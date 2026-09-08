@@ -125,7 +125,7 @@ router.get('/listing', verifyToken, async (req, res) => {
         category: template.category,
         tag: template.tag,
         reward: rewardPerAd,
-        durationSeconds: 15, // Smooth responsive duration
+        durationSeconds: 60, // Strictly 60 seconds per user requirement
         status: isWatched ? 'completed' : isCurrent ? 'available' : 'queued',
         watched: isWatched,
       });

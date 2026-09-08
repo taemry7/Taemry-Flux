@@ -16,6 +16,7 @@ import depositsRoutes from './routes/deposits.js';
 import withdrawalsRoutes from './routes/withdrawals.js';
 import transactionsRoutes from './routes/transactions.js';
 import settingsRoutes from './routes/settings.js';
+import adminRoutes from './routes/admin.js';
 
 // Load environment variables
 dotenv.config();
@@ -55,6 +56,7 @@ app.use('/api/deposits', depositsRoutes);
 app.use('/api/withdrawals', withdrawalsRoutes);
 app.use('/api/transactions', transactionsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/admin', adminRoutes);
 
 // 404 Handler for undefined API routes
 app.use('/api/*', (req, res) => {

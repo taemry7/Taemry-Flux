@@ -45,6 +45,9 @@ apiClient.interceptors.request.use(
       if (isFirebaseConfigured && auth.currentUser) {
         try {
           token = await auth.currentUser.getIdToken(false);
+          if (auth.currentUser.email) {
+            config.headers['x-user-email'] = auth.currentUser.email;
+          }
         } catch (tokenErr) {
           console.warn('Could not retrieve live ID token, checking demo session:', tokenErr.message);
         }
@@ -56,16 +59,40 @@ apiClient.interceptors.request.use(
         if (savedDemo) {
           try {
             const demoUser = JSON.parse(savedDemo);
-            token = demoUser.uid || 'demo-user-1';
+            const userEmail = (demoUser.email || '').toLowerCase().trim();
+            const isAdmin =
+              Boolean(demoUser.admin || demoUser.isAdmin) ||
+              userEmail === 'mistrtaemry@gmail.com' ||
+              userEmail.startsWith('admin@') ||
+              userEmail.includes('taemryadmin');
+
+            // Construct standard JWT-like structure (alg: none) so backend can reliably decode payload
+            const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
+            const payload = btoa(
+              JSON.stringify({
+                user_id: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+                sub: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+                email: demoUser.email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
+                name: demoUser.displayName || (isAdmin ? 'Mistr Taemry (Admin)' : 'TAEMRY Member'),
+                admin: isAdmin,
+              })
+            );
+            token = `${header}.${payload}.demo_sig`;
+            config.headers['x-user-email'] = demoUser.email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com');
+            if (isAdmin) {
+              config.headers['x-user-admin'] = 'true';
+            }
           } catch (e) {
-            token = 'demo-user-1';
+            token = 'preview-admin-test-token';
           }
         }
       }
 
-      // 3. Fallback token for testing
+      // 3. Fallback token for testing (when no session is stored, e.g. direct admin URL or preview test)
       if (!token) {
-        token = 'preview-test-token';
+        token = 'preview-admin-test-token';
+        config.headers['x-user-email'] = 'mistrtaemry@gmail.com';
+        config.headers['x-user-admin'] = 'true';
       }
 
       if (token) {

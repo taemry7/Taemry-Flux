@@ -64,8 +64,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(15);
-  const [totalTimerDuration, setTotalTimerDuration] = useState(15);
+  const [timerSeconds, setTimerSeconds] = useState(60);
+  const [totalTimerDuration, setTotalTimerDuration] = useState(60);
   const [isMuted, setIsMuted] = useState(true);
   const [recentReward, setRecentReward] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -106,6 +106,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         tag: sp.tag,
         desc: sp.desc,
         reward: rewardRate,
+        durationSeconds: 60,
         status: isCompleted ? 'completed' : isAvailable ? 'available' : 'queued',
         isWatched: isCompleted,
       });

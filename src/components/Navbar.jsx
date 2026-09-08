@@ -4,7 +4,7 @@ import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
-  const { currentUser, logout, userStats } = useAuth();
+  const { currentUser, isAdmin, logout, userStats } = useAuth();
 
   // Extract initials from user email or name
   const getInitials = () => {
@@ -49,6 +49,23 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
         <div className="flex items-center gap-3">
           {currentUser ? (
             <div className="flex items-center gap-3">
+              {/* Admin Panel Access Pill */}
+              {isAdmin && (
+                <button
+                  id="btn-nav-admin"
+                  onClick={() => onNavigate('admin')}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border transition-all cursor-pointer ${
+                    currentPage === 'admin'
+                      ? 'bg-[#0f172a] text-[#38bdf8] border-[#38bdf8] shadow-sm'
+                      : 'bg-[#1e293b] text-[#7dd3fc] border-[#334155] hover:bg-[#0f172a]'
+                  }`}
+                  title="Open Admin Control Center"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#38bdf8]" />
+                  <span>Admin Panel</span>
+                </button>
+              )}
+
               {/* Wallet quick balance pill */}
               <button
                 onClick={() => onNavigate('dashboard')}

@@ -11,6 +11,7 @@ import depositsRoutes from './backend/routes/deposits.js';
 import withdrawalsRoutes from './backend/routes/withdrawals.js';
 import transactionsRoutes from './backend/routes/transactions.js';
 import settingsRoutes from './backend/routes/settings.js';
+import adminRoutes from './backend/routes/admin.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
 
 async function startServer() {
@@ -47,6 +48,7 @@ async function startServer() {
   app.use('/api/withdrawals', withdrawalsRoutes);
   app.use('/api/transactions', transactionsRoutes);
   app.use('/api/settings', settingsRoutes);
+  app.use('/api/admin', adminRoutes);
 
   // 404 Handler for undefined API routes
   app.all('/api/*', (req, res) => {

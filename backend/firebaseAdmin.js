@@ -89,6 +89,190 @@ class MockFirestore {
       master: { id: 'master', name: 'Master', price: 500.00, minWallet: 50.00, rewardRate: '6.0%', dailyLimit: 150, description: 'Elite volume multiplier with maximum tier returns.' },
       apex: { id: 'apex', name: 'Apex', price: 1000.00, minWallet: 100.00, rewardRate: '7.5%', dailyLimit: 200, description: 'Top tier package with unbounded reward scale.' },
     });
+
+    // Seed realistic users
+    this.data.set('users/admin_taemry', {
+      uid: 'admin_taemry',
+      email: 'mistrtaemry@gmail.com',
+      name: 'Mistr Taemry (Admin)',
+      currentPackage: 'Apex',
+      walletBalance: 2500.00,
+      referralCount: 42,
+      isEligible: true,
+      isBlocked: false,
+      dailyAdCount: 0,
+      lifetimeAds: 12000,
+      role: 'admin',
+      admin: true,
+      isAdmin: true,
+      createdAt: '2026-08-01T10:00:00.000Z',
+    });
+    this.data.set('users/demo-user-1', {
+      uid: 'demo-user-1',
+      email: 'member@taemryflux.com',
+      name: 'TAEMRY Member',
+      currentPackage: 'Gold',
+      walletBalance: 45.50,
+      referralCount: 3,
+      isEligible: true,
+      isBlocked: false,
+      dailyAdCount: 8,
+      lifetimeAds: 1200,
+      createdAt: '2026-08-15T10:00:00.000Z',
+    });
+    this.data.set('users/user_tariq', {
+      uid: 'user_tariq',
+      email: 'tariq.khan@gmail.com',
+      name: 'Tariq Khan',
+      currentPackage: 'Elite',
+      walletBalance: 128.00,
+      referralCount: 7,
+      isEligible: true,
+      isBlocked: false,
+      dailyAdCount: 22,
+      lifetimeAds: 3450,
+      createdAt: '2026-08-20T14:30:00.000Z',
+    });
+    this.data.set('users/user_sara', {
+      uid: 'user_sara',
+      email: 'sara.ahmed@yahoo.com',
+      name: 'Sara Ahmed',
+      currentPackage: 'Silver',
+      walletBalance: 14.20,
+      referralCount: 2,
+      isEligible: true,
+      isBlocked: false,
+      dailyAdCount: 15,
+      lifetimeAds: 890,
+      createdAt: '2026-08-28T09:15:00.000Z',
+    });
+    this.data.set('users/user_bilal', {
+      uid: 'user_bilal',
+      email: 'bilal.malik@outlook.com',
+      name: 'Bilal Malik',
+      currentPackage: 'Master',
+      walletBalance: 612.50,
+      referralCount: 14,
+      isEligible: true,
+      isBlocked: false,
+      dailyAdCount: 45,
+      lifetimeAds: 6800,
+      createdAt: '2026-09-01T11:45:00.000Z',
+    });
+    this.data.set('users/user_hamza', {
+      uid: 'user_hamza',
+      email: 'hamza.dev@gmail.com',
+      name: 'Hamza Dev',
+      currentPackage: 'Bronze',
+      walletBalance: 2.10,
+      referralCount: 0,
+      isEligible: true,
+      isBlocked: true,
+      dailyAdCount: 0,
+      lifetimeAds: 40,
+      createdAt: '2026-09-02T16:20:00.000Z',
+    });
+
+    // Seed realistic deposits
+    this.data.set('deposits/dep_1001', {
+      depositId: 'dep_1001',
+      id: 'dep_1001',
+      userId: 'demo-user-1',
+      userEmail: 'member@taemryflux.com',
+      method: 'jazzcash',
+      amountUSD: 10,
+      amountPKR: 3000,
+      screenshotURL: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+    });
+    this.data.set('deposits/dep_1002', {
+      depositId: 'dep_1002',
+      id: 'dep_1002',
+      userId: 'user_tariq',
+      userEmail: 'tariq.khan@gmail.com',
+      method: 'bank_transfer',
+      amountUSD: 100,
+      amountPKR: 30000,
+      screenshotURL: 'https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80',
+      status: 'pending',
+      createdAt: new Date(Date.now() - 7200000).toISOString(),
+    });
+    this.data.set('deposits/dep_1003', {
+      depositId: 'dep_1003',
+      id: 'dep_1003',
+      userId: 'user_sara',
+      userEmail: 'sara.ahmed@yahoo.com',
+      method: 'easypaisa',
+      amountUSD: 5,
+      amountPKR: 1500,
+      screenshotURL: 'https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=600&auto=format&fit=crop&q=80',
+      status: 'approved',
+      createdAt: new Date(Date.now() - 86400000).toISOString(),
+    });
+
+    // Seed realistic withdrawals
+    this.data.set('withdrawals/wd_2001', {
+      withdrawalId: 'wd_2001',
+      id: 'wd_2001',
+      userId: 'demo-user-1',
+      userEmail: 'member@taemryflux.com',
+      method: 'easypaisa',
+      accountName: 'TAEMRY Member',
+      accountNumber: '03451122334',
+      amountUSD: 20,
+      amountPKR: 6000,
+      status: 'pending',
+      createdAt: new Date(Date.now() - 1800000).toISOString(),
+    });
+    this.data.set('withdrawals/wd_2002', {
+      withdrawalId: 'wd_2002',
+      id: 'wd_2002',
+      userId: 'user_bilal',
+      userEmail: 'bilal.malik@outlook.com',
+      method: 'bank_transfer',
+      accountName: 'Bilal Malik',
+      accountNumber: 'PK44BAHL0001234567890123',
+      amountUSD: 150,
+      amountPKR: 45000,
+      status: 'pending',
+      createdAt: new Date(Date.now() - 5400000).toISOString(),
+    });
+    this.data.set('withdrawals/wd_2003', {
+      withdrawalId: 'wd_2003',
+      id: 'wd_2003',
+      userId: 'user_tariq',
+      userEmail: 'tariq.khan@gmail.com',
+      method: 'crypto_usdt',
+      accountName: 'Tariq Crypto',
+      accountNumber: '0x33445566778899aabbccddeeff00112233445566',
+      amountUSD: 50,
+      amountPKR: 15000,
+      status: 'paid',
+      createdAt: new Date(Date.now() - 172800000).toISOString(),
+    });
+
+    // Seed audit logs
+    this.data.set('auditLogs/log_1', {
+      id: 'log_1',
+      adminEmail: 'mistrtaemry@gmail.com',
+      action: 'approved_deposit',
+      targetUid: 'user_sara',
+      targetEmail: 'sara.ahmed@yahoo.com',
+      amountUSD: 5,
+      details: 'Approved $5 deposit for Sara Ahmed',
+      timestamp: new Date(Date.now() - 86400000).toISOString(),
+    });
+    this.data.set('auditLogs/log_2', {
+      id: 'log_2',
+      adminEmail: 'mistrtaemry@gmail.com',
+      action: 'block_user',
+      targetUid: 'user_hamza',
+      targetEmail: 'hamza.dev@gmail.com',
+      amountUSD: null,
+      details: 'User flagged for multi-account abuse',
+      timestamp: new Date(Date.now() - 43200000).toISOString(),
+    });
   }
 
   collection(name) {

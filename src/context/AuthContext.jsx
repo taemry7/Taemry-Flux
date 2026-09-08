@@ -38,6 +38,7 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
   const [userStats, setUserStats] = useState({
@@ -84,9 +85,61 @@ export const AuthProvider = ({ children }) => {
     }
   }, [currentUser, fetchUserStats]);
 
+  // Check custom claim admin: true
+  useEffect(() => {
+    let isMounted = true;
+    const checkAdminClaim = async () => {
+      if (!currentUser) {
+        if (isMounted) setIsAdmin(false);
+        return;
+      }
+
+      const email = (currentUser.email || '').toLowerCase();
+      const isKnownAdminEmail =
+        email === 'mistrtaemry@gmail.com' ||
+        email.startsWith('admin@') ||
+        email.includes('taemryadmin');
+
+      // 1. Check custom claim on token
+      if (typeof currentUser.getIdTokenResult === 'function') {
+        try {
+          const tokenResult = await currentUser.getIdTokenResult();
+          if (tokenResult?.claims?.admin) {
+            if (isMounted) setIsAdmin(true);
+            return;
+          }
+        } catch (e) {
+          console.warn('Could not inspect token claims:', e);
+        }
+      }
+
+      // 2. Check mock/demo or known admin email
+      if (isMounted) {
+        setIsAdmin(Boolean(currentUser.admin || currentUser.isAdmin || isKnownAdminEmail));
+      }
+    };
+
+    checkAdminClaim();
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser]);
+
+  // Helper to test if an email has administrative privileges
+  const checkIsAdminEmail = (email) => {
+    if (!email) return false;
+    const em = email.toLowerCase().trim();
+    return (
+      em === 'mistrtaemry@gmail.com' ||
+      em.startsWith('admin@') ||
+      em.includes('taemryadmin')
+    );
+  };
+
   // 1. Sign Up with Email and Password
   const signup = async (email, password, displayName = '') => {
     setAuthError('');
+    const isUserAdmin = checkIsAdminEmail(email);
     try {
       if (isFirebaseConfigured) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
@@ -97,14 +150,17 @@ export const AuthProvider = ({ children }) => {
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
-          uid: 'demo-' + Date.now(),
+          uid: isUserAdmin ? 'admin_taemry' : ('demo-' + Date.now()),
           email: email,
-          displayName: displayName || email.split('@')[0],
+          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0]),
           photoURL: null,
-          isDemo: true
+          isDemo: true,
+          admin: isUserAdmin,
+          isAdmin: isUserAdmin,
         };
         localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
         setCurrentUser(mockUser);
+        setIsAdmin(isUserAdmin);
         return mockUser;
       }
     } catch (err) {
@@ -112,14 +168,17 @@ export const AuthProvider = ({ children }) => {
       // If Firebase key is invalid or demo, fallback gracefully
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
         const mockUser = {
-          uid: 'demo-' + Date.now(),
+          uid: isUserAdmin ? 'admin_taemry' : ('demo-' + Date.now()),
           email: email,
-          displayName: displayName || email.split('@')[0],
+          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0]),
           photoURL: null,
-          isDemo: true
+          isDemo: true,
+          admin: isUserAdmin,
+          isAdmin: isUserAdmin,
         };
         localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
         setCurrentUser(mockUser);
+        setIsAdmin(isUserAdmin);
         return mockUser;
       }
       setAuthError(err.message || 'Failed to sign up');
@@ -130,6 +189,7 @@ export const AuthProvider = ({ children }) => {
   // 2. Sign In with Email and Password
   const login = async (email, password) => {
     setAuthError('');
+    const isUserAdmin = checkIsAdminEmail(email);
     try {
       if (isFirebaseConfigured) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
@@ -137,28 +197,34 @@ export const AuthProvider = ({ children }) => {
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
-          uid: 'demo-user-1',
+          uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
           email: email,
-          displayName: email.split('@')[0],
+          displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0],
           photoURL: null,
-          isDemo: true
+          isDemo: true,
+          admin: isUserAdmin,
+          isAdmin: isUserAdmin,
         };
         localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
         setCurrentUser(mockUser);
+        setIsAdmin(isUserAdmin);
         return mockUser;
       }
     } catch (err) {
       console.error('Firebase login error:', err);
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
         const mockUser = {
-          uid: 'demo-user-1',
+          uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
           email: email,
-          displayName: email.split('@')[0],
+          displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0],
           photoURL: null,
-          isDemo: true
+          isDemo: true,
+          admin: isUserAdmin,
+          isAdmin: isUserAdmin,
         };
         localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
         setCurrentUser(mockUser);
+        setIsAdmin(isUserAdmin);
         return mockUser;
       }
       setAuthError(err.message || 'Failed to sign in');
@@ -176,28 +242,34 @@ export const AuthProvider = ({ children }) => {
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
-          uid: 'google-demo-user',
+          uid: 'admin_taemry',
           email: 'mistrtaemry@gmail.com',
           displayName: 'Mistr Taemry',
           photoURL: null,
-          isDemo: true
+          isDemo: true,
+          admin: true,
+          isAdmin: true,
         };
         localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
         setCurrentUser(mockUser);
+        setIsAdmin(true);
         return mockUser;
       }
     } catch (err) {
       console.error('Google Sign In error:', err);
       // Fallback if popup fails in iframe or unconfigured
       const mockUser = {
-        uid: 'google-demo-user',
+        uid: 'admin_taemry',
         email: 'mistrtaemry@gmail.com',
         displayName: 'Mistr Taemry',
         photoURL: null,
-        isDemo: true
+        isDemo: true,
+        admin: true,
+        isAdmin: true,
       };
       localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
       setCurrentUser(mockUser);
+      setIsAdmin(true);
       return mockUser;
     }
   };
@@ -211,10 +283,12 @@ export const AuthProvider = ({ children }) => {
       }
       localStorage.removeItem('taemry_demo_user');
       setCurrentUser(null);
+      setIsAdmin(false);
     } catch (err) {
       console.error('Firebase logout error:', err);
       localStorage.removeItem('taemry_demo_user');
       setCurrentUser(null);
+      setIsAdmin(false);
     }
   };
 
@@ -235,14 +309,18 @@ export const AuthProvider = ({ children }) => {
 
   // Quick Demo Login for instant testing
   const demoLogin = (email = 'mistrtaemry@gmail.com') => {
+    const isUserAdmin = checkIsAdminEmail(email);
     const mockUser = {
-      uid: 'demo-flux-' + Date.now(),
+      uid: isUserAdmin ? 'admin_taemry' : ('demo-flux-' + Date.now()),
       email: email,
-      displayName: 'TAEMRY User',
-      isDemo: true
+      displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : 'TAEMRY User',
+      isDemo: true,
+      admin: isUserAdmin,
+      isAdmin: isUserAdmin,
     };
     localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
     setCurrentUser(mockUser);
+    setIsAdmin(isUserAdmin);
   };
 
   // Listen to Firebase auth state changes
@@ -295,6 +373,8 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     currentUser,
+    isAdmin,
+    setIsAdmin,
     loading,
     authError,
     setAuthError,

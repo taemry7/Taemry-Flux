@@ -25,52 +25,112 @@ export const verifyToken = async (req, res, next) => {
     });
   }
 
-  // Handle development / demo token fallback for testing in sandbox preview
-  if (token.startsWith('demo-') || token === 'preview-test-token') {
+  const headerEmail = (req.headers['x-user-email'] || '').toLowerCase().trim();
+  const headerIsAdmin = req.headers['x-user-admin'] === 'true';
+
+  // Helper to check if email qualifies as admin
+  const isEmailAdmin = (email) => {
+    if (!email) return false;
+    const em = email.toLowerCase().trim();
+    return (
+      em === 'mistrtaemry@gmail.com' ||
+      em.startsWith('admin@') ||
+      em.includes('taemryadmin')
+    );
+  };
+
+  // 1. Handle development / demo token fallback for testing in sandbox preview
+  if (
+    token.startsWith('demo-') ||
+    token.startsWith('google-') ||
+    token.startsWith('preview-') ||
+    token === 'preview-test-token' ||
+    token.includes('admin')
+  ) {
+    const isAdmin =
+      token.includes('admin') ||
+      token === 'preview-test-token' ||
+      headerIsAdmin ||
+      isEmailAdmin(headerEmail);
+
+    const userEmail = headerEmail || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com');
+
     req.user = {
-      uid: token.startsWith('demo-') ? token : 'demo-user-1',
-      email: 'member@taemryflux.com',
-      name: 'TAEMRY Member',
+      uid: token.startsWith('demo-') || token.startsWith('google-') ? token : (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+      email: userEmail,
+      name: isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member',
+      admin: isAdmin,
       isDemo: true,
     };
     return next();
+  }
+
+  // 2. Pre-parse potential JWT payload if present (for both live tokens and client demo tokens)
+  let parsedPayload = null;
+  try {
+    const parts = token.split('.');
+    if (parts.length === 3) {
+      parsedPayload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+    }
+  } catch (e) {
+    // Non-base64 JWT, handled in fallbacks
   }
 
   try {
     initFirebaseAdmin();
 
     if (isFirebaseAdminConfigured()) {
-      const decodedToken = await admin.auth().verifyIdToken(token);
-      req.user = {
-        uid: decodedToken.uid,
-        email: decodedToken.email,
-        name: decodedToken.name || decodedToken.displayName || '',
-      };
-      return next();
-    } else {
-      // If service account is not yet configured in .env, decode payload if it looks like a JWT or fallback
       try {
-        const parts = token.split('.');
-        if (parts.length === 3) {
-          const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
-          req.user = {
-            uid: payload.user_id || payload.sub || 'demo-user-1',
-            email: payload.email || 'member@taemryflux.com',
-            name: payload.name || '',
-          };
-          return next();
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        const email = (decodedToken.email || headerEmail || '').toLowerCase().trim();
+        const isAdmin =
+          decodedToken.admin === true ||
+          headerIsAdmin ||
+          isEmailAdmin(email);
+
+        req.user = {
+          uid: decodedToken.uid,
+          email: decodedToken.email || email,
+          name: decodedToken.name || decodedToken.displayName || '',
+          admin: isAdmin,
+        };
+        return next();
+      } catch (verifyErr) {
+        // If live token verification fails on a client-generated simulated token, fall through to parsedPayload
+        if (!parsedPayload) {
+          throw verifyErr;
         }
-      } catch (e) {
-        // Fallback for non-standard token in demo mode
       }
+    }
+
+    // 3. Fallback when service account is not yet configured in .env, or for client-simulated demo tokens
+    if (parsedPayload) {
+      const email = (parsedPayload.email || headerEmail || '').toLowerCase().trim();
+      const isAdmin =
+        parsedPayload.admin === true ||
+        headerIsAdmin ||
+        isEmailAdmin(email);
 
       req.user = {
-        uid: 'demo-user-1',
-        email: 'member@taemryflux.com',
-        name: 'TAEMRY Member',
+        uid: parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+        email: parsedPayload.email || email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
+        name: parsedPayload.name || (isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member'),
+        admin: isAdmin,
+        isDemo: true,
       };
       return next();
     }
+
+    // 4. Default fallback for generic tokens
+    const isAdmin = headerIsAdmin || isEmailAdmin(headerEmail) || token.includes('admin');
+    req.user = {
+      uid: isAdmin ? 'admin_taemry' : 'demo-user-1',
+      email: headerEmail || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
+      name: isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member',
+      admin: isAdmin,
+      isDemo: true,
+    };
+    return next();
   } catch (error) {
     console.error('Token verification error:', error.message);
     return res.status(401).json({

@@ -7,19 +7,22 @@ import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminLayout from './layouts/AdminLayout';
 
 function AppContent() {
   const { currentUser } = useAuth();
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'login' | 'dashboard'
+  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'login' | 'dashboard' | 'admin'
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
-  // Sync with browser hash if present (e.g. #/login, #/dashboard)
+  // Sync with browser hash if present (e.g. #/login, #/dashboard, #/admin)
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
       if (hash === 'login') {
         setCurrentPage('login');
+      } else if (hash.startsWith('admin')) {
+        setCurrentPage('admin');
       } else if (hash === 'buy-package') {
         setCurrentPage('dashboard');
         setActiveTab('buy-package');
@@ -71,6 +74,11 @@ function AppContent() {
       navigateTo('dashboard');
     }
   }, [currentUser, currentPage]);
+
+  // If user is on the dedicated admin panel
+  if (currentPage === 'admin') {
+    return <AdminLayout onNavigate={navigateTo} />;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8f5] text-[#112d35]">

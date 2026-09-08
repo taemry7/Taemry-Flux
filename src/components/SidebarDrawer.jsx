@@ -10,13 +10,14 @@ import {
   ArrowUpRight,
   History,
   LogOut,
-  ExternalLink
+  ExternalLink,
+  ShieldCheck
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab, onNavigate }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, isAdmin, logout } = useAuth();
 
   if (!isOpen) return null;
 
@@ -87,6 +88,21 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               </button>
             );
           })}
+          {isAdmin && (
+            <div className="pt-2 border-t border-[#ece6d9]">
+              <button
+                id="drawer-link-admin"
+                onClick={() => {
+                  onNavigate('admin');
+                  onClose();
+                }}
+                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold bg-[#1e293b] text-[#38bdf8] border border-[#334155] hover:bg-[#0f172a] transition-all shadow-xs"
+              >
+                <ShieldCheck className="w-4 h-4 text-[#38bdf8]" />
+                <span>Admin Panel</span>
+              </button>
+            </div>
+          )}
         </nav>
 
         {/* User Account / Footer in Drawer */}
