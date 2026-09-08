@@ -11,7 +11,7 @@
  * - Development fallback mode for instant preview testing
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
@@ -22,6 +22,7 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { auth, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
+import apiClient from '../api/client.js';
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -39,6 +40,49 @@ export const AuthProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
+  const [userStats, setUserStats] = useState({
+    walletBalance: 45.50,
+    currentPackage: 'Bronze',
+    lifetimeAds: 1200,
+    dailyAdCount: 45,
+    teamAdsCount: 5000,
+    referralCount: 3,
+    totalEarned: 138.20,
+    isEligible: true,
+  });
+
+  // Global method to fetch and refresh user stats from API
+  const fetchUserStats = useCallback(async () => {
+    if (!currentUser) return null;
+    try {
+      const res = await apiClient.get('/dashboard/stats');
+      if (res.data?.success && res.data.stats) {
+        setUserStats((prev) => ({
+          ...prev,
+          ...res.data.stats,
+        }));
+        return res.data.stats;
+      }
+    } catch (err) {
+      console.warn('Failed to fetch user stats:', err.message);
+    }
+    return null;
+  }, [currentUser]);
+
+  // Method to immediately update local stats without waiting for server roundtrip
+  const updateLocalStats = useCallback((partial) => {
+    setUserStats((prev) => ({
+      ...prev,
+      ...partial,
+    }));
+  }, []);
+
+  // Refresh stats when user logs in or changes
+  useEffect(() => {
+    if (currentUser) {
+      fetchUserStats();
+    }
+  }, [currentUser, fetchUserStats]);
 
   // 1. Sign Up with Email and Password
   const signup = async (email, password, displayName = '') => {
@@ -260,7 +304,10 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     demoLogin,
-    isFirebaseConfigured
+    isFirebaseConfigured,
+    userStats,
+    fetchUserStats,
+    updateLocalStats,
   };
 
   return (

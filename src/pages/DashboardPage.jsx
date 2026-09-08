@@ -11,6 +11,7 @@ import {
   PlaySquare, 
   ArrowDownToLine, 
   Users, 
+  Trophy,
   Wallet, 
   TrendingUp, 
   ArrowRight, 
@@ -25,25 +26,32 @@ import {
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 import BuyPackage from './BuyPackage';
+import WatchAds from './WatchAds';
+import Referrals from './Referrals';
+import Milestones from './Milestones';
 
-export default function DashboardPage({ activeTab: propActiveTab = 'overview', onSelectTab }) {
-  const { currentUser } = useAuth();
+export default function DashboardPage({
+  activeTab: propActiveTab = 'overview',
+  onSelectTab = (_tab) => {},
+  onNavigate = (_page, _tab) => {}
+}) {
+  const { currentUser, userStats } = useAuth();
 
-  // Internal tab state ('overview' | 'buy-package' | 'watch-ads' | 'withdraw' | 'referrals')
+  // Internal tab state ('overview' | 'watch-ads' | 'referrals' | 'milestones' | 'buy-package' | 'withdraw')
   const [activeTab, setActiveTab] = useState(
     propActiveTab === 'packages' ? 'buy-package' : propActiveTab || 'overview'
   );
 
   // Live dashboard statistics loaded from GET /api/dashboard/stats
   const [stats, setStats] = useState({
-    walletBalance: 45.50,
-    currentPackage: 'Gold',
-    lifetimeAds: 1200,
-    teamAdsCount: 5000,
-    referralCount: 3,
-    totalEarned: 138.20,
+    walletBalance: userStats?.walletBalance || 45.50,
+    currentPackage: userStats?.currentPackage || 'Gold',
+    lifetimeAds: userStats?.lifetimeAds || 1200,
+    teamAdsCount: userStats?.teamAdsCount || 5000,
+    referralCount: userStats?.referralCount || 3,
+    totalEarned: userStats?.totalEarned || 138.20,
     milestone: {
-      current: 1200,
+      current: userStats?.lifetimeAds || 1200,
       target: 2000,
       percentage: 60,
       adsRemaining: 800,
@@ -109,10 +117,11 @@ export default function DashboardPage({ activeTab: propActiveTab = 'overview', o
   // Sidebar navigation menu items
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
+    { id: 'referrals', label: 'Referrals', icon: Users },
+    { id: 'milestones', label: 'Milestones', icon: Trophy },
     { id: 'buy-package', label: 'Buy Package', icon: Package },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare, tag: 'Phase 3' },
     { id: 'withdraw', label: 'Withdraw', icon: ArrowDownToLine, tag: 'Phase 4' },
-    { id: 'referrals', label: 'Referrals', icon: Users, tag: 'Phase 3' },
   ];
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'TAEMRY Member';
@@ -404,14 +413,17 @@ export default function DashboardPage({ activeTab: propActiveTab = 'overview', o
                   />
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#5f757a] gap-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#5f757a] gap-2 pt-1">
                   <span>
                     <strong>{Number(stats.milestone?.adsRemaining || 800).toLocaleString()} views</strong> remaining to reach the next tier unlock.
                   </span>
-                  <span className="text-[#0c5963] font-semibold flex items-center gap-1">
-                    <TrendingUp className="w-3.5 h-3.5" />
-                    <span>Reward rate multiplier increases at 2,000 ads</span>
-                  </span>
+                  <button
+                    onClick={() => handleTabChange('milestones')}
+                    className="text-[#0c5963] hover:text-[#083a41] font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                  >
+                    <span>View & Claim Milestones</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -476,34 +488,35 @@ export default function DashboardPage({ activeTab: propActiveTab = 'overview', o
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 3: WATCH ADS (Placeholder for Phase 3)                                */}
+          {/* TAB 3: WATCH ADS (Phase 3)                                                */}
           {/* ========================================================================= */}
           {activeTab === 'watch-ads' && (
-            <div className="bg-white rounded-3xl p-8 border border-[#e4ded2] shadow-xs text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center mx-auto mb-4">
-                <PlaySquare className="w-7 h-7" />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full border border-[#b8dfd7]">
-                Phase 3 Placeholder
-              </span>
-              <h2 className="text-2xl font-bold text-[#09353e] mt-4 mb-2">
-                Timed Daily Ads & Stream Player
-              </h2>
-              <p className="text-xs sm:text-sm text-[#546b70] max-w-md mx-auto leading-relaxed mb-6">
-                In Phase 3, this section will stream timed advertisements connected to your active {stats.currentPackage} package allocation, crediting rewards to your wallet with real-time timers.
-              </p>
-              <button
-                onClick={() => handleTabChange('overview')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#faf8f5] hover:bg-[#ede7db] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer"
-              >
-                <span>Return to Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <WatchAds
+              onSelectTab={handleTabChange}
+              onNavigate={onNavigate}
+            />
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 4: WITHDRAW (Placeholder for Phase 4)                                 */}
+          {/* TAB 4: REFERRALS (Phase 3)                                                */}
+          {/* ========================================================================= */}
+          {activeTab === 'referrals' && (
+            <Referrals
+              onSelectTab={handleTabChange}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 5: MILESTONES (Phase 3)                                               */}
+          {/* ========================================================================= */}
+          {activeTab === 'milestones' && (
+            <Milestones
+              onSelectTab={handleTabChange}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 6: WITHDRAW (Placeholder for Phase 4)                                 */}
           {/* ========================================================================= */}
           {activeTab === 'withdraw' && (
             <div className="bg-white rounded-3xl p-8 border border-[#e4ded2] shadow-xs text-center">
@@ -518,33 +531,6 @@ export default function DashboardPage({ activeTab: propActiveTab = 'overview', o
               </h2>
               <p className="text-xs sm:text-sm text-[#546b70] max-w-md mx-auto leading-relaxed mb-6">
                 Your available balance is currently <strong>${Number(stats.walletBalance).toFixed(2)}</strong>. The withdrawal gateway (Crypto USDT, Bank Transfer, JazzCash, Easypaisa) will be deployed in Phase 4.
-              </p>
-              <button
-                onClick={() => handleTabChange('overview')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#faf8f5] hover:bg-[#ede7db] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer"
-              >
-                <span>Return to Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-
-          {/* ========================================================================= */}
-          {/* TAB 5: REFERRALS (Placeholder for Phase 3)                                */}
-          {/* ========================================================================= */}
-          {activeTab === 'referrals' && (
-            <div className="bg-white rounded-3xl p-8 border border-[#e4ded2] shadow-xs text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center mx-auto mb-4">
-                <Users className="w-7 h-7" />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0284c7] bg-[#e0f2fe] px-3 py-1 rounded-full border border-[#bae6fd]">
-                Phase 3 Placeholder
-              </span>
-              <h2 className="text-2xl font-bold text-[#09353e] mt-4 mb-2">
-                Team Network & Referral Tree
-              </h2>
-              <p className="text-xs sm:text-sm text-[#546b70] max-w-md mx-auto leading-relaxed mb-6">
-                You have <strong>{stats.referralCount || 3} direct referrals</strong> generating <strong>{Number(stats.teamAdsCount).toLocaleString()} team views</strong>. Commission trees and unique invitation links arrive in Phase 3.
               </p>
               <button
                 onClick={() => handleTabChange('overview')}

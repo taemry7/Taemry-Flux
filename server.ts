@@ -1,15 +1,13 @@
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
-import { createServer as createViteServer } from 'vite';
 import userRoutes from './backend/routes/user.js';
 import packageRoutes from './backend/routes/package.js';
 import dashboardRoutes from './backend/routes/dashboard.js';
+import adsRoutes from './backend/routes/ads.js';
+import referralsRoutes from './backend/routes/referrals.js';
+import milestonesRoutes from './backend/routes/milestones.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 async function startServer() {
   // Initialize Firebase Admin SDK (lazy fallback if keys not in env)
@@ -29,7 +27,7 @@ async function startServer() {
     res.json({
       status: 'ok',
       service: 'TAEMRY FLUX Full-Stack Server',
-      phase: 'Phase 2',
+      phase: 'Phase 3',
       timestamp: new Date().toISOString(),
     });
   });
@@ -38,9 +36,21 @@ async function startServer() {
   app.use('/api/user', userRoutes);
   app.use('/api/packages', packageRoutes);
   app.use('/api/dashboard', dashboardRoutes);
+  app.use('/api/ads', adsRoutes);
+  app.use('/api/referrals', referralsRoutes);
+  app.use('/api/milestones', milestonesRoutes);
+
+  // 404 Handler for undefined API routes
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({
+      error: 'Not Found',
+      message: `Endpoint ${req.originalUrl} not found.`,
+    });
+  });
 
   // Vite middleware for development / static serving in production
   if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

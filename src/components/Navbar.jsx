@@ -4,7 +4,7 @@ import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, logout, userStats } = useAuth();
 
   // Extract initials from user email or name
   const getInitials = () => {
@@ -52,10 +52,10 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
               {/* Wallet quick balance pill */}
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="hidden sm:flex items-center gap-2 bg-[#e6f2f0] hover:bg-[#d8ebe7] text-[#0d5963] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-[#b8ded7] transition-all"
+                className="hidden sm:flex items-center gap-2 bg-[#e6f2f0] hover:bg-[#d8ebe7] text-[#0d5963] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-[#b8ded7] transition-all cursor-pointer"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                <span>$0.00</span>
+                <span>${Number(userStats?.walletBalance || 45.50).toFixed(2)}</span>
               </button>
 
               {/* User Avatar Circle */}

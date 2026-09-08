@@ -74,7 +74,51 @@ class MockFirestore {
 
   collection(name) {
     const self = this;
+
+    const createQuery = (filters = []) => ({
+      where(field, op, val) {
+        return createQuery([...filters, { field, op, val }]);
+      },
+      orderBy(field, dir = 'asc') {
+        return createQuery(filters);
+      },
+      limit(n) {
+        return createQuery(filters);
+      },
+      async get() {
+        const matchingDocs = [];
+        const prefix = `${name}/`;
+        for (const [key, value] of self.data.entries()) {
+          if (key.startsWith(prefix) && key.indexOf('/', prefix.length) === -1) {
+            const docId = key.substring(prefix.length);
+            let matches = true;
+            for (const f of filters) {
+              if (f.op === '==' && value[f.field] !== f.val) matches = false;
+              if (f.op === 'in' && Array.isArray(f.val) && !f.val.includes(value[f.field])) matches = false;
+              if (f.op === '>' && !(value[f.field] > f.val)) matches = false;
+              if (f.op === '>=' && !(value[f.field] >= f.val)) matches = false;
+              if (f.op === '<' && !(value[f.field] < f.val)) matches = false;
+              if (f.op === '<=' && !(value[f.field] <= f.val)) matches = false;
+            }
+            if (matches) {
+              matchingDocs.push({
+                id: docId,
+                exists: true,
+                data: () => ({ ...value }),
+              });
+            }
+          }
+        }
+        return {
+          empty: matchingDocs.length === 0,
+          size: matchingDocs.length,
+          docs: matchingDocs,
+        };
+      },
+    });
+
     return {
+      ...createQuery([]),
       doc(id) {
         const path = `${name}/${id}`;
         return {
@@ -82,7 +126,7 @@ class MockFirestore {
             const docData = self.data.get(path);
             return {
               exists: Boolean(docData),
-              data: () => docData,
+              data: () => (docData ? { ...docData } : undefined),
               id,
             };
           },

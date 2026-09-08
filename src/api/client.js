@@ -6,9 +6,26 @@
 import axios from 'axios';
 import { auth, isFirebaseConfigured } from '../firebase/firebase.config.js';
 
-// Base URL: Defaults to relative '/api' for integrated container,
-// or configurable via VITE_API_BASE_URL (e.g. 'http://localhost:5000/api')
-const baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+// Base URL: In our integrated single-port container, API requests should use the relative path '/api'.
+// We check if VITE_API_BASE_URL is provided, but if it points to localhost (e.g. legacy http://localhost:5000/api
+// from local separate process development), we fallback to '/api' so requests always hit the current host.
+const resolveApiBaseUrl = () => {
+  const envUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+
+  // If empty or relative, ensure it starts with /api
+  if (!envUrl || envUrl === '/api') {
+    return '/api';
+  }
+
+  // Guard against localhost or loopback URLs which fail inside browser iframe previews
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/i.test(envUrl)) {
+    return '/api';
+  }
+
+  return envUrl;
+};
+
+const baseURL = resolveApiBaseUrl();
 
 const apiClient = axios.create({
   baseURL,

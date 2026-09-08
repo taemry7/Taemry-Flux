@@ -23,6 +23,15 @@ function AppContent() {
       } else if (hash === 'buy-package') {
         setCurrentPage('dashboard');
         setActiveTab('buy-package');
+      } else if (hash === 'watch-ads') {
+        setCurrentPage('dashboard');
+        setActiveTab('watch-ads');
+      } else if (hash === 'referrals') {
+        setCurrentPage('dashboard');
+        setActiveTab('referrals');
+      } else if (hash === 'milestones') {
+        setCurrentPage('dashboard');
+        setActiveTab('milestones');
       } else if (hash.startsWith('dashboard')) {
         setCurrentPage('dashboard');
         const parts = hash.split('/');
@@ -90,6 +99,7 @@ function AppContent() {
             <DashboardPage
               activeTab={activeTab}
               onSelectTab={(tab) => setActiveTab(tab)}
+              onNavigate={navigateTo}
             />
           </ProtectedRoute>
         )}
