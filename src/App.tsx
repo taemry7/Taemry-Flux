@@ -32,6 +32,15 @@ function AppContent() {
       } else if (hash === 'milestones') {
         setCurrentPage('dashboard');
         setActiveTab('milestones');
+      } else if (hash === 'deposit') {
+        setCurrentPage('dashboard');
+        setActiveTab('deposit');
+      } else if (hash === 'withdraw') {
+        setCurrentPage('dashboard');
+        setActiveTab('withdraw');
+      } else if (hash === 'transactions') {
+        setCurrentPage('dashboard');
+        setActiveTab('transactions');
       } else if (hash.startsWith('dashboard')) {
         setCurrentPage('dashboard');
         const parts = hash.split('/');

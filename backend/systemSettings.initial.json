@@ -1,0 +1,79 @@
+{
+  "systemSettings": {
+    "general": {
+      "exchangeRate": 300,
+      "bankAccountName": "TAEMRY FLUX HOLDINGS LTD",
+      "bankAccountNumber": "PK76MEZN0000123456789012",
+      "bankName": "Meezan Bank Ltd",
+      "easypaisaNumber": "03451234567",
+      "easypaisaName": "TAEMRY OFFICIAL",
+      "jazzcashNumber": "03009876543",
+      "jazzcashName": "TAEMRY OFFICIAL",
+      "cryptoAddresses": {
+        "USDT": "0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)",
+        "BTC": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      },
+      "minWithdrawal": 1.0,
+      "maxWithdrawal": 1000.0,
+      "withdrawalCooldownMinutes": 5,
+      "referralRequired": true,
+      "updatedAt": "2026-09-07T00:00:00.000Z"
+    },
+    "packages": {
+      "bronze": {
+        "id": "bronze",
+        "name": "Bronze",
+        "price": 1.0,
+        "minWallet": 0.1,
+        "rewardRate": "2.0%",
+        "dailyLimit": 20,
+        "description": "Starter tier to begin daily earnings."
+      },
+      "silver": {
+        "id": "silver",
+        "name": "Silver",
+        "price": 5.0,
+        "minWallet": 0.5,
+        "rewardRate": "2.5%",
+        "dailyLimit": 40,
+        "description": "Higher daily capacity and rewards."
+      },
+      "gold": {
+        "id": "gold",
+        "name": "Gold",
+        "price": 10.0,
+        "minWallet": 1.0,
+        "rewardRate": "3.0%",
+        "dailyLimit": 60,
+        "description": "Accelerated views and earning potential."
+      },
+      "elite": {
+        "id": "elite",
+        "name": "Elite",
+        "price": 100.0,
+        "minWallet": 10.0,
+        "rewardRate": "4.5%",
+        "dailyLimit": 100,
+        "description": "High-velocity tier with premium returns."
+      },
+      "master": {
+        "id": "master",
+        "name": "Master",
+        "price": 500.0,
+        "minWallet": 50.0,
+        "rewardRate": "6.0%",
+        "dailyLimit": 150,
+        "description": "Elite volume multiplier with maximum tier returns."
+      },
+      "apex": {
+        "id": "apex",
+        "name": "Apex",
+        "price": 1000.0,
+        "minWallet": 100.0,
+        "rewardRate": "7.5%",
+        "dailyLimit": 200,
+        "description": "Top tier package with unbounded reward scale."
+      }
+    }
+  }
+}

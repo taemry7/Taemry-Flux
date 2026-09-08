@@ -13,18 +13,17 @@ const router = express.Router();
 
 // Package pricing directory to calculate exact 0.1% ad reward
 const PACKAGE_PRICES = {
-  bronze: 25.00,
-  silver: 75.00,
-  gold: 150.00,
-  platinum: 300.00,
-  diamond: 500.00,
-  master: 1000.00,
-  apex: 2500.00,
+  bronze: 1.00,
+  silver: 5.00,
+  gold: 10.00,
+  elite: 100.00,
+  master: 500.00,
+  apex: 1000.00,
 };
 
 /**
  * GET /api/ads/status
- * Protected: Returns user's daily ad progress, cooldown status, and eligibility.
+ * Protected: Returns user's daily ad progress, cooldown status (disabled per user request), and eligibility.
  */
 router.get('/status', verifyToken, async (req, res) => {
   try {
@@ -48,17 +47,11 @@ router.get('/status', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
-    // Cooldown calculation
-    let cooldownRemaining = 0;
-    if (user.lastAdWatchTime) {
-      const elapsedMs = Date.now() - new Date(user.lastAdWatchTime).getTime();
-      if (elapsedMs < 60000) {
-        cooldownRemaining = Math.ceil((60000 - elapsedMs) / 1000);
-      }
-    }
+    // Cooldown active restriction removed per user requirement
+    const cooldownRemaining = 0;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
-    const packagePrice = PACKAGE_PRICES[packageKey] || 25.00;
+    const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
     const rewardPerAd = +(packagePrice * 0.001).toFixed(4); // 0.1%
 
     return res.json({
@@ -71,7 +64,8 @@ router.get('/status', verifyToken, async (req, res) => {
       dailyLimit: 200,
       lifetimeAds: user.lifetimeAds !== undefined ? Number(user.lifetimeAds) : 1200,
       lastAdWatchTime: user.lastAdWatchTime || null,
-      cooldownRemaining,
+      cooldownRemaining: 0,
+      cooldownDisabled: true,
     });
   } catch (error) {
     console.error('Error in GET /api/ads/status:', error);
@@ -79,6 +73,76 @@ router.get('/status', verifyToken, async (req, res) => {
       error: 'Internal Server Error',
       message: 'Failed to fetch ad status.',
       details: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/ads/listing
+ * Protected: Returns the full catalog of 200 daily ad items with watched/available status.
+ */
+router.get('/listing', verifyToken, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+    const db = getDb();
+    const userRef = db.collection('users').doc(uid);
+    const doc = await userRef.get();
+    const user = doc.exists ? doc.data() : {};
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    let dailyAdCount = user.dailyAdCount !== undefined ? Number(user.dailyAdCount) : 0;
+    if (user.lastAdWatchDate !== todayStr) {
+      dailyAdCount = 0;
+    }
+
+    const packageKey = (user.currentPackage || 'bronze').toLowerCase();
+    const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
+    const rewardPerAd = +(packagePrice * 0.001).toFixed(4);
+
+    // Sponsors rotation for ads 1 to 200
+    const sponsorTemplates = [
+      { name: 'Solstice Cloud AI', category: 'Artificial Intelligence', tag: 'High Performance' },
+      { name: 'Aura Protocol', category: 'Web3 & Fintech', tag: 'Secure Settlement' },
+      { name: 'Apex Vantage Hardware', category: 'Computing', tag: 'Next-Gen Chips' },
+      { name: 'Zenith Global Liquidity', category: 'Institutional Finance', tag: 'Cross-Border' },
+      { name: 'Quantum Core Networks', category: 'Infrastructure', tag: 'Zero Latency' },
+      { name: 'Hyperion Energy Systems', category: 'Clean Tech', tag: 'Sustainable Grid' },
+      { name: 'CyberShield ZeroTrust', category: 'Cybersecurity', tag: 'Enterprise Grade' },
+      { name: 'Nexus Orbital Data', category: 'Telecom & Satellite', tag: 'Global Mesh' },
+    ];
+
+    // Generate 200 ads
+    const ads = [];
+    for (let i = 1; i <= 200; i++) {
+      const template = sponsorTemplates[(i - 1) % sponsorTemplates.length];
+      const isWatched = i <= dailyAdCount;
+      const isCurrent = i === dailyAdCount + 1;
+
+      ads.push({
+        adNumber: i,
+        id: `ad_${i}`,
+        title: `${template.name} #${i}`,
+        category: template.category,
+        tag: template.tag,
+        reward: rewardPerAd,
+        durationSeconds: 15, // Smooth responsive duration
+        status: isWatched ? 'completed' : isCurrent ? 'available' : 'queued',
+        watched: isWatched,
+      });
+    }
+
+    return res.json({
+      success: true,
+      totalAds: 200,
+      dailyAdCount,
+      rewardPerAd,
+      ads,
+    });
+  } catch (error) {
+    console.error('Error in GET /api/ads/listing:', error);
+    return res.status(500).json({
+      error: 'Failed to generate ad listing',
+      message: error.message,
     });
   }
 });
@@ -141,24 +205,13 @@ router.post('/watch', verifyToken, async (req, res) => {
       });
     }
 
-    // 4. Check 60-second cooldown to prevent instant clicking
-    if (user.lastAdWatchTime) {
-      const elapsedMs = Date.now() - new Date(user.lastAdWatchTime).getTime();
-      // Allow 2-second margin for network transit (58,000 ms)
-      if (elapsedMs < 58000) {
-        const remainingSeconds = Math.ceil((60000 - elapsedMs) / 1000);
-        return res.status(429).json({
-          error: 'Cooldown active',
-          message: `Please wait ${remainingSeconds}s before watching another ad.`,
-          remainingSeconds,
-        });
-      }
-    }
+    // 4. Cooldown active restriction removed per user requirement ("remove cooldown active fix it")
+    // Ads can be watched smoothly sequentially without 60s block
 
     // 5. Calculate reward: packagePrice * 0.001 (0.1%)
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
-    const packagePrice = PACKAGE_PRICES[packageKey] || 25.00;
-    const reward = +(packagePrice * 0.001).toFixed(4); // e.g. $25 * 0.001 = $0.025
+    const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
+    const reward = +(packagePrice * 0.001).toFixed(4); // e.g. $1 * 0.001 = $0.001
 
     const newBalance = +((Number(user.walletBalance) || 0) + reward).toFixed(4);
     const newTotalEarned = +((Number(user.totalEarned) || 0) + reward).toFixed(4);
@@ -178,15 +231,17 @@ router.post('/watch', verifyToken, async (req, res) => {
 
     // 7. Record transaction for user
     await db.collection('transactions').add({
+      userId: uid,
       uid,
       type: 'ad_reward',
       adId,
       package: user.currentPackage || 'Bronze',
       amount: reward,
       previousBalance: user.walletBalance,
-      newBalance,
+      balanceAfter: newBalance,
+      timestamp: currentTimestamp,
       createdAt: currentTimestamp,
-      description: `Watched ad reward (${user.currentPackage || 'Bronze'} package @ 0.1%)`,
+      description: `Daily Ad View Reward (#${newDailyAdCount} / 200 - ${user.currentPackage || 'Bronze'} tier)`,
     });
 
     // 8. Upline Ad Commission (50% Rule) & Unlimited Depth Team Ads Counting

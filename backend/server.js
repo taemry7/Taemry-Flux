@@ -12,6 +12,10 @@ import dashboardRoutes from './routes/dashboard.js';
 import adsRoutes from './routes/ads.js';
 import referralsRoutes from './routes/referrals.js';
 import milestonesRoutes from './routes/milestones.js';
+import depositsRoutes from './routes/deposits.js';
+import withdrawalsRoutes from './routes/withdrawals.js';
+import transactionsRoutes from './routes/transactions.js';
+import settingsRoutes from './routes/settings.js';
 
 // Load environment variables
 dotenv.config();
@@ -35,7 +39,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'TAEMRY FLUX Backend API',
-    phase: 'Phase 3',
+    phase: 'Phase 4',
     timestamp: new Date().toISOString(),
   });
 });
@@ -47,6 +51,10 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/ads', adsRoutes);
 app.use('/api/referrals', referralsRoutes);
 app.use('/api/milestones', milestonesRoutes);
+app.use('/api/deposits', depositsRoutes);
+app.use('/api/withdrawals', withdrawalsRoutes);
+app.use('/api/transactions', transactionsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // 404 Handler for undefined API routes
 app.use('/api/*', (req, res) => {

@@ -30,72 +30,62 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'Bronze
     {
       id: 'bronze',
       name: 'Bronze',
-      price: 25.00,
-      rewardRate: '1.8%',
-      dailyLimit: 20,
+      price: 1.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
       badge: null,
       color: '#b45309',
-      description: 'A measured first step to begin daily earnings.'
+      description: 'The foundation tier ($1) yielding 0.1% per ad across 200 daily ads.'
     },
     {
       id: 'silver',
       name: 'Silver',
-      price: 75.00,
-      rewardRate: '2.6%',
-      dailyLimit: 40,
+      price: 5.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
       badge: 'POPULAR',
       color: '#0f766e',
-      description: 'For a stronger rhythm and higher daily view limits.'
+      description: 'Step up to 5x earnings multiplier with 200 daily ad opportunities.'
     },
     {
       id: 'gold',
       name: 'Gold',
-      price: 150.00,
-      rewardRate: '3.4%',
-      dailyLimit: 60,
+      price: 10.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
       badge: 'RECOMMENDED',
       color: '#ca8a04',
-      description: 'For committed momentum with accelerated view allocation.'
+      description: 'Tenfold return speed with full 200 daily ad access.'
     },
     {
-      id: 'platinum',
-      name: 'Platinum',
-      price: 300.00,
-      rewardRate: '4.2%',
-      dailyLimit: 80,
-      badge: null,
-      color: '#0284c7',
-      description: 'Accelerated daily velocity and high-tier rewards.'
-    },
-    {
-      id: 'diamond',
-      name: 'Diamond',
-      price: 500.00,
-      rewardRate: '5.0%',
-      dailyLimit: 100,
+      id: 'elite',
+      name: 'Elite',
+      price: 100.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
       badge: 'HIGH CAPACITY',
-      color: '#7c3aed',
-      description: 'Maximum efficiency tier with 100 views daily.'
+      color: '#0284c7',
+      description: 'Substantial daily earnings ($0.10/ad) across 200 daily ads.'
     },
     {
       id: 'master',
       name: 'Master',
-      price: 1000.00,
-      rewardRate: '6.0%',
-      dailyLimit: 120,
-      badge: null,
-      color: '#db2777',
-      description: 'Elite daily multiplier for advanced volume.'
+      price: 500.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
+      badge: 'PRO TIER',
+      color: '#7c3aed',
+      description: 'High-volume allocation generating $0.50 per ad view.'
     },
     {
       id: 'apex',
       name: 'Apex',
-      price: 2500.00,
-      rewardRate: '7.5%',
-      dailyLimit: 150,
+      price: 1000.00,
+      rewardRate: '0.1%',
+      dailyLimit: 200,
       badge: 'TOP TIER',
       color: '#ea580c',
-      description: 'Unbounded reward scale and highest tier returns.'
+      description: 'Peak performance tier generating $1.00 per ad view up to 200 daily.'
     },
   ];
 

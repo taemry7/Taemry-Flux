@@ -1,5 +1,17 @@
 import React from 'react';
-import { X, LayoutDashboard, PlaySquare, PackageCheck, Users, Trophy, ArrowDownToLine, LogOut, ExternalLink } from 'lucide-react';
+import {
+  X,
+  LayoutDashboard,
+  PlaySquare,
+  PackageCheck,
+  Users,
+  Trophy,
+  ArrowDownCircle,
+  ArrowUpRight,
+  History,
+  LogOut,
+  ExternalLink
+} from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
@@ -10,11 +22,13 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
+    { id: 'watch-ads', label: 'Watch Ads (200)', icon: PlaySquare },
+    { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle },
+    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    { id: 'transactions', label: 'Transactions', icon: History },
+    { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
     { id: 'referrals', label: 'Referrals', icon: Users },
     { id: 'milestones', label: 'Milestones', icon: Trophy },
-    { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowDownToLine },
   ];
 
   return (

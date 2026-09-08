@@ -21,7 +21,11 @@ import {
   RefreshCw,
   AlertCircle,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  ArrowDownCircle,
+  ArrowUpRight,
+  History,
+  Coins
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -29,6 +33,9 @@ import BuyPackage from './BuyPackage';
 import WatchAds from './WatchAds';
 import Referrals from './Referrals';
 import Milestones from './Milestones';
+import DepositPage from './DepositPage';
+import WithdrawPage from './WithdrawPage';
+import TransactionHistory from './TransactionHistory';
 
 export default function DashboardPage({
   activeTab: propActiveTab = 'overview',
@@ -117,11 +124,13 @@ export default function DashboardPage({
   // Sidebar navigation menu items
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
+    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare, tag: '200' },
+    { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle, tag: 'Instant' },
+    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    { id: 'transactions', label: 'Transactions', icon: History },
+    { id: 'buy-package', label: 'Buy Package', icon: Package },
     { id: 'referrals', label: 'Referrals', icon: Users },
     { id: 'milestones', label: 'Milestones', icon: Trophy },
-    { id: 'buy-package', label: 'Buy Package', icon: Package },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowDownToLine, tag: 'Phase 4' },
   ];
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'TAEMRY Member';
@@ -278,15 +287,51 @@ export default function DashboardPage({
                   </p>
                 </div>
 
-                {/* Buy Package Quick CTA */}
+                {/* Quick Action Buttons */}
+                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                  <button
+                    id="btn-overview-deposit"
+                    onClick={() => handleTabChange('deposit')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                  >
+                    <ArrowDownCircle className="w-3.5 h-3.5" />
+                    <span>Deposit</span>
+                  </button>
+
+                  <button
+                    id="btn-overview-withdraw"
+                    onClick={() => handleTabChange('withdraw')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] shadow-xs transition-all cursor-pointer"
+                  >
+                    <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963]" />
+                    <span>Quick Withdraw</span>
+                  </button>
+
+                  <button
+                    id="btn-overview-buy-package"
+                    onClick={() => handleTabChange('buy-package')}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#faf8f5] hover:bg-[#ede7dc] text-[#526d72] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer"
+                  >
+                    <Package className="w-3.5 h-3.5 text-[#ca8a04]" />
+                    <span>Buy Package</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* RATE & SYSTEM INDICATOR BANNER */}
+              <div className="p-4 rounded-2xl bg-white border border-[#e4ded2] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse" />
+                  <span className="font-bold text-[#09353e]">Financial Gateway Status: Online</span>
+                  <span className="text-[#718589]">•</span>
+                  <span className="text-[#526d72]">Fixed Settlement Rate: <strong className="text-[#0c5963] font-black">$1 USD = 300 PKR</strong></span>
+                </div>
                 <button
-                  id="btn-overview-buy-package"
-                  onClick={() => handleTabChange('buy-package')}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all self-start sm:self-auto cursor-pointer"
+                  onClick={() => handleTabChange('transactions')}
+                  className="text-[#0c5963] hover:underline font-bold text-xs flex items-center gap-1 self-start sm:self-auto cursor-pointer"
                 >
-                  <Package className="w-4 h-4" />
-                  <span>Buy Package</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <History className="w-3.5 h-3.5" />
+                  <span>View Full Transaction Ledger</span>
                 </button>
               </div>
 
@@ -516,30 +561,30 @@ export default function DashboardPage({
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 6: WITHDRAW (Placeholder for Phase 4)                                 */}
+          {/* TAB 6: DEPOSIT (Phase 4)                                                  */}
+          {/* ========================================================================= */}
+          {activeTab === 'deposit' && (
+            <DepositPage
+              onSelectTab={handleTabChange}
+              onNavigate={onNavigate}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 7: WITHDRAW (Phase 4)                                                 */}
           {/* ========================================================================= */}
           {activeTab === 'withdraw' && (
-            <div className="bg-white rounded-3xl p-8 border border-[#e4ded2] shadow-xs text-center">
-              <div className="w-14 h-14 rounded-2xl bg-[#fef3c7] text-[#ca8a04] flex items-center justify-center mx-auto mb-4">
-                <ArrowDownToLine className="w-7 h-7" />
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#ca8a04] bg-[#fef3c7] px-3 py-1 rounded-full border border-[#fde047]">
-                Phase 4 Placeholder
-              </span>
-              <h2 className="text-2xl font-bold text-[#09353e] mt-4 mb-2">
-                Automated & Manual Withdrawals
-              </h2>
-              <p className="text-xs sm:text-sm text-[#546b70] max-w-md mx-auto leading-relaxed mb-6">
-                Your available balance is currently <strong>${Number(stats.walletBalance).toFixed(2)}</strong>. The withdrawal gateway (Crypto USDT, Bank Transfer, JazzCash, Easypaisa) will be deployed in Phase 4.
-              </p>
-              <button
-                onClick={() => handleTabChange('overview')}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#faf8f5] hover:bg-[#ede7db] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer"
-              >
-                <span>Return to Dashboard</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
+            <WithdrawPage
+              onSelectTab={handleTabChange}
+              onNavigate={onNavigate}
+            />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 8: TRANSACTIONS (Phase 4)                                             */}
+          {/* ========================================================================= */}
+          {activeTab === 'transactions' && (
+            <TransactionHistory />
           )}
         </section>
       </div>

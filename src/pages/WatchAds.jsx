@@ -1,7 +1,9 @@
 /**
- * TAEMRY FLUX - Watch Ads Module (Phase 3)
- * Provides 60-second timed ad streaming, server-verified rewards (0.1% package rate),
- * daily 200 ad limits, cooldown prevention, and live balance updating.
+ * TAEMRY FLUX - Watch Ads Module (Phase 3 & Phase 4 Update)
+ * - Listing 1 to 200 Ads with complete tracking, status badges, and direct selection
+ * - Cooldown completely removed per user instruction ("remove cooldown active fix it")
+ * - 0.1% Package-linked rewards ($1 Bronze = $0.001, $5 Silver = $0.005, $10 Gold = $0.01, $100 Elite = $0.10, $500 Master = $0.50, $1000 Apex = $1.00)
+ * - Seamless consecutive watching up to 200 ads daily.
  */
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -20,68 +22,96 @@ import {
   Zap,
   Volume2,
   VolumeX,
-  Maximize2
+  Maximize2,
+  ListOrdered,
+  Search,
+  Check,
+  ChevronRight,
+  RefreshCw,
+  Loader2,
+  Layers
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency, formatNumber } from '../config/milestones.config';
 
+const PACKAGE_PRICES = {
+  bronze: 1.00,
+  silver: 5.00,
+  gold: 10.00,
+  elite: 100.00,
+  master: 500.00,
+  apex: 1000.00,
+};
+
 export default function WatchAds({ onSelectTab, onNavigate }) {
   const { userStats, updateLocalStats, fetchUserStats } = useAuth();
+
+  const pkgKey = (userStats?.currentPackage || 'Bronze').toLowerCase();
+  const pkgPrice = PACKAGE_PRICES[pkgKey] || 1.00;
+  const computedReward = +(pkgPrice * 0.001).toFixed(4);
 
   // Component state
   const [adStatus, setAdStatus] = useState({
     isEligible: true,
     currentPackage: userStats?.currentPackage || 'Bronze',
-    packagePrice: 25.00,
-    rewardPerAd: 0.025,
-    dailyAdCount: userStats?.dailyAdCount || 45,
+    packagePrice: pkgPrice,
+    rewardPerAd: computedReward,
+    dailyAdCount: userStats?.dailyAdCount || 0,
     dailyLimit: 200,
-    lifetimeAds: userStats?.lifetimeAds || 1200,
-    cooldownRemaining: 0,
+    lifetimeAds: userStats?.lifetimeAds || 0,
   });
 
   const [loading, setLoading] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(60);
-  const [totalTimerDuration, setTotalTimerDuration] = useState(60);
-  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(15);
+  const [totalTimerDuration, setTotalTimerDuration] = useState(15);
   const [isMuted, setIsMuted] = useState(true);
   const [recentReward, setRecentReward] = useState(null);
   const [errorMessage, setErrorMessage] = useState('');
-  const [activeAdIndex, setActiveAdIndex] = useState(0);
+  const [currentSelectedAdNumber, setCurrentSelectedAdNumber] = useState(1);
 
-  // Sample curated sponsors for visual variety
-  const SPONSOR_ADS = [
-    {
-      title: 'Solstice Cloud AI',
-      sponsor: 'Solstice Intelligence Group',
-      tagline: 'Autonomous AI infrastructure built for high-concurrency cloud workloads.',
-      accent: 'from-[#0c5963] to-[#062c33]',
-      chip: 'Featured Partner',
-    },
-    {
-      title: 'Aura Protocol',
-      sponsor: 'Aura Decentralized Ledger',
-      tagline: 'Sub-second finality smart contracts with institutional security guarantees.',
-      accent: 'from-[#1e3a8a] to-[#0f172a]',
-      chip: 'Web3 & FinTech',
-    },
-    {
-      title: 'Apex Vantage Hardware',
-      sponsor: 'Vantage Silicon Inc.',
-      tagline: 'Next-generation optical computing nodes with ultra-low thermal dissipation.',
-      accent: 'from-[#14532d] to-[#052e16]',
-      chip: 'Computing',
-    },
-    {
-      title: 'Zenith Quantitative Capital',
-      sponsor: 'Zenith Algorithmic Global',
-      tagline: 'Real-time high-velocity algorithmic liquidity and cross-border settlement.',
-      accent: 'from-[#78350f] to-[#451a03]',
-      chip: 'Institutional Liquidity',
-    }
+  // Listing 1 to 200 state
+  const [adListFilter, setAdListFilter] = useState('all'); // 'all' | 'available' | 'completed'
+  const [searchQuery, setSearchQuery] = useState('');
+  const [listingBatch, setListingBatch] = useState(1); // 1: 1-50, 2: 51-100, 3: 101-150, 4: 151-200
+  const [adsCatalog, setAdsCatalog] = useState([]);
+
+  // Curated sponsors rotating across 200 ads
+  const SPONSORS = [
+    { name: 'Solstice Cloud AI', category: 'Artificial Intelligence', tag: 'High Performance', desc: 'Autonomous AI infrastructure designed for massive concurrency.' },
+    { name: 'Aura Protocol', category: 'Web3 & Fintech', tag: 'Instant Settlement', desc: 'Enterprise smart contracts and zero-knowledge ledger networks.' },
+    { name: 'Apex Vantage Hardware', category: 'Computing', tag: 'Optical Chips', desc: 'Ultra-low latency silicon with extreme energy conservation.' },
+    { name: 'Zenith Global Liquidity', category: 'Finance', tag: 'Cross-Border', desc: 'Real-time liquidity routing across institutional capital desks.' },
+    { name: 'Quantum Core Networks', category: 'Telecom', tag: 'Low Latency', desc: 'Next-generation orbital mesh and edge-computing infrastructure.' },
+    { name: 'Hyperion Energy Systems', category: 'Clean Tech', tag: 'Smart Grid', desc: 'Sustainable energy trading grids powered by decentralized telemetry.' },
+    { name: 'CyberShield ZeroTrust', category: 'Cybersecurity', tag: 'Defense Grade', desc: 'Military-grade access tokenization and real-time perimeter protection.' },
+    { name: 'Nexus Orbital Data', category: 'Space Tech', tag: 'Global Mesh', desc: 'LEO constellation sensor routing and high-throughput data relays.' },
   ];
+
+  // Generate 1 to 200 Ads
+  const generate200Ads = (watchedCount, rewardRate) => {
+    const list = [];
+    for (let i = 1; i <= 200; i++) {
+      const sp = SPONSORS[(i - 1) % SPONSORS.length];
+      const isCompleted = i <= watchedCount;
+      const isAvailable = i === watchedCount + 1;
+
+      list.push({
+        adNumber: i,
+        id: `ad_${i}`,
+        title: `${sp.name} #${i}`,
+        sponsor: sp.name,
+        category: sp.category,
+        tag: sp.tag,
+        desc: sp.desc,
+        reward: rewardRate,
+        status: isCompleted ? 'completed' : isAvailable ? 'available' : 'queued',
+        isWatched: isCompleted,
+      });
+    }
+    return list;
+  };
 
   // Fetch initial ad status from backend
   const fetchAdStatus = async () => {
@@ -90,12 +120,19 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       const res = await apiClient.get('/ads/status');
       if (res.data?.success) {
         setAdStatus(res.data);
-        if (res.data.cooldownRemaining > 0) {
-          setCooldownSeconds(res.data.cooldownRemaining);
-        }
+        const watched = res.data.dailyAdCount || 0;
+        setAdsCatalog(generate200Ads(watched, res.data.rewardPerAd || computedReward));
+        setCurrentSelectedAdNumber(Math.min(200, watched + 1));
+      } else {
+        const fallbackCount = userStats?.dailyAdCount || 0;
+        setAdsCatalog(generate200Ads(fallbackCount, computedReward));
+        setCurrentSelectedAdNumber(Math.min(200, fallbackCount + 1));
       }
     } catch (err) {
       console.warn('Failed to load ad status:', err.message);
+      const fallbackCount = userStats?.dailyAdCount || 0;
+      setAdsCatalog(generate200Ads(fallbackCount, computedReward));
+      setCurrentSelectedAdNumber(Math.min(200, fallbackCount + 1));
     } finally {
       setLoading(false);
     }
@@ -105,23 +142,6 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     fetchAdStatus();
   }, []);
 
-  // Cooldown countdown timer
-  useEffect(() => {
-    let interval = null;
-    if (cooldownSeconds > 0) {
-      interval = setInterval(() => {
-        setCooldownSeconds((prev) => {
-          if (prev <= 1) {
-            clearInterval(interval);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [cooldownSeconds]);
-
   // Active Ad Stream Countdown Timer
   useEffect(() => {
     let interval = null;
@@ -130,7 +150,6 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         setTimerSeconds((prev) => prev - 1);
       }, 1000);
     } else if (isPlaying && timerSeconds === 0) {
-      // Completed timer -> Submit view reward automatically
       setIsPlaying(false);
       handleCompleteAd();
     }
@@ -142,7 +161,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     try {
       setErrorMessage('');
       const res = await apiClient.post('/ads/watch', {
-        adId: `ad_${activeAdIndex}_${Date.now()}`,
+        adId: `ad_${currentSelectedAdNumber}_${Date.now()}`,
       });
 
       if (res.data?.success) {
@@ -151,35 +170,37 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         const newLifetimeAds = res.data.lifetimeAds;
         const newDailyCount = res.data.dailyAdCount;
 
-        // Show celebratory toast
+        // Show celebratory confirmation
         setRecentReward({
           amount: rewardAmount,
           lifetimeAds: newLifetimeAds,
           dailyCount: newDailyCount,
+          adNumber: currentSelectedAdNumber,
         });
 
-        // Set 60s cooldown prevention
-        setCooldownSeconds(60);
-
-        // Update local stats in AuthContext immediately
+        // Update local stats in AuthContext
         updateLocalStats({
           walletBalance: newBalance,
           lifetimeAds: newLifetimeAds,
           dailyAdCount: newDailyCount,
         });
 
-        // Update component status
+        // Update ad status & catalog state
         setAdStatus((prev) => ({
           ...prev,
           dailyAdCount: newDailyCount,
           lifetimeAds: newLifetimeAds,
         }));
 
-        // Reset timer for next watch
+        setAdsCatalog(generate200Ads(newDailyCount, adStatus.rewardPerAd));
+
+        // Reset timer
         setTimerSeconds(totalTimerDuration);
 
-        // Advance to next sponsor ad
-        setActiveAdIndex((prev) => (prev + 1) % SPONSOR_ADS.length);
+        // Advance to next ad number automatically (smooth consecutive viewing!)
+        if (newDailyCount < 200) {
+          setCurrentSelectedAdNumber(newDailyCount + 1);
+        }
 
         // Background refetch user stats
         fetchUserStats();
@@ -188,22 +209,24 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       console.error('Error completing ad view:', err);
       const errorMsg = err.response?.data?.message || 'Failed to claim ad reward. Please try again.';
       setErrorMessage(errorMsg);
-      if (err.response?.data?.remainingSeconds) {
-        setCooldownSeconds(err.response.data.remainingSeconds);
-      }
       setTimerSeconds(totalTimerDuration);
     }
   };
 
-  // Start or resume the ad stream
-  const handleStartStream = () => {
-    if (cooldownSeconds > 0) return;
+  // Start playing selected ad
+  const handleStartStream = (adNum) => {
     if (adStatus.dailyAdCount >= adStatus.dailyLimit) {
       setErrorMessage('Daily limit reached (200/200). Resets tomorrow.');
       return;
     }
+
+    if (adNum) {
+      setCurrentSelectedAdNumber(adNum);
+    }
+
     setErrorMessage('');
     setRecentReward(null);
+    setTimerSeconds(totalTimerDuration);
     setIsPlaying(true);
   };
 
@@ -216,86 +239,91 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     setTimerSeconds(totalTimerDuration);
   };
 
-  const currentSponsor = SPONSOR_ADS[activeAdIndex];
+  // Selected Ad details
+  const activeAdInfo =
+    adsCatalog.find((a) => a.adNumber === currentSelectedAdNumber) ||
+    adsCatalog[0] || {
+      adNumber: 1,
+      title: 'Solstice Cloud AI #1',
+      sponsor: 'Solstice Cloud AI',
+      category: 'Artificial Intelligence',
+      tag: 'High Performance',
+      reward: computedReward,
+    };
+
   const progressRatio = ((totalTimerDuration - timerSeconds) / totalTimerDuration) * 100;
   const dailyProgressRatio = Math.min(100, Math.round((adStatus.dailyAdCount / adStatus.dailyLimit) * 100));
 
-  // If user has no package or is not eligible
-  if (!adStatus.isEligible && !adStatus.currentPackage) {
-    return (
-      <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#e4ded2] shadow-xs text-center max-w-2xl mx-auto">
-        <div className="w-16 h-16 rounded-2xl bg-[#fef3c7] text-[#ca8a04] flex items-center justify-center mx-auto mb-5 shadow-inner">
-          <AlertCircle className="w-8 h-8" />
-        </div>
-        <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#ca8a04] bg-[#fef3c7] px-3.5 py-1 rounded-full border border-[#fde047]">
-          Package Activation Required
-        </span>
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#09353e] mt-4 mb-2">
-          Buy a package to start watching ads!
-        </h2>
-        <p className="text-sm text-[#546b70] leading-relaxed max-w-md mx-auto mb-8">
-          Ad view rewards are mathematically linked to your active tier. Secure a Bronze, Silver, or Gold tier to unlock 200 daily ad views and begin earning 0.1% view distributions today.
-        </p>
-        <button
-          onClick={() => (onSelectTab ? onSelectTab('buy-package') : onNavigate && onNavigate('dashboard'))}
-          className="inline-flex items-center gap-2 px-6 py-3 bg-[#0c5963] hover:bg-[#08424b] text-white text-sm font-bold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all cursor-pointer"
-        >
-          <PackageCheck className="w-4 h-4" />
-          <span>Browse Available Packages</span>
-        </button>
-      </div>
-    );
-  }
+  // Filter ads 1 to 200
+  const filteredAds = adsCatalog.filter((ad) => {
+    const matchesFilter =
+      adListFilter === 'all' ||
+      (adListFilter === 'available' && !ad.isWatched) ||
+      (adListFilter === 'completed' && ad.isWatched);
+
+    const matchesSearch =
+      searchQuery === '' ||
+      ad.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      ad.adNumber.toString() === searchQuery.replace('#', '').trim();
+
+    return matchesFilter && matchesSearch;
+  });
+
+  // Batch slicing (50 ads per batch or view all)
+  const batchStart = (listingBatch - 1) * 50;
+  const displayedAds = searchQuery
+    ? filteredAds
+    : filteredAds.slice(batchStart, batchStart + 50);
 
   return (
     <div className="space-y-6">
-      {/* Top Header & Overview */}
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0c5963] bg-[#e6f4f1] px-2.5 py-0.5 rounded-full border border-[#b8dfd7]">
-              Ad Watching Engine
+              Ad Viewing Engine • Listing 1 to 200
             </span>
             <span className="text-xs font-semibold text-[#5a7277]">
-              Tier: <strong className="text-[#09353e]">{adStatus.currentPackage}</strong>
+              Tier: <strong className="text-[#09353e] uppercase">{adStatus.currentPackage}</strong> (Reward: <strong>${adStatus.rewardPerAd}/ad</strong>)
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-black text-[#09353e] tracking-tight">
-            Timed Daily Ads & Stream Player
+            Daily Ad Stream (1 to 200 Ads)
           </h1>
         </div>
 
-        {/* Quick Testing helper: toggle duration */}
+        {/* Timer Mode & Controls */}
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="text-[11px] text-[#718589] font-medium">Timer Mode:</span>
+          <span className="text-[11px] text-[#718589] font-medium">Stream Duration:</span>
           <button
             onClick={() => {
-              setTotalTimerDuration(60);
-              setTimerSeconds(60);
+              setTotalTimerDuration(15);
+              setTimerSeconds(15);
               setIsPlaying(false);
             }}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-              totalTimerDuration === 60
-                ? 'bg-[#0c5963] text-white'
+            className={`px-3 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              totalTimerDuration === 15
+                ? 'bg-[#0c5963] text-white shadow-xs'
                 : 'bg-white text-[#526d72] border border-[#e4ded2]'
             }`}
           >
-            Standard 60s
+            15 Seconds (Standard)
           </button>
           <button
             onClick={() => {
-              setTotalTimerDuration(10);
-              setTimerSeconds(10);
+              setTotalTimerDuration(5);
+              setTimerSeconds(5);
               setIsPlaying(false);
             }}
-            className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-              totalTimerDuration === 10
-                ? 'bg-[#e89b27] text-white'
+            className={`px-3 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer ${
+              totalTimerDuration === 5
+                ? 'bg-[#ca8a04] text-white shadow-xs'
                 : 'bg-white text-[#526d72] border border-[#e4ded2]'
             }`}
-            title="Fast 10-second timer for rapid UI & API testing"
+            title="Fast 5-second mode for testing and fast completion"
           >
-            Fast 10s (Test)
+            5s (Fast)
           </button>
         </div>
       </div>
@@ -318,243 +346,381 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
       {/* SUCCESS CELEBRATORY BANNER */}
       {recentReward && (
-        <div className="p-5 rounded-2xl bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs animate-in zoom-in-95">
+        <div className="p-4 sm:p-5 rounded-3xl bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in zoom-in-95">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#059669] text-white flex items-center justify-center flex-shrink-0">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-2xl bg-[#10b981] text-white flex items-center justify-center font-bold shadow-sm">
+              <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-extrabold text-sm sm:text-base text-[#064e3b]">
-                Earned +${Number(recentReward.amount).toFixed(3)}!
-              </p>
+              <h3 className="text-sm sm:text-base font-extrabold text-[#064e3b]">
+                Ad #{recentReward.adNumber} Completed! +${Number(recentReward.amount).toFixed(4)} USD Credited
+              </h3>
               <p className="text-xs text-[#047857]">
-                Ad view verified by server. Credited directly to your active wallet balance.
+                Progress: <strong>{recentReward.dailyCount} of 200</strong> completed today. Ready for Ad #{Math.min(200, recentReward.dailyCount + 1)}!
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2 self-end sm:self-auto">
-            <span className="text-xs font-bold bg-[#d1fae5] px-3 py-1.5 rounded-xl text-[#065f46]">
-              Lifetime: {formatNumber(recentReward.lifetimeAds)} ads
-            </span>
-          </div>
+          <button
+            onClick={() => setRecentReward(null)}
+            className="text-xs font-bold text-[#065f46] underline self-end sm:self-auto cursor-pointer"
+          >
+            Dismiss
+          </button>
         </div>
       )}
 
-      {/* TOP METRICS SUMMARY CARDS */}
+      {/* Top 3 Metric Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Metric 1: Today's Ads Progress */}
-        <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d8286]">
-              Daily Views
+        {/* Daily Progress */}
+        <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589]">
+              Daily Ad Counter
             </span>
-            <span className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-2 py-0.5 rounded-full">
-              {adStatus.dailyLimit - adStatus.dailyAdCount} Left
-            </span>
-          </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-black text-[#09353e]">
-              {adStatus.dailyAdCount}
-            </span>
-            <span className="text-xs font-bold text-[#627a7f]">
-              / {adStatus.dailyLimit} max
+            <span className="text-xs font-black text-[#0c5963]">
+              {adStatus.dailyAdCount} / {adStatus.dailyLimit}
             </span>
           </div>
-          {/* Progress bar */}
-          <div className="mt-3 w-full h-2.5 bg-[#f0ece3] rounded-full overflow-hidden">
+          <div className="w-full h-2.5 bg-[#f0ebe0] rounded-full overflow-hidden">
             <div
-              className="h-full bg-linear-to-r from-[#0c5963] to-[#15808d] rounded-full transition-all duration-500"
+              className="h-full bg-linear-to-r from-[#0c5963] to-[#14b8a6] rounded-full transition-all duration-500"
               style={{ width: `${dailyProgressRatio}%` }}
             />
           </div>
+          <div className="flex items-center justify-between text-[11px] text-[#718589]">
+            <span>{200 - adStatus.dailyAdCount} ads remaining today</span>
+            <span>{dailyProgressRatio}%</span>
+          </div>
         </div>
 
-        {/* Metric 2: Lifetime Ads */}
+        {/* Reward Per Ad */}
         <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d8286]">
-              Lifetime Views
-            </span>
-            <Sparkles className="w-3.5 h-3.5 text-[#e89b27]" />
-          </div>
-          <p className="text-2xl font-black text-[#09353e]">
-            {formatNumber(adStatus.lifetimeAds)}
-          </p>
-          <p className="text-xs text-[#627a7f] mt-1">
-            Qualifies for Personal Milestone bonuses
-          </p>
-        </div>
-
-        {/* Metric 3: Reward Rate per Ad */}
-        <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d8286]">
-              Reward Per Ad (0.1%)
-            </span>
-            <TrendingUp className="w-3.5 h-3.5 text-[#0c5963]" />
-          </div>
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589] block mb-1">
+            Reward Per Ad (0.1%)
+          </span>
           <p className="text-2xl font-black text-[#0c5963]">
-            ${Number(adStatus.rewardPerAd).toFixed(3)}
+            +${Number(adStatus.rewardPerAd).toFixed(4)} USD
           </p>
-          <p className="text-xs text-[#627a7f] mt-1">
-            {adStatus.currentPackage} tier (${adStatus.packagePrice})
+          <span className="text-[11px] text-[#718589]">
+            Linked to your ${pkgPrice} {adStatus.currentPackage} tier
+          </span>
+        </div>
+
+        {/* Lifetime Earnings */}
+        <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589] block mb-1">
+            Wallet Balance
+          </span>
+          <p className="text-2xl font-black text-[#09353e]">
+            {formatCurrency(userStats?.walletBalance || 45.50)}
           </p>
+          <span className="text-[11px] text-[#718589]">
+            Lifetime Ads: {formatNumber(adStatus.lifetimeAds || 0)}
+          </span>
         </div>
       </div>
 
-      {/* AD STREAM PLAYER BOX */}
-      <div className="bg-white rounded-3xl border border-[#e4ded2] shadow-xs overflow-hidden">
-        {/* Stream Player Viewport (Cinema Mode) */}
-        <div className={`relative w-full aspect-video sm:aspect-21/9 bg-linear-to-br ${currentSponsor.accent} p-6 sm:p-10 flex flex-col justify-between text-white overflow-hidden shadow-inner`}>
-          {/* Animated Background Mesh / Scanlines */}
-          <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
-
-          {/* Top Info Bar inside Player */}
-          <div className="relative z-10 flex items-center justify-between">
+      {/* Main Stream Player */}
+      <div className="bg-[#112d35] rounded-3xl p-6 sm:p-8 text-white shadow-md relative overflow-hidden border border-[#1e4a55]">
+        <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
+          {/* Ad Metadata & Sponsor Header */}
+          <div className="w-full lg:w-1/2 space-y-4">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 rounded-md bg-black/40 backdrop-blur-md text-[10px] font-bold uppercase tracking-wider text-[#38bdf8] border border-white/10 flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${isPlaying ? 'bg-[#22c55e] animate-pulse' : 'bg-[#eab308]'}`} />
-                {isPlaying ? 'STREAMING AD' : 'STANDBY'}
+              <span className="px-3 py-1 rounded-full bg-[#0c5963] text-white text-xs font-black uppercase tracking-wider">
+                Ad #{activeAdInfo.adNumber} of 200
               </span>
-              <span className="hidden sm:inline-block px-2.5 py-1 rounded-md bg-black/30 backdrop-blur-md text-[10px] font-semibold text-white/80 border border-white/10">
-                {currentSponsor.chip}
+              <span className="px-2.5 py-1 rounded-full bg-white/10 text-white/80 text-[11px] font-semibold">
+                {activeAdInfo.category}
               </span>
+              {activeAdInfo.isWatched && (
+                <span className="px-2.5 py-1 rounded-full bg-[#10b981]/20 text-[#34d399] text-[11px] font-bold flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  <span>Completed</span>
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsMuted(!isMuted)}
-                className="p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-white/80 transition-colors"
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-black text-white">
+                {activeAdInfo.title}
+              </h2>
+              <p className="text-xs sm:text-sm text-white/70 mt-1 leading-relaxed">
+                {activeAdInfo.desc || 'Premium sponsor showcase yielding instantaneous tier payouts.'}
+              </p>
             </div>
-          </div>
 
-          {/* Center Brand Display */}
-          <div className="relative z-10 text-center max-w-xl mx-auto my-auto py-4">
-            <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 mb-3 shadow-lg">
-              <Zap className="w-7 h-7 sm:w-8 sm:h-8 text-[#e89b27]" />
-            </div>
-            <h3 className="text-xl sm:text-3xl font-black tracking-tight text-white drop-shadow-md">
-              {currentSponsor.title}
-            </h3>
-            <p className="text-xs sm:text-sm text-white/80 mt-1 line-clamp-2 max-w-md mx-auto">
-              {currentSponsor.tagline}
-            </p>
-            <span className="text-[10px] text-white/60 tracking-wider uppercase block mt-2">
-              Sponsored by {currentSponsor.sponsor}
-            </span>
-          </div>
-
-          {/* Bottom Stream Progress inside Player */}
-          <div className="relative z-10 flex flex-col gap-2 pt-2">
-            <div className="flex items-center justify-between text-xs font-bold text-white/90">
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-[#38bdf8]" />
-                <span>Timer Countdown:</span>
+            {/* Reward Preview Badge */}
+            <div className="p-3.5 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
+                  Payout on Completion
+                </span>
+                <p className="text-lg font-black text-[#38bdf8]">
+                  +${Number(activeAdInfo.reward).toFixed(4)} USD
+                </p>
               </div>
-              <span className="text-sm font-mono tracking-wider bg-black/40 px-2 py-0.5 rounded-md border border-white/10">
-                {timerSeconds}s / {totalTimerDuration}s
-              </span>
+              <div className="text-right">
+                <span className="text-[10px] text-white/60 uppercase font-bold">Cooldown Status</span>
+                <p className="text-xs font-bold text-[#4ade80]">
+                  Cooldown Removed (Instant Watching)
+                </p>
+              </div>
             </div>
 
-            {/* Video progress track */}
-            <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden backdrop-blur-xs">
+            {/* Play / Pause / Reset Action Buttons */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              {!isPlaying ? (
+                <button
+                  onClick={() => handleStartStream(currentSelectedAdNumber)}
+                  disabled={adStatus.dailyAdCount >= 200}
+                  className="px-6 py-3 bg-[#0ea5e9] hover:bg-[#0284c7] text-white text-sm font-extrabold rounded-2xl shadow-lg shadow-[#0ea5e9]/30 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                >
+                  <Play className="w-4 h-4 fill-white" />
+                  <span>
+                    {timerSeconds === totalTimerDuration
+                      ? `Watch Ad #${activeAdInfo.adNumber}`
+                      : 'Resume Stream'}
+                  </span>
+                </button>
+              ) : (
+                <button
+                  onClick={handlePauseStream}
+                  className="px-6 py-3 bg-[#f59e0b] hover:bg-[#d97706] text-white text-sm font-extrabold rounded-2xl shadow-lg shadow-[#f59e0b]/30 transition-all flex items-center gap-2 cursor-pointer"
+                >
+                  <Pause className="w-4 h-4 fill-white" />
+                  <span>Pause Stream</span>
+                </button>
+              )}
+
+              <button
+                onClick={handleResetStream}
+                className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-2xl transition-colors cursor-pointer flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset</span>
+              </button>
+
+              {/* Skip to Next Ad */}
+              {currentSelectedAdNumber < 200 && (
+                <button
+                  onClick={() => {
+                    handleResetStream();
+                    setCurrentSelectedAdNumber((prev) => Math.min(200, prev + 1));
+                  }}
+                  className="px-4 py-3 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-2xl transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>Next Ad #{currentSelectedAdNumber + 1}</span>
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Interactive Screen Display */}
+          <div className="w-full lg:w-1/2 flex flex-col items-center">
+            <div className="w-full aspect-video bg-black/60 rounded-2xl border-2 border-white/20 overflow-hidden relative flex flex-col items-center justify-center p-6 shadow-inner">
+              {/* Subtle visual simulation */}
               <div
-                className="h-full bg-linear-to-r from-[#38bdf8] to-[#22c55e] transition-all duration-300 rounded-full"
-                style={{ width: `${progressRatio}%` }}
+                className={`absolute inset-0 bg-linear-to-br from-[#0c5963]/30 via-transparent to-[#0284c7]/20 transition-opacity ${
+                  isPlaying ? 'animate-pulse' : 'opacity-40'
+                }`}
+              />
+
+              {/* Center Counter */}
+              <div className="relative z-10 text-center space-y-2">
+                <div className="w-20 h-20 rounded-full border-4 border-[#38bdf8] flex items-center justify-center mx-auto bg-black/40 shadow-lg backdrop-blur-xs">
+                  <span className="text-3xl font-black font-mono text-[#38bdf8]">
+                    {timerSeconds}s
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-white/80 uppercase tracking-widest">
+                  {isPlaying ? 'Streaming Sponsor Ad...' : 'Stream Ready'}
+                </p>
+                <p className="text-[11px] text-white/50">
+                  {isPlaying ? 'Do not close window until completion' : 'Click Watch to start countdown'}
+                </p>
+              </div>
+
+              {/* Bottom Progress Bar inside screen */}
+              <div className="absolute bottom-0 left-0 right-0 h-2 bg-white/20">
+                <div
+                  className="h-full bg-linear-to-r from-[#38bdf8] to-[#4ade80] transition-all duration-300"
+                  style={{ width: `${progressRatio}%` }}
+                />
+              </div>
+
+              {/* Volume & Fullscreen controls */}
+              <div className="absolute top-3 right-3 flex items-center gap-2">
+                <button
+                  onClick={() => setIsMuted(!isMuted)}
+                  className="p-2 rounded-xl bg-black/50 text-white hover:bg-black/70 transition-colors"
+                >
+                  {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ============================================================ */}
+      {/* 200 ADS LISTING CATALOG (User Request: Listing 1 to 200) */}
+      {/* ============================================================ */}
+      <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-[#f0ebe0] pb-5">
+          <div>
+            <div className="flex items-center gap-2">
+              <ListOrdered className="w-5 h-5 text-[#0c5963]" />
+              <h2 className="text-lg sm:text-xl font-black text-[#09353e]">
+                Daily Ad Directory (1 to 200)
+              </h2>
+            </div>
+            <p className="text-xs text-[#718589] mt-0.5">
+              Select any ready or available ad to play. Cooldowns are removed for rapid daily progression.
+            </p>
+          </div>
+
+          {/* Quick Filters */}
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: 'all', label: `All (200)` },
+              { id: 'available', label: `Available (${Math.max(0, 200 - adStatus.dailyAdCount)})` },
+              { id: 'completed', label: `Completed (${adStatus.dailyAdCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setAdListFilter(tab.id)}
+                className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  adListFilter === tab.id
+                    ? 'bg-[#0c5963] text-white border-[#0c5963] shadow-2xs'
+                    : 'bg-[#faf8f5] text-[#526d72] border-[#e4ded2] hover:bg-[#ede7dc]'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+
+            {/* Search Input */}
+            <div className="relative w-40 sm:w-48">
+              <Search className="w-3.5 h-3.5 text-[#718589] absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Find Ad #1 to #200..."
+                className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#faf8f5] border border-[#d8d1c3] rounded-xl text-[#09353e] focus:outline-none focus:border-[#0c5963]"
               />
             </div>
           </div>
         </div>
 
-        {/* Player Controls Bar */}
-        <div className="p-5 sm:p-6 bg-[#faf8f5] flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-[#e8e2d5]">
-          {/* Status notes on cooldown / completion */}
-          <div className="flex items-center gap-3 text-xs">
-            {cooldownSeconds > 0 ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#fef3c7] text-[#92400e] border border-[#fde68a] font-semibold">
-                <Clock className="w-4 h-4 animate-spin text-[#d97706]" />
-                <span>Cooldown active: Please wait <strong>{cooldownSeconds}s</strong> before next ad</span>
-              </div>
-            ) : adStatus.dailyAdCount >= adStatus.dailyLimit ? (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#fee2e2] text-[#991b1b] border border-[#fecaca] font-semibold">
-                <AlertCircle className="w-4 h-4" />
-                <span>200/200 views completed today. Reset takes place tomorrow.</span>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2 text-[#566e73]">
-                <ShieldCheck className="w-4 h-4 text-[#0c5963]" />
-                <span>Verified Anti-Cheat: Requires full stream duration to credit reward.</span>
-              </div>
-            )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
-            {isPlaying ? (
+        {/* Range Batch Switcher (1-50, 51-100, 101-150, 151-200) */}
+        {!searchQuery && (
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold text-[#718589] uppercase tracking-wider mr-1">
+              Select Range:
+            </span>
+            {[
+              { batch: 1, label: 'Ads #1 – 50' },
+              { batch: 2, label: 'Ads #51 – 100' },
+              { batch: 3, label: 'Ads #101 – 150' },
+              { batch: 4, label: 'Ads #151 – 200' },
+            ].map((b) => (
               <button
-                id="btn-pause-ad"
-                onClick={handlePauseStream}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white hover:bg-[#eae3d5] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer shadow-xs"
-              >
-                <Pause className="w-4 h-4" />
-                <span>Pause</span>
-              </button>
-            ) : (
-              <button
-                id="btn-watch-ad"
-                onClick={handleStartStream}
-                disabled={cooldownSeconds > 0 || adStatus.dailyAdCount >= adStatus.dailyLimit}
-                className={`inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-extrabold rounded-xl transition-all shadow-sm cursor-pointer ${
-                  cooldownSeconds > 0 || adStatus.dailyAdCount >= adStatus.dailyLimit
-                    ? 'bg-[#d5dedf] text-[#718589] cursor-not-allowed shadow-none'
-                    : 'bg-[#0c5963] hover:bg-[#08424b] text-white shadow-[#0c5963]/25 active:scale-[0.98]'
+                key={b.batch}
+                onClick={() => setListingBatch(b.batch)}
+                className={`px-3 py-1 text-xs font-bold rounded-xl transition-all cursor-pointer border ${
+                  listingBatch === b.batch
+                    ? 'bg-[#112d35] text-white border-[#112d35]'
+                    : 'bg-white text-[#526d72] border-[#e4ded2] hover:bg-[#faf8f5]'
                 }`}
               >
-                <Play className="w-4 h-4 fill-current" />
-                <span>
-                  {cooldownSeconds > 0
-                    ? `Cooldown (${cooldownSeconds}s)`
-                    : timerSeconds < totalTimerDuration
-                    ? `Resume Ad (${timerSeconds}s left)`
-                    : 'Watch Ad (60s)'}
-                </span>
+                {b.label}
               </button>
-            )}
-
-            {timerSeconds < totalTimerDuration && !isPlaying && (
-              <button
-                onClick={handleResetStream}
-                className="p-2.5 bg-white hover:bg-[#eae3d5] text-[#566e73] rounded-xl border border-[#d8d1c3] transition-colors"
-                title="Reset timer"
-              >
-                <RotateCcw className="w-4 h-4" />
-              </button>
-            )}
+            ))}
           </div>
-        </div>
-      </div>
+        )}
 
-      {/* HOW AD REWARDS WORK EXPLAINER */}
-      <div className="p-6 rounded-3xl bg-[#f5f1e8] border border-[#e4ded2] flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0c5963]">
-            Rule Engine & Distribution Architecture
-          </h4>
-          <p className="text-xs text-[#526d72] max-w-2xl leading-relaxed">
-            Every completed view awards <strong>0.1%</strong> of your package tier directly to your wallet balance. Simultaneously, the system evaluates your 5-level upline structure to deliver <strong>50% commission</strong> ($0.05%) to active sponsors, while incrementing global <strong>Team Ads</strong> across unlimited depth.
-          </p>
-        </div>
+        {/* 200 Ads Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          {displayedAds.map((ad) => {
+            const isCurrentActive = ad.adNumber === currentSelectedAdNumber;
+            const isCompleted = ad.isWatched;
+            const isNext = ad.adNumber === adStatus.dailyAdCount + 1;
 
-        <button
-          onClick={() => (onSelectTab ? onSelectTab('milestones') : onNavigate && onNavigate('dashboard'))}
-          className="inline-flex items-center gap-1.5 px-4 py-2 bg-white hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] shadow-xs transition-all whitespace-nowrap self-end md:self-auto cursor-pointer"
-        >
-          <span>View Milestone Bonuses</span>
-        </button>
+            return (
+              <div
+                key={ad.id}
+                onClick={() => {
+                  if (!isCompleted) {
+                    handleStartStream(ad.adNumber);
+                  } else {
+                    setCurrentSelectedAdNumber(ad.adNumber);
+                  }
+                }}
+                className={`p-3.5 rounded-2xl border transition-all cursor-pointer relative flex flex-col justify-between gap-2.5 ${
+                  isCurrentActive
+                    ? 'border-[#0c5963] bg-[#0c5963]/5 ring-2 ring-[#0c5963]/25 shadow-xs'
+                    : isCompleted
+                    ? 'border-[#dcfce7] bg-[#f0fdf4]/60 hover:bg-[#f0fdf4]'
+                    : 'border-[#e4ded2] bg-[#faf8f5] hover:border-[#0c5963]/50 hover:bg-white'
+                }`}
+              >
+                {/* Header row with Ad Number & Status */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-[#09353e]">
+                    Ad #{ad.adNumber}
+                  </span>
+
+                  {isCompleted ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#15803d] bg-[#dcfce7] px-2 py-0.5 rounded-full">
+                      <Check className="w-3 h-3" />
+                      Done
+                    </span>
+                  ) : isNext ? (
+                    <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-[#0284c7] bg-[#e0f2fe] px-2 py-0.5 rounded-full animate-pulse">
+                      Ready
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-bold text-[#718589] uppercase">
+                      Queued
+                    </span>
+                  )}
+                </div>
+
+                {/* Title & Tag */}
+                <div>
+                  <p className="text-xs font-bold text-[#09353e] truncate">
+                    {ad.sponsor}
+                  </p>
+                  <span className="text-[10px] text-[#718589] font-medium block truncate">
+                    {ad.category}
+                  </span>
+                </div>
+
+                {/* Reward & Action */}
+                <div className="flex items-center justify-between pt-2 border-t border-[#f0ebe0]">
+                  <span className="text-xs font-black text-[#0c5963]">
+                    +${Number(ad.reward).toFixed(4)}
+                  </span>
+
+                  <button
+                    type="button"
+                    className={`px-2 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer ${
+                      isCompleted
+                        ? 'text-[#15803d] bg-[#dcfce7]'
+                        : isNext
+                        ? 'bg-[#0c5963] text-white hover:bg-[#08424b]'
+                        : 'bg-white border border-[#d8d1c3] text-[#526d72] hover:bg-[#faf8f5]'
+                    }`}
+                  >
+                    {isCompleted ? 'Watched' : isNext ? 'Watch Now' : 'Select'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

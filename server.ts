@@ -7,6 +7,10 @@ import dashboardRoutes from './backend/routes/dashboard.js';
 import adsRoutes from './backend/routes/ads.js';
 import referralsRoutes from './backend/routes/referrals.js';
 import milestonesRoutes from './backend/routes/milestones.js';
+import depositsRoutes from './backend/routes/deposits.js';
+import withdrawalsRoutes from './backend/routes/withdrawals.js';
+import transactionsRoutes from './backend/routes/transactions.js';
+import settingsRoutes from './backend/routes/settings.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
 
 async function startServer() {
@@ -27,7 +31,7 @@ async function startServer() {
     res.json({
       status: 'ok',
       service: 'TAEMRY FLUX Full-Stack Server',
-      phase: 'Phase 3',
+      phase: 'Phase 4',
       timestamp: new Date().toISOString(),
     });
   });
@@ -39,6 +43,10 @@ async function startServer() {
   app.use('/api/ads', adsRoutes);
   app.use('/api/referrals', referralsRoutes);
   app.use('/api/milestones', milestonesRoutes);
+  app.use('/api/deposits', depositsRoutes);
+  app.use('/api/withdrawals', withdrawalsRoutes);
+  app.use('/api/transactions', transactionsRoutes);
+  app.use('/api/settings', settingsRoutes);
 
   // 404 Handler for undefined API routes
   app.all('/api/*', (req, res) => {
