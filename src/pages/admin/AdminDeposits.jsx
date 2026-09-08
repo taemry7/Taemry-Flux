@@ -113,7 +113,10 @@ export default function AdminDeposits() {
       }
       setConfirmModal({ isOpen: false, action: '', deposit: null, reason: '' });
     } catch (err) {
-      alert(err.response?.data?.message || `Failed to ${action} deposit.`);
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || `Failed to ${action} deposit.`,
+      });
     } finally {
       setActionLoading(false);
     }

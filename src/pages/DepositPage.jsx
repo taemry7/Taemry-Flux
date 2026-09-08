@@ -94,25 +94,82 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     setTimeout(() => setCopiedKey(''), 2500);
   };
 
-  // Handle file selection
-  const handleFileChange = (e) => {
+  // Helper to compress screenshot images before uploading to prevent network timeouts
+  const compressImage = (file) => {
+    return new Promise((resolve) => {
+      if (!file || !file.type.startsWith('image/')) {
+        return resolve(file);
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const maxWidth = 1200;
+          let { width, height } = img;
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return resolve(file);
+          ctx.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => {
+              if (blob && blob.size < file.size) {
+                const compressedFile = new File(
+                  [blob],
+                  file.name.replace(/\.[^/.]+$/, '') + '.jpg',
+                  { type: 'image/jpeg', lastModified: Date.now() }
+                );
+                resolve(compressedFile);
+              } else {
+                resolve(file);
+              }
+            },
+            'image/jpeg',
+            0.82
+          );
+        };
+        img.onerror = () => resolve(file);
+        img.src = e.target.result;
+      };
+      reader.onerror = () => resolve(file);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // Handle file selection with auto compression
+  const handleFileChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
+    if (file.size > 10 * 1024 * 1024) {
       setToastMessage({
         type: 'error',
-        text: 'File size exceeds 5MB limit. Please choose a smaller image.',
+        text: 'File size exceeds 10MB limit. Please choose a smaller image.',
       });
       return;
     }
 
-    setScreenshotFile(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setScreenshotPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    try {
+      const optimizedFile = await compressImage(file);
+      setScreenshotFile(optimizedFile);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setScreenshotPreview(reader.result);
+      };
+      reader.readAsDataURL(optimizedFile);
+    } catch {
+      setScreenshotFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setScreenshotPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   // Submit deposit request
@@ -141,6 +198,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
+        timeout: 60000,
       });
 
       if (res.data?.success) {
@@ -162,9 +220,13 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       }
     } catch (err) {
       console.error('Error submitting deposit:', err);
+      let errorMsg = err.response?.data?.message || err.message || 'Failed to submit deposit request. Please try again.';
+      if (err.code === 'ECONNABORTED' || errorMsg.toLowerCase().includes('timeout')) {
+        errorMsg = 'Network connection timed out. Please check your internet connection and try submitting again.';
+      }
       setToastMessage({
         type: 'error',
-        text: err.response?.data?.message || 'Failed to submit deposit request. Please try again.',
+        text: errorMsg,
       });
     } finally {
       setSubmitting(false);

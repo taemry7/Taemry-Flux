@@ -111,7 +111,10 @@ export default function AdminWithdrawals() {
       }
       setConfirmModal({ isOpen: false, action: '', withdrawal: null, reason: '' });
     } catch (err) {
-      alert(err.response?.data?.message || `Failed to ${action} withdrawal.`);
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || `Failed to ${action} withdrawal.`,
+      });
     } finally {
       setActionLoading(false);
     }

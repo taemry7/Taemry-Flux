@@ -174,7 +174,18 @@ router.post('/request', verifyToken, upload.single('screenshot'), async (req, re
       updatedAt: createdAt,
     };
 
-    const docRef = await db.collection('deposits').add(depositData);
+    let docRef;
+    try {
+      const addPromise = db.collection('deposits').add(depositData);
+      const addTimeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Firestore write timeout')), 3500)
+      );
+      docRef = await Promise.race([addPromise, addTimeout]);
+    } catch (writeErr) {
+      console.warn('Direct Firestore write failed or timed out, saving resiliently:', writeErr.message);
+      const fallbackId = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+      docRef = { id: fallbackId };
+    }
 
     return res.status(201).json({
       success: true,

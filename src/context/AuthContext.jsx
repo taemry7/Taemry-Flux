@@ -21,7 +21,8 @@ import {
   sendPasswordResetEmail,
   updateProfile
 } from 'firebase/auth';
-import { auth, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
+import { doc, setDoc } from 'firebase/firestore';
+import { auth, db, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
 import apiClient from '../api/client.js';
 
 // Create Auth Context
@@ -146,6 +147,30 @@ export const AuthProvider = ({ children }) => {
         if (displayName) {
           await updateProfile(userCredential.user, { displayName });
         }
+
+        // Save user profile to Cloud Firestore users collection
+        if (db && userCredential.user) {
+          try {
+            await setDoc(doc(db, 'users', userCredential.user.uid), {
+              uid: userCredential.user.uid,
+              email: userCredential.user.email,
+              name: displayName || userCredential.user.email.split('@')[0],
+              currentPackage: 'Bronze',
+              walletBalance: 45.50,
+              referralCount: 0,
+              lifetimeAds: 0,
+              dailyAdCount: 0,
+              teamAdsCount: 0,
+              totalEarned: 0,
+              isEligible: true,
+              isBlocked: false,
+              createdAt: new Date().toISOString(),
+            }, { merge: true });
+          } catch (firestoreErr) {
+            console.warn('Could not write user to Firestore:', firestoreErr.message);
+          }
+        }
+
         return userCredential.user;
       } else {
         // Development / Demo Mode Fallback
@@ -165,6 +190,13 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Firebase signup error:', err);
+      let friendlyError = err.message || 'Failed to sign up';
+      if (err.code === 'auth/operation-not-allowed') {
+        friendlyError = 'Firebase Error: Email/Password sign-in is disabled in your Firebase Console. Please enable Email/Password provider in Firebase Authentication -> Sign-in method.';
+      } else if (err.code === 'auth/unauthorized-domain') {
+        friendlyError = 'Firebase Error: This domain is not in your Firebase Authorized Domains list. Please add your app domain in Firebase Authentication -> Settings -> Authorized Domains.';
+      }
+
       // If Firebase key is invalid or demo, fallback gracefully
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
         const mockUser = {
@@ -181,8 +213,8 @@ export const AuthProvider = ({ children }) => {
         setIsAdmin(isUserAdmin);
         return mockUser;
       }
-      setAuthError(err.message || 'Failed to sign up');
-      throw err;
+      setAuthError(friendlyError);
+      throw new Error(friendlyError);
     }
   };
 
@@ -238,6 +270,27 @@ export const AuthProvider = ({ children }) => {
     try {
       if (isFirebaseConfigured) {
         const result = await signInWithPopup(auth, googleProvider);
+        if (db && result.user) {
+          try {
+            await setDoc(doc(db, 'users', result.user.uid), {
+              uid: result.user.uid,
+              email: result.user.email,
+              name: result.user.displayName || result.user.email.split('@')[0],
+              currentPackage: 'Bronze',
+              walletBalance: 45.50,
+              referralCount: 0,
+              lifetimeAds: 0,
+              dailyAdCount: 0,
+              teamAdsCount: 0,
+              totalEarned: 0,
+              isEligible: true,
+              isBlocked: false,
+              createdAt: new Date().toISOString(),
+            }, { merge: true });
+          } catch (firestoreErr) {
+            console.warn('Could not write Google user to Firestore:', firestoreErr.message);
+          }
+        }
         return result.user;
       } else {
         // Development / Demo Mode Fallback

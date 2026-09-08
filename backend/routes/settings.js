@@ -42,7 +42,9 @@ export const DEFAULT_SETTINGS = {
 export async function getSystemSettings() {
   try {
     const db = getDb();
-    const doc = await db.collection('systemSettings').doc('general').get();
+    const fetchDoc = db.collection('systemSettings').doc('general').get();
+    const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Settings fetch timeout')), 2000));
+    const doc = await Promise.race([fetchDoc, timeout]);
     if (doc && doc.exists && doc.data()) {
       return { ...DEFAULT_SETTINGS, ...doc.data() };
     }

@@ -5,6 +5,8 @@
 
 import * as firebaseAdminModule from 'firebase-admin';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 
 dotenv.config();
 
@@ -12,6 +14,28 @@ const admin = firebaseAdminModule.default || firebaseAdminModule;
 
 let dbInstance = null;
 let isConfigured = false;
+
+// Look for service account key file in common locations
+const findServiceAccountFile = () => {
+  const possiblePaths = [
+    process.env.GOOGLE_APPLICATION_CREDENTIALS,
+    process.env.FIREBASE_SERVICE_ACCOUNT_PATH,
+    path.resolve(process.cwd(), 'serviceAccountKey.json'),
+    path.resolve(process.cwd(), 'backend', 'serviceAccountKey.json'),
+  ].filter(Boolean);
+
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      try {
+        const raw = fs.readFileSync(p, 'utf-8');
+        return JSON.parse(raw);
+      } catch (e) {
+        console.warn('Could not parse serviceAccountKey file at:', p, e.message);
+      }
+    }
+  }
+  return null;
+};
 
 // Format private key correctly (replaces literal '\n' if stored as single-line string)
 const getFormattedPrivateKey = () => {
@@ -28,8 +52,39 @@ export const initFirebaseAdmin = () => {
     return admin.app();
   }
 
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  // 1. Try loading from serviceAccountKey.json file if present
+  const fileCredentials = findServiceAccountFile();
+  if (fileCredentials && admin && admin.credential) {
+    try {
+      admin.initializeApp({
+        credential: admin.credential.cert(fileCredentials),
+      });
+      isConfigured = true;
+      console.log('Firebase Admin SDK initialized successfully from serviceAccountKey.json.');
+      return admin.app();
+    } catch (error) {
+      console.warn('Firebase Admin file credential error:', error.message);
+    }
+  }
+
+  // 2. Try raw JSON string in environment variable
+  if (process.env.FIREBASE_SERVICE_ACCOUNT && admin && admin.credential) {
+    try {
+      const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+      admin.initializeApp({
+        credential: admin.credential.cert(parsed),
+      });
+      isConfigured = true;
+      console.log('Firebase Admin SDK initialized successfully from FIREBASE_SERVICE_ACCOUNT env.');
+      return admin.app();
+    } catch (error) {
+      console.warn('Firebase Admin JSON string credential error:', error.message);
+    }
+  }
+
+  // 3. Try individual environment variables with project defaults
+  const projectId = process.env.FIREBASE_PROJECT_ID || 'taemry-flux';
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@taemry-flux.iam.gserviceaccount.com';
   const privateKey = getFormattedPrivateKey();
 
   if (projectId && clientEmail && privateKey && !privateKey.includes('your_private_key') && admin && admin.credential) {
@@ -60,6 +115,20 @@ export const initFirebaseAdmin = () => {
 class MockFirestore {
   constructor() {
     this.data = new Map();
+    this.cacheFile = path.resolve(process.cwd(), '.mock_firestore_cache.json');
+    this._initData();
+  }
+
+  _persist() {
+    try {
+      const entries = Array.from(this.data.entries());
+      fs.writeFileSync(this.cacheFile, JSON.stringify(entries, null, 2), 'utf-8');
+    } catch (e) {
+      // Ignore cache write error in read-only environments
+    }
+  }
+
+  _initData() {
     // Pre-populate systemSettings with packages and general configuration
     this.data.set('systemSettings/general', {
       exchangeRate: 300,
@@ -303,6 +372,21 @@ class MockFirestore {
       createdAt: new Date(Date.now() - 14400000).toISOString(),
       updatedAt: new Date(Date.now() - 7200000).toISOString(),
     });
+
+    // Merge cached data if exists
+    if (fs.existsSync(this.cacheFile)) {
+      try {
+        const raw = fs.readFileSync(this.cacheFile, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          for (const [k, v] of parsed) {
+            this.data.set(k, v);
+          }
+        }
+      } catch (e) {
+        console.warn('Could not read mock cache file:', e.message);
+      }
+    }
   }
 
   collection(name) {
@@ -377,11 +461,32 @@ class MockFirestore {
         const path = `${name}/${id}`;
         return {
           async get() {
-            const docData = self.data.get(path);
+            let docData = self.data.get(path);
+            let resolvedId = id;
+            if (!docData) {
+              // Search collection entries for matching id, depositId, withdrawalId, or ticketId
+              const prefix = `${name}/`;
+              for (const [key, value] of self.data.entries()) {
+                if (key.startsWith(prefix)) {
+                  if (
+                    value.id === id ||
+                    value.depositId === id ||
+                    value.withdrawalId === id ||
+                    value.ticketId === id ||
+                    value.transactionId === id ||
+                    value.uid === id
+                  ) {
+                    docData = value;
+                    resolvedId = value.id || value.depositId || id;
+                    break;
+                  }
+                }
+              }
+            }
             return {
               exists: Boolean(docData),
               data: () => (docData ? { ...docData } : undefined),
-              id,
+              id: resolvedId,
             };
           },
           async set(data, options = {}) {
@@ -390,11 +495,32 @@ class MockFirestore {
             } else {
               self.data.set(path, data);
             }
+            self._persist();
             return { writeTime: new Date() };
           },
           async update(data) {
-            const existing = self.data.get(path) || {};
-            self.data.set(path, { ...existing, ...data });
+            let targetPath = path;
+            if (!self.data.has(targetPath)) {
+              const prefix = `${name}/`;
+              for (const [key, value] of self.data.entries()) {
+                if (key.startsWith(prefix)) {
+                  if (
+                    value.id === id ||
+                    value.depositId === id ||
+                    value.withdrawalId === id ||
+                    value.ticketId === id ||
+                    value.transactionId === id ||
+                    value.uid === id
+                  ) {
+                    targetPath = key;
+                    break;
+                  }
+                }
+              }
+            }
+            const existing = self.data.get(targetPath) || {};
+            self.data.set(targetPath, { ...existing, ...data });
+            self._persist();
             return { writeTime: new Date() };
           },
           collection(subName) {
@@ -403,11 +529,12 @@ class MockFirestore {
         };
       },
       async add(data) {
-        const generatedId = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+        const generatedId = data.id || data.depositId || ('tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000));
         const path = `${name}/${generatedId}`;
-        const record = { ...data, id: generatedId, timestamp: new Date().toISOString() };
+        const record = { ...data, id: generatedId, depositId: generatedId, timestamp: new Date().toISOString() };
         self.data.set(path, record);
-        return { id: generatedId, get: async () => ({ data: () => record }) };
+        self._persist();
+        return { id: generatedId, get: async () => ({ exists: true, data: () => ({ ...record }), id: generatedId }) };
       }
     };
   }

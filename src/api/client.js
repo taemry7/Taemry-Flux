@@ -32,7 +32,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 45000,
 });
 
 // Request Interceptor: Attach Firebase ID Token as Bearer token & sanitize duplicate /api prefix
