@@ -1,0 +1,6 @@
+{
+  "name": "TAEMRY FLUX",
+  "description": "TAEMRY FLUX - Reward-based advertising platform featuring daily views, packages, wallet tracking, and secure Firebase authentication.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,106 @@
+import React from 'react';
+import { Menu, LogOut, Wallet, ShieldCheck, User } from 'lucide-react';
+import Logo from './Logo';
+import { useAuth } from '../context/AuthContext';
+
+export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
+  const { currentUser, logout } = useAuth();
+
+  // Extract initials from user email or name
+  const getInitials = () => {
+    if (!currentUser) return 'TF';
+    if (currentUser.displayName) {
+      const parts = currentUser.displayName.split(' ');
+      return parts.length > 1
+        ? (parts[0][0] + parts[1][0]).toUpperCase()
+        : parts[0].substring(0, 2).toUpperCase();
+    }
+    if (currentUser.email) {
+      return currentUser.email.substring(0, 2).toUpperCase();
+    }
+    return 'TF';
+  };
+
+  return (
+    <header className="sticky top-0 z-40 w-full bg-[#faf8f5]/90 backdrop-blur-md border-b border-[#e9e3d8]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        {/* Left Side: Logo & Menu Button */}
+        <div className="flex items-center gap-3">
+          {currentUser && onOpenDrawer && (
+            <button
+              id="btn-nav-drawer"
+              onClick={onOpenDrawer}
+              className="p-2 -ml-1 text-[#093e4a] hover:bg-[#eae3d5] rounded-xl transition-colors focus:outline-none"
+              aria-label="Open Navigation Drawer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+
+          <button
+            onClick={() => onNavigate('home')}
+            className="flex items-center text-left focus:outline-none cursor-pointer"
+          >
+            <Logo size="md" />
+          </button>
+        </div>
+
+        {/* Right Side: Auth controls */}
+        <div className="flex items-center gap-3">
+          {currentUser ? (
+            <div className="flex items-center gap-3">
+              {/* Wallet quick balance pill */}
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="hidden sm:flex items-center gap-2 bg-[#e6f2f0] hover:bg-[#d8ebe7] text-[#0d5963] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-[#b8ded7] transition-all"
+              >
+                <Wallet className="w-3.5 h-3.5" />
+                <span>$0.00</span>
+              </button>
+
+              {/* User Avatar Circle */}
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="w-9 h-9 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#e89b27]/40 transition-all"
+                title={currentUser.email || 'Member'}
+              >
+                {getInitials()}
+              </button>
+
+              {/* Logout button */}
+              <button
+                id="btn-logout"
+                onClick={async () => {
+                  await logout();
+                  onNavigate('home');
+                }}
+                className="p-2 text-[#78888b] hover:text-[#b91c1c] hover:bg-[#fee2e2]/60 rounded-xl transition-colors"
+                title="Sign out"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 sm:gap-4">
+              <button
+                id="btn-nav-signin"
+                onClick={() => onNavigate('login')}
+                className="px-3.5 py-2 text-sm font-semibold text-[#093e4a] hover:text-[#0b6370] transition-colors"
+              >
+                Sign in
+              </button>
+
+              <button
+                id="btn-nav-getstarted"
+                onClick={() => onNavigate('login')}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#0c5963] hover:bg-[#08424b] active:scale-[0.98] text-white text-sm font-semibold rounded-full shadow-sm shadow-[#0c5963]/20 transition-all"
+              >
+                <span>Open your wallet</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </header>
+  );
+}
