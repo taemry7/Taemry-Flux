@@ -3,7 +3,7 @@
  * Comprehensive analytics, platform balance liabilities, pending approval cues, and 7-day performance charts.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Users,
   Wallet,
@@ -17,10 +17,14 @@ import {
   ArrowRight,
   ShieldCheck,
   RefreshCw,
-  Bell
+  Bell,
+  Rocket
 } from 'lucide-react';
+import GoLiveModal from '../../components/admin/GoLiveModal';
 
 export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loading }) {
+  const [showGoLive, setShowGoLive] = useState(false);
+
   if (!stats) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
@@ -47,6 +51,38 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
+      {/* Modal for Phase 6 Go-Live Checklist */}
+      <GoLiveModal isOpen={showGoLive} onClose={() => setShowGoLive(false)} />
+
+      {/* Phase 6 Go-Live & Deployment Quick Access Banner */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-sky-950/70 via-slate-900 to-emerald-950/50 border border-sky-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg shadow-sky-950/20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center shrink-0 border border-sky-500/30">
+            <Rocket className="w-5 h-5 text-sky-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-white">
+                Phase 6: Final Deployment & Go-Live Architecture
+              </h3>
+              <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-sky-500/20 text-sky-300 border border-sky-500/30">
+                Production Ready
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Vercel (Frontend), Render (Express API), Firebase (Auth/Firestore/Storage Rules), and Cloudflare DNS/WAF
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={() => setShowGoLive(true)}
+          className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all shadow-md shadow-sky-600/30 flex items-center gap-2 cursor-pointer shrink-0"
+        >
+          <Rocket className="w-3.5 h-3.5" />
+          <span>Launch & Go-Live Checklist</span>
+        </button>
+      </div>
+
       {/* Header Banner with Pending Action Alerts */}
       {(pendingDeposits > 0 || pendingWithdrawals > 0) && (
         <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">

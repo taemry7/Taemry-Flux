@@ -15,11 +15,14 @@ import {
   AlertTriangle,
   RefreshCw,
   X,
-  Coins
+  Coins,
+  PlaySquare
 } from 'lucide-react';
 import apiClient from '../../api/client';
+import AdminAdsSettings from './AdminAdsSettings';
 
 export default function AdminSettings() {
+  const [activeTab, setActiveTab] = useState('general'); // 'general' | 'ads'
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
@@ -163,14 +166,45 @@ export default function AdminSettings() {
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <Sliders className="w-5 h-5 text-emerald-400" />
-            <span>Platform Configuration & Payment Gateway Settings</span>
+            <span>Platform Configuration & Gateway Settings</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Set universal exchange rate, daily ad parameters, and official deposit receiving accounts
+            Manage exchange rate, banking gateways, and ad monetization rules
           </p>
         </div>
       </div>
 
+      {/* Configuration Tabs */}
+      <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+        <button
+          type="button"
+          onClick={() => setActiveTab('general')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'general'
+              ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+          }`}
+        >
+          <Sliders className="w-3.5 h-3.5" />
+          <span>Banking & Financial Parameters</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('ads')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'ads'
+              ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/20'
+              : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+          }`}
+        >
+          <PlaySquare className="w-3.5 h-3.5" />
+          <span>Ads Engine Settings</span>
+        </button>
+      </div>
+
+      {activeTab === 'ads' ? (
+        <AdminAdsSettings />
+      ) : (
       <form onSubmit={handleSaveSettings} className="space-y-6">
         {/* Section 1: Financial & Policy Parameters */}
         <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm space-y-5">
@@ -441,6 +475,7 @@ export default function AdminSettings() {
           </button>
         </div>
       </form>
+      )}
     </div>
   );
 }

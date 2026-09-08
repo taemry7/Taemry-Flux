@@ -10,6 +10,7 @@ import {
   ArrowDownCircle,
   ArrowUpRight,
   Sliders,
+  PlaySquare,
   FileText,
   Radio,
   ShieldCheck,
@@ -32,6 +33,7 @@ import AdminUsers from '../pages/admin/AdminUsers';
 import AdminDeposits from '../pages/admin/AdminDeposits';
 import AdminWithdrawals from '../pages/admin/AdminWithdrawals';
 import AdminSettings from '../pages/admin/AdminSettings';
+import AdminAdsSettings from '../pages/admin/AdminAdsSettings';
 import AdminAuditLogs from '../pages/admin/AdminAuditLogs';
 import AdminBroadcast from '../pages/admin/AdminBroadcast';
 
@@ -108,6 +110,7 @@ export default function AdminLayout({ onNavigate }) {
       badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
     },
     { id: 'settings', label: 'System Settings', icon: Sliders },
+    { id: 'ads-settings', label: 'Ads Settings', icon: PlaySquare },
     { id: 'audit-logs', label: 'Audit Logs', icon: FileText },
     { id: 'broadcast', label: 'Broadcasts', icon: Radio },
   ];
@@ -258,6 +261,8 @@ export default function AdminLayout({ onNavigate }) {
           {activeTab === 'withdrawals' && <AdminWithdrawals />}
 
           {activeTab === 'settings' && <AdminSettings />}
+
+          {activeTab === 'ads-settings' && <AdminAdsSettings />}
 
           {activeTab === 'audit-logs' && <AdminAuditLogs />}
 

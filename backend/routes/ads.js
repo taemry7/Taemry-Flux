@@ -8,6 +8,7 @@
 import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
+import { getSystemSettings } from './settings.js';
 
 const router = express.Router();
 
@@ -29,6 +30,7 @@ router.get('/status', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid;
     const db = getDb();
+    const settings = await getSystemSettings();
     const userRef = db.collection('users').doc(uid);
     const doc = await userRef.get();
 
@@ -42,17 +44,18 @@ router.get('/status', verifyToken, async (req, res) => {
     const user = doc.data();
     const todayStr = new Date().toISOString().split('T')[0];
 
-    let dailyAdCount = user.dailyAdCount !== undefined ? Number(user.dailyAdCount) : 45;
+    let dailyAdCount = user.dailyAdCount !== undefined ? Number(user.dailyAdCount) : 0;
     if (user.lastAdWatchDate !== todayStr) {
       dailyAdCount = 0;
     }
 
-    // Cooldown active restriction removed per user requirement
-    const cooldownRemaining = 0;
+    const dailyLimit = Number(settings.dailyAdLimit || 200);
+    const timerSeconds = Number(settings.adTimerSeconds || 60);
+    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
-    const rewardPerAd = +(packagePrice * 0.001).toFixed(4); // 0.1%
+    const rewardPerAd = +(packagePrice * rewardRate).toFixed(4);
 
     return res.json({
       success: true,
@@ -61,11 +64,14 @@ router.get('/status', verifyToken, async (req, res) => {
       packagePrice,
       rewardPerAd,
       dailyAdCount,
-      dailyLimit: 200,
-      lifetimeAds: user.lifetimeAds !== undefined ? Number(user.lifetimeAds) : 1200,
+      dailyLimit,
+      timerSeconds,
+      adCooldownSeconds: Number(settings.adCooldownSeconds || 0),
+      lifetimeAds: user.lifetimeAds !== undefined ? Number(user.lifetimeAds) : 0,
       lastAdWatchTime: user.lastAdWatchTime || null,
       cooldownRemaining: 0,
-      cooldownDisabled: true,
+      cooldownDisabled: (Number(settings.adCooldownSeconds || 0) === 0),
+      adVideoUrl: settings.adVideoUrl || '',
     });
   } catch (error) {
     console.error('Error in GET /api/ads/status:', error);
@@ -79,12 +85,13 @@ router.get('/status', verifyToken, async (req, res) => {
 
 /**
  * GET /api/ads/listing
- * Protected: Returns the full catalog of 200 daily ad items with watched/available status.
+ * Protected: Returns the full catalog of daily ad items with watched/available status.
  */
 router.get('/listing', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid;
     const db = getDb();
+    const settings = await getSystemSettings();
     const userRef = db.collection('users').doc(uid);
     const doc = await userRef.get();
     const user = doc.exists ? doc.data() : {};
@@ -95,11 +102,15 @@ router.get('/listing', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
+    const dailyLimit = Number(settings.dailyAdLimit || 200);
+    const timerSeconds = Number(settings.adTimerSeconds || 60);
+    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
+
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
-    const rewardPerAd = +(packagePrice * 0.001).toFixed(4);
+    const rewardPerAd = +(packagePrice * rewardRate).toFixed(4);
 
-    // Sponsors rotation for ads 1 to 200
+    // Sponsors rotation
     const sponsorTemplates = [
       { name: 'Solstice Cloud AI', category: 'Artificial Intelligence', tag: 'High Performance' },
       { name: 'Aura Protocol', category: 'Web3 & Fintech', tag: 'Secure Settlement' },
@@ -111,9 +122,9 @@ router.get('/listing', verifyToken, async (req, res) => {
       { name: 'Nexus Orbital Data', category: 'Telecom & Satellite', tag: 'Global Mesh' },
     ];
 
-    // Generate 200 ads
+    // Generate ads based on dynamic dailyLimit
     const ads = [];
-    for (let i = 1; i <= 200; i++) {
+    for (let i = 1; i <= dailyLimit; i++) {
       const template = sponsorTemplates[(i - 1) % sponsorTemplates.length];
       const isWatched = i <= dailyAdCount;
       const isCurrent = i === dailyAdCount + 1;
@@ -125,7 +136,7 @@ router.get('/listing', verifyToken, async (req, res) => {
         category: template.category,
         tag: template.tag,
         reward: rewardPerAd,
-        durationSeconds: 60, // Strictly 60 seconds per user requirement
+        durationSeconds: timerSeconds,
         status: isWatched ? 'completed' : isCurrent ? 'available' : 'queued',
         watched: isWatched,
       });
@@ -133,7 +144,9 @@ router.get('/listing', verifyToken, async (req, res) => {
 
     return res.json({
       success: true,
-      totalAds: 200,
+      totalAds: dailyLimit,
+      dailyLimit,
+      timerSeconds,
       dailyAdCount,
       rewardPerAd,
       ads,
@@ -180,8 +193,12 @@ router.post('/watch', verifyToken, async (req, res) => {
       await userRef.set(user);
     }
 
+    const settings = await getSystemSettings();
+    const dailyLimit = Number(settings.dailyAdLimit || 200);
+    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
+
     // 1. Check eligibility (must have bought a package)
-    if (!user.isEligible && !user.currentPackage) {
+    if (settings.requirePackageForAds !== false && !user.isEligible && !user.currentPackage) {
       return res.status(403).json({
         error: 'Ineligible',
         message: 'Buy a package to start watching ads and earning rewards!',
@@ -195,23 +212,33 @@ router.post('/watch', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
-    // 3. Check daily limit (200 ads per day max)
-    if (dailyAdCount >= 200) {
+    // 3. Check dynamic daily limit
+    if (dailyAdCount >= dailyLimit) {
       return res.status(400).json({
         error: 'Daily limit reached',
-        message: 'Daily limit reached! You have completed your 200 ads for today. Reset occurs tomorrow.',
-        dailyAdCount: 200,
-        dailyLimit: 200,
+        message: `Daily limit reached! You have completed your ${dailyLimit} ads for today. Reset occurs tomorrow.`,
+        dailyAdCount: dailyLimit,
+        dailyLimit,
       });
     }
 
-    // 4. Cooldown active restriction removed per user requirement ("remove cooldown active fix it")
-    // Ads can be watched smoothly sequentially without 60s block
+    // 4. Cooldown check (if configured by admin > 0)
+    const cooldownSecs = Number(settings.adCooldownSeconds || 0);
+    if (cooldownSecs > 0 && user.lastAdWatchTime) {
+      const elapsedSecs = (Date.now() - new Date(user.lastAdWatchTime).getTime()) / 1000;
+      if (elapsedSecs < cooldownSecs) {
+        return res.status(429).json({
+          error: 'Cooldown active',
+          message: `Please wait ${Math.ceil(cooldownSecs - elapsedSecs)}s before watching the next ad.`,
+          cooldownRemaining: Math.ceil(cooldownSecs - elapsedSecs),
+        });
+      }
+    }
 
-    // 5. Calculate reward: packagePrice * 0.001 (0.1%)
+    // 5. Calculate reward dynamically based on packagePrice * rewardRate
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
-    const reward = +(packagePrice * 0.001).toFixed(4); // e.g. $1 * 0.001 = $0.001
+    const reward = +(packagePrice * rewardRate).toFixed(4);
 
     const newBalance = +((Number(user.walletBalance) || 0) + reward).toFixed(4);
     const newTotalEarned = +((Number(user.totalEarned) || 0) + reward).toFixed(4);

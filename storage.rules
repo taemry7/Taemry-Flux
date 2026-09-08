@@ -1,0 +1,43 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && (
+        request.auth.token.admin == true ||
+        request.auth.token.email in ['admin@taemryflux.com', 'taemryflux@gmail.com', 'admin_taemry@taemryflux.com']
+      );
+    }
+
+    // Deposit Screenshots & Receipts
+    match /screenshots/{userId}/{fileName} {
+      // User can upload receipt image under 5MB
+      allow create: if isOwner(userId) &&
+        request.resource.size < 5 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+      
+      // User and Admin can read/view the receipt
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Only Admin can delete or update uploaded proof
+      allow delete, update: if isAdmin();
+    }
+    
+    // User profile avatars (optional)
+    match /avatars/{userId}/{fileName} {
+      allow read: if true;
+      allow write: if isOwner(userId) &&
+        request.resource.size < 2 * 1024 * 1024 &&
+        request.resource.contentType.matches('image/.*');
+    }
+  }
+}

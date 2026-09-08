@@ -24,8 +24,16 @@ export const DEFAULT_SETTINGS = {
   },
   minWithdrawal: 1.00,
   maxWithdrawal: 1000.00,
-  withdrawalCooldownMinutes: 5,
-  referralRequired: true,
+  withdrawalCooldownMinutes: 0,
+  referralRequired: 0,
+  // Ads Engine Configuration
+  dailyAdLimit: 200,
+  adTimerSeconds: 60,
+  adRewardPercentage: 0.1, // 0.1% of package price
+  adCooldownSeconds: 0, // 0s = disabled / consecutive watching allowed
+  uplineCommissionPercentage: 50, // 50% distributed to uplines
+  requirePackageForAds: true,
+  adVideoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-futuristic-robotic-artificial-intelligence-head-32863-large.mp4',
 };
 
 /**

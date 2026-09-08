@@ -24,12 +24,12 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Enable CORS for frontend development (e.g. port 5173, port 3000, or any local port)
+// Enable CORS for frontend development and production deployment
 app.use(cors({
   origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'x-user-email', 'x-user-admin'],
 }));
 
 // Body parser

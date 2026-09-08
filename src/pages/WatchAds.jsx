@@ -89,10 +89,11 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     { name: 'Nexus Orbital Data', category: 'Space Tech', tag: 'Global Mesh', desc: 'LEO constellation sensor routing and high-throughput data relays.' },
   ];
 
-  // Generate 1 to 200 Ads
-  const generate200Ads = (watchedCount, rewardRate) => {
+  // Generate 1 to N Ads based on dynamic admin dailyLimit & timerSeconds
+  const generate200Ads = (watchedCount, rewardRate, limit = 200, duration = 60) => {
     const list = [];
-    for (let i = 1; i <= 200; i++) {
+    const totalCount = limit || 200;
+    for (let i = 1; i <= totalCount; i++) {
       const sp = SPONSORS[(i - 1) % SPONSORS.length];
       const isCompleted = i <= watchedCount;
       const isAvailable = i === watchedCount + 1;
@@ -106,7 +107,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         tag: sp.tag,
         desc: sp.desc,
         reward: rewardRate,
-        durationSeconds: 60,
+        durationSeconds: duration || 60,
         status: isCompleted ? 'completed' : isAvailable ? 'available' : 'queued',
         isWatched: isCompleted,
       });
@@ -122,17 +123,22 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       if (res.data?.success) {
         setAdStatus(res.data);
         const watched = res.data.dailyAdCount || 0;
-        setAdsCatalog(generate200Ads(watched, res.data.rewardPerAd || computedReward));
-        setCurrentSelectedAdNumber(Math.min(200, watched + 1));
+        const duration = res.data.timerSeconds || 60;
+        const limit = res.data.dailyLimit || 200;
+
+        setTimerSeconds(duration);
+        setTotalTimerDuration(duration);
+        setAdsCatalog(generate200Ads(watched, res.data.rewardPerAd || computedReward, limit, duration));
+        setCurrentSelectedAdNumber(Math.min(limit, watched + 1));
       } else {
         const fallbackCount = userStats?.dailyAdCount || 0;
-        setAdsCatalog(generate200Ads(fallbackCount, computedReward));
+        setAdsCatalog(generate200Ads(fallbackCount, computedReward, 200, 60));
         setCurrentSelectedAdNumber(Math.min(200, fallbackCount + 1));
       }
     } catch (err) {
       console.warn('Failed to load ad status:', err.message);
       const fallbackCount = userStats?.dailyAdCount || 0;
-      setAdsCatalog(generate200Ads(fallbackCount, computedReward));
+      setAdsCatalog(generate200Ads(fallbackCount, computedReward, 200, 60));
       setCurrentSelectedAdNumber(Math.min(200, fallbackCount + 1));
     } finally {
       setLoading(false);
@@ -193,13 +199,14 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           lifetimeAds: newLifetimeAds,
         }));
 
-        setAdsCatalog(generate200Ads(newDailyCount, adStatus.rewardPerAd));
+        const limit = adStatus.dailyLimit || 200;
+        setAdsCatalog(generate200Ads(newDailyCount, adStatus.rewardPerAd, limit, totalTimerDuration));
 
         // Reset timer
         setTimerSeconds(totalTimerDuration);
 
         // Advance to next ad number automatically (smooth consecutive viewing!)
-        if (newDailyCount < 200) {
+        if (newDailyCount < limit) {
           setCurrentSelectedAdNumber(newDailyCount + 1);
         }
 
@@ -216,8 +223,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   // Start playing selected ad
   const handleStartStream = (adNum) => {
-    if (adStatus.dailyAdCount >= adStatus.dailyLimit) {
-      setErrorMessage('Daily limit reached (200/200). Resets tomorrow.');
+    const limit = adStatus.dailyLimit || 200;
+    if (adStatus.dailyAdCount >= limit) {
+      setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
     }
 

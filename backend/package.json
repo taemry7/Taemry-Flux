@@ -1,0 +1,21 @@
+{
+  "name": "taemry-flux-backend",
+  "version": "1.0.0",
+  "description": "TAEMRY FLUX Express API Server - Phase 6 Production Ready",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^4.21.2",
+    "firebase-admin": "^14.3.0",
+    "multer": "^2.3.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
