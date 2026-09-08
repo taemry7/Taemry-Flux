@@ -7,7 +7,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Your web app's Firebase configuration (provided directly)
+// Your web app's Firebase configuration
 export const firebaseConfig = {
   apiKey: "AIzaSyDHehaUaazgx9t5e6M5LzRFghD-6h7Gh14",
   authDomain: "taemry-flux.firebaseapp.com",
