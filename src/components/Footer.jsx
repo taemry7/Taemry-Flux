@@ -51,6 +51,12 @@ export default function Footer({ onNavigate }) {
           >
             Member Login
           </button>
+          <button
+            onClick={() => onNavigate('support')}
+            className="hover:text-[#0c5963] transition-colors font-semibold"
+          >
+            Support Desk
+          </button>
         </div>
 
         {/* Copyright notice required by user prompt */}

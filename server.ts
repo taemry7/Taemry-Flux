@@ -12,7 +12,9 @@ import withdrawalsRoutes from './backend/routes/withdrawals.js';
 import transactionsRoutes from './backend/routes/transactions.js';
 import settingsRoutes from './backend/routes/settings.js';
 import adminRoutes from './backend/routes/admin.js';
+import supportRoutes from './backend/routes/support.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
+import { sendAdminErrorAlert } from './backend/utils/email.js';
 
 async function startServer() {
   // Initialize Firebase Admin SDK (lazy fallback if keys not in env)
@@ -32,7 +34,7 @@ async function startServer() {
     res.json({
       status: 'ok',
       service: 'TAEMRY FLUX Full-Stack Server',
-      phase: 'Phase 4',
+      phase: 'Phase 7: Post-Launch Maintenance, Monitoring & Scaling',
       timestamp: new Date().toISOString(),
     });
   });
@@ -49,12 +51,32 @@ async function startServer() {
   app.use('/api/transactions', transactionsRoutes);
   app.use('/api/settings', settingsRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/support', supportRoutes);
 
   // 404 Handler for undefined API routes
   app.all('/api/*', (req, res) => {
     res.status(404).json({
       error: 'Not Found',
       message: `Endpoint ${req.originalUrl} not found.`,
+    });
+  });
+
+  // Global Error Alerting Middleware for API
+  app.use('/api', (err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+    console.error('[CRITICAL API ERROR]', err);
+    sendAdminErrorAlert({
+      error: err,
+      route: req.originalUrl,
+      method: req.method,
+      user: (req as any).user || null,
+      stack: err.stack,
+      reqBody: req.body,
+    }).catch((e) => console.warn('Alert dispatch failed:', e.message));
+
+    res.status(500).json({
+      success: false,
+      error: 'Internal Server Error',
+      message: 'A critical server error occurred. System administrators have been automatically alerted.',
     });
   });
 

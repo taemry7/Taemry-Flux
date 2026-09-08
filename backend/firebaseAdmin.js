@@ -273,6 +273,36 @@ class MockFirestore {
       details: 'User flagged for multi-account abuse',
       timestamp: new Date(Date.now() - 43200000).toISOString(),
     });
+
+    // Seed support tickets (Phase 7)
+    this.data.set('supportTickets/TKT-88A01', {
+      ticketId: 'TKT-88A01',
+      userId: 'demo-user-1',
+      userEmail: 'member@taemryflux.com',
+      subject: 'Inquiry regarding JazzCash deposit verification timeframe',
+      message: 'Hello support team, I submitted a 10 USD deposit via JazzCash an hour ago. How long does verification usually take?',
+      priority: 'normal',
+      status: 'open',
+      adminReply: null,
+      repliedAt: null,
+      repliedBy: null,
+      createdAt: new Date(Date.now() - 3600000).toISOString(),
+      updatedAt: new Date(Date.now() - 3600000).toISOString(),
+    });
+    this.data.set('supportTickets/TKT-88A02', {
+      ticketId: 'TKT-88A02',
+      userId: 'user_tariq',
+      userEmail: 'tariq.khan@gmail.com',
+      subject: 'Assistance with Level 2 referral commission rate',
+      message: 'Could you please confirm the exact percentage received for direct downline watching daily ads on Elite package?',
+      priority: 'low',
+      status: 'resolved',
+      adminReply: 'Hi Tariq, direct Level 1 referrals award 50% commission on all ads viewed by your downline. Level 2 through Level 5 receive respective tiered team bonuses. Thank you!',
+      repliedAt: new Date(Date.now() - 7200000).toISOString(),
+      repliedBy: 'mistrtaemry@gmail.com',
+      createdAt: new Date(Date.now() - 14400000).toISOString(),
+      updatedAt: new Date(Date.now() - 7200000).toISOString(),
+    });
   }
 
   collection(name) {

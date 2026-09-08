@@ -13,6 +13,8 @@
 import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyAdmin } from '../middleware/admin.js';
+import { sendDailyReportEmail, sendAdminErrorAlert } from '../utils/email.js';
+import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
 
 const router = express.Router();
 
@@ -42,16 +44,35 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     const usersSnap = await db.collection('users').get();
     const users = usersSnap.docs.map((d) => d.data());
 
-    const totalUsers = users.length;
+    let totalUsers = users.length;
     let platformBalance = 0;
     let activeUsers = 0;
+    let dailyActiveUsers = 0;
+    const todayStr = new Date().toISOString().split('T')[0];
 
     users.forEach((u) => {
       platformBalance += Number(u.walletBalance || 0);
       if (u.isEligible !== false && !u.isBlocked) {
         activeUsers++;
       }
+      if (u.lastAdWatchDate === todayStr || (u.dailyAdCount && u.dailyAdCount > 0)) {
+        dailyActiveUsers++;
+      }
     });
+
+    // 1.5 Fetch Support Tickets (Phase 7)
+    let pendingTickets = 0;
+    try {
+      const ticketsSnap = await db.collection('supportTickets').get();
+      ticketsSnap.docs.forEach((d) => {
+        const t = d.data();
+        if (t.status === 'open' || t.status === 'in-progress') {
+          pendingTickets++;
+        }
+      });
+    } catch (tErr) {
+      console.warn('Could not read supportTickets in stats:', tErr.message);
+    }
 
     // 2. Fetch Deposits
     const depositsSnap = await db.collection('deposits').get();
@@ -60,8 +81,6 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let totalDeposits = 0;
     let pendingDeposits = 0;
     let todayDepositsCount = 0;
-
-    const todayStr = new Date().toISOString().split('T')[0];
 
     deposits.forEach((d) => {
       if (d.status === 'approved') {
@@ -134,6 +153,8 @@ router.get('/stats', verifyAdmin, async (req, res) => {
         totalWithdrawals: +totalWithdrawals.toFixed(2),
         pendingDeposits,
         pendingWithdrawals,
+        pendingTickets,
+        dailyActiveUsers,
         todayActivity: {
           deposits: todayDepositsCount,
           withdrawals: todayWithdrawalsCount,
@@ -885,4 +906,317 @@ router.post('/notifications/broadcast', verifyAdmin, async (req, res) => {
   }
 });
 
+/**
+ * =========================================================================
+ * PHASE 7: MANUAL OVERRIDES, MONITORING, BACKUP & MAINTENANCE ENDPOINTS
+ * =========================================================================
+ */
+
+/**
+ * o) PUT /api/admin/users/:uid/reset-daily-limit
+ * Admin manual override: resets a member's daily ad count to 0 so they can view ads again immediately.
+ */
+router.put('/users/:uid/reset-daily-limit', verifyAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const db = getDb();
+    const userRef = db.collection('users').doc(uid);
+    const doc = await userRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const userData = doc.data();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    await userRef.update({
+      dailyAdCount: 0,
+      lastAdWatchDate: todayStr,
+      updatedAt: new Date().toISOString(),
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'reset_daily_limit_override',
+      targetUid: uid,
+      targetEmail: userData.email || 'N/A',
+      amountUSD: null,
+      details: `Admin reset daily ad watch count to 0 for ${userData.email || uid}.`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `Daily ad view limit successfully reset for ${userData.email || uid}.`,
+      dailyAdCount: 0,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/users/:uid/reset-daily-limit:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reset daily limit',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * p) PUT /api/admin/users/:uid/unblock
+ * Explicitly unblock an account and restore full earning privileges.
+ */
+router.put('/users/:uid/unblock', verifyAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const db = getDb();
+    const userRef = db.collection('users').doc(uid);
+    const doc = await userRef.get();
+
+    if (!doc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    const userData = doc.data();
+    await userRef.update({
+      isBlocked: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'unblock_user',
+      targetUid: uid,
+      targetEmail: userData.email || 'N/A',
+      details: `Account unblocked by admin.`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `User ${userData.email} successfully unblocked.`,
+      isBlocked: false,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/users/:uid/unblock:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to unblock user',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * q) POST /api/admin/maintenance/backup
+ * Manually trigger or test the full Firestore collections backup.
+ */
+router.post('/maintenance/backup', verifyAdmin, async (req, res) => {
+  try {
+    const backupResult = await exportFirestoreBackup();
+    const db = getDb();
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'manual_firestore_backup',
+      targetUid: null,
+      targetEmail: 'SYSTEM',
+      details: `Generated backup file: ${backupResult.filename}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: 'Firestore database backup created successfully.',
+      backup: backupResult,
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/maintenance/backup:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to execute database backup',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * r) POST /api/admin/maintenance/daily-report
+ * Trigger generation and delivery of the daily platform performance email report.
+ */
+router.post('/maintenance/daily-report', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Compute DAU
+    const usersSnap = await db.collection('users').get();
+    let dauCount = 0;
+    let newUsersCount = 0;
+    let totalAdsCount = 0;
+
+    usersSnap.docs.forEach((d) => {
+      const u = d.data();
+      if (u.lastAdWatchDate === todayStr || (u.dailyAdCount && u.dailyAdCount > 0)) {
+        dauCount++;
+      }
+      if (u.createdAt && u.createdAt.startsWith(todayStr)) {
+        newUsersCount++;
+      }
+      totalAdsCount += Number(u.dailyAdCount || 0);
+    });
+
+    // Approved deposits today
+    const depositsSnap = await db.collection('deposits').get();
+    let totalRevenue = 0;
+    let pendingDeposits = 0;
+    depositsSnap.docs.forEach((d) => {
+      const dep = d.data();
+      if (dep.status === 'approved' && dep.createdAt && dep.createdAt.startsWith(todayStr)) {
+        totalRevenue += Number(dep.amountUSD || 0);
+      }
+      if (dep.status === 'pending') {
+        pendingDeposits++;
+      }
+    });
+
+    // Withdrawals today
+    const withdrawalsSnap = await db.collection('withdrawals').get();
+    let totalPayouts = 0;
+    let pendingWithdrawals = 0;
+    withdrawalsSnap.docs.forEach((d) => {
+      const wd = d.data();
+      if ((wd.status === 'paid' || wd.status === 'approved') && wd.createdAt && wd.createdAt.startsWith(todayStr)) {
+        totalPayouts += Number(wd.amountUSD || 0);
+      }
+      if (wd.status === 'pending') {
+        pendingWithdrawals++;
+      }
+    });
+
+    // Tickets pending
+    let pendingTicketsCount = 0;
+    try {
+      const ticketsSnap = await db.collection('supportTickets').get();
+      ticketsSnap.docs.forEach((t) => {
+        const item = t.data();
+        if (item.status === 'open' || item.status === 'in-progress') {
+          pendingTicketsCount++;
+        }
+      });
+    } catch (e) {}
+
+    const reportStats = {
+      date: todayStr,
+      dauCount,
+      newUsersCount,
+      totalRevenue,
+      totalPayouts,
+      pendingTicketsCount,
+      pendingDeposits,
+      pendingWithdrawals,
+      todayAdsCount: totalAdsCount,
+    };
+
+    await sendDailyReportEmail(reportStats);
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'manual_daily_report_dispatched',
+      targetUid: null,
+      targetEmail: 'ADMIN',
+      details: `Dispatched daily report: DAU=${dauCount}, Revenue=$${totalRevenue.toFixed(2)}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: 'Daily health report generated and emailed to administrator.',
+      reportStats,
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/maintenance/daily-report:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to generate daily report',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * s) POST /api/admin/maintenance/cleanup-logs
+ * Deletes auditLogs older than 90 days.
+ */
+router.post('/maintenance/cleanup-logs', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
+
+    const oldLogsSnap = await db.collection('auditLogs')
+      .where('timestamp', '<', ninetyDaysAgo)
+      .get();
+
+    let deletedCount = 0;
+    for (const doc of oldLogsSnap.docs) {
+      await doc.ref.delete();
+      deletedCount++;
+    }
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'cleanup_audit_logs',
+      targetUid: null,
+      targetEmail: 'SYSTEM',
+      details: `Purged ${deletedCount} audit logs older than 90 days.`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully pruned ${deletedCount} audit log records older than 90 days.`,
+      deletedCount,
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/maintenance/cleanup-logs:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to prune audit logs',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * t) POST /api/admin/maintenance/test-error
+ * Intentionally triggers a test critical error to verify that admin error alerts work.
+ */
+router.post('/maintenance/test-error', verifyAdmin, async (req, res) => {
+  try {
+    const simulatedError = new Error('Test Critical Exception: Verification of Phase 7 Admin Alert Dispatcher');
+    simulatedError.stack = `Error: Test Critical Exception\n    at /backend/routes/admin.js:999:15\n    at Layer.handle [as handle_request]`;
+
+    await sendAdminErrorAlert({
+      error: simulatedError,
+      route: '/api/admin/maintenance/test-error',
+      method: 'POST',
+      user: req.user,
+      stack: simulatedError.stack,
+      reqBody: req.body,
+    });
+
+    return res.json({
+      success: true,
+      message: 'Test critical error dispatched to administrator email successfully.',
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/maintenance/test-error:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to dispatch test error',
+      message: error.message,
+    });
+  }
+});
+
 export default router;
+

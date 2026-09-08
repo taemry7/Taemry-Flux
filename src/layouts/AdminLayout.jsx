@@ -21,7 +21,9 @@ import {
   X,
   RefreshCw,
   AlertOctagon,
-  ArrowLeft
+  ArrowLeft,
+  LifeBuoy,
+  Wrench
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -36,6 +38,8 @@ import AdminSettings from '../pages/admin/AdminSettings';
 import AdminAdsSettings from '../pages/admin/AdminAdsSettings';
 import AdminAuditLogs from '../pages/admin/AdminAuditLogs';
 import AdminBroadcast from '../pages/admin/AdminBroadcast';
+import AdminSupport from '../pages/admin/AdminSupport';
+import AdminMaintenance from '../pages/admin/AdminMaintenance';
 
 export default function AdminLayout({ onNavigate }) {
   const { currentUser, isAdmin, logout } = useAuth();
@@ -109,6 +113,14 @@ export default function AdminLayout({ onNavigate }) {
       badge: stats?.pendingWithdrawals || 0,
       badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
     },
+    {
+      id: 'support',
+      label: 'Support Tickets',
+      icon: LifeBuoy,
+      badge: stats?.pendingTickets || 0,
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+    },
+    { id: 'maintenance', label: 'Maintenance & Operations', icon: Wrench },
     { id: 'settings', label: 'System Settings', icon: Sliders },
     { id: 'ads-settings', label: 'Ads Settings', icon: PlaySquare },
     { id: 'audit-logs', label: 'Audit Logs', icon: FileText },
@@ -259,6 +271,10 @@ export default function AdminLayout({ onNavigate }) {
           {activeTab === 'deposits' && <AdminDeposits />}
 
           {activeTab === 'withdrawals' && <AdminWithdrawals />}
+
+          {activeTab === 'support' && <AdminSupport />}
+
+          {activeTab === 'maintenance' && <AdminMaintenance />}
 
           {activeTab === 'settings' && <AdminSettings />}
 

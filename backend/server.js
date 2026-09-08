@@ -17,6 +17,8 @@ import withdrawalsRoutes from './routes/withdrawals.js';
 import transactionsRoutes from './routes/transactions.js';
 import settingsRoutes from './routes/settings.js';
 import adminRoutes from './routes/admin.js';
+import supportRoutes from './routes/support.js';
+import { sendAdminErrorAlert } from './utils/email.js';
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +42,7 @@ app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
     service: 'TAEMRY FLUX Backend API',
-    phase: 'Phase 4',
+    phase: 'Phase 7: Post-Launch Maintenance, Monitoring & Scaling',
     timestamp: new Date().toISOString(),
   });
 });
@@ -57,6 +59,7 @@ app.use('/api/withdrawals', withdrawalsRoutes);
 app.use('/api/transactions', transactionsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/support', supportRoutes);
 
 // 404 Handler for undefined API routes
 app.use('/api/*', (req, res) => {
@@ -66,12 +69,21 @@ app.use('/api/*', (req, res) => {
   });
 });
 
-// Global Error Handler
+// Global Error Handler & Admin Alert Dispatcher
 app.use((err, req, res, next) => {
-  console.error('Unhandled server error:', err);
+  console.error('[CRITICAL API ERROR]:', err);
+  sendAdminErrorAlert({
+    error: err,
+    route: req.originalUrl,
+    method: req.method,
+    user: req.user || null,
+    stack: err.stack,
+    reqBody: req.body,
+  }).catch((e) => console.warn('Alert dispatch failed:', e.message));
+
   res.status(500).json({
     error: 'Internal Server Error',
-    message: err.message || 'An unexpected error occurred.',
+    message: 'A critical server error occurred. System administrators have been automatically alerted.',
   });
 });
 

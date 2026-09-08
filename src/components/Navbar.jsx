@@ -45,6 +45,44 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
           </button>
         </div>
 
+        {/* Center: Quick Site Links */}
+        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[#50686d]">
+          <button
+            onClick={() => {
+              onNavigate('home');
+              setTimeout(() => {
+                const el = document.getElementById('packages-section');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 50);
+            }}
+            className="hover:text-[#0c5963] transition-colors cursor-pointer"
+          >
+            Packages
+          </button>
+          <button
+            onClick={() => {
+              onNavigate('home');
+              setTimeout(() => {
+                const el = document.getElementById('how-it-works');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }, 50);
+            }}
+            className="hover:text-[#0c5963] transition-colors cursor-pointer"
+          >
+            How it works
+          </button>
+          <button
+            onClick={() => onNavigate('support')}
+            className={`transition-colors cursor-pointer ${
+              currentPage === 'support'
+                ? 'text-[#0c5963] font-bold underline underline-offset-4'
+                : 'hover:text-[#0c5963]'
+            }`}
+          >
+            Support
+          </button>
+        </nav>
+
         {/* Right Side: Auth controls */}
         <div className="flex items-center gap-3">
           {currentUser ? (
@@ -72,7 +110,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 className="hidden sm:flex items-center gap-2 bg-[#e6f2f0] hover:bg-[#d8ebe7] text-[#0d5963] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-[#b8ded7] transition-all cursor-pointer"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                <span>${Number(userStats?.walletBalance || 45.50).toFixed(2)}</span>
+                <span>${Number(userStats?.walletBalance ?? 0).toFixed(2)}</span>
               </button>
 
               {/* User Avatar Circle */}

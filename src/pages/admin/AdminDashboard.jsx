@@ -18,7 +18,8 @@ import {
   ShieldCheck,
   RefreshCw,
   Bell,
-  Rocket
+  Rocket,
+  LifeBuoy
 } from 'lucide-react';
 import GoLiveModal from '../../components/admin/GoLiveModal';
 
@@ -42,6 +43,8 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
     totalWithdrawals = 0,
     pendingDeposits = 0,
     pendingWithdrawals = 0,
+    pendingTickets = 0,
+    dailyActiveUsers = 0,
     todayActivity = { deposits: 0, withdrawals: 0, total: 0 },
     charts = { growth: [], financials: [] }
   } = stats;
@@ -124,52 +127,67 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
       )}
 
       {/* Core Platform Metric Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
         {/* Total Users */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Users</span>
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
-              <Users className="w-4 h-4" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Users</span>
+            <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+              <Users className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-3xl font-black text-white mt-3">{totalUsers}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-            <span>Active Members: <strong className="text-emerald-400">{activeUsers}</strong></span>
+          <p className="text-2xl font-black text-white mt-2">{totalUsers}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Active: <strong className="text-emerald-400">{activeUsers}</strong></span>
             <button
               onClick={() => onNavigateTab('users')}
               className="text-sky-400 hover:underline font-semibold cursor-pointer"
             >
-              Directory &rarr;
+              View &rarr;
             </button>
           </div>
         </div>
 
-        {/* Platform Balance / Total Liability */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+        {/* Daily Active Users (DAU) Today (Phase 7) */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Platform Liability</span>
-            <div className="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <Wallet className="w-4 h-4" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">DAU (Today)</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <Activity className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-3xl font-black text-indigo-400 mt-3">${Number(platformBalance).toFixed(2)}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-            <span>Cumulative user wallet holdings</span>
+          <p className="text-2xl font-black text-emerald-400 mt-2">{dailyActiveUsers}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Watched ads today</span>
+            <span className="text-emerald-400 font-bold">LIVE</span>
+          </div>
+        </div>
+
+        {/* Platform Balance / Total Liability */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Liability</span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <Wallet className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-indigo-400 mt-2">${Number(platformBalance).toFixed(2)}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>User balances</span>
             <span className="text-indigo-300 font-semibold">USD</span>
           </div>
         </div>
 
         {/* Total Deposits Approved */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Approved Deposits</span>
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <ArrowDownCircle className="w-4 h-4" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Deposits</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <ArrowDownCircle className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-3xl font-black text-emerald-400 mt-3">${Number(totalDeposits).toFixed(2)}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+          <p className="text-2xl font-black text-emerald-400 mt-2">${Number(totalDeposits).toFixed(2)}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
             <span>Pending: <strong className="text-amber-400">{pendingDeposits}</strong></span>
             <button
               onClick={() => onNavigateTab('deposits')}
@@ -181,21 +199,41 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
         </div>
 
         {/* Total Withdrawals Settled */}
-        <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Paid Withdrawals</span>
-            <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
-              <ArrowUpRight className="w-4 h-4" />
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Withdrawals</span>
+            <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
+              <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-3xl font-black text-sky-400 mt-3">${Number(totalWithdrawals).toFixed(2)}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+          <p className="text-2xl font-black text-sky-400 mt-2">${Number(totalWithdrawals).toFixed(2)}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
             <span>Pending: <strong className="text-amber-400">{pendingWithdrawals}</strong></span>
             <button
               onClick={() => onNavigateTab('withdrawals')}
               className="text-sky-400 hover:underline font-semibold cursor-pointer"
             >
               Manage &rarr;
+            </button>
+          </div>
+        </div>
+
+        {/* Tickets Pending (Phase 7) */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Support Desk</span>
+            <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+              <LifeBuoy className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-rose-400 mt-2">{pendingTickets}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Pending Inquiries</span>
+            <button
+              onClick={() => onNavigateTab('support')}
+              className="text-rose-400 hover:underline font-semibold cursor-pointer"
+            >
+              Support &rarr;
             </button>
           </div>
         </div>

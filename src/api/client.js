@@ -123,4 +123,24 @@ apiClient.interceptors.response.use(
   }
 );
 
+export const apiGet = async (url, config = {}) => {
+  const res = await apiClient.get(url, config);
+  return res.data;
+};
+
+export const apiPost = async (url, data = {}, config = {}) => {
+  const res = await apiClient.post(url, data, config);
+  return res.data;
+};
+
+export const apiPut = async (url, data = {}, config = {}) => {
+  const res = await apiClient.put(url, data, config);
+  return res.data;
+};
+
+export const apiDelete = async (url, config = {}) => {
+  const res = await apiClient.delete(url, config);
+  return res.data;
+};
+
 export default apiClient;
