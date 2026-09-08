@@ -20,11 +20,14 @@ function AppContent() {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
       if (hash === 'login') {
         setCurrentPage('login');
+      } else if (hash === 'buy-package') {
+        setCurrentPage('dashboard');
+        setActiveTab('buy-package');
       } else if (hash.startsWith('dashboard')) {
         setCurrentPage('dashboard');
         const parts = hash.split('/');
         if (parts[1]) {
-          setActiveTab(parts[1]);
+          setActiveTab(parts[1] === 'packages' ? 'buy-package' : parts[1]);
         }
       } else if (hash === '' || hash === 'home') {
         setCurrentPage('home');

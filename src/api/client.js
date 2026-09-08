@@ -1,0 +1,82 @@
+/**
+ * TAEMRY FLUX - Central API Client
+ * Configured Axios instance with request interceptor for Firebase Auth ID token injection.
+ */
+
+import axios from 'axios';
+import { auth, isFirebaseConfigured } from '../firebase/firebase.config.js';
+
+// Base URL: Defaults to relative '/api' for integrated container,
+// or configurable via VITE_API_BASE_URL (e.g. 'http://localhost:5000/api')
+const baseURL = import.meta.env.VITE_API_BASE_URL || '/api';
+
+const apiClient = axios.create({
+  baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  timeout: 10000,
+});
+
+// Request Interceptor: Attach Firebase ID Token as Bearer token
+apiClient.interceptors.request.use(
+  async (config) => {
+    try {
+      let token = null;
+
+      // 1. Try real Firebase Auth current user
+      if (isFirebaseConfigured && auth.currentUser) {
+        try {
+          token = await auth.currentUser.getIdToken(false);
+        } catch (tokenErr) {
+          console.warn('Could not retrieve live ID token, checking demo session:', tokenErr.message);
+        }
+      }
+
+      // 2. If no live token, check localStorage for active demo session
+      if (!token) {
+        const savedDemo = localStorage.getItem('taemry_demo_user');
+        if (savedDemo) {
+          try {
+            const demoUser = JSON.parse(savedDemo);
+            token = demoUser.uid || 'demo-user-1';
+          } catch (e) {
+            token = 'demo-user-1';
+          }
+        }
+      }
+
+      // 3. Fallback token for testing
+      if (!token) {
+        token = 'preview-test-token';
+      }
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Error attaching authorization token:', error);
+    }
+
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response Interceptor: Provide clean error handling
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      error.message ||
+      'Network communication error';
+    console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, message);
+    return Promise.reject(error);
+  }
+);
+
+export default apiClient;

@@ -10,10 +10,10 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
 
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'daily-views', label: 'Daily views', icon: PlaySquare },
-    { id: 'packages', label: 'Packages', icon: PackageCheck },
-    { id: 'deposit', label: 'Deposit', icon: CreditCard },
+    { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
+    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
     { id: 'withdraw', label: 'Withdraw', icon: ArrowDownToLine },
+    { id: 'referrals', label: 'Referrals', icon: CreditCard },
   ];
 
   return (
