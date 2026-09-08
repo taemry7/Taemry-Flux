@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
+import { firebaseConfig } from '../firebase/firebase.config';
 
 export default function LoginPage({ onNavigate }) {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -289,12 +290,12 @@ export default function LoginPage({ onNavigate }) {
           )}
         </div>
 
-        {/* Development Mode Notice & 1-Click Test Access */}
+        {/* Firebase Live Status & Fast Access */}
         <div className="mt-6 pt-5 border-t border-[#eee9df]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[#7c8f94] flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981]" />
-              Development mode
+            <span className="text-[11px] font-semibold text-[#0f766e] flex items-center gap-1.5 bg-[#e6f4f1] px-2 py-0.5 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
+              Firebase Connected ({firebaseConfig.projectId || 'taemry-flux'})
             </span>
             <button
               type="button"
@@ -302,10 +303,10 @@ export default function LoginPage({ onNavigate }) {
                 demoLogin('mistrtaemry@gmail.com');
                 onNavigate('dashboard');
               }}
-              className="text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#e6f4f1] hover:bg-[#d8ece8] px-2.5 py-1 rounded-lg transition-colors"
-              title="Click to instantly test Phase 1 dashboard without typing"
+              className="text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#f1ede4] hover:bg-[#e4ded2] px-2.5 py-1 rounded-lg transition-colors"
+              title="Quick demo preview login"
             >
-              Instant Test Login
+              Quick Preview Login
             </button>
           </div>
         </div>

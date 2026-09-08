@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "FirebaseBlueprint",
+  "type": "object",
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Registered user profile with wallet balances, role, and current active package.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "admin"] },
+        "walletBalance": { "type": "number" },
+        "currentPackage": { "type": "string" },
+        "referralCode": { "type": "string" },
+        "referredBy": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Deposit": {
+      "title": "Deposit",
+      "description": "User deposit request awaiting administrator review or approved.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amountUSD": { "type": "number" },
+        "amountPKR": { "type": "number" },
+        "paymentMethod": { "type": "string" },
+        "trxId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "amountUSD", "status"]
+    },
+    "Withdrawal": {
+      "title": "Withdrawal",
+      "description": "User payout withdrawal request.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "amountUSD": { "type": "number" },
+        "amountPKR": { "type": "number" },
+        "accountDetails": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "amountUSD", "status"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Wallet activity transaction record.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string" },
+        "amount": { "type": "number" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["userId", "type", "amount"]
+    },
+    "SystemSetting": {
+      "title": "SystemSetting",
+      "description": "Global operational and finance system parameters.",
+      "type": "object",
+      "properties": {
+        "exchangeRatePKR": { "type": "number" },
+        "minDepositUSD": { "type": "number" },
+        "minWithdrawalUSD": { "type": "number" },
+        "dailyAdsLimit": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User accounts with wallet information and tier settings"
+    },
+    "/deposits/{depositId}": {
+      "schema": "Deposit",
+      "description": "User payment deposit proof requests"
+    },
+    "/withdrawals/{withdrawalId}": {
+      "schema": "Withdrawal",
+      "description": "User fund payout requests"
+    },
+    "/transactions/{txId}": {
+      "schema": "Transaction",
+      "description": "Wallet transaction records"
+    },
+    "/systemSettings/{settingId}": {
+      "schema": "SystemSetting",
+      "description": "Application settings and rate configurations"
+    }
+  }
+}

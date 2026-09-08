@@ -1,32 +1,26 @@
 /**
- * TAEMRY FLUX - Firebase Configuration (Phase 1)
- *
- * Modular Firebase v9+ initialization using environment variables.
- * Exports: app, auth, db (Firestore), googleProvider
+ * TAEMRY FLUX - Firebase Configuration
+ * Direct integration using the user's provided Firebase Project configuration.
  */
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
-// Environment variables from Vite (.env file)
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDummyKeyForPreviewDemoTestingOnly123',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'taemry-flux-demo.firebaseapp.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'taemry-flux-demo',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'taemry-flux-demo.appspot.com',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '123456789012',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:123456789012:web:demo12345678',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-DEMO12345'
+// Your web app's Firebase configuration (provided directly)
+export const firebaseConfig = {
+  apiKey: "AIzaSyDHehaUaazgx9t5e6M5LzRFghD-6h7Gh14",
+  authDomain: "taemry-flux.firebaseapp.com",
+  projectId: "taemry-flux",
+  storageBucket: "taemry-flux.firebasestorage.app",
+  messagingSenderId: "692537379762",
+  appId: "1:692537379762:web:030e49001e88f1877cf2ab"
 };
 
-// Check if user has provided real Firebase keys
-export const isFirebaseConfigured = Boolean(
-  import.meta.env.VITE_FIREBASE_API_KEY &&
-  !import.meta.env.VITE_FIREBASE_API_KEY.includes('your_firebase_api_key')
-);
+// Always configured with your project credentials
+export const isFirebaseConfigured = true;
 
-// Initialize Firebase app singleton
+// Initialize Firebase
 export const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
 
 // Initialize Firebase Authentication

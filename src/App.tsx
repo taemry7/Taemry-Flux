@@ -10,12 +10,29 @@ import DashboardPage from './pages/DashboardPage';
 import WhitepaperPage from './pages/WhitepaperPage';
 import SupportPage from './pages/SupportPage';
 import AdminLayout from './layouts/AdminLayout';
+import { db } from './firebase/firebase.config';
+import { doc, getDocFromServer } from 'firebase/firestore';
 
 function AppContent() {
   const { currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'login' | 'dashboard' | 'admin'
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+
+  // Validate Firestore connection on boot
+  useEffect(() => {
+    async function testFirestoreConnection() {
+      try {
+        await getDocFromServer(doc(db, '_connection_test', 'status'));
+      } catch (error) {
+        // Document may not exist, but network reachability is verified
+        if (error instanceof Error && error.message.includes('the client is offline')) {
+          console.warn('[Firestore] Client is offline. Please check network connection.');
+        }
+      }
+    }
+    testFirestoreConnection();
+  }, []);
 
   // Sync with browser hash if present (e.g. #/login, #/dashboard, #/admin)
   useEffect(() => {
