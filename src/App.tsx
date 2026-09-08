@@ -7,6 +7,8 @@ import ProtectedRoute from './components/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import WhitepaperPage from './pages/WhitepaperPage';
+import SupportPage from './pages/SupportPage';
 import AdminLayout from './layouts/AdminLayout';
 
 function AppContent() {
@@ -21,6 +23,10 @@ function AppContent() {
       const hash = window.location.hash.replace('#/', '').replace('#', '');
       if (hash === 'login') {
         setCurrentPage('login');
+      } else if (hash === 'whitepaper') {
+        setCurrentPage('whitepaper');
+      } else if (hash === 'support') {
+        setCurrentPage('support');
       } else if (hash.startsWith('admin')) {
         setCurrentPage('admin');
       } else if (hash === 'buy-package') {
@@ -105,6 +111,14 @@ function AppContent() {
       <main className="flex-1">
         {currentPage === 'home' && (
           <HomePage onNavigate={navigateTo} />
+        )}
+
+        {currentPage === 'whitepaper' && (
+          <WhitepaperPage onNavigate={navigateTo} />
+        )}
+
+        {currentPage === 'support' && (
+          <SupportPage onNavigate={navigateTo} />
         )}
 
         {currentPage === 'login' && (

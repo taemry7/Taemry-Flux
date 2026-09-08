@@ -3,16 +3,12 @@ import {
   ArrowRight,
   CheckCircle2,
   Lock,
-  ShieldCheck,
-  Eye,
-  Clock,
-  History,
-  HelpCircle,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   Sparkles,
   TrendingUp,
-  Wallet,
-  LifeBuoy
+  LifeBuoy,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
@@ -21,6 +17,30 @@ import { apiGet } from '../api/client';
 export default function HomePage({ onNavigate }) {
   const { currentUser, userStats } = useAuth();
   const [selectedViewMode, setSelectedViewMode] = useState('all'); // 'core' or 'all'
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const homeFaqs = [
+    {
+      q: 'Q1. What is TAEMRY FLUX?',
+      a: 'It is a revolutionary reward-based advertising platform. You earn US Dollars ($) by watching ads, referring friends, and achieving milestones.'
+    },
+    {
+      q: 'Q2. Do I have to pay to start earning?',
+      a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
+    },
+    {
+      q: 'Q3. Why can\'t I withdraw money if I have 0 referrals?',
+      a: 'To build a strong community, you must invite at least 1 active friend (direct referral) before you can withdraw any amount.'
+    },
+    {
+      q: 'Q4. What are the deposit and withdrawal methods?',
+      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto (USDT / BTC).'
+    },
+    {
+      q: 'Q5. What is the minimum and maximum withdrawal?',
+      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request). You can withdraw once per day with a 5-minute cooldown.'
+    },
+  ];
 
   // Default updated catalog matching official system specifications
   const defaultPackages = [
@@ -61,6 +81,18 @@ export default function HomePage({ onNavigate }) {
       circleColor: 'bg-[#ca8a04]',
     },
     {
+      id: 'premium',
+      name: 'Premium',
+      tagline: 'High-velocity professional plan',
+      entryPrice: '$50.00',
+      minWallet: '$5.00',
+      rewardRate: '3.8%',
+      dailyLimit: '80 views/day',
+      accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
+      badge: 'POPULAR',
+      circleColor: 'bg-[#0284c7]',
+    },
+    {
       id: 'elite',
       name: 'Elite',
       tagline: 'Accelerated daily velocity',
@@ -93,7 +125,7 @@ export default function HomePage({ onNavigate }) {
       rewardRate: '7.5%',
       dailyLimit: '200 views/day',
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
-      badge: 'TOP TIER',
+      badge: 'ELITE MASTER',
       circleColor: 'bg-[#ea580c]',
     },
   ];
@@ -105,7 +137,7 @@ export default function HomePage({ onNavigate }) {
     let isMounted = true;
     const loadPackages = async () => {
       try {
-        const res = await apiGet('/api/packages');
+        const res = await apiGet('/packages');
         if (res.success && Array.isArray(res.packages) && res.packages.length > 0) {
           if (!isMounted) return;
           const mapped = res.packages.map((pkg) => {
@@ -173,12 +205,6 @@ export default function HomePage({ onNavigate }) {
       {/* Hero Section */}
       <section className="pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 relative overflow-hidden">
         <div className="max-w-4xl mx-auto text-left sm:text-center flex flex-col sm:items-center">
-          {/* Tagline Pill Badge */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e6f2f0] border border-[#bce2dc] text-[#0d5963] text-xs sm:text-sm font-semibold mb-6 shadow-xs">
-            <span className="w-2 h-2 rounded-full bg-[#0d5963] animate-pulse" />
-            <span>A clearer way to build daily momentum</span>
-          </div>
-
           {/* Main Hero Headline */}
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#0a353f] leading-[1.15] mb-6">
             Put your wallet <br className="hidden sm:block" />
@@ -224,15 +250,6 @@ export default function HomePage({ onNavigate }) {
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-[#0c5963]" />
               <span>Cookie-secured access</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <LifeBuoy className="w-4 h-4 text-[#0c5963]" />
-              <button
-                onClick={() => onNavigate('support')}
-                className="hover:underline font-semibold text-[#0d5963] cursor-pointer"
-              >
-                24/7 Dedicated Support
-              </button>
             </div>
           </div>
         </div>
@@ -292,75 +309,6 @@ export default function HomePage({ onNavigate }) {
                 <span className="text-xs font-extrabold text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md">
                   +2.5%
                 </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 3-Step Guide */}
-      <section id="how-it-works" className="py-16 sm:py-20 px-4 sm:px-6 bg-[#f4f0e7] border-y border-[#e7e1d5]">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-10 text-left sm:text-center">
-            <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] uppercase">
-              SIMPLE BY DESIGN
-            </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#09353e] mt-2 mb-3">
-              A steady system beats a noisy one.
-            </h2>
-            <p className="text-sm sm:text-base text-[#50686d] max-w-xl sm:mx-auto">
-              Every part of your progress has a place: the wallet, your active package,
-              your daily views, and the rewards they create.
-            </p>
-          </div>
-
-          {/* 3 Steps in Vertical/Grid Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
-            {/* Step 1 */}
-            <div className="bg-[#faf8f5] rounded-2xl p-6 border border-[#e5ded1] shadow-xs relative flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-bold font-mono text-[#8a9ca0] block mb-4">
-                  01
-                </span>
-                <h3 className="text-xl font-bold text-[#0a353f] mb-2">Fund</h3>
-                <p className="text-xs sm:text-sm text-[#50686d] leading-relaxed">
-                  Submit a deposit and track your verification directly in your personal wallet trail.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#eee8dd] text-[11px] font-semibold text-[#0d5963] flex items-center gap-1">
-                <span>Bank, Crypto, Easypaisa, JazzCash</span>
-              </div>
-            </div>
-
-            {/* Step 2 */}
-            <div className="bg-[#faf8f5] rounded-2xl p-6 border border-[#e5ded1] shadow-xs relative flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-mono font-bold text-[#8a9ca0] block mb-4">
-                  02
-                </span>
-                <h3 className="text-xl font-bold text-[#0a353f] mb-2">Choose</h3>
-                <p className="text-xs sm:text-sm text-[#50686d] leading-relaxed">
-                  Activate an earning tier with your wallet balance that matches your daily target pace.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#eee8dd] text-[11px] font-semibold text-[#0d5963] flex items-center gap-1">
-                <span>{packageList.length} verified packages available</span>
-              </div>
-            </div>
-
-            {/* Step 3 */}
-            <div className="bg-[#faf8f5] rounded-2xl p-6 border border-[#e5ded1] shadow-xs relative flex flex-col justify-between">
-              <div>
-                <span className="text-xs font-mono font-bold text-[#8a9ca0] block mb-4">
-                  03
-                </span>
-                <h3 className="text-xl font-bold text-[#0a353f] mb-2">Show up</h3>
-                <p className="text-xs sm:text-sm text-[#50686d] leading-relaxed">
-                  Complete your timed daily views and see each reward credited instantly to your growing ledger.
-                </p>
-              </div>
-              <div className="mt-6 pt-4 border-t border-[#eee8dd] text-[11px] font-semibold text-[#0d5963] flex items-center gap-1">
-                <span>Daily rhythm tracking</span>
               </div>
             </div>
           </div>
@@ -427,13 +375,16 @@ export default function HomePage({ onNavigate }) {
                 >
                   <div>
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[11px] font-bold tracking-wider text-[#697f83] uppercase">
-                        PACKAGE TIER
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${pkg.circleColor || 'bg-[#0d5963]'}`} />
+                        <span className="text-xs font-semibold text-[#697f83]">
+                          Plan #{pkg.id}
+                        </span>
+                      </div>
                       <div className="flex items-center gap-2">
                         {isCurrentActive && (
                           <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                            YOUR ACTIVE TIER
+                            YOUR ACTIVE PLAN
                           </span>
                         )}
                         {pkg.badge && !isCurrentActive && (
@@ -441,7 +392,6 @@ export default function HomePage({ onNavigate }) {
                             {pkg.badge}
                           </span>
                         )}
-                        <div className={`w-3.5 h-3.5 rounded-full ${pkg.circleColor || 'bg-[#0d5963]'}`} />
                       </div>
                     </div>
 
@@ -475,11 +425,6 @@ export default function HomePage({ onNavigate }) {
                         <span>Daily View Quota</span>
                         <span className="font-semibold text-[#09353e]">{pkg.dailyLimit}</span>
                       </div>
-
-                      <div className="flex items-center justify-between text-xs text-[#526a6f] bg-[#faf8f5] px-3 py-2 rounded-xl border border-[#efe9de]">
-                        <span>Min Wallet Hold</span>
-                        <span className="font-semibold text-[#09353e]">{pkg.minWallet}</span>
-                      </div>
                     </div>
                   </div>
 
@@ -493,7 +438,7 @@ export default function HomePage({ onNavigate }) {
                   >
                     <span>
                       {isCurrentActive
-                        ? 'Manage Current Tier'
+                        ? 'Manage Active Plan'
                         : currentUser
                         ? 'Activate with Wallet'
                         : 'Select & Activate'}
@@ -532,68 +477,74 @@ export default function HomePage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Built for Clarity Section */}
-      <section className="py-16 px-4 sm:px-6 bg-[#faf8f5]">
+      {/* Frequently Asked Questions (FAQs) Section */}
+      <section id="faqs-section" className="py-16 sm:py-24 px-4 sm:px-6 bg-[#faf8f5]">
         <div className="max-w-4xl mx-auto">
           <div className="text-left sm:text-center mb-12">
             <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] uppercase">
-              BUILT FOR CLARITY
+              FREQUENTLY ASKED QUESTIONS (FAQS)
             </span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-[#09353e] mt-2 mb-3">
-              No mystery math. No hidden dashboard corners.
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-[#09353e] mt-2 mb-3">
+              Answers to Common Questions
             </h2>
             <p className="text-sm sm:text-base text-[#50686d] max-w-xl sm:mx-auto">
-              Everything in TAEMRY FLUX is visible, verifiable, and structured around your daily consistency.
+              Everything you need to know about starting, watching daily ads, referral commissions, milestones, and withdrawals.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            <div className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#e4ded2] shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#e6f4f1] text-[#0d5963] flex items-center justify-center flex-shrink-0">
-                <Eye className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#09353e] mb-1">Daily visibility</h4>
-                <p className="text-xs text-[#526b70] leading-relaxed">
-                  Know your limit, your completed views, and your earnings at a glance without confusion.
-                </p>
-              </div>
-            </div>
+          <div className="space-y-3">
+            {homeFaqs.map((faq, idx) => {
+              const isOpen = openFaq === idx;
+              return (
+                <div
+                  key={idx}
+                  className="bg-white rounded-2xl border border-[#e4dfd4] shadow-xs overflow-hidden transition-all"
+                >
+                  <button
+                    onClick={() => setOpenFaq(isOpen ? null : idx)}
+                    className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 hover:bg-[#faf8f4] transition-colors cursor-pointer"
+                  >
+                    <span className="text-sm sm:text-base font-bold text-[#09353e]">
+                      {faq.q}
+                    </span>
+                    <div className="w-8 h-8 rounded-xl bg-[#f0eae0] text-[#0c5963] flex items-center justify-center shrink-0">
+                      {isOpen ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </div>
+                  </button>
 
-            <div className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#e4ded2] shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#e6f4f1] text-[#0d5963] flex items-center justify-center flex-shrink-0">
-                <History className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#09353e] mb-1">Request history</h4>
-                <p className="text-xs text-[#526b70] leading-relaxed">
-                  Deposits keep their status, method, note, and timestamp in one permanent, transparent trail.
-                </p>
-              </div>
-            </div>
+                  {isOpen && (
+                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#4d666b] leading-relaxed border-t border-[#f2ede4] bg-[#fcfbfa] whitespace-pre-line">
+                      {faq.a}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-            <div className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#e4ded2] shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#e6f4f1] text-[#0d5963] flex items-center justify-center flex-shrink-0">
-                <HelpCircle className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#09353e] mb-1">Supportable flow</h4>
-                <p className="text-xs text-[#526b70] leading-relaxed">
-                  Every action has a clear next step and a record you can easily verify or return to.
-                </p>
-              </div>
+          {/* Quick Helper Banner */}
+          <div className="mt-10 p-5 rounded-2xl bg-[#f2ede2] border border-[#e2dacb] flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+              <h4 className="text-sm font-bold text-[#09353e]">Still have questions or need technical assistance?</h4>
+              <p className="text-xs text-[#5a7378] mt-0.5">Read our full official whitepaper documentation or submit a ticket to our support desk.</p>
             </div>
-
-            <div className="flex items-start gap-4 p-5 bg-white rounded-2xl border border-[#e4ded2] shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-[#e6f4f1] text-[#0d5963] flex items-center justify-center flex-shrink-0">
-                <Lock className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-base font-bold text-[#09353e] mb-1">Private by default</h4>
-                <p className="text-xs text-[#526b70] leading-relaxed">
-                  Your wallet view is yours alone, backed by modern Firebase authentication security.
-                </p>
-              </div>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <button
+                onClick={() => onNavigate('whitepaper')}
+                className="px-4 py-2 rounded-xl bg-white hover:bg-[#0c5963] text-[#0c5963] hover:text-white font-bold text-xs border border-[#d8cfbe] transition-all cursor-pointer shadow-xs"
+              >
+                Whitepaper (v1.0)
+              </button>
+              <button
+                onClick={() => onNavigate('support')}
+                className="px-4 py-2 rounded-xl bg-[#0c5963] hover:bg-[#09424a] text-white font-bold text-xs shadow-xs transition-all cursor-pointer"
+              >
+                Contact Support
+              </button>
             </div>
           </div>
         </div>

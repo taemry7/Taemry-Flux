@@ -57,6 +57,12 @@ export default function Footer({ onNavigate }) {
           >
             Support Desk
           </button>
+          <button
+            onClick={() => onNavigate('whitepaper')}
+            className="hover:text-[#0c5963] transition-colors font-semibold"
+          >
+            Whitepaper (v1.0)
+          </button>
         </div>
 
         {/* Copyright notice required by user prompt */}

@@ -29,6 +29,14 @@ async function startServer() {
   }));
   app.use(express.json());
 
+  // Normalize duplicate /api/api prefix if any client request arrives with it
+  app.use((req, res, next) => {
+    if (req.url.startsWith('/api/api/')) {
+      req.url = req.url.replace(/^\/api\/api\//, '/api/');
+    }
+    next();
+  });
+
   // API Health Check
   app.get('/api/health', (req, res) => {
     res.json({

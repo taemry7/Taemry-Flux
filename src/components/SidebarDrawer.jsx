@@ -11,7 +11,9 @@ import {
   History,
   LogOut,
   ExternalLink,
-  ShieldCheck
+  ShieldCheck,
+  FileText,
+  LifeBuoy
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
@@ -103,6 +105,31 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               </button>
             </div>
           )}
+
+          <div className="pt-2 border-t border-[#ece6d9] space-y-1">
+            <button
+              id="drawer-link-whitepaper"
+              onClick={() => {
+                onNavigate('whitepaper');
+                onClose();
+              }}
+              className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#0c5963] hover:bg-[#eae3d5] transition-all"
+            >
+              <FileText className="w-4 h-4 text-[#0c5963]" />
+              <span>Official Whitepaper (v1.0)</span>
+            </button>
+            <button
+              id="drawer-link-support"
+              onClick={() => {
+                onNavigate('support');
+                onClose();
+              }}
+              className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#486065] hover:bg-[#eae3d5] transition-all"
+            >
+              <LifeBuoy className="w-4 h-4 text-[#486065]" />
+              <span>Support Desk</span>
+            </button>
+          </div>
         </nav>
 
         {/* User Account / Footer in Drawer */}

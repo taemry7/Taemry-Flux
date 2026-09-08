@@ -35,9 +35,18 @@ const apiClient = axios.create({
   timeout: 10000,
 });
 
-// Request Interceptor: Attach Firebase ID Token as Bearer token
+// Request Interceptor: Attach Firebase ID Token as Bearer token & sanitize duplicate /api prefix
 apiClient.interceptors.request.use(
   async (config) => {
+    // Strip redundant leading '/api' prefix to prevent '/api/api/...' when combined with baseURL: '/api'
+    if (config.url && typeof config.url === 'string') {
+      if (config.url.startsWith('/api/')) {
+        config.url = config.url.replace(/^\/api/, '');
+      } else if (config.url === '/api') {
+        config.url = '/';
+      }
+    }
+
     try {
       let token = null;
 
@@ -123,23 +132,34 @@ apiClient.interceptors.response.use(
   }
 );
 
+const sanitizeEndpoint = (url) => {
+  if (typeof url === 'string') {
+    if (url.startsWith('/api/')) {
+      return url.replace(/^\/api/, '');
+    } else if (url === '/api') {
+      return '/';
+    }
+  }
+  return url;
+};
+
 export const apiGet = async (url, config = {}) => {
-  const res = await apiClient.get(url, config);
+  const res = await apiClient.get(sanitizeEndpoint(url), config);
   return res.data;
 };
 
 export const apiPost = async (url, data = {}, config = {}) => {
-  const res = await apiClient.post(url, data, config);
+  const res = await apiClient.post(sanitizeEndpoint(url), data, config);
   return res.data;
 };
 
 export const apiPut = async (url, data = {}, config = {}) => {
-  const res = await apiClient.put(url, data, config);
+  const res = await apiClient.put(sanitizeEndpoint(url), data, config);
   return res.data;
 };
 
 export const apiDelete = async (url, config = {}) => {
-  const res = await apiClient.delete(url, config);
+  const res = await apiClient.delete(sanitizeEndpoint(url), config);
   return res.data;
 };
 

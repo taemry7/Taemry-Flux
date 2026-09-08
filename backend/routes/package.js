@@ -44,6 +44,17 @@ const DEFAULT_PACKAGES = {
     color: '#ca8a04',
     description: 'For committed momentum with accelerated view allocation.',
   },
+  premium: {
+    id: 'premium',
+    name: 'Premium',
+    price: 50.00,
+    minWallet: 5.00,
+    rewardRate: '3.8%',
+    dailyLimit: 80,
+    badge: 'POPULAR',
+    color: '#0284c7',
+    description: 'Higher volume capacity and optimized daily returns.',
+  },
   elite: {
     id: 'elite',
     name: 'Elite',
@@ -73,9 +84,9 @@ const DEFAULT_PACKAGES = {
     minWallet: 100.00,
     rewardRate: '7.5%',
     dailyLimit: 200,
-    badge: 'TOP TIER',
+    badge: 'ELITE MASTER',
     color: '#ea580c',
-    description: 'Unbounded reward scale and highest tier return.',
+    description: 'Unbounded reward scale with highest return rate.',
   },
 };
 

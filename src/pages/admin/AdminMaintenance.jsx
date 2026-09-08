@@ -30,7 +30,7 @@ export default function AdminMaintenance() {
 
   const fetchUsers = async () => {
     try {
-      const res = await apiGet('/api/admin/users');
+      const res = await apiGet('/admin/users');
       if (res.success && Array.isArray(res.users)) {
         setUsers(res.users);
       }
@@ -47,7 +47,7 @@ export default function AdminMaintenance() {
     try {
       setLoading(true);
       setFeedback(null);
-      const res = await apiPost('/api/admin/maintenance/backup');
+      const res = await apiPost('/admin/maintenance/backup');
       if (res.success) {
         setFeedback({
           type: 'success',
@@ -67,7 +67,7 @@ export default function AdminMaintenance() {
     try {
       setLoading(true);
       setFeedback(null);
-      const res = await apiPost('/api/admin/maintenance/daily-report');
+      const res = await apiPost('/admin/maintenance/daily-report');
       if (res.success) {
         setFeedback({
           type: 'success',
@@ -88,7 +88,7 @@ export default function AdminMaintenance() {
     try {
       setLoading(true);
       setFeedback(null);
-      const res = await apiPost('/api/admin/maintenance/cleanup-logs');
+      const res = await apiPost('/admin/maintenance/cleanup-logs');
       if (res.success) {
         setFeedback({
           type: 'success',
@@ -108,7 +108,7 @@ export default function AdminMaintenance() {
     try {
       setLoading(true);
       setFeedback(null);
-      const res = await apiPost('/api/admin/maintenance/test-error');
+      const res = await apiPost('/admin/maintenance/test-error');
       if (res.success) {
         setFeedback({
           type: 'success',
@@ -134,7 +134,7 @@ export default function AdminMaintenance() {
     try {
       setOverrideLoading(true);
       setFeedback(null);
-      const res = await apiPut(`/api/admin/users/${targetUid}/reset-daily-limit`);
+      const res = await apiPut(`/admin/users/${targetUid}/reset-daily-limit`);
       if (res.success) {
         setFeedback({
           type: 'success',

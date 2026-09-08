@@ -34,7 +34,7 @@ export default function AdminSupport() {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      let url = `/api/support/admin/all?status=${statusFilter}`;
+      let url = `/support/admin/all?status=${statusFilter}`;
       if (searchQuery.trim()) {
         url += `&search=${encodeURIComponent(searchQuery.trim())}`;
       }
@@ -67,7 +67,7 @@ export default function AdminSupport() {
       setUpdating(true);
       setActionAlert(null);
 
-      const res = await apiPut(`/api/support/admin/${selectedTicket.ticketId}/status`, {
+      const res = await apiPut(`/support/admin/${selectedTicket.ticketId}/status`, {
         status: statusDraft,
         adminReply: replyText,
       });
@@ -90,7 +90,7 @@ export default function AdminSupport() {
     setStatusDraft('resolved');
     try {
       setUpdating(true);
-      const res = await apiPut(`/api/support/admin/${selectedTicket.ticketId}/status`, {
+      const res = await apiPut(`/support/admin/${selectedTicket.ticketId}/status`, {
         status: 'resolved',
         adminReply: replyText || 'Issue resolved by administration.',
       });

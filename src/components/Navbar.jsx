@@ -72,6 +72,16 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
             How it works
           </button>
           <button
+            onClick={() => onNavigate('whitepaper')}
+            className={`transition-colors cursor-pointer ${
+              currentPage === 'whitepaper'
+                ? 'text-[#0c5963] font-bold underline underline-offset-4'
+                : 'hover:text-[#0c5963]'
+            }`}
+          >
+            Whitepaper
+          </button>
+          <button
             onClick={() => onNavigate('support')}
             className={`transition-colors cursor-pointer ${
               currentPage === 'support'

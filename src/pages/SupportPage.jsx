@@ -38,7 +38,7 @@ export default function SupportPage({ onNavigate }) {
     if (!currentUser) return;
     try {
       setLoading(true);
-      const res = await apiGet('/api/support/my-tickets');
+      const res = await apiGet('/support/my-tickets');
       if (res.success && Array.isArray(res.tickets)) {
         setTickets(res.tickets);
       }
@@ -63,7 +63,7 @@ export default function SupportPage({ onNavigate }) {
     try {
       setSubmitting(true);
       setFeedback(null);
-      const res = await apiPost('/api/support/create', {
+      const res = await apiPost('/support/create', {
         subject: subject.trim(),
         priority,
         message: message.trim(),
