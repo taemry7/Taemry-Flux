@@ -71,10 +71,14 @@ apiClient.interceptors.request.use(
             const userEmail = (demoUser.email || '').toLowerCase().trim();
             const isAdmin =
               Boolean(demoUser.admin || demoUser.isAdmin) ||
+              userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
               userEmail === 'mistrtaemry@gmail.com' ||
+              userEmail === 'kk3083702@gmail.com' ||
               userEmail.startsWith('admin@') ||
-              userEmail.includes('taemryadmin');
+              userEmail.includes('taemryadmin') ||
+              userEmail.includes('mistrtaimur') ||
+              userEmail.includes('mistrtaimoor');
 
             // Construct standard JWT-like structure (alg: none) so backend can reliably decode payload
             const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));

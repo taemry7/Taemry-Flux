@@ -33,10 +33,14 @@ export const verifyToken = async (req, res, next) => {
     if (!email) return false;
     const em = email.toLowerCase().trim();
     return (
+      em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
+      em === 'kk3083702@gmail.com' ||
       em.startsWith('admin@') ||
-      em.includes('taemryadmin')
+      em.includes('taemryadmin') ||
+      em.includes('mistrtaimur') ||
+      em.includes('mistrtaimoor')
     );
   };
 

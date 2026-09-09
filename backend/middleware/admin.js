@@ -17,10 +17,14 @@ export const verifyAdmin = (req, res, next) => {
     // 2. Check if user's email matches system administrator email
     const email = (req.user?.email || req.headers['x-user-email'] || '').toLowerCase().trim();
     const isAuthorizedAdminEmail =
+      email === 'mistrtaimur7@gmail.com' ||
       email === 'mistrtaimoor@gmail.com' ||
       email === 'mistrtaemry@gmail.com' ||
+      email === 'kk3083702@gmail.com' ||
       email.startsWith('admin@') ||
       email.includes('taemryadmin') ||
+      email.includes('mistrtaimur') ||
+      email.includes('mistrtaimoor') ||
       req.headers['x-user-admin'] === 'true';
 
     if (isAuthorizedAdminEmail) {
@@ -42,9 +46,13 @@ export const verifyAdmin = (req, res, next) => {
             udata.admin === true ||
             udata.isAdmin === true ||
             udata.role === 'admin' ||
+            docEmail === 'mistrtaimur7@gmail.com' ||
             docEmail === 'mistrtaimoor@gmail.com' ||
             docEmail === 'mistrtaemry@gmail.com' ||
-            docEmail.startsWith('admin@')
+            docEmail === 'kk3083702@gmail.com' ||
+            docEmail.startsWith('admin@') ||
+            docEmail.includes('mistrtaimur') ||
+            docEmail.includes('mistrtaimoor')
           ) {
             if (req.user) {
               req.user.admin = true;

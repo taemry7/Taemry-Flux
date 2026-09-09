@@ -95,12 +95,16 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const email = (currentUser.email || '').toLowerCase();
+      const email = (currentUser.email || '').toLowerCase().trim();
       const isKnownAdminEmail =
+        email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
         email === 'mistrtaemry@gmail.com' ||
+        email === 'kk3083702@gmail.com' ||
         email.startsWith('admin@') ||
-        email.includes('taemryadmin');
+        email.includes('taemryadmin') ||
+        email.includes('mistrtaimur') ||
+        email.includes('mistrtaimoor');
 
       // 1. Check custom claim on token
       if (typeof currentUser.getIdTokenResult === 'function') {
@@ -132,10 +136,14 @@ export const AuthProvider = ({ children }) => {
     if (!email) return false;
     const em = email.toLowerCase().trim();
     return (
+      em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
+      em === 'kk3083702@gmail.com' ||
       em.startsWith('admin@') ||
-      em.includes('taemryadmin')
+      em.includes('taemryadmin') ||
+      em.includes('mistrtaimur') ||
+      em.includes('mistrtaimoor')
     );
   };
 
