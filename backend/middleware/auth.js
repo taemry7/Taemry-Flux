@@ -33,6 +33,7 @@ export const verifyToken = async (req, res, next) => {
     if (!email) return false;
     const em = email.toLowerCase().trim();
     return (
+      em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taemryadmin')
@@ -53,12 +54,12 @@ export const verifyToken = async (req, res, next) => {
       headerIsAdmin ||
       isEmailAdmin(headerEmail);
 
-    const userEmail = headerEmail || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com');
+    const userEmail = headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
 
     req.user = {
       uid: token.startsWith('demo-') || token.startsWith('google-') ? token : (isAdmin ? 'admin_taemry' : 'demo-user-1'),
       email: userEmail,
-      name: isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member',
+      name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
       admin: isAdmin,
       isDemo: true,
     };
@@ -113,8 +114,8 @@ export const verifyToken = async (req, res, next) => {
 
       req.user = {
         uid: parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-        email: parsedPayload.email || email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
-        name: parsedPayload.name || (isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member'),
+        email: parsedPayload.email || email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
+        name: parsedPayload.name || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
         admin: isAdmin,
         isDemo: true,
       };
@@ -125,8 +126,8 @@ export const verifyToken = async (req, res, next) => {
     const isAdmin = headerIsAdmin || isEmailAdmin(headerEmail) || token.includes('admin');
     req.user = {
       uid: isAdmin ? 'admin_taemry' : 'demo-user-1',
-      email: headerEmail || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
-      name: isAdmin ? 'TAEMRY Admin' : 'TAEMRY Member',
+      email: headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
+      name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
       admin: isAdmin,
       isDemo: true,
     };

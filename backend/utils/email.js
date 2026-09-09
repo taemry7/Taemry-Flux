@@ -48,7 +48,7 @@ const getTransporter = () => {
 };
 
 const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX Alerts" <no-reply@taemryflux.com>';
-const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaemry@gmail.com';
+const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
  * 1. Send Critical Error Alert to Platform Admin

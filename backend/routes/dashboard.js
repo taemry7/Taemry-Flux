@@ -49,15 +49,15 @@ router.get('/stats', verifyToken, async (req, res) => {
     let data;
 
     if (!doc.exists) {
-      // Default initial record matching user's Phase 2 requirements
+      // Default clean initial record for new user
       data = {
-        walletBalance: 45.50,
-        currentPackage: 'Gold',
-        lifetimeAds: 1200,
-        teamAdsCount: 5000,
-        referralCount: 3,
-        totalEarned: 138.20,
-        isEligible: true,
+        walletBalance: 0,
+        currentPackage: 'None',
+        lifetimeAds: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
+        isEligible: false,
       };
       await userRef.set({
         ...data,
@@ -69,13 +69,13 @@ router.get('/stats', verifyToken, async (req, res) => {
     } else {
       const userDocData = doc.data();
       data = {
-        walletBalance: userDocData.walletBalance !== undefined ? Number(userDocData.walletBalance) : 45.50,
-        currentPackage: userDocData.currentPackage || 'Gold',
-        lifetimeAds: userDocData.lifetimeAds !== undefined ? Number(userDocData.lifetimeAds) : 1200,
-        teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 5000,
-        referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 3,
-        totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 138.20,
-        isEligible: userDocData.isEligible !== undefined ? userDocData.isEligible : true,
+        walletBalance: userDocData.walletBalance !== undefined ? Number(userDocData.walletBalance) : 0,
+        currentPackage: userDocData.currentPackage || 'None',
+        lifetimeAds: userDocData.lifetimeAds !== undefined ? Number(userDocData.lifetimeAds) : 0,
+        teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 0,
+        referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 0,
+        totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 0,
+        isEligible: userDocData.isEligible !== undefined ? userDocData.isEligible : false,
       };
     }
 

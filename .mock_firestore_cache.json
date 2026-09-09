@@ -629,5 +629,113 @@
       "depositId": "tx_1788898988435_643",
       "timestamp": "2026-09-08T20:23:08.435Z"
     }
+  ],
+  [
+    "users/xWvy8NoPkXRwbVseXgzlAh89lKI3",
+    {
+      "walletBalance": 45.5,
+      "currentPackage": "Gold",
+      "lifetimeAds": 1200,
+      "teamAdsCount": 5000,
+      "referralCount": 3,
+      "totalEarned": 138.2,
+      "isEligible": true,
+      "uid": "xWvy8NoPkXRwbVseXgzlAh89lKI3",
+      "email": "mistrtaimoor@gmail.com",
+      "name": "TAEMRY Member",
+      "createdAt": "2026-09-09T11:30:19.860Z"
+    }
+  ],
+  [
+    "users/demo-new-user-999",
+    {
+      "walletBalance": 0.001,
+      "currentPackage": "None",
+      "lifetimeAds": 1,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0.001,
+      "isEligible": false,
+      "uid": "demo-new-user-999",
+      "email": "freshuser@test.com",
+      "name": "TAEMRY Member",
+      "createdAt": "2026-09-09T11:42:15.869Z",
+      "referralCode": "FLUX-DEMONE",
+      "dailyAdCount": 1,
+      "lastAdWatchTime": "2026-09-09T11:42:38.059Z",
+      "lastAdWatchDate": "2026-09-09"
+    }
+  ],
+  [
+    "transactions/tx_1788954158059_14",
+    {
+      "userId": "demo-new-user-999",
+      "uid": "demo-new-user-999",
+      "type": "ad_reward",
+      "adId": "sample",
+      "package": "None",
+      "amount": 0.001,
+      "previousBalance": 0,
+      "balanceAfter": 0.001,
+      "timestamp": "2026-09-09T11:42:38.059Z",
+      "createdAt": "2026-09-09T11:42:38.059Z",
+      "description": "Daily Ad View Reward (#1 / 200 - None tier)",
+      "id": "tx_1788954158059_14",
+      "depositId": "tx_1788954158059_14"
+    }
+  ],
+  [
+    "users/demo-brand-new-user-000",
+    {
+      "uid": "demo-brand-new-user-000",
+      "email": "brandnew@test.com",
+      "name": "TAEMRY Member",
+      "walletBalance": 0.001,
+      "currentPackage": "None",
+      "isEligible": false,
+      "lifetimeAds": 1,
+      "dailyAdCount": 1,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0.001,
+      "createdAt": "2026-09-09T11:42:58.554Z",
+      "lastAdWatchTime": "2026-09-09T11:42:58.555Z",
+      "lastAdWatchDate": "2026-09-09"
+    }
+  ],
+  [
+    "transactions/tx_1788954178555_863",
+    {
+      "userId": "demo-brand-new-user-000",
+      "uid": "demo-brand-new-user-000",
+      "type": "ad_reward",
+      "adId": "sample",
+      "package": "None",
+      "amount": 0.001,
+      "previousBalance": 0,
+      "balanceAfter": 0.001,
+      "timestamp": "2026-09-09T11:42:58.555Z",
+      "createdAt": "2026-09-09T11:42:58.555Z",
+      "description": "Daily Ad View Reward (#1 / 200 - None tier)",
+      "id": "tx_1788954178555_863",
+      "depositId": "tx_1788954178555_863"
+    }
+  ],
+  [
+    "users/demo-brand-new-user-777",
+    {
+      "uid": "demo-brand-new-user-777",
+      "email": "brandnew777@test.com",
+      "name": "TAEMRY Member",
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "isEligible": false,
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "createdAt": "2026-09-09T11:43:28.024Z"
+    }
   ]
 ]

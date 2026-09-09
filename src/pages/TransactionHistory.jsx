@@ -192,7 +192,7 @@ export default function TransactionHistory() {
             Current Wallet Balance
           </span>
           <p className="text-2xl font-black text-[#0c5963]">
-            {formatCurrency(userStats?.walletBalance || 45.50)}
+            {formatCurrency(userStats?.walletBalance ?? 0)}
           </p>
           <span className="text-[11px] text-[#718589]">Live audited balance</span>
         </div>

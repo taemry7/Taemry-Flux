@@ -82,8 +82,8 @@ router.post('/request', verifyToken, async (req, res) => {
       // Fallback default initialization if user profile has not been saved yet
       userData = {
         uid,
-        walletBalance: 45.50,
-        referralCount: 3,
+        walletBalance: 0,
+        referralCount: 0,
         lastWithdrawalDate: null,
         lastWithdrawalRequestTime: null,
       };

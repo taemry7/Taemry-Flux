@@ -39,7 +39,7 @@ const getTransporter = () => {
   };
 };
 
-const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaemry@gmail.com';
+const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
  * 1. Scheduled Daily Backup: Runs every 24 hours at 02:00 UTC

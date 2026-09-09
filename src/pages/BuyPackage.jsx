@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../api/client';
 
-export default function BuyPackage({ walletBalance = 0, currentPackage = 'Bronze', onPackageBought, onSelectTab }) {
+export default function BuyPackage({ walletBalance = 0, currentPackage = 'None', onPackageBought, onSelectTab }) {
   const [packages, setPackages] = useState([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [selectedPkg, setSelectedPkg] = useState(null);

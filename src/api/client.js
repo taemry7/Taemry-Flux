@@ -71,6 +71,7 @@ apiClient.interceptors.request.use(
             const userEmail = (demoUser.email || '').toLowerCase().trim();
             const isAdmin =
               Boolean(demoUser.admin || demoUser.isAdmin) ||
+              userEmail === 'mistrtaimoor@gmail.com' ||
               userEmail === 'mistrtaemry@gmail.com' ||
               userEmail.startsWith('admin@') ||
               userEmail.includes('taemryadmin');
@@ -81,13 +82,13 @@ apiClient.interceptors.request.use(
               JSON.stringify({
                 user_id: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
                 sub: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-                email: demoUser.email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com'),
-                name: demoUser.displayName || (isAdmin ? 'Mistr Taemry (Admin)' : 'TAEMRY Member'),
+                email: demoUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
+                name: demoUser.displayName || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
                 admin: isAdmin,
               })
             );
             token = `${header}.${payload}.demo_sig`;
-            config.headers['x-user-email'] = demoUser.email || (isAdmin ? 'mistrtaemry@gmail.com' : 'member@taemryflux.com');
+            config.headers['x-user-email'] = demoUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
             if (isAdmin) {
               config.headers['x-user-admin'] = 'true';
             }
@@ -100,7 +101,7 @@ apiClient.interceptors.request.use(
       // 3. Fallback token for testing (when no session is stored, e.g. direct admin URL or preview test)
       if (!token) {
         token = 'preview-admin-test-token';
-        config.headers['x-user-email'] = 'mistrtaemry@gmail.com';
+        config.headers['x-user-email'] = 'mistrtaimoor@gmail.com';
         config.headers['x-user-admin'] = 'true';
       }
 

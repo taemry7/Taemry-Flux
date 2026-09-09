@@ -174,20 +174,20 @@ router.post('/watch', verifyToken, async (req, res) => {
 
     let user = doc.exists ? doc.data() : null;
 
-    // If user record doesn't exist yet, initialize default
+    // If user record doesn't exist yet, initialize default clean user
     if (!user) {
       user = {
         uid,
         email: req.user.email || 'member@taemryflux.com',
         name: req.user.name || 'TAEMRY Member',
-        walletBalance: 45.50,
-        currentPackage: 'Bronze',
-        isEligible: true,
-        lifetimeAds: 1200,
-        dailyAdCount: 45,
-        teamAdsCount: 5000,
-        referralCount: 3,
-        totalEarned: 138.20,
+        walletBalance: 0,
+        currentPackage: 'None',
+        isEligible: false,
+        lifetimeAds: 0,
+        dailyAdCount: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
         createdAt: new Date().toISOString(),
       };
       await userRef.set(user);
@@ -197,8 +197,9 @@ router.post('/watch', verifyToken, async (req, res) => {
     const dailyLimit = Number(settings.dailyAdLimit || 200);
     const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
 
-    // 1. Check eligibility (must have bought a package)
-    if (settings.requirePackageForAds !== false && !user.isEligible && !user.currentPackage) {
+    // 1. Check eligibility (must have bought an active package)
+    const hasActivePackage = user.currentPackage && user.currentPackage !== 'None';
+    if (settings.requirePackageForAds !== false && (!user.isEligible || !hasActivePackage)) {
       return res.status(403).json({
         error: 'Ineligible',
         message: 'Buy a package to start watching ads and earning rewards!',

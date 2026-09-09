@@ -14,7 +14,7 @@ import { db } from './firebase/firebase.config';
 import { doc, getDocFromServer } from 'firebase/firestore';
 
 function AppContent() {
-  const { currentUser } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
   const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'login' | 'dashboard' | 'admin'
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -91,12 +91,16 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If user signs in while on login page, smoothly transition to dashboard
+  // If user signs in while on login page, smoothly transition to dashboard or admin
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
-      navigateTo('dashboard');
+      if (isAdmin) {
+        navigateTo('admin');
+      } else {
+        navigateTo('dashboard');
+      }
     }
-  }, [currentUser, currentPage]);
+  }, [currentUser, currentPage, isAdmin]);
 
   // If user is on the dedicated admin panel
   if (currentPage === 'admin') {

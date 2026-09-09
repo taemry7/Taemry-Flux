@@ -300,7 +300,7 @@ export default function LoginPage({ onNavigate }) {
             <button
               type="button"
               onClick={() => {
-                demoLogin('mistrtaemry@gmail.com');
+                demoLogin('mistrtaimoor@gmail.com');
                 onNavigate('dashboard');
               }}
               className="text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#f1ede4] hover:bg-[#e4ded2] px-2.5 py-1 rounded-lg transition-colors"

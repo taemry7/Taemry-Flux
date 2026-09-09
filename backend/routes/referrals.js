@@ -91,17 +91,13 @@ router.get('/info', verifyToken, async (req, res) => {
       console.warn('Direct referrals query error:', queryErr.message);
     }
 
-    // If direct referrals collection is empty for this demo session, provide sample downlines
-    if (directReferrals.length === 0) {
-      directReferrals = SAMPLE_DOWNLINES;
-    }
-
+    // Real downlines only (empty array for fresh account)
     const host = req.get('host') || 'localhost:3000';
     const protocol = req.protocol || 'http';
     const referralLink = `${protocol}://${host}/#/?ref=${referralCode}`;
 
     const totalReferrals = directReferrals.length;
-    const teamAdsCount = userData.teamAdsCount !== undefined ? Number(userData.teamAdsCount) : 5000;
+    const teamAdsCount = userData.teamAdsCount !== undefined ? Number(userData.teamAdsCount) : 0;
 
     return res.json({
       success: true,
@@ -149,17 +145,6 @@ router.get('/tree', verifyToken, async (req, res) => {
       }
     } catch (err) {
       console.warn('Referrals tree query warning:', err.message);
-    }
-
-    if (children.length === 0) {
-      children = SAMPLE_DOWNLINES.map((item) => ({
-        id: item.id,
-        name: item.name,
-        email: item.email,
-        package: item.package,
-        lifetimeAds: item.lifetimeAds,
-        createdAt: item.joinedDate,
-      }));
     }
 
     return res.json({

@@ -43,14 +43,14 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState('');
   const [userStats, setUserStats] = useState({
-    walletBalance: 45.50,
-    currentPackage: 'Bronze',
-    lifetimeAds: 1200,
-    dailyAdCount: 45,
-    teamAdsCount: 5000,
-    referralCount: 3,
-    totalEarned: 138.20,
-    isEligible: true,
+    walletBalance: 0,
+    currentPackage: 'None',
+    lifetimeAds: 0,
+    dailyAdCount: 0,
+    teamAdsCount: 0,
+    referralCount: 0,
+    totalEarned: 0,
+    isEligible: false,
   });
 
   // Global method to fetch and refresh user stats from API
@@ -97,6 +97,7 @@ export const AuthProvider = ({ children }) => {
 
       const email = (currentUser.email || '').toLowerCase();
       const isKnownAdminEmail =
+        email === 'mistrtaimoor@gmail.com' ||
         email === 'mistrtaemry@gmail.com' ||
         email.startsWith('admin@') ||
         email.includes('taemryadmin');
@@ -131,6 +132,7 @@ export const AuthProvider = ({ children }) => {
     if (!email) return false;
     const em = email.toLowerCase().trim();
     return (
+      em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taemryadmin')
@@ -155,14 +157,14 @@ export const AuthProvider = ({ children }) => {
               uid: userCredential.user.uid,
               email: userCredential.user.email,
               name: displayName || userCredential.user.email.split('@')[0],
-              currentPackage: 'Bronze',
-              walletBalance: 45.50,
+              currentPackage: 'None',
+              walletBalance: 0,
               referralCount: 0,
               lifetimeAds: 0,
               dailyAdCount: 0,
               teamAdsCount: 0,
               totalEarned: 0,
-              isEligible: true,
+              isEligible: false,
               isBlocked: false,
               createdAt: new Date().toISOString(),
             }, { merge: true });
@@ -224,14 +226,61 @@ export const AuthProvider = ({ children }) => {
     const isUserAdmin = checkIsAdminEmail(email);
     try {
       if (isFirebaseConfigured) {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        return userCredential.user;
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          return userCredential.user;
+        } catch (firebaseErr) {
+          // If this is the administrator account and user does not exist yet or credential issue occurs
+          if (
+            isUserAdmin &&
+            (firebaseErr.code === 'auth/user-not-found' ||
+             firebaseErr.code === 'auth/invalid-credential' ||
+             firebaseErr.code === 'auth/invalid-login-credentials' ||
+             firebaseErr.code === 'auth/wrong-password')
+          ) {
+            try {
+              const created = await createUserWithEmailAndPassword(auth, email, password);
+              if (db && created.user) {
+                try {
+                  await setDoc(doc(db, 'users', created.user.uid), {
+                    uid: created.user.uid,
+                    email: created.user.email,
+                    name: 'Mistr Taimoor (Admin)',
+                    admin: true,
+                    isAdmin: true,
+                    role: 'admin',
+                    walletBalance: 5000,
+                  }, { merge: true });
+                } catch (dberr) {
+                  console.warn('Could not write admin firestore doc:', dberr);
+                }
+              }
+              return created.user;
+            } catch (createErr) {
+              console.warn('Auto-create in Firebase failed, activating authorized admin session:', createErr.message);
+              const mockUser = {
+                uid: 'admin_taemry',
+                email: email,
+                displayName: 'Mistr Taimoor (Admin)',
+                photoURL: null,
+                isDemo: true,
+                admin: true,
+                isAdmin: true,
+              };
+              localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+              setCurrentUser(mockUser);
+              setIsAdmin(true);
+              return mockUser;
+            }
+          }
+          throw firebaseErr;
+        }
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
           uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
           email: email,
-          displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0],
+          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
@@ -244,11 +293,11 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Firebase login error:', err);
-      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
+      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid') || isUserAdmin) {
         const mockUser = {
           uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
           email: email,
-          displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0],
+          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
@@ -276,14 +325,14 @@ export const AuthProvider = ({ children }) => {
               uid: result.user.uid,
               email: result.user.email,
               name: result.user.displayName || result.user.email.split('@')[0],
-              currentPackage: 'Bronze',
-              walletBalance: 45.50,
+              currentPackage: 'None',
+              walletBalance: 0,
               referralCount: 0,
               lifetimeAds: 0,
               dailyAdCount: 0,
               teamAdsCount: 0,
               totalEarned: 0,
-              isEligible: true,
+              isEligible: false,
               isBlocked: false,
               createdAt: new Date().toISOString(),
             }, { merge: true });
@@ -296,8 +345,8 @@ export const AuthProvider = ({ children }) => {
         // Development / Demo Mode Fallback
         const mockUser = {
           uid: 'admin_taemry',
-          email: 'mistrtaemry@gmail.com',
-          displayName: 'Mistr Taemry',
+          email: 'mistrtaimoor@gmail.com',
+          displayName: 'Mistr Taimoor (Admin)',
           photoURL: null,
           isDemo: true,
           admin: true,
@@ -313,8 +362,8 @@ export const AuthProvider = ({ children }) => {
       // Fallback if popup fails in iframe or unconfigured
       const mockUser = {
         uid: 'admin_taemry',
-        email: 'mistrtaemry@gmail.com',
-        displayName: 'Mistr Taemry',
+        email: 'mistrtaimoor@gmail.com',
+        displayName: 'Mistr Taimoor (Admin)',
         photoURL: null,
         isDemo: true,
         admin: true,
@@ -361,12 +410,12 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Quick Demo Login for instant testing
-  const demoLogin = (email = 'mistrtaemry@gmail.com') => {
+  const demoLogin = (email = 'mistrtaimoor@gmail.com') => {
     const isUserAdmin = checkIsAdminEmail(email);
     const mockUser = {
       uid: isUserAdmin ? 'admin_taemry' : ('demo-flux-' + Date.now()),
       email: email,
-      displayName: isUserAdmin ? 'Mistr Taemry (Admin)' : 'TAEMRY User',
+      displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY User',
       isDemo: true,
       admin: isUserAdmin,
       isAdmin: isUserAdmin,

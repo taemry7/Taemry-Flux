@@ -27,8 +27,8 @@ router.get('/status', verifyToken, async (req, res) => {
 
     let user = doc.exists ? doc.data() : {};
 
-    const lifetimeAds = user.lifetimeAds !== undefined ? Number(user.lifetimeAds) : 1200;
-    const teamAdsCount = user.teamAdsCount !== undefined ? Number(user.teamAdsCount) : 5000;
+    const lifetimeAds = user.lifetimeAds !== undefined ? Number(user.lifetimeAds) : 0;
+    const teamAdsCount = user.teamAdsCount !== undefined ? Number(user.teamAdsCount) : 0;
     const claimedPersonal = Array.isArray(user.claimedPersonalMilestones) ? user.claimedPersonalMilestones : [];
     const claimedTeam = Array.isArray(user.claimedTeamMilestones) ? user.claimedTeamMilestones : [];
 

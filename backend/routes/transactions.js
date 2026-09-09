@@ -49,59 +49,6 @@ router.get('/', verifyToken, async (req, res) => {
       });
     });
 
-    // If transactions collection is empty for new user, construct helpful demo transactions from user profile
-    if (transactions.length === 0) {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (userDoc.exists) {
-        const u = userDoc.data();
-        const currentBal = Number(u.walletBalance) || 45.50;
-        const now = new Date();
-
-        const defaultSeed = [
-          {
-            userId: uid,
-            type: 'ad_reward',
-            amount: 0.05,
-            description: 'Completed Ad View stream verified',
-            balanceAfter: currentBal,
-            timestamp: new Date(now.getTime() - 1000 * 60 * 12).toISOString(),
-          },
-          {
-            userId: uid,
-            type: 'commission',
-            amount: 0.125,
-            description: 'L1 Direct Referral View Commission',
-            balanceAfter: +(currentBal - 0.05).toFixed(3),
-            timestamp: new Date(now.getTime() - 1000 * 60 * 85).toISOString(),
-          },
-          {
-            userId: uid,
-            type: 'milestone_bonus',
-            amount: 5.00,
-            description: 'Achieved Personal Milestone (1,000 Ads)',
-            balanceAfter: +(currentBal - 0.175).toFixed(3),
-            timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 24).toISOString(),
-          },
-          {
-            userId: uid,
-            type: 'package_purchase',
-            amount: -1.00,
-            description: 'Purchased Bronze Tier Package',
-            balanceAfter: +(currentBal - 5.175).toFixed(3),
-            timestamp: new Date(now.getTime() - 1000 * 60 * 60 * 48).toISOString(),
-          },
-        ];
-
-        for (const seed of defaultSeed) {
-          const docRef = await db.collection('transactions').add(seed);
-          transactions.push({
-            id: docRef.id,
-            ...seed,
-          });
-        }
-      }
-    }
-
     return res.json({
       success: true,
       count: transactions.length,

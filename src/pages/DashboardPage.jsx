@@ -51,17 +51,17 @@ export default function DashboardPage({
 
   // Live dashboard statistics loaded from GET /api/dashboard/stats
   const [stats, setStats] = useState({
-    walletBalance: userStats?.walletBalance || 45.50,
-    currentPackage: userStats?.currentPackage || 'Gold',
-    lifetimeAds: userStats?.lifetimeAds || 1200,
-    teamAdsCount: userStats?.teamAdsCount || 5000,
-    referralCount: userStats?.referralCount || 3,
-    totalEarned: userStats?.totalEarned || 138.20,
+    walletBalance: userStats?.walletBalance ?? 0,
+    currentPackage: userStats?.currentPackage || 'None',
+    lifetimeAds: userStats?.lifetimeAds ?? 0,
+    teamAdsCount: userStats?.teamAdsCount ?? 0,
+    referralCount: userStats?.referralCount ?? 0,
+    totalEarned: userStats?.totalEarned ?? 0,
     milestone: {
-      current: userStats?.lifetimeAds || 1200,
-      target: 2000,
-      percentage: 60,
-      adsRemaining: 800,
+      current: userStats?.lifetimeAds ?? 0,
+      target: 500,
+      percentage: 0,
+      adsRemaining: 500,
     },
   });
 
@@ -375,14 +375,21 @@ export default function DashboardPage({
                   </div>
                   <div className="mt-3 pt-3 border-t border-[#f4f0e7] flex items-center justify-between text-[11px]">
                     <span className="text-[#597277]">Status</span>
-                    <span className="font-bold text-[#16a34a] flex items-center gap-1">
-                      <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-                      Eligible
-                    </span>
+                    {stats.currentPackage && stats.currentPackage !== 'None' ? (
+                      <span className="font-bold text-[#16a34a] flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
+                        Active
+                      </span>
+                    ) : (
+                      <span className="font-bold text-[#73888d] flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#94a3b8]" />
+                        No Package
+                      </span>
+                    )}
                   </div>
                 </div>
 
-                {/* 3. Lifetime Ads (1,200) */}
+                {/* 3. Lifetime Ads */}
                 <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex flex-col justify-between hover:border-[#0c5963]/40 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -394,16 +401,16 @@ export default function DashboardPage({
                       </div>
                     </div>
                     <div className="text-3xl font-extrabold text-[#09353e] tracking-tight">
-                      {Number(stats.lifetimeAds).toLocaleString()}
+                      {Number(stats.lifetimeAds || 0).toLocaleString()}
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-[#f4f0e7] flex items-center justify-between text-[11px]">
                     <span className="text-[#597277]">Daily rhythm</span>
-                    <span className="font-bold text-[#09353e]">Active</span>
+                    <span className="font-bold text-[#09353e]">{stats.dailyAdCount ?? 0} today</span>
                   </div>
                 </div>
 
-                {/* 4. Team Ads (5,000) */}
+                {/* 4. Team Ads */}
                 <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex flex-col justify-between hover:border-[#0c5963]/40 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
@@ -415,12 +422,12 @@ export default function DashboardPage({
                       </div>
                     </div>
                     <div className="text-3xl font-extrabold text-[#09353e] tracking-tight">
-                      {Number(stats.teamAdsCount).toLocaleString()}
+                      {Number(stats.teamAdsCount || 0).toLocaleString()}
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-[#f4f0e7] flex items-center justify-between text-[11px]">
                     <span className="text-[#597277]">Referrals</span>
-                    <span className="font-bold text-[#09353e]">{stats.referralCount || 3} members</span>
+                    <span className="font-bold text-[#09353e]">{stats.referralCount ?? 0} members</span>
                   </div>
                 </div>
               </div>

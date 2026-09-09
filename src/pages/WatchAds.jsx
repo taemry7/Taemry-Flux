@@ -421,7 +421,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
             Wallet Balance
           </span>
           <p className="text-2xl font-black text-[#09353e]">
-            {formatCurrency(userStats?.walletBalance || 45.50)}
+            {formatCurrency(userStats?.walletBalance ?? 0)}
           </p>
           <span className="text-[11px] text-[#718589]">
             Lifetime Ads: {formatNumber(adStatus.lifetimeAds || 0)}

@@ -162,12 +162,12 @@ router.post('/buy', verifyToken, async (req, res) => {
     const userRef = db.collection('users').doc(uid);
     const userDoc = await userRef.get();
 
-    let currentBalance = 45.50; // Initial fallback balance
+    let currentBalance = 0; // Clean initial zero balance
     let userData = {};
 
     if (userDoc.exists) {
       userData = userDoc.data();
-      currentBalance = Number(userData.walletBalance !== undefined ? userData.walletBalance : 45.50);
+      currentBalance = Number(userData.walletBalance !== undefined ? userData.walletBalance : 0);
     } else {
       userData = {
         uid,
@@ -175,10 +175,10 @@ router.post('/buy', verifyToken, async (req, res) => {
         name: req.user.name || 'TAEMRY Member',
         currentPackage: 'None',
         isEligible: false,
-        lifetimeAds: 1200,
-        teamAdsCount: 5000,
-        referralCount: 3,
-        totalEarned: 138.20,
+        lifetimeAds: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
       };
     }
 

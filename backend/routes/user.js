@@ -23,30 +23,30 @@ router.get('/me', verifyToken, async (req, res) => {
     let userData;
 
     if (!doc.exists) {
-      // Initialize default user document if newly registered
+      // Initialize default user document if newly registered (Clean zeroed account)
       userData = {
         uid,
         email: req.user.email || 'member@taemryflux.com',
         name: req.user.name || req.user.email?.split('@')[0] || 'TAEMRY Member',
-        walletBalance: 45.50, // Initial balance for Phase 2 demonstration
-        currentPackage: 'Bronze',
-        isEligible: true,
-        lifetimeAds: 1200,
-        teamAdsCount: 5000,
-        referralCount: 3,
-        totalEarned: 138.20,
+        walletBalance: 0,
+        currentPackage: 'None',
+        isEligible: false,
+        lifetimeAds: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
         createdAt: new Date().toISOString(),
       };
       await userRef.set(userData);
     } else {
       userData = doc.data();
       // Ensure all required fields exist
-      if (userData.walletBalance === undefined) userData.walletBalance = 45.50;
-      if (!userData.currentPackage) userData.currentPackage = 'Bronze';
-      if (userData.lifetimeAds === undefined) userData.lifetimeAds = 1200;
-      if (userData.teamAdsCount === undefined) userData.teamAdsCount = 5000;
-      if (userData.referralCount === undefined) userData.referralCount = 3;
-      if (userData.totalEarned === undefined) userData.totalEarned = 138.20;
+      if (userData.walletBalance === undefined) userData.walletBalance = 0;
+      if (!userData.currentPackage) userData.currentPackage = 'None';
+      if (userData.lifetimeAds === undefined) userData.lifetimeAds = 0;
+      if (userData.teamAdsCount === undefined) userData.teamAdsCount = 0;
+      if (userData.referralCount === undefined) userData.referralCount = 0;
+      if (userData.totalEarned === undefined) userData.totalEarned = 0;
     }
 
     return res.json({
