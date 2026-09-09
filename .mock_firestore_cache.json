@@ -105,15 +105,16 @@
       "uid": "demo-user-1",
       "email": "member@taemryflux.com",
       "name": "TAEMRY Member",
-      "currentPackage": "Gold",
-      "walletBalance": 35.5,
-      "referralCount": 3,
-      "isEligible": true,
+      "currentPackage": "None",
+      "walletBalance": 0,
+      "referralCount": 0,
+      "isEligible": false,
       "isBlocked": false,
-      "dailyAdCount": 8,
-      "lifetimeAds": 1200,
+      "dailyAdCount": 0,
+      "lifetimeAds": 0,
+      "totalEarned": 0,
       "createdAt": "2026-08-15T10:00:00.000Z",
-      "updatedAt": "2026-09-08T20:15:20.910Z"
+      "referralCode": "FLUX-DEMOUS"
     }
   ],
   [
@@ -736,6 +737,23 @@
       "referralCount": 0,
       "totalEarned": 0,
       "createdAt": "2026-09-09T11:43:28.024Z"
+    }
+  ],
+  [
+    "users/EGEXFF83UNa80ZNzxIIWVfblIes1",
+    {
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "uid": "EGEXFF83UNa80ZNzxIIWVfblIes1",
+      "email": "mistrtaimur7@gmail.com",
+      "name": "TAEMRY Member",
+      "createdAt": "2026-09-09T11:58:26.673Z",
+      "referralCode": "FLUX-EGEXFF"
     }
   ]
 ]

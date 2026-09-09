@@ -31,19 +31,19 @@ export default function Milestones({ onSelectTab }) {
 
   const [milestoneStatus, setMilestoneStatus] = useState({
     personal: {
-      currentAds: userStats?.lifetimeAds || 1200,
-      nextMilestone: { adsRequired: 2500, bonusAmount: 15.00 },
-      progressPercentage: 48,
+      currentAds: userStats?.lifetimeAds ?? 0,
+      nextMilestone: { adsRequired: 1000, bonusAmount: 5.00 },
+      progressPercentage: 0,
       claimableMilestone: null,
     },
     team: {
-      currentAds: userStats?.teamAdsCount || 5000,
-      nextMilestone: { adsRequired: 10000, bonusAmount: 60.00 },
-      progressPercentage: 50,
-      claimableMilestone: { adsRequired: 5000, bonusAmount: 25.00, label: '5,000 Team Ads' },
+      currentAds: userStats?.teamAdsCount ?? 0,
+      nextMilestone: { adsRequired: 2500, bonusAmount: 10.00 },
+      progressPercentage: 0,
+      claimableMilestone: null,
     },
-    claimedPersonalMilestones: [1000],
-    claimedTeamMilestones: [2500],
+    claimedPersonalMilestones: [],
+    claimedTeamMilestones: [],
   });
 
   const [loading, setLoading] = useState(false);

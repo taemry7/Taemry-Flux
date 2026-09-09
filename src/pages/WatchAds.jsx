@@ -47,19 +47,20 @@ const PACKAGE_PRICES = {
 export default function WatchAds({ onSelectTab, onNavigate }) {
   const { userStats, updateLocalStats, fetchUserStats } = useAuth();
 
-  const pkgKey = (userStats?.currentPackage || 'Bronze').toLowerCase();
-  const pkgPrice = PACKAGE_PRICES[pkgKey] || 1.00;
-  const computedReward = +(pkgPrice * 0.001).toFixed(4);
+  const hasActivePkg = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
+  const pkgKey = (userStats?.currentPackage || 'None').toLowerCase();
+  const pkgPrice = PACKAGE_PRICES[pkgKey] || 0.00;
+  const computedReward = hasActivePkg ? +(pkgPrice * 0.001).toFixed(4) : 0;
 
   // Component state
   const [adStatus, setAdStatus] = useState({
-    isEligible: true,
-    currentPackage: userStats?.currentPackage || 'Bronze',
+    isEligible: Boolean(userStats?.isEligible && hasActivePkg),
+    currentPackage: userStats?.currentPackage || 'None',
     packagePrice: pkgPrice,
     rewardPerAd: computedReward,
-    dailyAdCount: userStats?.dailyAdCount || 0,
+    dailyAdCount: userStats?.dailyAdCount ?? 0,
     dailyLimit: 200,
-    lifetimeAds: userStats?.lifetimeAds || 0,
+    lifetimeAds: userStats?.lifetimeAds ?? 0,
   });
 
   const [loading, setLoading] = useState(false);

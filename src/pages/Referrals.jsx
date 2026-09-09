@@ -27,10 +27,10 @@ export default function Referrals({ onSelectTab }) {
   const { userStats } = useAuth();
 
   const [referralData, setReferralData] = useState({
-    referralCode: 'FLUX-PRO123',
-    referralLink: window.location.origin + '/#/?ref=FLUX-PRO123',
-    referralCount: userStats?.referralCount || 3,
-    teamAdsCount: userStats?.teamAdsCount || 5000,
+    referralCode: '',
+    referralLink: '',
+    referralCount: userStats?.referralCount ?? 0,
+    teamAdsCount: userStats?.teamAdsCount ?? 0,
     directReferrals: [],
   });
 

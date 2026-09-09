@@ -278,7 +278,7 @@ export const AuthProvider = ({ children }) => {
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
+          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
           email: email,
           displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
           photoURL: null,
@@ -295,7 +295,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Firebase login error:', err);
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid') || isUserAdmin) {
         const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : 'demo-user-1',
+          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
           email: email,
           displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
           photoURL: null,

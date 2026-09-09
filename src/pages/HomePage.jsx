@@ -191,13 +191,13 @@ export default function HomePage({ onNavigate }) {
 
   // Compute live card preview values based on user authentication
   const displayBalance = currentUser
-    ? Number(userStats?.walletBalance || 0).toFixed(2)
-    : '284.60';
+    ? Number(userStats?.walletBalance ?? 0).toFixed(2)
+    : '0.00';
   const displayProgress = currentUser
     ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / (userStats?.dailyLimit || 20)) * 100))
-    : 68;
+    : 0;
   const currentActivePackageName = currentUser
-    ? (userStats?.currentPackage || 'Bronze')
+    ? (userStats?.currentPackage || 'None')
     : null;
 
   return (
@@ -299,9 +299,17 @@ export default function HomePage({ onNavigate }) {
                 </div>
                 <div>
                   <p className="text-xs font-bold text-[#09353e]">
-                    {currentUser ? 'Active Package: ' + (userStats?.currentPackage || 'Bronze') : 'Reward credited'}
+                    {currentUser
+                      ? (userStats?.currentPackage && userStats?.currentPackage !== 'None'
+                          ? 'Active Package: ' + userStats.currentPackage
+                          : 'No Active Package')
+                      : 'Attention to Value'}
                   </p>
-                  <p className="text-[11px] text-[#6b7f83]">Keep your daily rhythm</p>
+                  <p className="text-[11px] text-[#6b7f83]">
+                    {currentUser && (!userStats?.currentPackage || userStats?.currentPackage === 'None')
+                      ? 'Choose a package to start earning'
+                      : 'Keep your daily rhythm'}
+                  </p>
                 </div>
               </div>
               <div className="text-right">
