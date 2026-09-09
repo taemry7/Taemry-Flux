@@ -29,63 +29,87 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
   const fallbackPackages = [
     {
       id: 'bronze',
-      name: 'Bronze',
+      name: 'PACKAGE',
+      tierName: 'Bronze',
       price: 1.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: null,
       color: '#b45309',
-      description: 'The foundation tier ($1) yielding 0.1% per ad across 200 daily ads.'
+      description: 'The starter tier ($1.00) generating guaranteed 25% daily returns with 200 daily ads.',
+      motivationText: '✨ Start your journey to consistent daily cashflow with guaranteed 25% returns upon activation.',
     },
     {
       id: 'silver',
-      name: 'Silver',
+      name: 'PACKAGE',
+      tierName: 'Silver',
       price: 5.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: 'POPULAR',
       color: '#0f766e',
-      description: 'Step up to 5x earnings multiplier with 200 daily ad opportunities.'
+      description: 'Accelerated revenue pace with guaranteed 25% daily returns and 200 ads allocation.',
+      motivationText: '🚀 Step up your capital accumulation with verified daily asset compounding.',
     },
     {
       id: 'gold',
-      name: 'Gold',
+      name: 'PACKAGE',
+      tierName: 'Gold',
       price: 10.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: 'RECOMMENDED',
       color: '#ca8a04',
-      description: 'Tenfold return speed with full 200 daily ad access.'
+      description: 'High-yield momentum tier with 25% daily returns and 200 ads allocation.',
+      motivationText: '💼 Accelerate your financial future with maximum daily asset growth and momentum.',
+    },
+    {
+      id: 'premium',
+      name: 'PACKAGE',
+      tierName: 'Premium',
+      price: 50.00,
+      rewardRate: '25%',
+      dailyLimit: 200,
+      badge: 'HIGH DEMAND',
+      color: '#0284c7',
+      description: 'Substantial daily earnings yield with 25% daily returns across 200 ads.',
+      motivationText: '🌟 Optimize your earnings portfolio with accelerated automated returns.',
     },
     {
       id: 'elite',
-      name: 'Elite',
+      name: 'PACKAGE',
+      tierName: 'Elite',
       price: 100.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: 'HIGH CAPACITY',
-      color: '#0284c7',
-      description: 'Substantial daily earnings ($0.10/ad) across 200 daily ads.'
+      color: '#7c3aed',
+      description: 'Accelerated volume capacity yielding 25% daily returns across 200 ads.',
+      motivationText: '⚡ Unlock high-tier digital income with boundless daily earning power.',
     },
     {
       id: 'master',
-      name: 'Master',
+      name: 'PACKAGE',
+      tierName: 'Master',
       price: 500.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: 'PRO TIER',
-      color: '#7c3aed',
-      description: 'High-volume allocation generating $0.50 per ad view.'
+      color: '#db2777',
+      description: 'Elite return multiplier delivering 25% daily returns across 200 ads.',
+      motivationText: '👑 Experience top-tier financial scaling and exponential revenue independence.',
     },
     {
       id: 'apex',
-      name: 'Apex',
+      name: 'PACKAGE',
+      tierName: 'Apex',
       price: 1000.00,
-      rewardRate: '0.1%',
+      rewardRate: '25%',
       dailyLimit: 200,
       badge: 'TOP TIER',
       color: '#ea580c',
-      description: 'Peak performance tier generating $1.00 per ad view up to 200 daily.'
+      description: 'Peak performance tier generating 25% daily returns across 200 ads.',
+      motivationText: '🏆 Reach pinnacle financial status with supreme daily capital returns and full power.',
     },
   ];
 
@@ -97,7 +121,18 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         setLoadingPackages(true);
         const res = await apiClient.get('/packages');
         if (isMounted && res.data?.packages?.length > 0) {
-          setPackages(res.data.packages);
+          const sanitized = res.data.packages.map((pkg) => {
+            const fallback = fallbackPackages.find((f) => f.id === pkg.id) || {};
+            return {
+              ...pkg,
+              name: 'PACKAGE',
+              tierName: pkg.tierName || fallback.tierName || (pkg.id ? pkg.id.toUpperCase() : 'Tier'),
+              rewardRate: '25%',
+              dailyLimit: 200,
+              motivationText: fallback.motivationText || '✨ Empower your financial future with guaranteed 25% daily asset returns upon activation.',
+            };
+          });
+          setPackages(sanitized);
         } else if (isMounted) {
           setPackages(fallbackPackages);
         }
@@ -237,7 +272,12 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       {/* Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {displayList.map((pkg) => {
-          const isCurrent = currentPackage?.toLowerCase() === pkg.name?.toLowerCase();
+          const isCurrent = currentPackage && currentPackage !== 'None' && (
+            currentPackage.toLowerCase() === pkg.id?.toLowerCase() ||
+            currentPackage.toLowerCase() === pkg.tierName?.toLowerCase() ||
+            currentPackage.toLowerCase() === pkg.name?.toLowerCase()
+          );
+          const userHasPackage = currentPackage && currentPackage !== 'None';
           const canAfford = walletBalance >= pkg.price;
 
           return (
@@ -252,7 +292,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
               <div>
                 {/* Card Top */}
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[10px] font-bold tracking-wider text-[#73888d] uppercase">
+                  <span className="text-[10px] font-bold tracking-wider text-[#0c5963] uppercase">
                     PACKAGE
                   </span>
                   <div className="flex items-center gap-2">
@@ -269,9 +309,12 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-bold text-[#09353e] mb-1">{pkg.name}</h3>
+                <h3 className="text-2xl font-black text-[#09353e] mb-0.5">PACKAGE</h3>
+                <p className="text-xs font-semibold text-[#0c5963] mb-1">
+                  {pkg.tierName || `${pkg.id?.toUpperCase()} Tier`} (${Number(pkg.price).toFixed(2)})
+                </p>
                 <p className="text-xs text-[#5e757a] mb-5 leading-relaxed">
-                  {pkg.description || `Includes ${pkg.dailyLimit} daily views with ${pkg.rewardRate} reward rate.`}
+                  {pkg.description || 'Guaranteed 25% daily returns with 200 daily ads allocation.'}
                 </p>
 
                 {/* Pricing and Stats */}
@@ -288,18 +331,28 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
 
                     <div className="text-right">
                       <span className="text-[10px] text-[#788e93] block uppercase font-medium">
-                        Reward Rate
+                        Daily Return
                       </span>
                       <span className="text-sm font-bold text-[#0c5963]">
-                        {pkg.rewardRate} <span className="text-[10px] font-normal text-[#6f8489]">/ view</span>
+                        25% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs text-[#526a6f] bg-[#faf8f5] px-3.5 py-2.5 rounded-xl border border-[#efe9de]">
-                    <span>Daily Views Allocation</span>
-                    <span className="font-bold text-[#09353e]">{pkg.dailyLimit} views/day</span>
-                  </div>
+                  {/* Quota display: Shown only if user has an active package; Otherwise hidden with motivation text */}
+                  {userHasPackage ? (
+                    <div className="flex items-center justify-between text-xs text-[#065f46] bg-[#ecfdf5] px-3.5 py-2.5 rounded-xl border border-[#a7f3d0]">
+                      <span className="font-medium">Daily Ads Allocation</span>
+                      <span className="font-extrabold text-[#065f46]">200 ads/day (Unlocked)</span>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
+                      <span className="leading-snug font-medium">
+                        {pkg.motivationText || '✨ Build your digital earnings foundation with guaranteed 25% daily returns.'}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -319,7 +372,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                         : 'bg-[#faf8f5] hover:bg-[#f1ede4] text-[#09353e] border border-[#d8d1c3]'
                     }`}
                   >
-                    <span>{canAfford ? `Buy ${pkg.name}` : `Buy for $${Number(pkg.price).toFixed(2)}`}</span>
+                    <span>{canAfford ? `Buy PACKAGE` : `Buy for $${Number(pkg.price).toFixed(2)}`}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 )}
@@ -349,7 +402,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
               Confirm Package Purchase
             </h3>
             <p className="text-xs text-[#5b7277] mb-5 leading-relaxed">
-              You are about to buy <strong className="text-[#09353e]">{selectedPkg.name}</strong> for <strong className="text-[#0c5963]">${Number(selectedPkg.price).toFixed(2)}</strong>. Confirm?
+              You are about to buy <strong className="text-[#09353e]">PACKAGE ({selectedPkg.tierName || 'Tier'})</strong> for <strong className="text-[#0c5963]">${Number(selectedPkg.price).toFixed(2)}</strong>. Confirm?
             </p>
 
             <div className="bg-[#faf8f5] rounded-2xl p-4 border border-[#e8e2d5] space-y-2.5 mb-6 text-xs">

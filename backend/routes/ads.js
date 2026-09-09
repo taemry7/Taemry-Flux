@@ -12,11 +12,12 @@ import { getSystemSettings } from './settings.js';
 
 const router = express.Router();
 
-// Package pricing directory to calculate exact 0.1% ad reward
+// Package pricing directory to calculate exact ad reward (25% daily returns across 200 ads)
 const PACKAGE_PRICES = {
   bronze: 1.00,
   silver: 5.00,
   gold: 10.00,
+  premium: 50.00,
   elite: 100.00,
   master: 500.00,
   apex: 1000.00,
@@ -49,9 +50,14 @@ router.get('/status', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
+    const hasActivePackage = user.currentPackage && user.currentPackage !== 'None';
+    const isEligible = Boolean(user.isEligible && hasActivePackage);
+
     const dailyLimit = Number(settings.dailyAdLimit || 200);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
+    // 25% daily return distributed across 200 ads = 0.125% per ad (25% / 200)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.125;
+    const rewardRate = rewardPercentage / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
@@ -59,8 +65,8 @@ router.get('/status', verifyToken, async (req, res) => {
 
     return res.json({
       success: true,
-      isEligible: user.isEligible !== false,
-      currentPackage: user.currentPackage || 'Bronze',
+      isEligible,
+      currentPackage: user.currentPackage || 'None',
       packagePrice,
       rewardPerAd,
       dailyAdCount,
@@ -195,14 +201,16 @@ router.post('/watch', verifyToken, async (req, res) => {
 
     const settings = await getSystemSettings();
     const dailyLimit = Number(settings.dailyAdLimit || 200);
-    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
+    // 25% daily return distributed across 200 ads = 0.125% per ad (25% / 200)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.125;
+    const rewardRate = rewardPercentage / 100;
 
-    // 1. Check eligibility (must have bought an active package)
+    // 1. Strict eligibility: new accounts only eligible for deposit and buying a package
     const hasActivePackage = user.currentPackage && user.currentPackage !== 'None';
-    if (settings.requirePackageForAds !== false && (!user.isEligible || !hasActivePackage)) {
+    if (!user.isEligible || !hasActivePackage) {
       return res.status(403).json({
         error: 'Ineligible',
-        message: 'Buy a package to start watching ads and earning rewards!',
+        message: 'New accounts are only eligible for deposit and buying a package. Please buy a package first to unlock watching ads and earning rewards!',
       });
     }
 

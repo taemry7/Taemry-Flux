@@ -19,14 +19,38 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  setPersistence,
+  browserLocalPersistence
 } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
 import apiClient from '../api/client.js';
 
 // Create Auth Context
 const AuthContext = createContext(null);
+
+// Configure Firebase persistence for lifelong persistent sessions until explicit user logout
+if (isFirebaseConfigured && auth) {
+  try {
+    setPersistence(auth, browserLocalPersistence).catch((err) => {
+      console.warn('[Firebase Auth] Persistence configuration notice:', err?.message);
+    });
+  } catch (err) {
+    console.warn('[Firebase Auth] Persistence setup error:', err);
+  }
+}
+
+// Helper to retrieve any persisted session on cold start
+const getInitialPersistedUser = () => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+};
 
 // Custom hook to consume AuthContext easily
 export const useAuth = () => {
@@ -38,9 +62,10 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const initialUser = getInitialPersistedUser();
+  const [currentUser, setCurrentUser] = useState(initialUser);
+  const [isAdmin, setIsAdmin] = useState(() => Boolean(initialUser?.admin || initialUser?.isAdmin));
+  const [loading, setLoading] = useState(!initialUser);
   const [authError, setAuthError] = useState('');
   const [userStats, setUserStats] = useState({
     walletBalance: 0,
@@ -52,6 +77,25 @@ export const AuthProvider = ({ children }) => {
     totalEarned: 0,
     isEligible: false,
   });
+
+  // Helper to persist session to localStorage
+  const saveUserSession = (user) => {
+    if (user) {
+      const serializableUser = {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Member'),
+        photoURL: user.photoURL || null,
+        phoneNumber: user.phoneNumber || null,
+        admin: Boolean(user.admin || user.isAdmin),
+        isAdmin: Boolean(user.admin || user.isAdmin),
+      };
+      localStorage.setItem('taemry_persisted_user', JSON.stringify(serializableUser));
+    } else {
+      localStorage.removeItem('taemry_persisted_user');
+      localStorage.removeItem('taemry_demo_user');
+    }
+  };
 
   // Global method to fetch and refresh user stats from API
   const fetchUserStats = useCallback(async () => {
@@ -150,10 +194,25 @@ export const AuthProvider = ({ children }) => {
   // 1. Sign Up with Email and Password
   const signup = async (email, password, displayName = '') => {
     setAuthError('');
-    const isUserAdmin = checkIsAdminEmail(email);
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const isUserAdmin = checkIsAdminEmail(cleanEmail);
+
+    // Track simulated registry to prevent creating duplicate accounts
+    let registeredUsers = [];
+    try {
+      const rawRegistered = localStorage.getItem('taemry_registered_emails');
+      registeredUsers = rawRegistered ? JSON.parse(rawRegistered) : [];
+    } catch {}
+
+    if (registeredUsers.includes(cleanEmail)) {
+      const msg = 'Account already exists! An account with this email address already exists. Please sign in instead.';
+      setAuthError(msg);
+      throw new Error(msg);
+    }
+
     try {
       if (isFirebaseConfigured) {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
         if (displayName) {
           await updateProfile(userCredential.user, { displayName });
         }
@@ -163,8 +222,8 @@ export const AuthProvider = ({ children }) => {
           try {
             await setDoc(doc(db, 'users', userCredential.user.uid), {
               uid: userCredential.user.uid,
-              email: userCredential.user.email,
-              name: displayName || userCredential.user.email.split('@')[0],
+              email: cleanEmail,
+              name: displayName || cleanEmail.split('@')[0],
               currentPackage: 'None',
               walletBalance: 0,
               referralCount: 0,
@@ -181,19 +240,25 @@ export const AuthProvider = ({ children }) => {
           }
         }
 
+        registeredUsers.push(cleanEmail);
+        localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
+        saveUserSession(userCredential.user);
+        setCurrentUser(userCredential.user);
         return userCredential.user;
       } else {
         // Development / Demo Mode Fallback
         const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : ('demo-' + Date.now()),
-          email: email,
-          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0]),
+          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Date.now()),
+          email: cleanEmail,
+          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : cleanEmail.split('@')[0]),
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
           isAdmin: isUserAdmin,
         };
-        localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+        registeredUsers.push(cleanEmail);
+        localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
+        saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
         return mockUser;
@@ -201,7 +266,9 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Firebase signup error:', err);
       let friendlyError = err.message || 'Failed to sign up';
-      if (err.code === 'auth/operation-not-allowed') {
+      if (err.code === 'auth/email-already-in-use') {
+        friendlyError = 'Account already exists! An account with this email address already exists. Please sign in instead.';
+      } else if (err.code === 'auth/operation-not-allowed') {
         friendlyError = 'Firebase Error: Email/Password sign-in is disabled in your Firebase Console. Please enable Email/Password provider in Firebase Authentication -> Sign-in method.';
       } else if (err.code === 'auth/unauthorized-domain') {
         friendlyError = 'Firebase Error: This domain is not in your Firebase Authorized Domains list. Please add your app domain in Firebase Authentication -> Settings -> Authorized Domains.';
@@ -210,15 +277,17 @@ export const AuthProvider = ({ children }) => {
       // If Firebase key is invalid or demo, fallback gracefully
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
         const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : ('demo-' + Date.now()),
-          email: email,
-          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : email.split('@')[0]),
+          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Date.now()),
+          email: cleanEmail,
+          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : cleanEmail.split('@')[0]),
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
           isAdmin: isUserAdmin,
         };
-        localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+        registeredUsers.push(cleanEmail);
+        localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
+        saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
         return mockUser;
@@ -231,11 +300,14 @@ export const AuthProvider = ({ children }) => {
   // 2. Sign In with Email and Password
   const login = async (email, password) => {
     setAuthError('');
-    const isUserAdmin = checkIsAdminEmail(email);
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const isUserAdmin = checkIsAdminEmail(cleanEmail);
     try {
       if (isFirebaseConfigured) {
         try {
-          const userCredential = await signInWithEmailAndPassword(auth, email, password);
+          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+          saveUserSession(userCredential.user);
+          setCurrentUser(userCredential.user);
           return userCredential.user;
         } catch (firebaseErr) {
           // If this is the administrator account and user does not exist yet or credential issue occurs
@@ -247,7 +319,7 @@ export const AuthProvider = ({ children }) => {
              firebaseErr.code === 'auth/wrong-password')
           ) {
             try {
-              const created = await createUserWithEmailAndPassword(auth, email, password);
+              const created = await createUserWithEmailAndPassword(auth, cleanEmail, password);
               if (db && created.user) {
                 try {
                   await setDoc(doc(db, 'users', created.user.uid), {
@@ -263,19 +335,21 @@ export const AuthProvider = ({ children }) => {
                   console.warn('Could not write admin firestore doc:', dberr);
                 }
               }
+              saveUserSession(created.user);
+              setCurrentUser(created.user);
               return created.user;
             } catch (createErr) {
               console.warn('Auto-create in Firebase failed, activating authorized admin session:', createErr.message);
               const mockUser = {
                 uid: 'admin_taemry',
-                email: email,
+                email: cleanEmail,
                 displayName: 'Mistr Taimoor (Admin)',
                 photoURL: null,
                 isDemo: true,
                 admin: true,
                 isAdmin: true,
               };
-              localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+              saveUserSession(mockUser);
               setCurrentUser(mockUser);
               setIsAdmin(true);
               return mockUser;
@@ -287,14 +361,14 @@ export const AuthProvider = ({ children }) => {
         // Development / Demo Mode Fallback
         const mockUser = {
           uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
-          email: email,
-          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
+          email: cleanEmail,
+          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0],
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
           isAdmin: isUserAdmin,
         };
-        localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+        saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
         return mockUser;
@@ -304,14 +378,14 @@ export const AuthProvider = ({ children }) => {
       if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid') || isUserAdmin) {
         const mockUser = {
           uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
-          email: email,
-          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : email.split('@')[0],
+          email: cleanEmail,
+          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0],
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
           isAdmin: isUserAdmin,
         };
-        localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+        saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
         return mockUser;
@@ -348,6 +422,8 @@ export const AuthProvider = ({ children }) => {
             console.warn('Could not write Google user to Firestore:', firestoreErr.message);
           }
         }
+        saveUserSession(result.user);
+        setCurrentUser(result.user);
         return result.user;
       } else {
         // Development / Demo Mode Fallback
@@ -360,14 +436,13 @@ export const AuthProvider = ({ children }) => {
           admin: true,
           isAdmin: true,
         };
-        localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+        saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(true);
         return mockUser;
       }
     } catch (err) {
       console.error('Google Sign In error:', err);
-      // Fallback if popup fails in iframe or unconfigured
       const mockUser = {
         uid: 'admin_taemry',
         email: 'mistrtaimoor@gmail.com',
@@ -377,32 +452,79 @@ export const AuthProvider = ({ children }) => {
         admin: true,
         isAdmin: true,
       };
-      localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+      saveUserSession(mockUser);
       setCurrentUser(mockUser);
       setIsAdmin(true);
       return mockUser;
     }
   };
 
-  // 4. Log Out
+  // 4. Log Out (Only explicitly logs out when user clicks logout)
   const logout = async () => {
     setAuthError('');
     try {
       if (isFirebaseConfigured) {
         await signOut(auth);
       }
-      localStorage.removeItem('taemry_demo_user');
+      saveUserSession(null);
       setCurrentUser(null);
       setIsAdmin(false);
     } catch (err) {
       console.error('Firebase logout error:', err);
-      localStorage.removeItem('taemry_demo_user');
+      saveUserSession(null);
       setCurrentUser(null);
       setIsAdmin(false);
     }
   };
 
-  // 5. Reset Password
+  // 5. Update Profile (Profile Photo, Name, Phone, Bio)
+  const updateUserProfile = async ({ displayName, photoURL, phoneNumber, country, bio }) => {
+    try {
+      if (currentUser) {
+        // Update in Firebase Auth if available
+        if (isFirebaseConfigured && auth.currentUser) {
+          const authUpdates = {};
+          if (displayName !== undefined) authUpdates.displayName = displayName;
+          if (photoURL !== undefined) authUpdates.photoURL = photoURL;
+          if (Object.keys(authUpdates).length > 0) {
+            await updateProfile(auth.currentUser, authUpdates);
+          }
+        }
+
+        // Update in Firestore
+        if (db && currentUser.uid) {
+          try {
+            const updates = {};
+            if (displayName !== undefined) updates.name = displayName;
+            if (photoURL !== undefined) updates.photoURL = photoURL;
+            if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber;
+            if (country !== undefined) updates.country = country;
+            if (bio !== undefined) updates.bio = bio;
+            await setDoc(doc(db, 'users', currentUser.uid), updates, { merge: true });
+          } catch (e) {
+            console.warn('Firestore profile update warning:', e.message);
+          }
+        }
+
+        const updated = {
+          ...currentUser,
+          ...(displayName ? { displayName } : {}),
+          ...(photoURL !== undefined ? { photoURL } : {}),
+          ...(phoneNumber !== undefined ? { phoneNumber } : {}),
+          ...(country !== undefined ? { country } : {}),
+          ...(bio !== undefined ? { bio } : {}),
+        };
+        saveUserSession(updated);
+        setCurrentUser(updated);
+        return updated;
+      }
+    } catch (err) {
+      console.error('Error updating user profile:', err);
+      throw err;
+    }
+  };
+
+  // 6. Reset Password
   const resetPassword = async (email) => {
     setAuthError('');
     try {
@@ -428,7 +550,7 @@ export const AuthProvider = ({ children }) => {
       admin: isUserAdmin,
       isAdmin: isUserAdmin,
     };
-    localStorage.setItem('taemry_demo_user', JSON.stringify(mockUser));
+    saveUserSession(mockUser);
     setCurrentUser(mockUser);
     setIsAdmin(isUserAdmin);
   };
@@ -441,16 +563,13 @@ export const AuthProvider = ({ children }) => {
       try {
         unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user) {
+            saveUserSession(user);
             setCurrentUser(user);
           } else {
-            // Check if demo user is stored in localStorage
-            const savedDemo = localStorage.getItem('taemry_demo_user');
-            if (savedDemo) {
-              try {
-                setCurrentUser(JSON.parse(savedDemo));
-              } catch {
-                setCurrentUser(null);
-              }
+            // Keep persisted user if user did not explicitly sign out
+            const persisted = getInitialPersistedUser();
+            if (persisted) {
+              setCurrentUser(persisted);
             } else {
               setCurrentUser(null);
             }
@@ -459,22 +578,13 @@ export const AuthProvider = ({ children }) => {
         });
       } catch (e) {
         console.warn('Firebase onAuthStateChanged setup notice:', e);
-        const savedDemo = localStorage.getItem('taemry_demo_user');
-        if (savedDemo) {
-          try {
-            setCurrentUser(JSON.parse(savedDemo));
-          } catch {}
-        }
+        const persisted = getInitialPersistedUser();
+        if (persisted) setCurrentUser(persisted);
         setLoading(false);
       }
     } else {
-      // Offline / Demo Mode check
-      const savedDemo = localStorage.getItem('taemry_demo_user');
-      if (savedDemo) {
-        try {
-          setCurrentUser(JSON.parse(savedDemo));
-        } catch {}
-      }
+      const persisted = getInitialPersistedUser();
+      if (persisted) setCurrentUser(persisted);
       setLoading(false);
     }
 
@@ -494,6 +604,7 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     demoLogin,
+    updateUserProfile,
     isFirebaseConfigured,
     userStats,
     fetchUserStats,

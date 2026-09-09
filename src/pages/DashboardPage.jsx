@@ -25,7 +25,8 @@ import {
   ArrowDownCircle,
   ArrowUpRight,
   History,
-  Coins
+  Coins,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -36,6 +37,7 @@ import Milestones from './Milestones';
 import DepositPage from './DepositPage';
 import WithdrawPage from './WithdrawPage';
 import TransactionHistory from './TransactionHistory';
+import AccountSettings from './AccountSettings';
 
 export default function DashboardPage({
   activeTab: propActiveTab = 'overview',
@@ -124,13 +126,14 @@ export default function DashboardPage({
   // Sidebar navigation menu items
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare, tag: '200' },
+    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
     { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle, tag: 'Instant' },
     { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
     { id: 'transactions', label: 'Transactions', icon: History },
     { id: 'buy-package', label: 'Buy Package', icon: Package },
     { id: 'referrals', label: 'Referrals', icon: Users },
     { id: 'milestones', label: 'Milestones', icon: Trophy },
+    { id: 'settings', label: 'Settings & Profile', icon: Settings },
   ];
 
   const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'TAEMRY Member';
@@ -592,6 +595,13 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {activeTab === 'transactions' && (
             <TransactionHistory />
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB 9: SETTINGS & PROFILE (Theme, Photo, Info)                            */}
+          {/* ========================================================================= */}
+          {activeTab === 'settings' && (
+            <AccountSettings onSelectTab={handleTabChange} />
           )}
         </section>
       </div>

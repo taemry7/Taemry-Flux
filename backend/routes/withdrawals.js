@@ -98,6 +98,16 @@ router.post('/request', verifyToken, async (req, res) => {
       });
     }
 
+    // 2.5 Strict Rule: Active Package Check
+    const hasActivePackage = userData.currentPackage && userData.currentPackage !== 'None' && userData.isEligible;
+    if (!hasActivePackage) {
+      return res.status(400).json({
+        error: 'Package Required',
+        message: 'You must purchase an active PACKAGE before requesting withdrawals. Please activate a package first.',
+        currentPackage: userData.currentPackage || 'None',
+      });
+    }
+
     // 3. Balance Check: amountUSD must be <= user's walletBalance
     const currentBalance = Number(userData.walletBalance) || 0;
     if (parsedAmount > currentBalance) {

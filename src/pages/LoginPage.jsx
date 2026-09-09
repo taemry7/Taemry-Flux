@@ -127,9 +127,27 @@ export default function LoginPage({ onNavigate }) {
 
         {/* Error Alert */}
         {error && (
-          <div className="mb-5 p-3.5 bg-[#fef2f2] border border-[#fecaca] rounded-xl flex items-start gap-2.5 text-xs text-[#991b1b]">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-            <span className="flex-1">{error}</span>
+          <div className={`mb-5 p-3.5 rounded-xl flex flex-col gap-2 text-xs ${
+            error.toLowerCase().includes('already exist')
+              ? 'bg-[#fffbeb] border border-[#fde68a] text-[#92400e]'
+              : 'bg-[#fef2f2] border border-[#fecaca] text-[#991b1b]'
+          }`}>
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+              <span className="flex-1 font-medium">{error}</span>
+            </div>
+            {error.toLowerCase().includes('already exist') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(false);
+                  setError('');
+                }}
+                className="self-start mt-1 px-3 py-1.5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-lg font-bold text-xs transition cursor-pointer"
+              >
+                👉 Switch to Sign In with this Email
+              </button>
+            )}
           </div>
         )}
 

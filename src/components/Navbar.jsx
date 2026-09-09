@@ -1,10 +1,29 @@
-import React from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('taemry_theme') || 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.body.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      document.body.classList.remove('dark');
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('taemry_theme', nextTheme);
+  };
 
   // Extract initials from user email or name
   const getInitials = () => {
@@ -114,6 +133,20 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 </button>
               )}
 
+              {/* Theme Toggle (White Mode / Dark Mode) */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="p-2 rounded-xl text-[#526d72] hover:text-[#0c5963] hover:bg-[#eef2f3] transition-colors cursor-pointer"
+                title={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-[#f59e0b]" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#526d72]" />
+                )}
+              </button>
+
               {/* Wallet quick balance pill */}
               <button
                 onClick={() => onNavigate('dashboard')}
@@ -123,13 +156,30 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 <span>${Number(userStats?.walletBalance ?? 0).toFixed(2)}</span>
               </button>
 
-              {/* User Avatar Circle */}
+              {/* User Avatar (Photo or Initials) */}
               <button
                 onClick={() => onNavigate('dashboard')}
-                className="w-9 h-9 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#e89b27]/40 transition-all"
-                title={currentUser.email || 'Member'}
+                className="w-9 h-9 rounded-full overflow-hidden bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#0c5963]/40 transition-all cursor-pointer border border-[#ded8cb]"
+                title={currentUser.email || 'Member Profile'}
               >
-                {getInitials()}
+                {currentUser.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    alt="User Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  getInitials()
+                )}
+              </button>
+
+              {/* Settings shortcut button */}
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="p-2 text-[#78888b] hover:text-[#0c5963] hover:bg-[#eef2f3] rounded-xl transition-colors cursor-pointer hidden sm:block"
+                title="Account Settings"
+              >
+                <Settings className="w-4 h-4" />
               </button>
 
               {/* Logout button */}
@@ -139,7 +189,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                   await logout();
                   onNavigate('home');
                 }}
-                className="p-2 text-[#78888b] hover:text-[#b91c1c] hover:bg-[#fee2e2]/60 rounded-xl transition-colors"
+                className="p-2 text-[#78888b] hover:text-[#b91c1c] hover:bg-[#fee2e2]/60 rounded-xl transition-colors cursor-pointer"
                 title="Sign out"
               >
                 <LogOut className="w-4 h-4" />
@@ -147,6 +197,19 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
             </div>
           ) : (
             <div className="flex items-center gap-2 sm:gap-4">
+              {/* Theme Toggle for logged out guests too */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="p-2 rounded-xl text-[#526d72] hover:text-[#0c5963] hover:bg-[#eef2f3] transition-colors cursor-pointer"
+                title={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
+              >
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-[#f59e0b]" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#526d72]" />
+                )}
+              </button>
               <button
                 id="btn-nav-signin"
                 onClick={() => onNavigate('login')}

@@ -63,4 +63,43 @@ router.get('/me', verifyToken, async (req, res) => {
   }
 });
 
+/**
+ * PUT /api/user/profile
+ * Protected: Updates profile information (name, phone, photoURL, country, bio).
+ */
+router.put('/profile', verifyToken, async (req, res) => {
+  try {
+    const uid = req.user.uid;
+    const { name, phoneNumber, photoURL, country, bio, theme } = req.body || {};
+    const db = getDb();
+    const userRef = db.collection('users').doc(uid);
+
+    const updates = {
+      updatedAt: new Date().toISOString(),
+    };
+    if (name !== undefined) updates.name = name.trim();
+    if (phoneNumber !== undefined) updates.phoneNumber = phoneNumber.trim();
+    if (photoURL !== undefined) updates.photoURL = photoURL;
+    if (country !== undefined) updates.country = country.trim();
+    if (bio !== undefined) updates.bio = bio.trim();
+    if (theme !== undefined) updates.theme = theme;
+
+    await userRef.set(updates, { merge: true });
+
+    const updatedDoc = await userRef.get();
+    return res.json({
+      success: true,
+      message: 'Profile updated successfully.',
+      user: updatedDoc.data(),
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/user/profile:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to update profile.',
+      details: error.message,
+    });
+  }
+});
+
 export default router;

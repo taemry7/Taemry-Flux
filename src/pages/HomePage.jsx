@@ -29,8 +29,8 @@ export default function HomePage({ onNavigate }) {
       a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
     },
     {
-      q: 'Q3. Why can\'t I withdraw money if I have 0 referrals?',
-      a: 'To build a strong community, you must invite at least 1 active friend (direct referral) before you can withdraw any amount.'
+      q: 'Q3. How does the 25% daily return on packages work?',
+      a: 'Every package delivers a guaranteed 25% daily return rate through our daily 200 ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
     },
     {
       q: 'Q4. What are the deposit and withdrawal methods?',
@@ -46,87 +46,101 @@ export default function HomePage({ onNavigate }) {
   const defaultPackages = [
     {
       id: 'bronze',
-      name: 'Bronze',
-      tagline: 'A measured first step',
+      name: 'PACKAGE',
+      tierLabel: 'Bronze Tier',
+      tagline: 'A measured first step into daily digital earnings',
       entryPrice: '$1.00',
       minWallet: '$0.10',
-      rewardRate: '2.0%',
-      dailyLimit: '20 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#d97706]/10 text-[#b45309] border-[#d97706]/30',
       badge: 'STARTER',
       circleColor: 'bg-[#b45309]',
+      motivationText: '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
     },
     {
       id: 'silver',
-      name: 'Silver',
-      tagline: 'For a stronger rhythm',
+      name: 'PACKAGE',
+      tierLabel: 'Silver Tier',
+      tagline: 'For accelerated daily revenue momentum',
       entryPrice: '$5.00',
       minWallet: '$0.50',
-      rewardRate: '2.5%',
-      dailyLimit: '40 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0f766e]/10 text-[#0f766e] border-[#0f766e]/30',
-      badge: 'MOST CHOSEN',
+      badge: 'POPULAR',
       circleColor: 'bg-[#0f766e]',
+      motivationText: '🚀 Build long-term digital wealth with secure, verified daily asset accumulation.',
     },
     {
       id: 'gold',
-      name: 'Gold',
-      tagline: 'For committed momentum',
+      name: 'PACKAGE',
+      tierLabel: 'Gold Tier',
+      tagline: 'For committed momentum with high-velocity returns',
       entryPrice: '$10.00',
       minWallet: '$1.00',
-      rewardRate: '3.0%',
-      dailyLimit: '60 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#ca8a04]/10 text-[#ca8a04] border-[#ca8a04]/30',
       badge: 'RECOMMENDED',
       circleColor: 'bg-[#ca8a04]',
+      motivationText: '💼 Secure your financial future with maximized cashflow and daily compounding growth.',
     },
     {
       id: 'premium',
-      name: 'Premium',
+      name: 'PACKAGE',
+      tierLabel: 'Premium Tier',
       tagline: 'High-velocity professional plan',
       entryPrice: '$50.00',
       minWallet: '$5.00',
-      rewardRate: '3.8%',
-      dailyLimit: '80 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
-      badge: 'POPULAR',
+      badge: 'HIGH DEMAND',
       circleColor: 'bg-[#0284c7]',
+      motivationText: '🌟 Accelerate your asset portfolio with institutional-grade daily returns.',
     },
     {
       id: 'elite',
-      name: 'Elite',
-      tagline: 'Accelerated daily velocity',
+      name: 'PACKAGE',
+      tierLabel: 'Elite Tier',
+      tagline: 'Accelerated daily velocity and high-tier returns',
       entryPrice: '$100.00',
       minWallet: '$10.00',
-      rewardRate: '4.5%',
-      dailyLimit: '100 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH CAPACITY',
       circleColor: 'bg-[#0284c7]',
+      motivationText: '⚡ Unlock boundless future opportunities with high-yield automated daily capital.',
     },
     {
       id: 'master',
-      name: 'Master',
-      tagline: 'Elite daily multiplier',
+      name: 'PACKAGE',
+      tierLabel: 'Master Tier',
+      tagline: 'Elite daily multiplier for advanced digital leaders',
       entryPrice: '$500.00',
       minWallet: '$50.00',
-      rewardRate: '6.0%',
-      dailyLimit: '150 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#db2777]/10 text-[#db2777] border-[#db2777]/30',
-      badge: 'ELITE',
+      badge: 'PRO MASTER',
       circleColor: 'bg-[#db2777]',
+      motivationText: '👑 Experience top-tier financial scaling and exponential revenue independence.',
     },
     {
       id: 'apex',
-      name: 'Apex',
-      tagline: 'Unbounded reward scale',
+      name: 'PACKAGE',
+      tierLabel: 'Apex Tier',
+      tagline: 'Unbounded reward scale with peak return rate',
       entryPrice: '$1,000.00',
       minWallet: '$100.00',
-      rewardRate: '7.5%',
-      dailyLimit: '200 views/day',
+      rewardRate: '25%',
+      dailyLimit: '200 ads/day',
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
-      badge: 'ELITE MASTER',
+      badge: 'APEX MASTER',
       circleColor: 'bg-[#ea580c]',
+      motivationText: '🏆 Reach pinnacle financial status with supreme daily capital returns and full power.',
     },
   ];
 
@@ -145,15 +159,17 @@ export default function HomePage({ onNavigate }) {
             const matchingDefault = defaultPackages.find((p) => p.id === id) || {};
             return {
               id: pkg.id,
-              name: pkg.name || id.toUpperCase(),
-              tagline: pkg.description || matchingDefault.tagline || 'Optimized daily earnings',
+              name: 'PACKAGE',
+              tierLabel: matchingDefault.tierLabel || (pkg.tierName ? `${pkg.tierName} Tier` : (pkg.id ? pkg.id.toUpperCase() : 'Tier')),
+              tagline: matchingDefault.tagline || 'Guaranteed 25% daily returns with 200 ads/day allocation.',
               entryPrice: `$${Number(pkg.price || 0).toFixed(2)}`,
               minWallet: `$${Number(pkg.minWallet || 0).toFixed(2)}`,
-              rewardRate: pkg.rewardRate || '2.5%',
-              dailyLimit: `${pkg.dailyLimit || 20} views/day`,
+              rewardRate: '25%',
+              dailyLimit: '200 ads/day',
               badge: pkg.badge || matchingDefault.badge || null,
               circleColor: pkg.color ? `bg-[${pkg.color}]` : matchingDefault.circleColor || 'bg-[#0f766e]',
               accentColor: matchingDefault.accentColor || 'bg-[#0f766e]/10 text-[#0f766e]',
+              motivationText: matchingDefault.motivationText || '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
             };
           });
           setPackageList(mapped);
@@ -194,16 +210,54 @@ export default function HomePage({ onNavigate }) {
     ? Number(userStats?.walletBalance ?? 0).toFixed(2)
     : '0.00';
   const displayProgress = currentUser
-    ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / (userStats?.dailyLimit || 20)) * 100))
+    ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 200) * 100))
     : 0;
-  const currentActivePackageName = currentUser
-    ? (userStats?.currentPackage || 'None')
-    : null;
+  const hasBoughtPackage = Boolean(
+    currentUser &&
+    userStats?.currentPackage &&
+    userStats.currentPackage !== 'None' &&
+    userStats.isEligible
+  );
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8f5]">
       {/* Hero Section */}
-      <section className="pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 relative overflow-hidden">
+      <section className="pt-8 sm:pt-16 pb-16 sm:pb-24 px-4 sm:px-6 relative overflow-hidden">
+        {/* Logged In User Live Balance Banner */}
+        {currentUser && (
+          <div className="w-full max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl bg-white border border-[#0c5963]/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center font-bold shadow-xs">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-[10px] font-extrabold text-[#697f83] uppercase tracking-wider block">
+                  Live Member Status
+                </span>
+                <span className="text-sm font-bold text-[#09353e]">
+                  {currentUser.displayName || currentUser.email} • Package: <strong className="text-[#0c5963] uppercase">{userStats?.currentPackage || 'None'}</strong>
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0ede6]">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-[#71868a] block">
+                  Live Available Balance
+                </span>
+                <span className="text-2xl font-black text-[#0c5963]">
+                  ${Number(userStats?.walletBalance || 0).toFixed(2)} <span className="text-xs font-semibold text-[#546e73]">USD</span>
+                </span>
+              </div>
+              <button
+                onClick={() => onNavigate('dashboard')}
+                className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          </div>
+        )}
+
         <div className="max-w-4xl mx-auto text-left sm:text-center flex flex-col sm:items-center">
           {/* Main Hero Headline */}
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#0a353f] leading-[1.15] mb-6">
@@ -245,11 +299,11 @@ export default function HomePage({ onNavigate }) {
           <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-[#486065] pt-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#0c5963]" />
-              <span>Transparent rewards</span>
+              <span>Transparent 25% Daily Returns</span>
             </div>
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-[#0c5963]" />
-              <span>Cookie-secured access</span>
+              <span>Secure Session Architecture</span>
             </div>
           </div>
         </div>
@@ -280,7 +334,7 @@ export default function HomePage({ onNavigate }) {
             {/* Progress bar */}
             <div className="space-y-1.5 mb-6">
               <div className="flex justify-between text-xs font-medium text-[#4f676b]">
-                <span>Today's view rhythm</span>
+                <span>Today's ad rhythm</span>
                 <span className="font-bold text-[#0d5963]">{displayProgress}%</span>
               </div>
               <div className="w-full bg-[#f1eee7] h-2.5 rounded-full overflow-hidden">
@@ -302,20 +356,20 @@ export default function HomePage({ onNavigate }) {
                     {currentUser
                       ? (userStats?.currentPackage && userStats?.currentPackage !== 'None'
                           ? 'Active Package: ' + userStats.currentPackage
-                          : 'No Active Package')
+                          : 'Deposit & Buy Package')
                       : 'Attention to Value'}
                   </p>
                   <p className="text-[11px] text-[#6b7f83]">
                     {currentUser && (!userStats?.currentPackage || userStats?.currentPackage === 'None')
-                      ? 'Choose a package to start earning'
-                      : 'Keep your daily rhythm'}
+                      ? 'Activate a package to start 200 daily ads'
+                      : 'Keep your daily ad rhythm'}
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-[#718588] block">DAILY RETURN</span>
                 <span className="text-xs font-extrabold text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md">
-                  +2.5%
+                  +25%
                 </span>
               </div>
             </div>
@@ -385,14 +439,14 @@ export default function HomePage({ onNavigate }) {
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${pkg.circleColor || 'bg-[#0d5963]'}`} />
-                        <span className="text-xs font-semibold text-[#697f83]">
-                          Plan #{pkg.id}
+                        <span className="text-xs font-bold uppercase tracking-wider text-[#0c5963]">
+                          PACKAGE
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
                         {isCurrentActive && (
                           <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                            YOUR ACTIVE PLAN
+                            YOUR ACTIVE PACKAGE
                           </span>
                         )}
                         {pkg.badge && !isCurrentActive && (
@@ -403,9 +457,12 @@ export default function HomePage({ onNavigate }) {
                       </div>
                     </div>
 
-                    <h3 className="text-2xl font-bold text-[#09353e] mb-1 group-hover:text-[#0c5963] transition-colors">
-                      {pkg.name}
+                    <h3 className="text-2xl font-black text-[#09353e] mb-0.5 group-hover:text-[#0c5963] transition-colors">
+                      PACKAGE
                     </h3>
+                    <p className="text-xs font-semibold text-[#0c5963] mb-1">
+                      {pkg.tierLabel || `${pkg.entryPrice} Tier`}
+                    </p>
                     <p className="text-xs text-[#637a7f] mb-5">{pkg.tagline}</p>
 
                     <div className="pt-3 border-t border-[#f0ede6] space-y-3">
@@ -421,18 +478,28 @@ export default function HomePage({ onNavigate }) {
 
                         <div className="text-right">
                           <span className="text-[10px] text-[#71868a] block uppercase font-medium">
-                            Reward Rate
+                            Daily Return
                           </span>
-                          <span className="text-sm font-bold text-[#0d5963]">
-                            {pkg.rewardRate} <span className="text-[10px] font-normal text-[#6f8489]">/ view</span>
+                          <span className="text-sm font-bold text-[#0c5963]">
+                            25% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
                           </span>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between text-xs text-[#526a6f] bg-[#faf8f5] px-3 py-2 rounded-xl border border-[#efe9de]">
-                        <span>Daily View Quota</span>
-                        <span className="font-semibold text-[#09353e]">{pkg.dailyLimit}</span>
-                      </div>
+                      {/* Daily Ads Quota: Shown to users who have bought a package; Hidden for non-buyers with motivation copy */}
+                      {hasBoughtPackage ? (
+                        <div className="flex items-center justify-between text-xs text-[#065f46] bg-[#ecfdf5] px-3.5 py-2.5 rounded-xl border border-[#a7f3d0]">
+                          <span className="font-medium">Daily Ads Quota</span>
+                          <span className="font-extrabold">200 ads/day (Unlocked)</span>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
+                          <span className="leading-snug font-medium">
+                            {pkg.motivationText || '✨ Empower your financial future with guaranteed 25% daily asset returns upon activation.'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -446,10 +513,10 @@ export default function HomePage({ onNavigate }) {
                   >
                     <span>
                       {isCurrentActive
-                        ? 'Manage Active Plan'
+                        ? 'Active Package'
                         : currentUser
-                        ? 'Activate with Wallet'
-                        : 'Select & Activate'}
+                        ? 'Activate Package with Wallet'
+                        : 'Select & Activate Package'}
                     </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
@@ -470,7 +537,7 @@ export default function HomePage({ onNavigate }) {
             <div>
               <h3 className="text-base font-bold text-[#09353e]">Need assistance with your account or deposit?</h3>
               <p className="text-xs text-[#556e73] mt-0.5">
-                Our support desk is operational. Open a ticket anytime and track admin replies directly.
+                Contact Support anytime. Our support team is operational to assist with packages and deposits.
               </p>
             </div>
           </div>
@@ -479,7 +546,7 @@ export default function HomePage({ onNavigate }) {
             onClick={() => onNavigate('support')}
             className="px-5 py-2.5 rounded-xl bg-white hover:bg-[#0c5963] text-[#09353e] hover:text-white font-semibold text-xs border border-[#ddd5c7] hover:border-[#0c5963] transition-all flex items-center gap-2 cursor-pointer shadow-xs shrink-0"
           >
-            <span>Open Support Desk</span>
+            <span>Contact Support</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>

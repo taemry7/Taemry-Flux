@@ -39,6 +39,7 @@ const PACKAGE_PRICES = {
   bronze: 1.00,
   silver: 5.00,
   gold: 10.00,
+  premium: 50.00,
   elite: 100.00,
   master: 500.00,
   apex: 1000.00,
@@ -50,7 +51,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const hasActivePkg = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
   const pkgKey = (userStats?.currentPackage || 'None').toLowerCase();
   const pkgPrice = PACKAGE_PRICES[pkgKey] || 0.00;
-  const computedReward = hasActivePkg ? +(pkgPrice * 0.001).toFixed(4) : 0;
+  // 25% daily return across 200 ads = 0.125% per ad (pkgPrice * 0.25 / 200)
+  const computedReward = hasActivePkg ? +(pkgPrice * 0.00125).toFixed(4) : 0;
 
   // Component state
   const [adStatus, setAdStatus] = useState({
@@ -338,6 +340,34 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       </div>
 
+      {/* INELIGIBILITY BANNER FOR NEW USERS WITHOUT PACKAGE */}
+      {(!hasActivePkg || !adStatus.isEligible) && (
+        <div className="p-5 rounded-3xl bg-[#fffbeb] border border-[#fde68a] text-[#92400e] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-[#f59e0b] text-white flex items-center justify-center font-bold shrink-0 shadow-sm">
+              <PackageCheck className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm sm:text-base font-extrabold text-[#78350f]">
+                Package Activation Required
+              </h3>
+              <p className="text-xs text-[#92400e] mt-0.5">
+                New accounts are only eligible for deposit and buying a package. Once you activate a package, 200 daily ads and guaranteed 25% daily returns will be unlocked immediately!
+              </p>
+            </div>
+          </div>
+          {onSelectTab && (
+            <button
+              onClick={() => onSelectTab('buy-package')}
+              className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs transition-all shrink-0 cursor-pointer flex items-center gap-1.5"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Buy a Package</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* ERROR TOAST */}
       {errorMessage && (
         <div className="p-4 rounded-2xl bg-[#fef2f2] border border-[#fecaca] text-[#b91c1c] flex items-center justify-between gap-3 text-xs sm:text-sm animate-in fade-in">
@@ -406,7 +436,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         {/* Reward Per Ad */}
         <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589] block mb-1">
-            Reward Per Ad (0.1%)
+            Reward Per Ad (25% Daily)
           </span>
           <p className="text-2xl font-black text-[#0c5963]">
             +${Number(adStatus.rewardPerAd).toFixed(4)} USD

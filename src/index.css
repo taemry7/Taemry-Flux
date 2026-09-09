@@ -10,11 +10,60 @@
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     color: #112d35;
     background-color: #faf8f5;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  html.dark,
+  body.dark {
+    background-color: #07151a !important;
+    color: #e2e8f0 !important;
+  }
+
+  /* Dark mode overrides for common components */
+  .dark .bg-white {
+    background-color: #0c2027 !important;
+    color: #e2e8f0;
+  }
+
+  .dark .bg-\[\#faf8f5\] {
+    background-color: #07151a !important;
+  }
+
+  .dark .bg-\[\#faf8f5\]\/90 {
+    background-color: rgba(7, 21, 26, 0.92) !important;
+  }
+
+  .dark .text-\[\#09353e\],
+  .dark .text-\[\#132e35\],
+  .dark .text-\[\#112d35\] {
+    color: #f8fafc !important;
+  }
+
+  .dark .text-\[\#546b70\],
+  .dark .text-\[\#526a6f\],
+  .dark .text-\[\#718589\],
+  .dark .text-\[\#62777c\] {
+    color: #94a3b8 !important;
+  }
+
+  .dark .border-\[\#e4ded2\],
+  .dark .border-\[\#e9e3d8\],
+  .dark .border-\[\#e4dfd4\],
+  .dark .border-\[\#f0ebe0\] {
+    border-color: #1a353d !important;
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: #081a20 !important;
+    color: #f1f5f9 !important;
+    border-color: #1f4049 !important;
   }
 }
 
