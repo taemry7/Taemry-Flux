@@ -15,7 +15,19 @@ import { doc, getDocFromServer } from 'firebase/firestore';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' | 'login' | 'dashboard' | 'admin'
+  const [currentPage, setCurrentPage] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+    const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
+    const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
+    if (rawPath === 'admin' || rawPath.startsWith('admin/') || rawHash === 'admin' || rawHash.startsWith('admin/')) {
+      return 'admin';
+    }
+    if (rawPath === 'login' || rawHash === 'login') return 'login';
+    if (rawPath === 'support' || rawHash === 'support') return 'support';
+    if (rawPath === 'whitepaper' || rawHash === 'whitepaper') return 'whitepaper';
+    if (rawPath.startsWith('dashboard') || rawHash.startsWith('dashboard')) return 'dashboard';
+    return 'home';
+  });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -34,53 +46,69 @@ function AppContent() {
     testFirestoreConnection();
   }, []);
 
-  // Sync with browser hash if present (e.g. #/login, #/dashboard, #/admin)
+  // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
   useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#/', '').replace('#', '');
-      if (hash === 'login') {
-        setCurrentPage('login');
-      } else if (hash === 'whitepaper') {
-        setCurrentPage('whitepaper');
-      } else if (hash === 'support') {
-        setCurrentPage('support');
-      } else if (hash.startsWith('admin')) {
+    const handleLocationChange = () => {
+      const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
+      const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
+
+      // Check if user is navigating directly to admin (e.g. /admin or #/admin)
+      if (rawPath === 'admin' || rawPath.startsWith('admin/') || rawHash === 'admin' || rawHash.startsWith('admin/')) {
         setCurrentPage('admin');
-      } else if (hash === 'buy-package') {
+        const parts = (rawHash.startsWith('admin') ? rawHash : rawPath).split('/');
+        if (parts[1]) {
+          setActiveTab(parts[1]);
+        }
+        return;
+      }
+
+      const effectiveRoute = rawHash || rawPath;
+
+      if (effectiveRoute === 'login') {
+        setCurrentPage('login');
+      } else if (effectiveRoute === 'whitepaper') {
+        setCurrentPage('whitepaper');
+      } else if (effectiveRoute === 'support') {
+        setCurrentPage('support');
+      } else if (effectiveRoute === 'buy-package') {
         setCurrentPage('dashboard');
         setActiveTab('buy-package');
-      } else if (hash === 'watch-ads') {
+      } else if (effectiveRoute === 'watch-ads') {
         setCurrentPage('dashboard');
         setActiveTab('watch-ads');
-      } else if (hash === 'referrals') {
+      } else if (effectiveRoute === 'referrals') {
         setCurrentPage('dashboard');
         setActiveTab('referrals');
-      } else if (hash === 'milestones') {
+      } else if (effectiveRoute === 'milestones') {
         setCurrentPage('dashboard');
         setActiveTab('milestones');
-      } else if (hash === 'deposit') {
+      } else if (effectiveRoute === 'deposit') {
         setCurrentPage('dashboard');
         setActiveTab('deposit');
-      } else if (hash === 'withdraw') {
+      } else if (effectiveRoute === 'withdraw') {
         setCurrentPage('dashboard');
         setActiveTab('withdraw');
-      } else if (hash === 'transactions') {
+      } else if (effectiveRoute === 'transactions') {
         setCurrentPage('dashboard');
         setActiveTab('transactions');
-      } else if (hash.startsWith('dashboard')) {
+      } else if (effectiveRoute.startsWith('dashboard')) {
         setCurrentPage('dashboard');
-        const parts = hash.split('/');
+        const parts = effectiveRoute.split('/');
         if (parts[1]) {
           setActiveTab(parts[1] === 'packages' ? 'buy-package' : parts[1]);
         }
-      } else if (hash === '' || hash === 'home') {
+      } else if (effectiveRoute === '' || effectiveRoute === 'home') {
         setCurrentPage('home');
       }
     };
 
-    handleHashChange();
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
+    handleLocationChange();
+    window.addEventListener('hashchange', handleLocationChange);
+    window.addEventListener('popstate', handleLocationChange);
+    return () => {
+      window.removeEventListener('hashchange', handleLocationChange);
+      window.removeEventListener('popstate', handleLocationChange);
+    };
   }, []);
 
   // Update hash when navigating

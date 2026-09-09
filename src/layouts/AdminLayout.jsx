@@ -23,7 +23,9 @@ import {
   AlertOctagon,
   ArrowLeft,
   LifeBuoy,
-  Wrench
+  Wrench,
+  LogIn,
+  ShieldAlert
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -42,7 +44,7 @@ import AdminSupport from '../pages/admin/AdminSupport';
 import AdminMaintenance from '../pages/admin/AdminMaintenance';
 
 export default function AdminLayout({ onNavigate }) {
-  const { currentUser, isAdmin, logout } = useAuth();
+  const { currentUser, isAdmin, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);
@@ -69,7 +71,51 @@ export default function AdminLayout({ onNavigate }) {
     }
   }, [isAdmin, activeTab]);
 
-  // Access Control Guard
+  // 1. Loading state: Avoid brief flashes while Firebase credentials verify
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-300 space-y-4">
+        <div className="w-10 h-10 border-3 border-amber-400 border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest">
+          Verifying Administrative Credentials...
+        </p>
+      </div>
+    );
+  }
+
+  // 2. Unauthenticated state: User navigated directly to /admin without being signed in
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-300 space-y-5">
+        <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shadow-lg">
+          <ShieldAlert className="w-8 h-8" />
+        </div>
+        <div className="max-w-md space-y-2">
+          <h1 className="text-2xl font-black text-white tracking-tight">Admin Sign-In Required</h1>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            The control surface at <code className="text-amber-400 font-mono">/admin</code> requires signing in with an authorized administrative account (<code className="text-emerald-400 font-mono">mistrtaimur7@gmail.com</code>).
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <button
+            onClick={() => onNavigate('login')}
+            className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/20"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Sign In to Admin Portal</span>
+          </button>
+          <button
+            onClick={() => onNavigate('home')}
+            className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
+          >
+            <span>Back to Home</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Authenticated but unauthorized: Logged in user is not an admin
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-6 text-center text-slate-300 space-y-5">
@@ -79,17 +125,26 @@ export default function AdminLayout({ onNavigate }) {
         <div className="max-w-md space-y-2">
           <h1 className="text-2xl font-black text-white">Administrative Access Restricted</h1>
           <p className="text-xs text-slate-400 leading-relaxed">
-            The requested control surface requires an administrative role with verified custom claims
-            (<code className="text-rose-400">admin: true</code>). Your account ({currentUser?.email || 'Guest'}) does not possess system clearance.
+            The requested control surface requires an administrative role. Your current account ({currentUser.email || 'User'}) does not possess administrative clearance.
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center justify-center gap-3">
           <button
             onClick={() => onNavigate('dashboard')}
             className="px-5 py-2.5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-colors cursor-pointer flex items-center gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Member Dashboard</span>
+          </button>
+          <button
+            onClick={async () => {
+              await logout();
+              onNavigate('login');
+            }}
+            className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold text-xs transition-colors cursor-pointer flex items-center gap-2 border border-slate-700"
+          >
+            <LogIn className="w-4 h-4" />
+            <span>Switch to Admin Account</span>
           </button>
         </div>
       </div>
