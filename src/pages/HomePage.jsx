@@ -281,7 +281,7 @@ export default function HomePage({ onNavigate }) {
           </p>
 
           {/* CTA Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto mb-10">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto mb-8">
             <button
               id="btn-hero-start"
               onClick={handlePrimaryAction}
@@ -303,22 +303,10 @@ export default function HomePage({ onNavigate }) {
               <ChevronRight className="w-4 h-4 text-[#597176] dark:text-[#94a3b8]" />
             </button>
           </div>
-
-          {/* Trust points */}
-          <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-[#486065] dark:text-[#94a3b8] pt-2">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
-              <span>Guaranteed Daily Ad Returns</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
-              <span>Secure Session Architecture</span>
-            </div>
-          </div>
         </div>
 
-        {/* Floating Preview Card */}
-        <div className="max-w-md mx-auto mt-12 px-2">
+        {/* Floating Preview Card - UPAR */}
+        <div className="max-w-md mx-auto mt-6 sm:mt-8 px-2">
           <div className="relative bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-7 shadow-xl shadow-[#0c5963]/5 dark:shadow-black/60 border border-[#e4ded2] dark:border-[#173740] overflow-hidden transition-colors">
             {/* Top decorative gradient shape */}
             <div className="absolute -top-16 -right-16 w-44 h-44 bg-[#e6f4f1] dark:bg-[#0c262e]/30 rounded-full blur-2xl pointer-events-none" />
@@ -380,6 +368,18 @@ export default function HomePage({ onNavigate }) {
                 </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Trust points - NICHY */}
+        <div className="flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm text-[#486065] dark:text-[#94a3b8] mt-8">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+            <span>Guaranteed Daily Ad Returns</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+            <span>Secure Session Architecture</span>
           </div>
         </div>
       </section>

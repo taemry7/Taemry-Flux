@@ -47,6 +47,15 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Auto-reverting or resetting working code is strictly prohibited.
 - **TOTAL CODEBASE FREEZE**: As instructed by the user ("all coding ko lock karo taky khud ba khud changing na hojay"), the entire codebase across frontend, backend, routes, config, and components is under permanent lock. No file shall be modified or altered without clear, explicit, word-for-word instructions from the user.
 
+## STRICT INVARIANT: Footer Navigation & Layout Rules (PERMANENT)
+- **Footer Navigation Links & Copyright**:
+  - Visible ONLY on First Page (`home`) and Dashboard Page (`dashboard`).
+  - Completely hidden on all other pages (`login`, `support`, `whitepaper`, etc.).
+  - Footer Auth Button: displays `My Dashboard` when logged in, or `Sign In` when logged out.
+- **Hero Section Layout Invariant**:
+  - Floating Preview Card is placed above the trust points.
+  - Trust points ("Guaranteed Daily Ad Returns", "Secure Session Architecture") are placed below the card.
+
 ## STRICT INVARIANT: First Page (HomePage.jsx) PERMANENT LOCK
 - **`src/pages/HomePage.jsx` is COMPLETELY FINALIZED AND PERMANENTLY LOCKED.**
 - **NO CHANGES, MODIFICATIONS, OR REVISIONS** are allowed to the first page (`src/pages/HomePage.jsx`).
