@@ -124,12 +124,15 @@ export default function DashboardPage({
     setRefreshKey((k) => k + 1);
   };
 
+  // Check if user has an active package (new users without package do not see Watch Ads or Withdrawal)
+  const hasActivePackage = Boolean(stats.currentPackage && stats.currentPackage !== 'None');
+
   // Sidebar navigation menu items
   const navItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
+    ...(hasActivePackage ? [{ id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare }] : []),
     { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle, tag: 'Instant' },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    ...(hasActivePackage ? [{ id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight }] : []),
     { id: 'transactions', label: 'Transactions', icon: History },
     { id: 'buy-package', label: 'Buy Package', icon: Package },
     { id: 'referrals', label: 'Referrals', icon: Users },
@@ -137,43 +140,13 @@ export default function DashboardPage({
     { id: 'settings', label: 'Settings & Profile', icon: Settings },
   ];
 
-  const userName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'TAEMRY Member';
+  const rawDisplayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Member';
+  const userFirstName = rawDisplayName.trim().split(' ')[0];
+  const userName = rawDisplayName;
   const userEmail = currentUser?.email || 'member@taemryflux.com';
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* PHASE 2 STATUS BADGE */}
-      <div className="mb-6 p-4 rounded-2xl bg-[#e6f4f1] border border-[#bde2db] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-[#0c5963] text-white flex items-center justify-center flex-shrink-0">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs sm:text-sm font-bold text-[#09353e]">
-                Phase 2 Dashboard Active
-              </span>
-              <span className="text-[10px] font-bold bg-[#0c5963] text-white px-2 py-0.5 rounded-full">
-                API + Firestore
-              </span>
-            </div>
-            <p className="text-[11px] text-[#526d72]">
-              Connected to backend Express API. Authenticated as <strong className="text-[#09353e]">{userEmail}</strong>.
-            </p>
-          </div>
-        </div>
-
-        <button
-          onClick={() => setRefreshKey((k) => k + 1)}
-          disabled={loadingStats}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-[#faf8f5] text-[#0c5963] text-xs font-semibold rounded-xl border border-[#b8dfd7] shadow-2xs transition-all self-end sm:self-auto cursor-pointer"
-          title="Refresh dashboard stats from API"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loadingStats ? 'animate-spin' : ''}`} />
-          <span>Refresh stats</span>
-        </button>
-      </div>
-
       {/* MAIN TWO-COLUMN SIDEBAR LAYOUT */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
         {/* SIDEBAR NAVIGATION (Desktop 1 Col, Responsive Header on Mobile) */}
@@ -280,14 +253,14 @@ export default function DashboardPage({
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] uppercase">
+                  <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] dark:text-[#38bdf8] uppercase">
                     MEMBER DASHBOARD
                   </span>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-[#09353e] mt-0.5">
-                    Welcome back, {userName}
+                  <h1 className="text-2xl sm:text-3xl font-bold text-[#09353e] dark:text-[#f1f5f9] mt-0.5">
+                    Welcome Back, {userFirstName}
                   </h1>
-                  <p className="text-xs sm:text-sm text-[#546b70] mt-0.5">
-                    Real-time metrics verified via Firebase Admin API.
+                  <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] mt-0.5">
+                    Real-time protected balance, verified earnings, and instant fund management.
                   </p>
                 </div>
 
@@ -302,14 +275,16 @@ export default function DashboardPage({
                     <span>Deposit</span>
                   </button>
 
-                  <button
-                    id="btn-overview-withdraw"
-                    onClick={() => handleTabChange('withdraw')}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] shadow-xs transition-all cursor-pointer"
-                  >
-                    <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963]" />
-                    <span>Quick Withdraw</span>
-                  </button>
+                  {hasActivePackage && (
+                    <button
+                      id="btn-overview-withdraw"
+                      onClick={() => handleTabChange('withdraw')}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] shadow-xs transition-all cursor-pointer"
+                    >
+                      <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963]" />
+                      <span>Quick Withdraw</span>
+                    </button>
+                  )}
 
                   <button
                     id="btn-overview-buy-package"
@@ -322,8 +297,8 @@ export default function DashboardPage({
                 </div>
               </div>
 
-              {/* RATE & SYSTEM INDICATOR BANNER */}
-              <div className="p-4 rounded-2xl bg-white border border-[#e4ded2] shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+              {/* RATE & SYSTEM INDICATOR BANNER (Hidden per user request) */}
+              <div className="hidden p-4 rounded-2xl bg-white border border-[#e4ded2] shadow-2xs flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#10b981] animate-pulse" />
                   <span className="font-bold text-[#09353e]">Financial Gateway Status: Online</span>
@@ -414,24 +389,42 @@ export default function DashboardPage({
                   </div>
                 </div>
 
-                {/* 4. Team Ads */}
-                <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex flex-col justify-between hover:border-[#0c5963]/40 transition-all">
+                {/* 4. Team Network & Ads */}
+                <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-5 border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col justify-between hover:border-[#0c5963]/40 transition-all">
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-[#73888d] uppercase tracking-wider">
-                        Team Ads
+                      <span className="text-[11px] font-bold text-[#73888d] dark:text-[#94a3b8] uppercase tracking-wider">
+                        My Team & Team Ads
                       </span>
-                      <div className="w-8 h-8 rounded-xl bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
+                      <div className="w-8 h-8 rounded-xl bg-[#e0f2fe] dark:bg-[#082836] text-[#0284c7] dark:text-[#38bdf8] flex items-center justify-center">
                         <Users className="w-4 h-4" />
                       </div>
                     </div>
-                    <div className="text-3xl font-extrabold text-[#09353e] tracking-tight">
-                      {Number(stats.teamAdsCount || 0).toLocaleString()}
+                    {/* 2 Types: My Team and Team Ads */}
+                    <div className="grid grid-cols-2 gap-2 mt-1">
+                      <div className="bg-[#faf8f5] dark:bg-[#081c22] p-2.5 rounded-2xl border border-[#ece6d9] dark:border-[#123640]">
+                        <span className="text-[10px] font-bold text-[#6a8288] dark:text-[#94a3b8] uppercase tracking-wider block">
+                          My Team
+                        </span>
+                        <div className="text-xl sm:text-2xl font-black text-[#09353e] dark:text-white mt-0.5 tracking-tight">
+                          {Number(stats.referralCount || 0).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="bg-[#faf8f5] dark:bg-[#081c22] p-2.5 rounded-2xl border border-[#ece6d9] dark:border-[#123640]">
+                        <span className="text-[10px] font-bold text-[#6a8288] dark:text-[#94a3b8] uppercase tracking-wider block">
+                          Team Ads
+                        </span>
+                        <div className="text-xl sm:text-2xl font-black text-[#0c5963] dark:text-[#38bdf8] mt-0.5 tracking-tight">
+                          {Number(stats.teamAdsCount || 0).toLocaleString()}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="mt-3 pt-3 border-t border-[#f4f0e7] flex items-center justify-between text-[11px]">
-                    <span className="text-[#597277]">Referrals</span>
-                    <span className="font-bold text-[#09353e]">{stats.referralCount ?? 0} members</span>
+                  <div className="mt-3 pt-3 border-t border-[#f4f0e7] dark:border-[#173740] flex items-center justify-between text-[11px]">
+                    <span className="text-[#597277] dark:text-[#94a3b8] font-semibold">Daily Team Refer</span>
+                    <span className="font-bold text-[#0c5963] dark:text-[#38bdf8]">
+                      {stats.dailyReferralCount !== undefined ? stats.dailyReferralCount : 0} today
+                    </span>
                   </div>
                 </div>
               </div>
@@ -484,50 +477,27 @@ export default function DashboardPage({
                 </div>
               </div>
 
-              {/* ACTION / INTEGRATION CARDS */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Package Status and Upgrade CTA */}
-                <div className="p-6 rounded-3xl bg-[#f5f1e8] border border-[#e7e1d4] flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#73888d]">
-                      ACTIVE CONTRACT
-                    </span>
-                    <h4 className="text-xl font-bold text-[#09353e] mt-1 mb-2">
-                      {stats.currentPackage} Package
-                    </h4>
-                    <p className="text-xs text-[#526b70] leading-relaxed mb-4">
-                      Your wallet entry gives you access to higher daily ad allocations and accelerated reward rates.
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleTabChange('buy-package')}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all self-start cursor-pointer"
-                  >
-                    <span>Browse and upgrade packages</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+              {/* ACTIVE CONTRACT / PACKAGE UPGRADE CARD */}
+              <div className="p-6 sm:p-7 rounded-3xl bg-[#f5f1e8] dark:bg-[#0c2027] border border-[#e7e1d4] dark:border-[#173740] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#73888d] dark:text-[#94a3b8]">
+                    ACTIVE CONTRACT
+                  </span>
+                  <h4 className="text-xl font-bold text-[#09353e] dark:text-white mt-1 mb-1">
+                    {stats.currentPackage} Package
+                  </h4>
+                  <p className="text-xs text-[#526b70] dark:text-[#94a3b8] leading-relaxed max-w-xl">
+                    "Success does not come from what you do occasionally, it comes from what you do consistently. Keep building your daily momentum, watch your ads, grow your team, and unlock your true financial freedom!"
+                  </p>
                 </div>
 
-                {/* Phase 3 & 4 Roadmap Preview */}
-                <div className="p-6 rounded-3xl bg-white border border-[#e4ded2] shadow-xs flex flex-col justify-between">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#73888d]">
-                      UPCOMING MODULES
-                    </span>
-                    <h4 className="text-xl font-bold text-[#09353e] mt-1 mb-2">
-                      Roadmap Progression
-                    </h4>
-                    <p className="text-xs text-[#526b70] leading-relaxed mb-4">
-                      Phase 2 backend APIs and package purchase engine are ready. Phase 3 (Ads + Referrals) and Phase 4 (Withdrawals) are queued.
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs font-semibold text-[#0c5963]">
-                    <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-                    <span>Phase 2 Verified</span>
-                  </div>
-                </div>
+                <button
+                  onClick={() => handleTabChange('buy-package')}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all self-start sm:self-auto cursor-pointer shrink-0"
+                >
+                  <span>Browse & Upgrade Packages</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
               </div>
             </div>
           )}
@@ -548,10 +518,38 @@ export default function DashboardPage({
           {/* TAB 3: WATCH ADS (Phase 3)                                                */}
           {/* ========================================================================= */}
           {activeTab === 'watch-ads' && (
-            <WatchAds
-              onSelectTab={handleTabChange}
-              onNavigate={onNavigate}
-            />
+            hasActivePackage ? (
+              <WatchAds
+                onSelectTab={handleTabChange}
+                onNavigate={onNavigate}
+              />
+            ) : (
+              <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-8 border border-[#e4ded2] dark:border-[#173740] text-center max-w-xl mx-auto my-8 shadow-xs">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center mb-4">
+                  <PlaySquare className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-[#09353e] dark:text-white mb-2">
+                  Package Required to Watch Ads
+                </h3>
+                <p className="text-xs sm:text-sm text-[#526b70] dark:text-[#94a3b8] mb-6 leading-relaxed">
+                  Watching daily ads and earning daily returns unlocks immediately upon depositing and activating an advertising package.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => handleTabChange('deposit')}
+                    className="px-5 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+                  >
+                    Deposit Funds
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('buy-package')}
+                    className="px-5 py-2.5 bg-white dark:bg-[#122e37] text-[#09353e] dark:text-white border border-[#d8d1c3] dark:border-[#1e4854] text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    Buy Package
+                  </button>
+                </div>
+              </div>
+            )
           )}
 
           {/* ========================================================================= */}
@@ -586,10 +584,38 @@ export default function DashboardPage({
           {/* TAB 7: WITHDRAW (Phase 4)                                                 */}
           {/* ========================================================================= */}
           {activeTab === 'withdraw' && (
-            <WithdrawPage
-              onSelectTab={handleTabChange}
-              onNavigate={onNavigate}
-            />
+            hasActivePackage ? (
+              <WithdrawPage
+                onSelectTab={handleTabChange}
+                onNavigate={onNavigate}
+              />
+            ) : (
+              <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-8 border border-[#e4ded2] dark:border-[#173740] text-center max-w-xl mx-auto my-8 shadow-xs">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center mb-4">
+                  <ArrowUpRight className="w-7 h-7" />
+                </div>
+                <h3 className="text-xl font-bold text-[#09353e] dark:text-white mb-2">
+                  Package Required for Withdrawals
+                </h3>
+                <p className="text-xs sm:text-sm text-[#526b70] dark:text-[#94a3b8] mb-6 leading-relaxed">
+                  Withdrawal requests are exclusively available for active package holders. Please deposit and activate an advertising package to unlock withdrawals.
+                </p>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                  <button
+                    onClick={() => handleTabChange('deposit')}
+                    className="px-5 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs cursor-pointer"
+                  >
+                    Deposit Funds
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('buy-package')}
+                    className="px-5 py-2.5 bg-white dark:bg-[#122e37] text-[#09353e] dark:text-white border border-[#d8d1c3] dark:border-[#1e4854] text-xs font-bold rounded-xl cursor-pointer"
+                  >
+                    Buy Package
+                  </button>
+                </div>
+              </div>
+            )
           )}
 
           {/* ========================================================================= */}

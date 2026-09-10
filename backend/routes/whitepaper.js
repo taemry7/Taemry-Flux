@@ -58,8 +58,8 @@ export const DEFAULT_WHITEPAPER = {
       a: 'Downline commissions are paid 5 Levels deep (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%) whenever direct downlines purchase advertising packages.'
     },
     {
-      q: 'Q6. Why can\'t I withdraw money if I have 0 referrals?',
-      a: 'To build an authentic, active member community and protect ecosystem liquidity, each member must have at least 1 active direct referral before requesting a withdrawal.'
+      q: 'Q6. How are member withdrawals processed?',
+      a: 'Withdrawals are processed directly to your preferred payment method (Bank, Easypaisa, JazzCash, or USDT/BTC) with a low $1.00 minimum threshold, reviewed within 1 to 24 hours.'
     },
     {
       q: 'Q7. What happens if I do not watch ads for a few days?',

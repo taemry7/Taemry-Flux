@@ -229,32 +229,32 @@ export default function HomePage({ onNavigate }) {
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf8f5]">
+    <div className="min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a]">
       {/* Hero Section */}
       <section className="pt-8 sm:pt-16 pb-16 sm:pb-24 px-4 sm:px-6 relative overflow-hidden">
         {/* Logged In User Live Balance Banner */}
         {currentUser && (
-          <div className="w-full max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl bg-white border border-[#0c5963]/20 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="w-full max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a1b22] border border-[#0c5963]/20 dark:border-[#0c5963]/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center font-bold shadow-xs">
+              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center font-bold shadow-xs">
                 <TrendingUp className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-[10px] font-extrabold text-[#697f83] uppercase tracking-wider block">
+                <span className="text-[10px] font-extrabold text-[#697f83] dark:text-[#94a3b8] uppercase tracking-wider block">
                   Live Member Status
                 </span>
-                <span className="text-sm font-bold text-[#09353e]">
-                  {currentUser.displayName || currentUser.email} • Package: <strong className="text-[#0c5963] uppercase">{userStats?.currentPackage || 'None'}</strong>
+                <span className="text-sm font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                  {currentUser.displayName || currentUser.email} • Package: <strong className="text-[#0c5963] dark:text-[#38bdf8] uppercase">{userStats?.currentPackage || 'None'}</strong>
                 </span>
               </div>
             </div>
-            <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0ede6]">
+            <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0ede6] dark:border-[#17323b]">
               <div>
-                <span className="text-[10px] uppercase font-bold text-[#71868a] block">
+                <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">
                   Live Available Balance
                 </span>
-                <span className="text-2xl font-black text-[#0c5963]">
-                  ${Number(userStats?.walletBalance || 0).toFixed(2)} <span className="text-xs font-semibold text-[#546e73]">USD</span>
+                <span className="text-2xl font-black text-[#0c5963] dark:text-[#38bdf8]">
+                  ${Number(userStats?.walletBalance || 0).toFixed(2)} <span className="text-xs font-semibold text-[#546e73] dark:text-[#94a3b8]">USD</span>
                 </span>
               </div>
               <button
@@ -269,13 +269,13 @@ export default function HomePage({ onNavigate }) {
 
         <div className="max-w-4xl mx-auto text-left sm:text-center flex flex-col sm:items-center">
           {/* Main Hero Headline */}
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#0a353f] leading-[1.15] mb-6">
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#0a353f] dark:text-[#f1f5f9] leading-[1.15] mb-6">
             Put your wallet <br className="hidden sm:block" />
-            <span className="text-[#0d5963]">in motion.</span>
+            <span className="text-[#0d5963] dark:text-[#38bdf8]">in motion.</span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-base sm:text-lg text-[#476066] max-w-2xl leading-relaxed mb-8">
+          <p className="text-base sm:text-lg text-[#476066] dark:text-[#94a3b8] max-w-2xl leading-relaxed mb-8">
             TAEMRY FLUX turns consistent attention into a visible earnings habit.
             Fund your wallet, choose your pace, and earn from the work you can see.
           </p>
@@ -297,21 +297,21 @@ export default function HomePage({ onNavigate }) {
                 const el = document.getElementById('packages-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="inline-flex items-center justify-center gap-1.5 px-6 py-3.5 bg-[#eae4d8]/80 hover:bg-[#eae4d8] text-[#133c44] font-semibold rounded-2xl text-base transition-all cursor-pointer"
+              className="inline-flex items-center justify-center gap-1.5 px-6 py-3.5 bg-[#eae4d8]/80 dark:bg-[#122b33] hover:bg-[#eae4d8] dark:hover:bg-[#173740] text-[#133c44] dark:text-[#f1f5f9] font-semibold rounded-2xl text-base transition-all cursor-pointer"
             >
               <span>See the packages</span>
-              <ChevronRight className="w-4 h-4 text-[#597176]" />
+              <ChevronRight className="w-4 h-4 text-[#597176] dark:text-[#94a3b8]" />
             </button>
           </div>
 
           {/* Trust points */}
-          <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-[#486065] pt-2">
+          <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-[#486065] dark:text-[#94a3b8] pt-2">
             <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-[#0c5963]" />
+              <CheckCircle2 className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
               <span>Transparent 25% Daily Returns</span>
             </div>
             <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#0c5963]" />
+              <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
               <span>Secure Session Architecture</span>
             </div>
           </div>
@@ -319,34 +319,34 @@ export default function HomePage({ onNavigate }) {
 
         {/* Floating Preview Card */}
         <div className="max-w-md mx-auto mt-12 px-2">
-          <div className="relative bg-[#ffffff] rounded-3xl p-6 sm:p-7 shadow-xl shadow-[#0c5963]/5 border border-[#e4ded2] overflow-hidden">
+          <div className="relative bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-7 shadow-xl shadow-[#0c5963]/5 dark:shadow-black/60 border border-[#e4ded2] dark:border-[#173740] overflow-hidden transition-colors">
             {/* Top decorative gradient shape */}
-            <div className="absolute -top-16 -right-16 w-44 h-44 bg-[#e6f4f1] rounded-full blur-2xl pointer-events-none" />
+            <div className="absolute -top-16 -right-16 w-44 h-44 bg-[#e6f4f1] dark:bg-[#0c262e]/30 rounded-full blur-2xl pointer-events-none" />
 
-            <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] tracking-wider uppercase mb-3">
+            <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
               <span className="tracking-widest">
                 {currentUser ? `MEMBER / ${currentUser.email?.split('@')[0]}` : 'TAEMRY / PERSONAL WALLET'}
               </span>
               <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
             </div>
 
-            <p className="text-xs text-[#6e8286] mb-1">
+            <p className="text-xs text-[#6e8286] dark:text-[#94a3b8] mb-1">
               {currentUser ? 'Your Live Available Balance' : 'Available balance'}
             </p>
-            <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] tracking-tight mb-5">
+            <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5">
               ${displayBalance.split('.')[0]}
-              <span className="text-2xl sm:text-3xl text-[#0d5963]">
+              <span className="text-2xl sm:text-3xl text-[#0d5963] dark:text-[#38bdf8]">
                 .{displayBalance.split('.')[1] || '00'}
               </span>
             </div>
 
             {/* Progress bar */}
             <div className="space-y-1.5 mb-6">
-              <div className="flex justify-between text-xs font-medium text-[#4f676b]">
+              <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
                 <span>Today's ad rhythm</span>
-                <span className="font-bold text-[#0d5963]">{displayProgress}%</span>
+                <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">{displayProgress}%</span>
               </div>
-              <div className="w-full bg-[#f1eee7] h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">
                 <div
                   className="bg-gradient-to-r from-[#0d5963] to-[#10b981] h-full rounded-full transition-all duration-1000"
                   style={{ width: `${displayProgress}%` }}
@@ -354,21 +354,21 @@ export default function HomePage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Floating Toast / Notification */}
-            <div className="bg-[#fcfaf7] border border-[#e5dfd3] rounded-2xl p-3.5 flex items-center justify-between shadow-xs">
+            {/* Floating Toast / Notification ("OK div wala") */}
+            <div className="bg-[#fcfaf7] dark:bg-[#07151a] border border-[#e5dfd3] dark:border-[#1e3f49] rounded-2xl p-3.5 flex items-center justify-between shadow-xs transition-colors">
               <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-[#dcfce7] flex items-center justify-center text-[#16a34a]">
+                <div className="w-6 h-6 rounded-full bg-[#dcfce7] dark:bg-[#064e3b]/70 flex items-center justify-center text-[#16a34a] dark:text-[#34d399] shrink-0">
                   <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-[#09353e]">
+                  <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
                     {currentUser
                       ? (userStats?.currentPackage && userStats?.currentPackage !== 'None'
                           ? 'Active Package: ' + userStats.currentPackage
                           : 'Deposit & Buy Package')
                       : 'Attention to Value'}
                   </p>
-                  <p className="text-[11px] text-[#6b7f83]">
+                  <p className="text-[11px] text-[#6b7f83] dark:text-[#94a3b8]">
                     {currentUser && (!userStats?.currentPackage || userStats?.currentPackage === 'None')
                       ? 'Activate a package to start 200 daily ads'
                       : 'Keep your daily ad rhythm'}
@@ -376,8 +376,8 @@ export default function HomePage({ onNavigate }) {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-[#718588] block">DAILY RETURN</span>
-                <span className="text-xs font-extrabold text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md">
+                <span className="text-[10px] text-[#718588] dark:text-[#94a3b8] block">DAILY RETURN</span>
+                <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded-md">
                   +25%
                 </span>
               </div>

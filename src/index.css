@@ -33,10 +33,12 @@
   }
 
   /* Base cards & containers in Dark Mode */
-  .dark .bg-white {
-    background-color: #0c2027 !important;
+  .dark .bg-white,
+  .dark .bg-\[\#ffffff\] {
+    background-color: #0a1b22 !important;
   }
 
+  .dark .bg-\[\#fcfaf7\],
   .dark .bg-\[\#faf8f5\],
   .dark .bg-\[\#faf8f4\],
   .dark .bg-\[\#fbf8f2\],
@@ -111,6 +113,7 @@
 
   /* Refined subtle borders in Dark Mode */
   .dark .border-\[\#e4ded2\],
+  .dark .border-\[\#e5dfd3\],
   .dark .border-\[\#e9e3d8\],
   .dark .border-\[\#e4dfd4\],
   .dark .border-\[\#f0ebe0\],

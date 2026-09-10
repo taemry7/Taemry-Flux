@@ -18,7 +18,8 @@ import {
   Palette,
   KeyRound,
   ArrowRight,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -36,7 +37,7 @@ const AVATAR_PRESETS = [
 ];
 
 export default function AccountSettings({ onSelectTab }) {
-  const { currentUser, updateUserProfile, userStats, fetchUserStats } = useAuth();
+  const { currentUser, updateUserProfile, userStats, fetchUserStats, logout } = useAuth();
 
   // Form State
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
@@ -259,26 +260,26 @@ export default function AccountSettings({ onSelectTab }) {
             onClick={() => handleThemeChange('light')}
             className={`p-5 rounded-2xl border-2 transition-all flex items-center gap-4 text-left cursor-pointer ${
               theme === 'light'
-                ? 'border-[#0c5963] bg-[#fbfdfc] shadow-xs ring-2 ring-[#0c5963]/15'
-                : 'border-[#e4ded2] bg-[#faf8f5] hover:border-[#b8ced2]'
+                ? 'border-[#0c5963] bg-linear-to-b from-[#ffffff] to-[#f4efe5] shadow-[0_4px_0_#0c5963,0_6px_12px_rgba(12,89,99,0.15)] translate-y-[-2px]'
+                : 'border-[#e4ded2] bg-[#faf8f5] hover:border-[#b8ced2] shadow-[0_2px_0_#d8d1c2]'
             }`}
           >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-              theme === 'light' ? 'bg-[#0c5963] text-white' : 'bg-white text-[#526a6f] border border-[#e0d9cb]'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+              theme === 'light' ? 'bg-linear-to-b from-[#fde047] to-[#eab308] text-[#78350f]' : 'bg-white text-[#526a6f] border border-[#e0d9cb]'
             }`}>
               <Sun className="w-6 h-6" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-extrabold text-[#09353e]">White Mode</span>
+                <span className="text-sm font-extrabold text-[#09353e]">White Mode (3D)</span>
                 {theme === 'light' && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#e6f4f1] text-[#0c5963] px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#0c5963] text-white px-2.5 py-0.5 rounded-full shadow-xs">
                     Active
                   </span>
                 )}
               </div>
               <p className="text-xs text-[#627a7f] mt-0.5 leading-snug">
-                Classic high-contrast warm daylight theme with crisp clarity.
+                Classic high-contrast warm daylight theme with crisp 3D depth and clarity.
               </p>
             </div>
           </button>
@@ -289,28 +290,28 @@ export default function AccountSettings({ onSelectTab }) {
             onClick={() => handleThemeChange('dark')}
             className={`p-5 rounded-2xl border-2 transition-all flex items-center gap-4 text-left cursor-pointer ${
               theme === 'dark'
-                ? 'border-[#0c5963] bg-[#0c242c] text-white shadow-xs ring-2 ring-[#0c5963]/30'
-                : 'border-[#e4ded2] bg-[#faf8f5] hover:border-[#b8ced2]'
+                ? 'border-[#38bdf8] bg-linear-to-b from-[#112f38] to-[#081b21] text-white shadow-[0_4px_0_#0284c7,0_6px_12px_rgba(2,132,199,0.25)] translate-y-[-2px]'
+                : 'border-[#e4ded2] bg-[#faf8f5] hover:border-[#b8ced2] shadow-[0_2px_0_#d8d1c2]'
             }`}
           >
-            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${
-              theme === 'dark' ? 'bg-[#0ea5e9] text-white' : 'bg-[#112d35] text-white'
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-xs ${
+              theme === 'dark' ? 'bg-linear-to-b from-[#38bdf8] to-[#0284c7] text-white' : 'bg-[#112d35] text-white'
             }`}>
               <Moon className="w-6 h-6" />
             </div>
             <div className="flex-1">
               <div className="flex items-center justify-between">
                 <span className={`text-sm font-extrabold ${theme === 'dark' ? 'text-white' : 'text-[#09353e]'}`}>
-                  Dark Mode
+                  Dark Mode (3D)
                 </span>
                 {theme === 'dark' && (
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#0ea5e9]/20 text-[#38bdf8] px-2 py-0.5 rounded-full border border-[#0ea5e9]/40">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-[#0284c7] text-white px-2.5 py-0.5 rounded-full shadow-xs">
                     Active
                   </span>
                 )}
               </div>
-              <p className={`text-xs mt-0.5 leading-snug ${theme === 'dark' ? 'text-white/70' : 'text-[#627a7f]'}`}>
-                Sleek midnight dark aesthetic designed for comfortable viewing.
+              <p className={`text-xs mt-0.5 leading-snug ${theme === 'dark' ? 'text-white/80' : 'text-[#627a7f]'}`}>
+                Sleek midnight dark aesthetic with deep 3D shading designed for eye comfort.
               </p>
             </div>
           </button>
@@ -554,6 +555,37 @@ export default function AccountSettings({ onSelectTab }) {
           </button>
         </div>
       </form>
+
+      {/* SESSION & SIGN OUT SECTION (Relocated to Settings per user directive) */}
+      <div className="mt-8 p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0c2027] border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+        <div>
+          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#73888d] dark:text-[#94a3b8]">
+            SECURITY & SESSION
+          </span>
+          <h4 className="text-base font-bold text-[#09353e] dark:text-white mt-1">
+            Active Account Session
+          </h4>
+          <p className="text-xs text-[#526b70] dark:text-[#94a3b8] mt-1 max-w-xl leading-relaxed">
+            Signed in as <strong className="text-[#09353e] dark:text-white">{currentUser?.email || 'Member'}</strong>. You can safely terminate your active session and sign out of this device.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          id="btn-settings-signout"
+          onClick={async () => {
+            if (logout) {
+              await logout();
+            }
+            window.location.hash = '#/home';
+            window.location.reload();
+          }}
+          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#fee2e2] hover:bg-[#fecaca] dark:bg-red-950/40 dark:hover:bg-red-900/60 text-[#b91c1c] dark:text-red-300 text-xs font-bold rounded-xl border border-red-200 dark:border-red-900/50 shadow-xs transition-all cursor-pointer self-start sm:self-auto shrink-0"
+        >
+          <LogOut className="w-4 h-4" />
+          <span>Sign Out of Account</span>
+        </button>
+      </div>
     </div>
   );
 }

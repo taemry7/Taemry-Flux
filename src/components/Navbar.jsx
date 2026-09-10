@@ -82,54 +82,6 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
           </button>
         </div>
 
-        {/* Center: Quick Site Links */}
-        <nav className="hidden md:flex items-center gap-6 text-xs font-semibold text-[#50686d] dark:text-[#94a3b8]">
-          <button
-            onClick={() => {
-              onNavigate('home');
-              setTimeout(() => {
-                const el = document.getElementById('packages-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 50);
-            }}
-            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
-          >
-            Packages
-          </button>
-          <button
-            onClick={() => {
-              onNavigate('home');
-              setTimeout(() => {
-                const el = document.getElementById('how-it-works');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }, 50);
-            }}
-            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
-          >
-            How it works
-          </button>
-          <button
-            onClick={() => onNavigate('whitepaper')}
-            className={`transition-colors cursor-pointer ${
-              currentPage === 'whitepaper'
-                ? 'text-[#0c5963] dark:text-[#38bdf8] font-bold underline underline-offset-4'
-                : 'hover:text-[#0c5963] dark:hover:text-[#38bdf8]'
-            }`}
-          >
-            Whitepaper
-          </button>
-          <button
-            onClick={() => onNavigate('support')}
-            className={`transition-colors cursor-pointer ${
-              currentPage === 'support'
-                ? 'text-[#0c5963] dark:text-[#38bdf8] font-bold underline underline-offset-4'
-                : 'hover:text-[#0c5963] dark:hover:text-[#38bdf8]'
-            }`}
-          >
-            Support
-          </button>
-        </nav>
-
         {/* Right Side: Auth controls */}
         <div className="flex items-center gap-3">
           {currentUser ? (
@@ -151,20 +103,31 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 </button>
               )}
 
-              {/* Theme Toggle (White Mode / Dark Mode) */}
+              {/* 3D Theme Toggle (White Mode / Dark Mode) */}
               <button
                 type="button"
                 id="btn-nav-theme-toggle"
                 onClick={toggleTheme}
-                className="p-2 rounded-xl text-[#526d72] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white hover:bg-[#eef2f3] dark:hover:bg-[#122e37] transition-colors cursor-pointer"
-                title={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
-                aria-label={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
+                className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-linear-to-b from-[#ffffff] via-[#f7f4ee] to-[#e4ded2] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] border border-[#d6cfc0] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0,inset_0_2px_4px_rgba(0,0,0,0.2)] dark:active:shadow-[0_1px_0_#051318,inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer select-none"
+                title={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
+                aria-label={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
               >
-                {theme === 'dark' ? (
-                  <Sun className="w-4 h-4 text-amber-400" />
-                ) : (
-                  <Moon className="w-4 h-4 text-[#526d72]" />
-                )}
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    theme === 'dark'
+                      ? 'bg-linear-to-b from-[#38bdf8] to-[#0284c7] text-white shadow-[0_2px_4px_rgba(2,132,199,0.5),inset_0_1px_1px_rgba(255,255,255,0.6)]'
+                      : 'bg-linear-to-b from-[#fde047] to-[#eab308] text-[#78350f] shadow-[0_2px_4px_rgba(202,138,4,0.4),inset_0_1px_1px_rgba(255,255,255,0.8)]'
+                  }`}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-3 h-3 text-white" />
+                  ) : (
+                    <Moon className="w-3 h-3 text-amber-950" />
+                  )}
+                </div>
+                <span className="text-[10px] font-black tracking-wider uppercase hidden sm:inline text-[#09353e] dark:text-[#f1f5f9] pr-0.5">
+                  {theme === 'dark' ? 'Dark 3D' : 'Light 3D'}
+                </span>
               </button>
 
               {/* Wallet quick balance pill */}
@@ -176,11 +139,11 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 <span>${Number(userStats?.walletBalance ?? 0).toFixed(2)}</span>
               </button>
 
-              {/* User Avatar (Photo or Initials) */}
+              {/* User Avatar Button (Opens Information & Profile Settings) */}
               <button
-                onClick={() => onNavigate('dashboard')}
+                onClick={() => onNavigate('dashboard', 'settings')}
                 className="w-9 h-9 rounded-full overflow-hidden bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#0c5963]/40 transition-all cursor-pointer border border-[#ded8cb] dark:border-[#224450]"
-                title={currentUser.email || 'Member Profile'}
+                title={currentUser.email ? `${currentUser.displayName || currentUser.email} - View Profile & Settings` : 'Profile & Settings'}
               >
                 {currentUser.photoURL ? (
                   <img
@@ -192,45 +155,34 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                   getInitials()
                 )}
               </button>
-
-              {/* Settings shortcut button */}
-              <button
-                onClick={() => onNavigate('dashboard')}
-                className="p-2 text-[#78888b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white hover:bg-[#eef2f3] dark:hover:bg-[#122e37] rounded-xl transition-colors cursor-pointer hidden sm:block"
-                title="Account Settings"
-              >
-                <Settings className="w-4 h-4" />
-              </button>
-
-              {/* Logout button */}
-              <button
-                id="btn-logout"
-                onClick={async () => {
-                  await logout();
-                  onNavigate('home');
-                }}
-                className="p-2 text-[#78888b] dark:text-[#94a3b8] hover:text-[#b91c1c] dark:hover:text-red-400 hover:bg-[#fee2e2]/60 dark:hover:bg-red-950/30 rounded-xl transition-colors cursor-pointer"
-                title="Sign out"
-              >
-                <LogOut className="w-4 h-4" />
-              </button>
             </div>
           ) : (
             <div className="flex items-center gap-2 sm:gap-4">
-              {/* Theme Toggle for logged out guests too */}
+              {/* 3D Theme Toggle for guest */}
               <button
                 type="button"
                 id="btn-nav-theme-toggle-guest"
                 onClick={toggleTheme}
-                className="p-2 rounded-xl text-[#526d72] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white hover:bg-[#eef2f3] dark:hover:bg-[#122e37] transition-colors cursor-pointer"
-                title={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
-                aria-label={theme === 'dark' ? 'Switch to White Mode' : 'Switch to Dark Mode'}
+                className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-linear-to-b from-[#ffffff] via-[#f7f4ee] to-[#e4ded2] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] border border-[#d6cfc0] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0,inset_0_2px_4px_rgba(0,0,0,0.2)] dark:active:shadow-[0_1px_0_#051318,inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer select-none"
+                title={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
+                aria-label={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
               >
-                {theme === 'dark' ? (
-                  <Sun className="w-4 h-4 text-amber-400" />
-                ) : (
-                  <Moon className="w-4 h-4 text-[#526d72]" />
-                )}
+                <div
+                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
+                    theme === 'dark'
+                      ? 'bg-linear-to-b from-[#38bdf8] to-[#0284c7] text-white shadow-[0_2px_4px_rgba(2,132,199,0.5),inset_0_1px_1px_rgba(255,255,255,0.6)]'
+                      : 'bg-linear-to-b from-[#fde047] to-[#eab308] text-[#78350f] shadow-[0_2px_4px_rgba(202,138,4,0.4),inset_0_1px_1px_rgba(255,255,255,0.8)]'
+                  }`}
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="w-3 h-3 text-white" />
+                  ) : (
+                    <Moon className="w-3 h-3 text-amber-950" />
+                  )}
+                </div>
+                <span className="text-[10px] font-black tracking-wider uppercase hidden sm:inline text-[#09353e] dark:text-[#f1f5f9] pr-0.5">
+                  {theme === 'dark' ? 'Dark 3D' : 'Light 3D'}
+                </span>
               </button>
               <button
                 id="btn-nav-signin"

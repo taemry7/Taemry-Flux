@@ -91,8 +91,8 @@ export default function WhitepaperPage({ onNavigate }) {
         a: 'Downline commissions are paid 5 Levels deep (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%) whenever direct downlines purchase advertising packages.'
       },
       {
-        q: 'Q6. Why can\'t I withdraw money if I have 0 referrals?',
-        a: 'To build an authentic, active member community and protect ecosystem liquidity, each member must have at least 1 active direct referral before requesting a withdrawal.'
+        q: 'Q6. How are member withdrawals processed?',
+        a: 'Withdrawals are processed directly to your preferred payment method (Bank, Easypaisa, JazzCash, or USDT/BTC) with a low $1.00 minimum threshold, reviewed within 1 to 24 hours.'
       },
       {
         q: 'Q7. What happens if I do not watch ads for a few days?',
@@ -193,11 +193,11 @@ export default function WhitepaperPage({ onNavigate }) {
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Back</span>
             </button>
-            <div className="flex items-center gap-2">
-              <Logo className="w-8 h-8" />
+            <div className="flex items-center gap-2.5">
+              <Logo size="sm" showText={false} />
               <div>
                 <span className="text-sm font-black text-[#093e4a] dark:text-white tracking-wider uppercase block">
-                  TAEMRY FLUX
+                  TAEMRY
                 </span>
                 <span className="text-[10px] font-bold text-[#0c5963] dark:text-[#38bdf8] uppercase tracking-widest block -mt-1">
                   Official Protocol Whitepaper
@@ -517,8 +517,7 @@ export default function WhitepaperPage({ onNavigate }) {
                   { title: '1. Minimum Withdrawal', desc: '$1.00 USD' },
                   { title: '2. Maximum Withdrawal', desc: '$1,000.00 USD (per single request)' },
                   { title: '3. Daily Request Frequency', desc: '1 withdrawal request per calendar day' },
-                  { title: '4. Active Referral Requirement', desc: 'You MUST have at least 1 active direct referral to withdraw any balance.' },
-                  { title: '5. Anti-VPN & Multi-Account Policy', desc: 'VPNs, proxies, and emulator automation are strictly forbidden.' },
+                  { title: '4. Anti-VPN & Multi-Account Policy', desc: 'VPNs, proxies, and emulator automation are strictly forbidden.' },
                 ].map((rule) => (
                   <div key={rule.title} className="p-3 rounded-xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />

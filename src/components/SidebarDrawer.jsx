@@ -20,15 +20,17 @@ import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab, onNavigate }) {
-  const { currentUser, isAdmin, logout } = useAuth();
+  const { currentUser, userStats, isAdmin, logout } = useAuth();
 
   if (!isOpen) return null;
 
+  const hasActivePackage = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
+
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare },
+    ...(hasActivePackage ? [{ id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare }] : []),
     { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
+    ...(hasActivePackage ? [{ id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight }] : []),
     { id: 'transactions', label: 'Transactions', icon: History },
     { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
     { id: 'referrals', label: 'Referrals', icon: Users },
