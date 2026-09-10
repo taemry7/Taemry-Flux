@@ -63,11 +63,13 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Every assistant, turn, or task MUST keep `src/pages/HomePage.jsx` strictly unchanged.
 
 ## STRICT INVARIANT: Dashboard Eligibility Gating Rules (PERMANENT)
-- **New User Access Limit**: Users without an active package (`stats.currentPackage === 'None'` or falsy) are only eligible for **Deposit** and **Buy Package** (along with the overview page).
-- **Ineligible Feature Shield**: When a user without a package clicks any other feature (Watch Ads, Withdraw, Referrals, Team Rewards, Transactions, Settings), an **Ineligible** gate component must be displayed indicating that the feature requires package activation, with buttons to buy a package or deposit funds.
+- **New User Access Limit**: Users without an active package (`stats.currentPackage === 'None'` or falsy) are only eligible for **Overview**, **Deposit**, **Buy Package**, and **Profile Information**.
+- **Profile Information Accessibility**: Every user (with or without an active contract package) is 100% eligible to access, view, and update their Profile Information (display name, avatar, bio, country, and phone). It must NEVER be gated behind `IneligibleGate`.
+- **Ineligible Feature Shield**: When a user without a package clicks restricted earning features (Watch Ads, Withdraw, Referrals, Team Rewards, Transactions), an **Ineligible** gate component must be displayed indicating that the feature requires package activation, with buttons to buy a package or deposit funds.
 - **Full Eligibility Upon Purchase**: Once an advertising package is purchased, all features, ads, withdrawal gateway, and team rewards immediately become 100% eligible and fully accessible.
 - **Package Labeling**: Display "No Package" or "No Active Package" instead of "None".
 - **Stat Cards Layout**: Wallet balance and package status are consolidated into a unified section, and lifetime ads feature daily progress tracking.
+- **Contract Badge**: The status badge span next to "ACTIVE CONTRACT" is permanently hidden per user specification.
 
 ## STRICT INVARIANT: Clean New User Accounts & Zero Pre-seed (PERMANENT)
 - Every new user and admin account MUST start completely clean with:
@@ -81,10 +83,23 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - `isEligible`: false
 - No account shall ever be pre-seeded with fake balances (e.g. $2500, $5000) or fake packages (e.g. Apex, Gold) upon refresh or update. Package activation and wallet balances must only change through actual deposits and genuine package purchases.
 
-## STRICT INVARIANT: Navigation Drawer Layout Rules (PERMANENT)
-- **User Profile Info Div**: Positioned at the top of the drawer right beneath the header logo & close button.
-- **Sign Out Button**: Hidden (`#btn-drawer-signout`).
-- **Settings & Profile Link**: Removed from drawer navigation menu items.
+## STRICT INVARIANT: Navigation & Profile Menu Rules (PERMANENT)
+- **User Profile Info Div in Drawer**: Positioned at the top of the drawer right beneath the header logo & close button, clickable to open Profile Information, and marked Eligible.
+- **3-Dots Options Menu in Navbar**: Located next to the user avatar in the top navbar (`#btn-nav-more-menu`), providing instant access to Profile Information (marked Eligible), Overview Dashboard, Deposit Funds, and Sign Out.
+- **Sign Out Button**: Hidden from the drawer footer (`#btn-drawer-signout`); accessible via the 3-dots navbar menu and profile area.
+- **LK Avatar Button in Navbar**: The standalone user initials avatar button in the top navbar is permanently hidden per user specification.
+- **Dashboard Overview Fallback**: Dashboard route and internal state must always default to `'overview'` so the dashboard never renders blank or empty. Clicking Overview switches smoothly to the full overview splash view.
+
+## STRICT INVARIANT: Deposit Page & Footer Layout Rules (PERMANENT)
+- **Rate Span & Instant Verification Span**: Permanently hidden in `src/pages/DepositPage.jsx`.
+- **Payment Method Brand Logos**: Dedicated vector logos are displayed for each payment method:
+  - **JazzCash**: Official red and yellow brand logo.
+  - **Easypaisa**: Official green and white brand logo.
+  - **Bank Transfer**: Official bank pediment and transfer symbol.
+  - **Crypto (USDT)**: Official Tether green USDT logo.
+- **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently hidden.
+- **Records Count Format**: The recent deposits count badge in `src/pages/DepositPage.jsx` strictly displays "{count} Rec" (e.g., "0 Rec").
+- **Footer Navigation & Copyright**: The navigation quick links div and copyright notice div in `src/components/Footer.jsx` are permanently hidden per user directive.
 
 
 

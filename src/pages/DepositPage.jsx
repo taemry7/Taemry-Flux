@@ -248,7 +248,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0c5963] bg-[#e6f4f1] px-2.5 py-0.5 rounded-full border border-[#b8dfd7]">
               Transaction Engine
             </span>
-            <span className="text-xs font-semibold text-[#5a7277]">
+            <span className="hidden text-xs font-semibold text-[#5a7277]">
               Rate: <strong>$1 = {exchangeRate} PKR</strong>
             </span>
           </div>
@@ -301,7 +301,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
               <ArrowDownCircle className="w-5 h-5 text-[#0c5963]" />
               <span>Step 1: Choose Payment Method</span>
             </h2>
-            <span className="text-xs text-[#718589] font-semibold">Instant verification</span>
+            <span className="hidden text-xs text-[#718589] font-semibold">Instant verification</span>
           </div>
 
           {/* Payment Method Selector Pills */}
@@ -315,8 +315,13 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#fee2e2] text-[#b91c1c] flex items-center justify-center font-black text-xs">
-                JC
+              <div className="w-9 h-9 rounded-xl bg-[#D91B24] flex items-center justify-center shadow-xs overflow-hidden p-1">
+                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
+                  <rect width="32" height="32" rx="6" fill="#D91B24" />
+                  <path d="M12 7C12 11 16 13 16 17C16 20 13.5 22 13.5 24C13.5 25.5 14.8 26.8 16.5 26.8C18.2 26.8 19.5 25.5 19.5 24C19.5 21 16 19 16 15C16 11 19 8 19 8C17 9.5 15 10.5 14 10.5C13 10.5 12 9.5 12 7Z" fill="#FDB813" />
+                  <circle cx="21" cy="11" r="2" fill="#FDB813" />
+                  <text x="16" y="29.5" fill="#FFFFFF" fontSize="5.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">JazzCash</text>
+                </svg>
               </div>
               <span className="text-xs font-bold">JazzCash</span>
             </button>
@@ -330,8 +335,14 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#dcfce7] text-[#15803d] flex items-center justify-center font-black text-xs">
-                EP
+              <div className="w-9 h-9 rounded-xl bg-[#00A859] flex items-center justify-center shadow-xs overflow-hidden p-1">
+                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
+                  <rect width="32" height="32" rx="6" fill="#00A859" />
+                  <circle cx="16" cy="13.5" r="7.5" stroke="#FFFFFF" strokeWidth="2.2" strokeDasharray="34 10" />
+                  <path d="M21 8.5L24 12.5L20 13.5" fill="#FFFFFF" />
+                  <circle cx="16" cy="13.5" r="3" fill="#6EE7B7" />
+                  <text x="16" y="28.5" fill="#FFFFFF" fontSize="4.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">easypaisa</text>
+                </svg>
               </div>
               <span className="text-xs font-bold">Easypaisa</span>
             </button>
@@ -345,8 +356,18 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#e0f2fe] text-[#0284c7] flex items-center justify-center">
-                <Building2 className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-[#0284c7] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
+                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
+                  <rect width="32" height="32" rx="6" fill="#0284c7" />
+                  <path d="M7 11L16 6L25 11H7Z" fill="#FFFFFF" />
+                  <rect x="9" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
+                  <rect x="13.3" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
+                  <rect x="17.6" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
+                  <rect x="21.9" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
+                  <rect x="6" y="22" width="20" height="2.2" rx="0.5" fill="#FFFFFF" />
+                  <circle cx="23.5" cy="23.5" r="4.5" fill="#38BDF8" stroke="#0284c7" strokeWidth="1" />
+                  <path d="M21.5 23.5H24.5M24.5 23.5L23.2 22M24.5 23.5L23.2 25" stroke="#09353e" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
               </div>
               <span className="text-xs font-bold">Bank Transfer</span>
             </button>
@@ -360,8 +381,13 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#fef3c7] text-[#ca8a04] flex items-center justify-center">
-                <Coins className="w-4 h-4" />
+              <div className="w-9 h-9 rounded-xl bg-[#26A17B] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
+                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
+                  <rect width="32" height="32" rx="6" fill="#26A17B" />
+                  <path d="M16 15.6C12.8 15.6 10.2 15.1 10.2 14.5C10.2 13.9 12.8 13.4 16 13.4C19.2 13.4 21.8 13.9 21.8 14.5C21.8 15.1 19.2 15.6 16 15.6ZM16 11.2C10.6 11.2 6.2 12.7 6.2 14.5C6.2 16.1 9.9 17.5 14.6 17.7V25H17.4V17.7C22.1 17.5 25.8 16.1 25.8 14.5C25.8 12.7 21.4 11.2 16 11.2Z" fill="#FFFFFF" />
+                  <rect x="14.2" y="7" width="3.6" height="5" fill="#FFFFFF" />
+                  <rect x="9.5" y="7" width="13" height="2.8" rx="0.5" fill="#FFFFFF" />
+                </svg>
               </div>
               <span className="text-xs font-bold">Crypto (USDT)</span>
             </button>
@@ -672,8 +698,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             </div>
           </div>
 
-          {/* Quick Wallet Summary Card */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex items-center justify-between">
+          {/* Quick Wallet Summary Card - Hidden per user directive */}
+          <div className="hidden bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs items-center justify-between">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589]">
                 Current Wallet Balance
@@ -704,7 +730,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             </p>
           </div>
           <span className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-2.5 py-1 rounded-full border border-[#b8dfd7]">
-            {depositHistory.length} records
+            {depositHistory.length} Rec
           </span>
         </div>
 

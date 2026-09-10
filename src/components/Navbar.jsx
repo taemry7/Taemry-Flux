@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck } from 'lucide-react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const notificationRef = useRef(null);
+  const moreMenuRef = useRef(null);
   const [hasUnread, setHasUnread] = useState(() => {
     return localStorage.getItem('taemry_notifications_status') !== 'read';
   });
@@ -63,12 +65,15 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
       if (notificationRef.current && !notificationRef.current.contains(e.target)) {
         setShowNotifications(false);
       }
+      if (moreMenuRef.current && !moreMenuRef.current.contains(e.target)) {
+        setShowMoreMenu(false);
+      }
     };
-    if (showNotifications) {
+    if (showNotifications || showMoreMenu) {
       document.addEventListener('mousedown', handleClickOutside);
     }
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showNotifications]);
+  }, [showNotifications, showMoreMenu]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -252,10 +257,10 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 <span>${Number(userStats?.walletBalance ?? 0).toFixed(2)}</span>
               </button>
 
-              {/* User Avatar Button (Opens Information & Profile Settings) */}
+              {/* User Avatar Button (Opens Information & Profile Settings) - Hidden per user directive */}
               <button
                 onClick={() => onNavigate('dashboard', 'settings')}
-                className="w-9 h-9 rounded-full overflow-hidden bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#0c5963]/40 transition-all cursor-pointer border border-[#ded8cb] dark:border-[#224450]"
+                className="hidden w-9 h-9 rounded-full overflow-hidden bg-[#e89b27] text-white items-center justify-center font-bold text-xs shadow-sm hover:ring-2 hover:ring-[#0c5963]/40 transition-all cursor-pointer border border-[#ded8cb] dark:border-[#224450]"
                 title={currentUser.email ? `${currentUser.displayName || currentUser.email} - View Profile & Settings` : 'Profile & Settings'}
               >
                 {currentUser.photoURL ? (
@@ -268,6 +273,104 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                   getInitials()
                 )}
               </button>
+
+              {/* 3 Dots More Options Menu */}
+              <div className="relative" ref={moreMenuRef}>
+                <button
+                  type="button"
+                  id="btn-nav-more-menu"
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                  title="More Options & Profile"
+                  aria-label="More Options & Profile"
+                >
+                  <MoreVertical className="w-4 h-4" />
+                </button>
+
+                {/* 3 Dots Dropdown Menu */}
+                {showMoreMenu && (
+                  <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-[#0a1c22] border border-[#e5dfd3] dark:border-[#193d48] rounded-2xl shadow-xl z-50 p-2 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="p-3 border-b border-[#f1ece1] dark:border-[#15343d] flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shrink-0">
+                        {getInitials()}
+                      </div>
+                      <div className="truncate flex-1">
+                        <p className="text-xs font-bold text-[#09353e] dark:text-white truncate">
+                          {currentUser.displayName || 'Member'}
+                        </p>
+                        <p className="text-[11px] text-[#6d7f83] dark:text-[#94a3b8] truncate">
+                          {currentUser.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="py-1.5 space-y-1">
+                      {/* Profile Information Link - Explicitly Marked Eligible */}
+                      <button
+                        type="button"
+                        id="btn-menu-profile-info"
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          onNavigate('dashboard', 'settings');
+                        }}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold text-[#09353e] dark:text-[#f1f5f9] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <User className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                          <span>Profile Information</span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80]">
+                          Eligible
+                        </span>
+                      </button>
+
+                      {/* Overview Dashboard Link */}
+                      <button
+                        type="button"
+                        id="btn-menu-overview"
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          onNavigate('dashboard', 'overview');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[#09353e] dark:text-[#f1f5f9] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                      >
+                        <LayoutDashboard className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                        <span>Overview Dashboard</span>
+                      </button>
+
+                      {/* Deposit Funds Link */}
+                      <button
+                        type="button"
+                        id="btn-menu-deposit"
+                        onClick={() => {
+                          setShowMoreMenu(false);
+                          onNavigate('dashboard', 'deposit');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-[#09353e] dark:text-[#f1f5f9] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                      >
+                        <ArrowDownCircle className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                        <span>Deposit Funds</span>
+                      </button>
+                    </div>
+
+                    <div className="pt-1.5 border-t border-[#f1ece1] dark:border-[#15343d]">
+                      <button
+                        type="button"
+                        id="btn-menu-signout"
+                        onClick={async () => {
+                          setShowMoreMenu(false);
+                          await logout();
+                          onNavigate('home');
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-[#dc2626] dark:text-red-400 hover:bg-[#fee2e2] dark:hover:bg-red-950/40 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>Sign Out</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-2 sm:gap-3">

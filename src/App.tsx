@@ -85,6 +85,8 @@ function AppContent() {
         const parts = effectiveRoute.split('/');
         if (parts[1]) {
           setActiveTab(parts[1] === 'packages' ? 'buy-package' : parts[1]);
+        } else {
+          setActiveTab('overview');
         }
       } else if (effectiveRoute === '' || effectiveRoute === 'home') {
         setCurrentPage('home');
@@ -103,7 +105,13 @@ function AppContent() {
   // Update hash when navigating
   const navigateTo = (page, tab = null) => {
     setCurrentPage(page);
-    if (tab) setActiveTab(tab);
+    if (page === 'dashboard') {
+      setActiveTab(tab || 'overview');
+    } else if (tab) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab('overview');
+    }
     window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -111,7 +119,7 @@ function AppContent() {
   // If user signs in while on login page, smoothly transition to member dashboard
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
-      navigateTo('dashboard');
+      navigateTo('dashboard', 'overview');
     }
   }, [currentUser, currentPage]);
 

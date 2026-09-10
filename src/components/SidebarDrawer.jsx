@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   FileText,
   LifeBuoy,
-  Gift
+  Gift,
+  User
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
@@ -35,6 +36,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
     { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
     { id: 'referrals', label: 'Referrals', icon: Users },
     { id: 'milestones', label: 'Team Rewards', icon: Gift },
+    { id: 'settings', label: 'Profile Information', icon: User },
   ];
 
   return (
@@ -69,20 +71,33 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
           </button>
         </div>
 
-        {/* User Account / Profile Info moved to TOP */}
-        <div className="px-5 py-3.5 border-b border-[#ece6d9] dark:border-[#17323b] bg-[#f5f1e8] dark:bg-[#061418] flex items-center gap-3 transition-colors">
-          <div className="w-8 h-8 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shrink-0">
-            {currentUser?.email ? currentUser.email.substring(0, 2).toUpperCase() : 'TF'}
+        {/* User Account / Profile Info moved to TOP - Clickable & Eligible */}
+        <button
+          type="button"
+          onClick={() => {
+            onSelectTab('settings');
+            onClose();
+          }}
+          className="w-full text-left px-5 py-3.5 border-b border-[#ece6d9] dark:border-[#17323b] bg-[#f5f1e8] dark:bg-[#061418] hover:bg-[#ede7db] dark:hover:bg-[#0c2027] flex items-center justify-between gap-3 transition-colors cursor-pointer"
+          title="Open Profile Information"
+        >
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <div className="w-8 h-8 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shrink-0">
+              {currentUser?.email ? currentUser.email.substring(0, 2).toUpperCase() : 'TF'}
+            </div>
+            <div className="truncate flex-1">
+              <p className="text-xs font-semibold text-[#093e4a] dark:text-white truncate">
+                {currentUser?.displayName || 'Member'}
+              </p>
+              <p className="text-[11px] text-[#6d7f83] dark:text-[#94a3b8] truncate">
+                {currentUser?.email}
+              </p>
+            </div>
           </div>
-          <div className="truncate flex-1">
-            <p className="text-xs font-semibold text-[#093e4a] dark:text-white truncate">
-              {currentUser?.displayName || 'Member'}
-            </p>
-            <p className="text-[11px] text-[#6d7f83] dark:text-[#94a3b8] truncate">
-              {currentUser?.email}
-            </p>
-          </div>
-        </div>
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80] shrink-0">
+            Eligible
+          </span>
+        </button>
 
         {/* Menu Items */}
         <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto">

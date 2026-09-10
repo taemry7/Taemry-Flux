@@ -28,7 +28,8 @@ import {
   Coins,
   Settings,
   Gift,
-  ChevronRight
+  ChevronRight,
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -90,10 +91,26 @@ export default function DashboardPage({
 }) {
   const { currentUser, userStats } = useAuth();
 
-  // Internal tab state ('overview' | 'watch-ads' | 'referrals' | 'milestones' | 'buy-package' | 'withdraw')
-  const [activeTab, setActiveTab] = useState(
-    propActiveTab === 'packages' ? 'buy-package' : propActiveTab || 'overview'
-  );
+  const validTabs = [
+    'overview',
+    'watch-ads',
+    'deposit',
+    'buy-package',
+    'withdraw',
+    'referrals',
+    'milestones',
+    'transactions',
+    'settings',
+  ];
+
+  const sanitizeTab = (tab) => {
+    if (!tab) return 'overview';
+    if (tab === 'packages') return 'buy-package';
+    return validTabs.includes(tab) ? tab : 'overview';
+  };
+
+  // Internal tab state ('overview' | 'watch-ads' | 'referrals' | 'milestones' | 'buy-package' | 'withdraw' | 'deposit' | 'transactions' | 'settings')
+  const [activeTab, setActiveTab] = useState(() => sanitizeTab(propActiveTab));
 
   // Live dashboard statistics loaded from GET /api/dashboard/stats
   const [stats, setStats] = useState({
@@ -117,15 +134,14 @@ export default function DashboardPage({
 
   // Sync when propActiveTab changes
   useEffect(() => {
-    if (propActiveTab) {
-      setActiveTab(propActiveTab === 'packages' ? 'buy-package' : propActiveTab);
-    }
+    setActiveTab(sanitizeTab(propActiveTab));
   }, [propActiveTab]);
 
   const handleTabChange = (tabId) => {
-    setActiveTab(tabId);
+    const sanitized = sanitizeTab(tabId);
+    setActiveTab(sanitized);
     if (onSelectTab) {
-      onSelectTab(tabId);
+      onSelectTab(sanitized);
     }
   };
 
@@ -180,8 +196,10 @@ export default function DashboardPage({
     { id: 'referrals', label: 'Referrals', icon: Users, eligible: hasActivePackage },
     { id: 'milestones', label: 'Team Rewards', icon: Gift, tag: 'Cash', eligible: hasActivePackage },
     { id: 'transactions', label: 'Transactions', icon: History, eligible: hasActivePackage },
-    { id: 'settings', label: 'Settings & Profile', icon: Settings, eligible: hasActivePackage },
+    { id: 'settings', label: 'Profile Information', icon: User, eligible: true },
   ];
+
+  const currentActiveTab = sanitizeTab(activeTab);
 
   const rawDisplayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Member';
   const userFirstName = rawDisplayName.trim().split(' ')[0];
@@ -198,7 +216,7 @@ export default function DashboardPage({
           <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-4 scrollbar-none">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = currentActiveTab === item.id;
               return (
                 <button
                   key={item.id}
@@ -235,7 +253,7 @@ export default function DashboardPage({
             <nav className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeTab === item.id;
+                const isActive = currentActiveTab === item.id;
                 return (
                   <button
                     key={item.id}
@@ -307,8 +325,8 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 1: OVERVIEW (/dashboard)                                             */}
           {/* ========================================================================= */}
-          {activeTab === 'overview' && (
-            <div className="space-y-6">
+          {currentActiveTab === 'overview' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -586,7 +604,7 @@ export default function DashboardPage({
                     <span className="text-[10px] font-bold uppercase tracking-wider text-[#73888d] dark:text-[#94a3b8]">
                       ACTIVE CONTRACT
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    <span className={`hidden text-[10px] font-bold px-2 py-0.5 rounded-full ${
                       hasActivePackage
                         ? 'bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80]'
                         : 'bg-[#fee2e2] text-[#dc2626] dark:bg-[#7f1d1d]/40 dark:text-[#f87171]'
@@ -618,7 +636,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 2: BUY PACKAGE (/buy-package)                                        */}
           {/* ========================================================================= */}
-          {activeTab === 'buy-package' && (
+          {currentActiveTab === 'buy-package' && (
             <BuyPackage
               walletBalance={stats.walletBalance}
               currentPackage={stats.currentPackage}
@@ -630,7 +648,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 3: WATCH ADS (Phase 3)                                                */}
           {/* ========================================================================= */}
-          {activeTab === 'watch-ads' && (
+          {currentActiveTab === 'watch-ads' && (
             hasActivePackage ? (
               <WatchAds
                 onSelectTab={handleTabChange}
@@ -647,7 +665,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 4: REFERRALS (Phase 3)                                                */}
           {/* ========================================================================= */}
-          {activeTab === 'referrals' && (
+          {currentActiveTab === 'referrals' && (
             hasActivePackage ? (
               <Referrals
                 onSelectTab={handleTabChange}
@@ -663,7 +681,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 5: TEAM REWARDS (Direct Referral Cash Milestones)                     */}
           {/* ========================================================================= */}
-          {(activeTab === 'milestones' || activeTab === 'team-rewards') && (
+          {(currentActiveTab === 'milestones' || currentActiveTab === 'team-rewards') && (
             hasActivePackage ? (
               <Milestones
                 onSelectTab={handleTabChange}
@@ -679,7 +697,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 6: DEPOSIT (Phase 4)                                                  */}
           {/* ========================================================================= */}
-          {activeTab === 'deposit' && (
+          {currentActiveTab === 'deposit' && (
             <DepositPage
               onSelectTab={handleTabChange}
               onNavigate={onNavigate}
@@ -689,7 +707,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 7: WITHDRAW (Phase 4)                                                 */}
           {/* ========================================================================= */}
-          {activeTab === 'withdraw' && (
+          {currentActiveTab === 'withdraw' && (
             hasActivePackage ? (
               <WithdrawPage
                 onSelectTab={handleTabChange}
@@ -706,7 +724,7 @@ export default function DashboardPage({
           {/* ========================================================================= */}
           {/* TAB 8: TRANSACTIONS (Phase 4)                                             */}
           {/* ========================================================================= */}
-          {activeTab === 'transactions' && (
+          {currentActiveTab === 'transactions' && (
             hasActivePackage ? (
               <TransactionHistory />
             ) : (
@@ -718,17 +736,10 @@ export default function DashboardPage({
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 9: SETTINGS & PROFILE (Theme, Photo, Info)                            */}
+          {/* TAB 9: PROFILE INFORMATION & SETTINGS (Eligible for All Users)            */}
           {/* ========================================================================= */}
-          {activeTab === 'settings' && (
-            hasActivePackage ? (
-              <AccountSettings onSelectTab={handleTabChange} />
-            ) : (
-              <IneligibleGate
-                featureName="Account Settings & Profile Preferences"
-                onSelectTab={handleTabChange}
-              />
-            )
+          {currentActiveTab === 'settings' && (
+            <AccountSettings onSelectTab={handleTabChange} />
           )}
         </section>
       </div>

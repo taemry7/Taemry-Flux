@@ -20,9 +20,9 @@ export default function Footer({ onNavigate, currentPage }) {
             </p>
           </div>
 
-          {/* Navigation Quick Links (Selector 1) - Only visible on Home and Dashboard */}
+          {/* Navigation Quick Links (Selector 10) - Hidden per user directive */}
           {shouldShowNavAndCopyright && (
-            <div className="flex flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e] dark:text-[#94a3b8]">
+            <div className="hidden flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e] dark:text-[#94a3b8]">
               <button
                 id="btn-footer-home"
                 onClick={() => {
@@ -81,9 +81,9 @@ export default function Footer({ onNavigate, currentPage }) {
           )}
         </div>
 
-        {/* Copyright notice (Selector 2) - Only visible on Home and Dashboard */}
+        {/* Copyright notice (Selector 11) - Hidden per user directive */}
         {shouldShowNavAndCopyright && (
-          <div className="w-full pt-6 border-t border-[#eae4d8]/60 dark:border-[#17323b]/60 flex items-center justify-center text-center text-xs text-[#718286] dark:text-[#627a80]">
+          <div className="hidden w-full pt-6 border-t border-[#eae4d8]/60 dark:border-[#17323b]/60 items-center justify-center text-center text-xs text-[#718286] dark:text-[#627a80]">
             © 2026 TAEMRY FLUX. All rights reserved.
           </div>
         )}
