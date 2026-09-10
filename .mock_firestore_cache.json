@@ -86,13 +86,14 @@
       "uid": "admin_taemry",
       "email": "mistrtaemry@gmail.com",
       "name": "Mistr Taemry (Admin)",
-      "currentPackage": "Apex",
-      "walletBalance": 2500,
-      "referralCount": 42,
-      "isEligible": true,
+      "currentPackage": "None",
+      "walletBalance": 0,
+      "referralCount": 0,
+      "isEligible": false,
       "isBlocked": false,
       "dailyAdCount": 0,
-      "lifetimeAds": 12000,
+      "lifetimeAds": 0,
+      "totalEarned": 0,
       "role": "admin",
       "admin": true,
       "isAdmin": true,
@@ -754,6 +755,39 @@
       "name": "TAEMRY Member",
       "createdAt": "2026-09-09T11:58:26.673Z",
       "referralCode": "FLUX-EGEXFF"
+    }
+  ],
+  [
+    "users/e5mPxvgLTlM8frpfv3CVUpdevmN2",
+    {
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "uid": "e5mPxvgLTlM8frpfv3CVUpdevmN2",
+      "email": "lalakhan@gmail.com",
+      "name": "TAEMRY Member",
+      "createdAt": "2026-09-10T16:46:45.886Z",
+      "referralCode": "FLUX-E5MPXV"
+    }
+  ],
+  [
+    "users/demo-new-user-token",
+    {
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "uid": "demo-new-user-token",
+      "email": "newuser123@gmail.com",
+      "name": "TAEMRY Member",
+      "createdAt": "2026-09-10T17:11:20.716Z"
     }
   ]
 ]

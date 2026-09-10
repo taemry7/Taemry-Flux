@@ -349,7 +349,14 @@ export const AuthProvider = ({ children }) => {
                     admin: true,
                     isAdmin: true,
                     role: 'admin',
-                    walletBalance: 5000,
+                    walletBalance: 0,
+                    currentPackage: 'None',
+                    isEligible: false,
+                    lifetimeAds: 0,
+                    dailyAdCount: 0,
+                    teamAdsCount: 0,
+                    referralCount: 0,
+                    totalEarned: 0,
                   }, { merge: true });
                 } catch (dberr) {
                   console.warn('Could not write admin firestore doc:', dberr);

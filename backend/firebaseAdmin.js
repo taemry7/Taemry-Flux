@@ -159,18 +159,19 @@ class MockFirestore {
       apex: { id: 'apex', name: 'Apex', price: 1000.00, minWallet: 100.00, rewardRate: '7.5%', dailyLimit: 200, description: 'Top tier package with unbounded reward scale.' },
     });
 
-    // Seed realistic users
+    // Seed realistic users (clean new initial state with 0 balance and No Package)
     this.data.set('users/admin_taemry', {
       uid: 'admin_taemry',
       email: 'mistrtaemry@gmail.com',
       name: 'Mistr Taemry (Admin)',
-      currentPackage: 'Apex',
-      walletBalance: 2500.00,
-      referralCount: 42,
-      isEligible: true,
+      currentPackage: 'None',
+      walletBalance: 0.00,
+      referralCount: 0,
+      isEligible: false,
       isBlocked: false,
       dailyAdCount: 0,
-      lifetimeAds: 12000,
+      lifetimeAds: 0,
+      totalEarned: 0.00,
       role: 'admin',
       admin: true,
       isAdmin: true,
@@ -180,13 +181,14 @@ class MockFirestore {
       uid: 'demo-user-1',
       email: 'member@taemryflux.com',
       name: 'TAEMRY Member',
-      currentPackage: 'Gold',
-      walletBalance: 45.50,
-      referralCount: 3,
-      isEligible: true,
+      currentPackage: 'None',
+      walletBalance: 0.00,
+      referralCount: 0,
+      isEligible: false,
       isBlocked: false,
-      dailyAdCount: 8,
-      lifetimeAds: 1200,
+      dailyAdCount: 0,
+      lifetimeAds: 0,
+      totalEarned: 0.00,
       createdAt: '2026-08-15T10:00:00.000Z',
     });
     this.data.set('users/user_tariq', {

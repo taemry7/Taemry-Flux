@@ -62,4 +62,30 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - All text content, headings, floating cards, buttons, daily allocation labels ("ads/day"), motivation texts for packages, and visual layouts are finalized per the user's explicit approval.
 - Every assistant, turn, or task MUST keep `src/pages/HomePage.jsx` strictly unchanged.
 
+## STRICT INVARIANT: Dashboard Eligibility Gating Rules (PERMANENT)
+- **New User Access Limit**: Users without an active package (`stats.currentPackage === 'None'` or falsy) are only eligible for **Deposit** and **Buy Package** (along with the overview page).
+- **Ineligible Feature Shield**: When a user without a package clicks any other feature (Watch Ads, Withdraw, Referrals, Team Rewards, Transactions, Settings), an **Ineligible** gate component must be displayed indicating that the feature requires package activation, with buttons to buy a package or deposit funds.
+- **Full Eligibility Upon Purchase**: Once an advertising package is purchased, all features, ads, withdrawal gateway, and team rewards immediately become 100% eligible and fully accessible.
+- **Package Labeling**: Display "No Package" or "No Active Package" instead of "None".
+- **Stat Cards Layout**: Wallet balance and package status are consolidated into a unified section, and lifetime ads feature daily progress tracking.
+
+## STRICT INVARIANT: Clean New User Accounts & Zero Pre-seed (PERMANENT)
+- Every new user and admin account MUST start completely clean with:
+  - `walletBalance`: 0.00
+  - `currentPackage`: 'None'
+  - `lifetimeAds`: 0
+  - `dailyAdCount`: 0
+  - `teamAdsCount`: 0
+  - `referralCount`: 0
+  - `totalEarned`: 0.00
+  - `isEligible`: false
+- No account shall ever be pre-seeded with fake balances (e.g. $2500, $5000) or fake packages (e.g. Apex, Gold) upon refresh or update. Package activation and wallet balances must only change through actual deposits and genuine package purchases.
+
+## STRICT INVARIANT: Navigation Drawer Layout Rules (PERMANENT)
+- **User Profile Info Div**: Positioned at the top of the drawer right beneath the header logo & close button.
+- **Sign Out Button**: Hidden (`#btn-drawer-signout`).
+- **Settings & Profile Link**: Removed from drawer navigation menu items.
+
+
+
 
