@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X } from 'lucide-react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
@@ -7,9 +7,13 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef(null);
+  const [hasUnread, setHasUnread] = useState(() => {
+    return localStorage.getItem('taemry_notifications_status') !== 'read';
+  });
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('taemry_theme') || 'light';
   });
+  const [splash, setSplash] = useState(null); // { x, y, color, expanded, fading }
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -67,18 +71,59 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showNotifications]);
 
-  const toggleTheme = () => {
+  const toggleTheme = (e) => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(nextTheme);
-    localStorage.setItem('taemry_theme', nextTheme);
-    if (nextTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.body.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      document.body.classList.remove('dark');
+
+    // Splash origin from click coordinates or button center
+    let x = window.innerWidth - 80;
+    let y = 32;
+    if (e?.currentTarget) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      x = rect.left + rect.width / 2;
+      y = rect.top + rect.height / 2;
+    } else if (e?.clientX) {
+      x = e.clientX;
+      y = e.clientY;
     }
-    window.dispatchEvent(new CustomEvent('taemry-theme-change', { detail: nextTheme }));
+
+    const splashColor = nextTheme === 'dark' ? '#07151a' : '#faf8f5';
+
+    // Trigger splash wave
+    setSplash({ x, y, color: splashColor, expanded: false, fading: false });
+
+    requestAnimationFrame(() => {
+      setSplash((prev) => (prev ? { ...prev, expanded: true } : null));
+    });
+
+    // Switch theme state midway during expanding splash
+    setTimeout(() => {
+      setTheme(nextTheme);
+      localStorage.setItem('taemry_theme', nextTheme);
+      if (nextTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark');
+      }
+      window.dispatchEvent(new CustomEvent('taemry-theme-change', { detail: nextTheme }));
+    }, 220);
+
+    // Fade out splash overlay
+    setTimeout(() => {
+      setSplash((prev) => (prev ? { ...prev, fading: true } : null));
+    }, 380);
+
+    // Clean up splash
+    setTimeout(() => {
+      setSplash(null);
+    }, 620);
+  };
+
+  const toggleNotificationRead = () => {
+    const next = !hasUnread;
+    setHasUnread(next);
+    localStorage.setItem('taemry_notifications_status', next ? 'unread' : 'read');
   };
 
   // Extract initials from user email or name
@@ -98,6 +143,30 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#faf8f5]/90 dark:bg-[#07151a]/95 backdrop-blur-md border-b border-[#e9e3d8] dark:border-[#15323b] transition-colors">
+      {/* Theme Splash Transition Ripple Overlay */}
+      {splash && (
+        <div
+          className={`fixed inset-0 pointer-events-none z-[99999] overflow-hidden transition-opacity duration-300 ${
+            splash.fading ? 'opacity-0' : 'opacity-100'
+          }`}
+        >
+          <div
+            style={{
+              position: 'absolute',
+              left: `${splash.x}px`,
+              top: `${splash.y}px`,
+              width: splash.expanded ? '320vmax' : '0px',
+              height: splash.expanded ? '320vmax' : '0px',
+              transform: 'translate(-50%, -50%)',
+              borderRadius: '50%',
+              backgroundColor: splash.color,
+              transition: 'width 480ms cubic-bezier(0.16, 1, 0.3, 1), height 480ms cubic-bezier(0.16, 1, 0.3, 1)',
+              boxShadow: '0 0 100px rgba(0,0,0,0.25)',
+            }}
+          />
+        </div>
+      )}
+
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Left Side: Logo & Menu Button */}
         <div className="flex items-center gap-3">
@@ -168,7 +237,9 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                   aria-label="Notification Updates"
                 >
                   <Bell className="w-4 h-4" />
-                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#07151a]" />
+                  {hasUnread && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#07151a]" />
+                  )}
                 </button>
 
                 {/* Notifications Panel */}
@@ -181,19 +252,37 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                           Notification Updates
                         </span>
                       </div>
-                      <button
-                        onClick={() => setShowNotifications(false)}
-                        className="p-1 text-[#72888e] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white rounded-lg transition-colors cursor-pointer"
-                        aria-label="Close Notifications"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          id="btn-notifications-mark-unread"
+                          onClick={toggleNotificationRead}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#0c5963] dark:text-[#38bdf8] hover:text-[#09353e] dark:hover:text-white bg-[#eef7f6] dark:bg-[#112d36] px-2 py-1 rounded-lg border border-[#cbe4e1] dark:border-[#1e4450] transition-colors cursor-pointer"
+                          title={hasUnread ? 'Mark notifications as read' : 'Mark notifications as unread'}
+                        >
+                          <CheckCheck className="w-3.5 h-3.5" />
+                          <span>{hasUnread ? 'Mark as read' : 'Mark as unread'}</span>
+                        </button>
+                        <button
+                          onClick={() => setShowNotifications(false)}
+                          className="p-1 text-[#72888e] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white rounded-lg transition-colors cursor-pointer"
+                          aria-label="Close Notifications"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="divide-y divide-[#f4f0e6] dark:divide-[#15343d] mt-2 max-h-72 overflow-y-auto">
                       {notificationUpdates.map((item) => (
                         <div key={item.id} className="py-2.5 flex items-start gap-2.5">
-                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${item.isNew ? 'bg-emerald-500' : 'bg-[#0c5963] dark:bg-[#38bdf8]'}`} />
+                          <span
+                            className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
+                              hasUnread && item.isNew
+                                ? 'bg-emerald-500'
+                                : 'bg-[#94a3b8] dark:bg-[#475569]'
+                            }`}
+                          />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
                               <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] truncate">

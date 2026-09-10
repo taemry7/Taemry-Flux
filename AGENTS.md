@@ -36,7 +36,16 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Implemented in `backend/routes/ads.js` (`adCommissionRates = { 1: 0.25, 2: 0.20, 3: 0.15, 4: 0.10, 5: 0.05 }`).
 - DO NOT change or revert these commission rates.
 
-## STRICT INVARIANT: Codebase Stabilization & Modification Lock
-- The core platform architecture, business calculations, reward equations, and UI styling decisions are finalized.
-- Assistants must NOT make speculative, unsolicited, or automated modifications to working features. Only explicit, direct user instructions may be executed.
+## STRICT INVARIANT: Codebase Stabilization & Modification Lock (PERMANENT)
+- The core platform architecture, business calculations, reward equations, package motivations, theme toggle, and UI styling decisions are permanently finalized.
+- Assistants must NOT make speculative, unsolicited, or automated modifications to working features.
+- Any change to existing functionality, commission rates, or layouts requires explicit, direct user instructions.
+- Auto-reverting or resetting working code is strictly prohibited.
+
+## STRICT INVARIANT: First Page (HomePage.jsx) PERMANENT LOCK
+- **`src/pages/HomePage.jsx` is COMPLETELY FINALIZED AND PERMANENTLY LOCKED.**
+- **NO CHANGES, MODIFICATIONS, OR REVISIONS** are allowed to the first page (`src/pages/HomePage.jsx`).
+- All text content, headings, floating cards, buttons, daily allocation labels ("ads/day"), motivation texts for packages, and visual layouts are finalized per the user's explicit approval.
+- Every assistant, turn, or task MUST keep `src/pages/HomePage.jsx` strictly unchanged.
+
 

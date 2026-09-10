@@ -56,7 +56,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#d97706]/10 text-[#b45309] border-[#d97706]/30',
       badge: 'STARTER',
       circleColor: 'bg-[#b45309]',
-      motivationText: '✨ Empower your financial freedom with guaranteed 20% daily returns upon activation.',
+      motivationText: '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
     },
     {
       id: 'silver',
@@ -70,7 +70,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#0f766e]/10 text-[#0f766e] border-[#0f766e]/30',
       badge: 'POPULAR',
       circleColor: 'bg-[#0f766e]',
-      motivationText: '🚀 Build long-term digital wealth with secure, verified daily asset accumulation.',
+      motivationText: '🚀 Accelerate your daily revenue momentum with verified digital asset accumulation.',
     },
     {
       id: 'gold',
@@ -84,7 +84,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#ca8a04]/10 text-[#ca8a04] border-[#ca8a04]/30',
       badge: 'RECOMMENDED',
       circleColor: 'bg-[#ca8a04]',
-      motivationText: '💼 Secure your financial future with maximized cashflow and daily compounding growth.',
+      motivationText: '💼 Secure your financial growth with maximized cashflow and steady compounding returns.',
     },
     {
       id: 'premium',
@@ -98,7 +98,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH DEMAND',
       circleColor: 'bg-[#0284c7]',
-      motivationText: '🌟 Accelerate your asset portfolio with institutional-grade daily returns.',
+      motivationText: '🌟 Elevate your portfolio with high-velocity earnings and priority daily payouts.',
     },
     {
       id: 'elite',
@@ -112,7 +112,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH CAPACITY',
       circleColor: 'bg-[#0284c7]',
-      motivationText: '⚡ Unlock boundless future opportunities with high-yield automated daily capital.',
+      motivationText: '⚡ Unlock boundless financial opportunities with high-yield automated daily capital.',
     },
     {
       id: 'master',
@@ -140,7 +140,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
       badge: 'APEX MASTER',
       circleColor: 'bg-[#ea580c]',
-      motivationText: '🏆 Reach pinnacle financial status with supreme daily capital returns and full power.',
+      motivationText: '🏆 Reach pinnacle financial freedom with maximum daily capital yields and apex VIP benefits.',
     },
   ];
 
@@ -178,7 +178,7 @@ export default function HomePage({ onNavigate }) {
               badge: pkg.badge || matchingDefault.badge || null,
               circleColor: pkg.color ? `bg-[${pkg.color}]` : matchingDefault.circleColor || 'bg-[#0f766e]',
               accentColor: matchingDefault.accentColor || 'bg-[#0f766e]/10 text-[#0f766e]',
-              motivationText: matchingDefault.motivationText || '✨ Empower your financial freedom with guaranteed 20% daily returns upon activation.',
+              motivationText: matchingDefault.motivationText || pkg.motivationText || '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
             };
           });
           setPackageList(mapped);
@@ -369,16 +369,14 @@ export default function HomePage({ onNavigate }) {
                       : 'Attention to Value'}
                   </p>
                   <p className="text-[11px] text-[#6b7f83] dark:text-[#94a3b8]">
-                    {currentUser && (!userStats?.currentPackage || userStats?.currentPackage === 'None')
-                      ? 'Activate a package to start 200 daily ads'
-                      : 'Keep your daily ad rhythm'}
+                    Activate Package to start daily ads
                   </p>
                 </div>
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-[#718588] dark:text-[#94a3b8] block">DAILY AD LIMIT</span>
                 <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded-md">
-                  200 Ads
+                  Ads
                 </span>
               </div>
             </div>
@@ -429,11 +427,22 @@ export default function HomePage({ onNavigate }) {
 
           {/* Packages Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedPackages.map((pkg) => {
+            {displayedPackages.map((pkg, idx) => {
               const isCurrentActive =
                 currentUser &&
                 userStats?.currentPackage &&
                 userStats.currentPackage.toLowerCase() === pkg.id.toLowerCase();
+
+              const motivationTexts = [
+                '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
+                '🚀 Accelerate your daily revenue momentum with verified digital asset accumulation.',
+                '💼 Secure your financial growth with maximized cashflow and steady compounding returns.',
+                '🌟 Elevate your portfolio with high-velocity earnings and priority daily payouts.',
+                '⚡ Unlock boundless financial opportunities with high-yield automated daily capital.',
+                '👑 Experience executive-grade wealth expansion with supreme daily returns and leadership perks.',
+                '🏆 Reach pinnacle financial freedom with maximum daily capital yields and apex VIP benefits.',
+              ];
+              const uniqueMotivation = pkg.motivationText || motivationTexts[idx % motivationTexts.length];
 
               return (
                 <div
@@ -490,7 +499,7 @@ export default function HomePage({ onNavigate }) {
                             Daily Allocation
                           </span>
                           <span className="text-sm font-bold text-[#0c5963]">
-                            200 <span className="text-[10px] font-normal text-[#6f8489]">ads/day</span>
+                            ads/day
                           </span>
                         </div>
                       </div>
@@ -505,7 +514,7 @@ export default function HomePage({ onNavigate }) {
                         <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
                           <span className="leading-snug font-medium">
-                            {pkg.motivationText || '✨ Empower your financial future with guaranteed daily asset returns upon activation.'}
+                            {uniqueMotivation}
                           </span>
                         </div>
                       )}
