@@ -76,6 +76,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
+            const isSettings = item.id === 'settings';
             return (
               <button
                 key={item.id}
@@ -85,12 +86,16 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
                   onClose();
                 }}
                 className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#0c5963] text-white font-semibold shadow-sm shadow-[#0c5963]/25'
-                    : 'text-[#16363d] dark:text-[#cbd5e1] hover:bg-[#ede7db] dark:hover:bg-[#122e37] dark:hover:text-white'
+                  isSettings
+                    ? (isActive
+                        ? 'bg-transparent text-[#0c5963] dark:text-[#38bdf8] font-bold'
+                        : 'bg-transparent text-[#16363d] dark:text-[#cbd5e1] hover:text-[#0c5963] dark:hover:text-white')
+                    : (isActive
+                        ? 'bg-[#0c5963] text-white font-semibold shadow-sm shadow-[#0c5963]/25'
+                        : 'text-[#16363d] dark:text-[#cbd5e1] hover:bg-[#ede7db] dark:hover:bg-[#122e37] dark:hover:text-white')
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#50686d] dark:text-[#94a3b8]'}`} />
+                <Icon className={`w-4 h-4 ${isSettings ? (isActive ? 'text-[#0c5963] dark:text-[#38bdf8]' : 'text-[#50686d] dark:text-[#94a3b8]') : (isActive ? 'text-white' : 'text-[#50686d] dark:text-[#94a3b8]')}`} />
                 <span>{item.label}</span>
               </button>
             );
@@ -132,7 +137,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#486065] dark:text-[#94a3b8] hover:bg-[#eae3d5] dark:hover:bg-[#122e37] dark:hover:text-white transition-all cursor-pointer"
             >
               <LifeBuoy className="w-4 h-4 text-[#486065] dark:text-[#94a3b8]" />
-              <span>Support Desk</span>
+              <span>Contact Support</span>
             </button>
           </div>
         </nav>
