@@ -309,8 +309,10 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                   </div>
                 </div>
 
-                <h3 className="text-2xl font-black text-[#09353e] mb-0.5">PACKAGE</h3>
-                <p className="text-xs font-semibold text-[#0c5963] mb-1">
+                <h3 className="text-2xl font-black text-[#09353e] mb-0.5">
+                  {pkg.tierName || (pkg.name && pkg.name !== 'PACKAGE' ? pkg.name : (pkg.id ? pkg.id.charAt(0).toUpperCase() + pkg.id.slice(1) : 'Package'))}
+                </h3>
+                <p className="hidden text-xs font-semibold text-[#0c5963] mb-1">
                   {pkg.tierName || `${pkg.id?.toUpperCase()} Tier`} (${Number(pkg.price).toFixed(2)})
                 </p>
                 <p className="text-xs text-[#5e757a] mb-5 leading-relaxed">

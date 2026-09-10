@@ -29,16 +29,16 @@ export default function HomePage({ onNavigate }) {
       a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
     },
     {
-      q: 'Q3. How does the 25% daily return on packages work?',
-      a: 'Every package delivers a guaranteed 25% daily return rate through our daily 200 ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
+      q: 'Q3. Why can\'t I withdraw money if I have 0 referrals?',
+      a: 'To build an active and genuine community, you must invite at least 1 active direct referral before requesting a withdrawal.'
     },
     {
-      q: 'Q4. What are the deposit and withdrawal methods?',
-      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto (USDT / BTC).'
+      q: 'Q4. How does the 5-level referral commission system work?',
+      a: 'You earn commissions up to 5 levels deep: Level 1 (20%), Level 2 (10%), Level 3 (5%), Level 4 (3%), and Level 5 (2%). All team milestones count across unlimited depth.'
     },
     {
-      q: 'Q5. What is the minimum and maximum withdrawal?',
-      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request). You can withdraw once per day with a 5-minute cooldown.'
+      q: 'Q5. What are the deposit and withdrawal methods and limits?',
+      a: 'Methods: Local Bank Transfer, Easypaisa, JazzCash (1 USD = 300 PKR), and Crypto (USDT/BTC). Minimum withdrawal is $1.00 USD and maximum is $1,000.00 USD per request.'
     },
   ];
 
@@ -46,7 +46,7 @@ export default function HomePage({ onNavigate }) {
   const defaultPackages = [
     {
       id: 'bronze',
-      name: 'PACKAGE',
+      name: 'Bronze',
       tierLabel: 'Bronze Tier',
       tagline: 'A measured first step into daily digital earnings',
       entryPrice: '$1.00',
@@ -60,7 +60,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'silver',
-      name: 'PACKAGE',
+      name: 'Silver',
       tierLabel: 'Silver Tier',
       tagline: 'For accelerated daily revenue momentum',
       entryPrice: '$5.00',
@@ -74,7 +74,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'gold',
-      name: 'PACKAGE',
+      name: 'Gold',
       tierLabel: 'Gold Tier',
       tagline: 'For committed momentum with high-velocity returns',
       entryPrice: '$10.00',
@@ -88,7 +88,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'premium',
-      name: 'PACKAGE',
+      name: 'Premium',
       tierLabel: 'Premium Tier',
       tagline: 'High-velocity professional plan',
       entryPrice: '$50.00',
@@ -102,7 +102,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'elite',
-      name: 'PACKAGE',
+      name: 'Elite',
       tierLabel: 'Elite Tier',
       tagline: 'Accelerated daily velocity and high-tier returns',
       entryPrice: '$100.00',
@@ -116,7 +116,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'master',
-      name: 'PACKAGE',
+      name: 'Master',
       tierLabel: 'Master Tier',
       tagline: 'Elite daily multiplier for advanced digital leaders',
       entryPrice: '$500.00',
@@ -130,7 +130,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       id: 'apex',
-      name: 'PACKAGE',
+      name: 'Apex',
       tierLabel: 'Apex Tier',
       tagline: 'Unbounded reward scale with peak return rate',
       entryPrice: '$1,000.00',
@@ -157,10 +157,19 @@ export default function HomePage({ onNavigate }) {
           const mapped = res.packages.map((pkg) => {
             const id = (pkg.id || '').toLowerCase();
             const matchingDefault = defaultPackages.find((p) => p.id === id) || {};
+            const cleanName =
+              pkg.name && pkg.name !== 'PACKAGE'
+                ? pkg.name
+                : matchingDefault.name ||
+                  (pkg.tierName
+                    ? pkg.tierName
+                    : pkg.id
+                    ? pkg.id.charAt(0).toUpperCase() + pkg.id.slice(1)
+                    : 'Package');
             return {
               id: pkg.id,
-              name: 'PACKAGE',
-              tierLabel: matchingDefault.tierLabel || (pkg.tierName ? `${pkg.tierName} Tier` : (pkg.id ? pkg.id.toUpperCase() : 'Tier')),
+              name: cleanName,
+              tierLabel: matchingDefault.tierLabel || (pkg.tierName ? `${pkg.tierName} Tier` : `${cleanName} Tier`),
               tagline: matchingDefault.tagline || 'Guaranteed 25% daily returns with 200 ads/day allocation.',
               entryPrice: `$${Number(pkg.price || 0).toFixed(2)}`,
               minWallet: `$${Number(pkg.minWallet || 0).toFixed(2)}`,
@@ -458,9 +467,9 @@ export default function HomePage({ onNavigate }) {
                     </div>
 
                     <h3 className="text-2xl font-black text-[#09353e] mb-0.5 group-hover:text-[#0c5963] transition-colors">
-                      PACKAGE
+                      {pkg.name}
                     </h3>
-                    <p className="text-xs font-semibold text-[#0c5963] mb-1">
+                    <p className="hidden text-xs font-semibold text-[#0c5963] mb-1">
                       {pkg.tierLabel || `${pkg.entryPrice} Tier`}
                     </p>
                     <p className="text-xs text-[#637a7f] mb-5">{pkg.tagline}</p>
