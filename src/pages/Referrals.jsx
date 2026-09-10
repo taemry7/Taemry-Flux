@@ -101,10 +101,10 @@ export default function Referrals({ onSelectTab }) {
               Your Personal Invitation Link
             </span>
             <h3 className="text-lg sm:text-xl font-black text-[#09353e]">
-              Invite members to earn 50% matching commission
+              Invite members to earn multi-level matching commission
             </h3>
             <p className="text-xs sm:text-sm text-[#526d72] leading-relaxed">
-              Share your link with colleagues and team partners. Whenever any member in your 5-level direct chain watches an ad, you earn a 50% commission match automatically.
+              Share your link with colleagues and team partners. Whenever any member in your 5-level direct chain watches an ad, you earn tiered matching commissions (L1: 25%, L2: 20%, L3: 15%, L4: 10%, L5: 5%) automatically.
             </p>
           </div>
 
@@ -196,10 +196,10 @@ export default function Referrals({ onSelectTab }) {
             <Award className="w-4 h-4 text-[#0c5963]" />
           </div>
           <p className="text-2xl font-black text-[#0c5963]">
-            50% Match
+            Up to 25%
           </p>
           <p className="text-xs text-[#526d72] mt-1">
-            Across 5 direct sponsor levels
+            Tiered match (25% down to 5%) across 5 levels
           </p>
         </div>
       </div>
@@ -298,10 +298,10 @@ export default function Referrals({ onSelectTab }) {
       <div className="p-6 rounded-3xl bg-[#f5f1e8] border border-[#e4ded2] grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0c5963] mb-1.5">
-            5-Level Matching Commission
+            5-Level Tiered Matching Commission
           </h4>
           <p className="text-xs text-[#526d72] leading-relaxed">
-            Every time any member in your Level 1 to Level 5 downlines completes a 60-second ad view, you instantly receive a 50% commission match based on the base ad reward. There is no cap on daily referral earnings.
+            Every time any member in your downlines completes an ad view, you instantly receive tiered commissions: Level 1 (25%), Level 2 (20%), Level 3 (15%), Level 4 (10%), and Level 5 (5%) based on their ad reward. There is no cap on daily referral earnings.
           </p>
         </div>
 

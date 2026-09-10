@@ -25,3 +25,18 @@
   4. In-memory fallback during local development when credentials are not yet uploaded
 
 Any future assistant, turn, or task MUST keep these configurations strictly intact without making changes to them.
+
+## STRICT INVARIANT: Daily Ads Matching Commission Rates (PERMANENT)
+- Whenever a downline member completes an ad view and earns their ad reward (e.g. 0.1% per ad / 20% daily for 200 ads), the upline matching commissions are strictly locked to:
+  - **Level 1**: **25%** of user's earned ad reward
+  - **Level 2**: **20%** of user's earned ad reward
+  - **Level 3**: **15%** of user's earned ad reward
+  - **Level 4**: **10%** of user's earned ad reward
+  - **Level 5**: **5%** of user's earned ad reward
+- Implemented in `backend/routes/ads.js` (`adCommissionRates = { 1: 0.25, 2: 0.20, 3: 0.15, 4: 0.10, 5: 0.05 }`).
+- DO NOT change or revert these commission rates.
+
+## STRICT INVARIANT: Codebase Stabilization & Modification Lock
+- The core platform architecture, business calculations, reward equations, and UI styling decisions are finalized.
+- Assistants must NOT make speculative, unsolicited, or automated modifications to working features. Only explicit, direct user instructions may be executed.
+

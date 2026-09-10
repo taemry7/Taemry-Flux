@@ -271,12 +271,12 @@ export default function DashboardPage({
                   </p>
                 </div>
 
-                {/* Quick Action Buttons */}
+                {/* Quick Action Buttons (Normal, clean styling - No 3D) */}
                 <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
                   <button
                     id="btn-overview-deposit"
                     onClick={() => handleTabChange('deposit')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-[#146e7b] via-[#0c5963] to-[#074048] hover:brightness-110 text-white text-xs font-bold rounded-xl border border-[#0e606b] shadow-[0_3px_0_#052c31,0_4px_6px_rgba(12,89,99,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] active:translate-y-[2px] active:shadow-[0_1px_0_#052c31] transition-all cursor-pointer select-none"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0c5963] hover:bg-[#094750] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-xs"
                   >
                     <ArrowDownCircle className="w-3.5 h-3.5" />
                     <span>Deposit</span>
@@ -286,7 +286,7 @@ export default function DashboardPage({
                     <button
                       id="btn-overview-withdraw"
                       onClick={() => handleTabChange('withdraw')}
-                      className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-white via-[#fcfaf7] to-[#eee8dd] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] hover:brightness-105 text-[#09353e] dark:text-white text-xs font-bold rounded-xl border border-[#d8d1c3] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.4)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0] dark:active:shadow-[0_1px_0_#051318] transition-all cursor-pointer select-none"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white dark:bg-[#0c222a] hover:bg-[#f3eee4] dark:hover:bg-[#12313c] text-[#09353e] dark:text-white text-xs font-bold rounded-xl border border-[#d8d1c3] dark:border-[#1e4854] transition-colors cursor-pointer shadow-xs"
                     >
                       <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
                       <span>Quick Withdraw</span>
@@ -296,9 +296,9 @@ export default function DashboardPage({
                   <button
                     id="btn-overview-buy-package"
                     onClick={() => handleTabChange('buy-package')}
-                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-[#fefce8] via-[#fef08a] to-[#fde047] hover:brightness-105 text-[#713f12] text-xs font-bold rounded-xl border border-[#facc15] shadow-[0_3px_0_#ca8a04,0_3px_6px_rgba(202,138,4,0.25),inset_0_1px_0_rgba(255,255,255,0.8)] active:translate-y-[2px] active:shadow-[0_1px_0_#ca8a04] transition-all cursor-pointer select-none"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#fef9c3] dark:bg-[#232918] hover:bg-[#fef08a] dark:hover:bg-[#2c341f] text-[#854d0e] dark:text-[#fde047] text-xs font-bold rounded-xl border border-[#fef08a] dark:border-[#3f4a27] transition-colors cursor-pointer shadow-xs"
                   >
-                    <Package className="w-3.5 h-3.5 text-[#854d0e]" />
+                    <Package className="w-3.5 h-3.5 text-[#854d0e] dark:text-[#fde047]" />
                     <span>Buy Package</span>
                   </button>
                 </div>
@@ -497,7 +497,7 @@ export default function DashboardPage({
 
                 <button
                   onClick={() => handleTabChange('buy-package')}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-linear-to-b from-[#146e7b] via-[#0c5963] to-[#074048] hover:brightness-110 text-white text-xs font-bold rounded-xl border border-[#0e606b] shadow-[0_3px_0_#052c31,0_4px_6px_rgba(12,89,99,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] active:translate-y-[2px] active:shadow-[0_1px_0_#052c31] transition-all self-start sm:self-auto cursor-pointer shrink-0 select-none"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#094750] text-white text-xs font-bold rounded-xl transition-colors self-start sm:self-auto cursor-pointer shrink-0 shadow-xs"
                 >
                   <span>Browse & Upgrade Packages</span>
                   <ArrowRight className="w-3.5 h-3.5" />

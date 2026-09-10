@@ -139,7 +139,7 @@ export default function SupportPage({ onNavigate }) {
     },
     {
       q: 'How does the 5-Level referral commission work?',
-      a: 'Level 1 direct referrals award a 50% commission multiplier on ad views. Levels 2 through 5 earn tiered passive commissions as your community expands.',
+      a: 'Direct ad view commissions are paid across 5 tiers: Level 1 awards 25%, Level 2 awards 20%, Level 3 awards 15%, Level 4 awards 10%, and Level 5 awards 5% of your downlines\' ad rewards.',
     },
   ];
 

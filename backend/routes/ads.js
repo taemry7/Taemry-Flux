@@ -299,10 +299,19 @@ router.post('/watch', verifyToken, async (req, res) => {
           teamAdsCount: (Number(uplineData.teamAdsCount) || 0) + 1,
         };
 
-        // For Level 1 to 5, distribute 50% commission:
-        // Rate = Original Rate * 0.50 (0.05% of package price or 50% of user reward)
-        if (level <= 5) {
-          const uplineCommission = +(reward * 0.50).toFixed(5);
+        // Upline Daily Ad Commission for Levels 1 to 5:
+        // Level 1: 25%, Level 2: 20%, Level 3: 15%, Level 4: 10%, Level 5: 5% of user's earned ad reward
+        const adCommissionRates = {
+          1: 0.25,
+          2: 0.20,
+          3: 0.15,
+          4: 0.10,
+          5: 0.05,
+        };
+
+        if (level <= 5 && adCommissionRates[level]) {
+          const rate = adCommissionRates[level];
+          const uplineCommission = +(reward * rate).toFixed(5);
           uplineUpdate.walletBalance = +((Number(uplineData.walletBalance) || 0) + uplineCommission).toFixed(4);
           uplineUpdate.totalEarned = +((Number(uplineData.totalEarned) || 0) + uplineCommission).toFixed(4);
 
@@ -315,7 +324,7 @@ router.post('/watch', verifyToken, async (req, res) => {
             level,
             amount: uplineCommission,
             createdAt: currentTimestamp,
-            description: `Level ${level} Ad Commission (50% of ${reward.toFixed(3)})`,
+            description: `Level ${level} Ad Commission (${Math.round(rate * 100)}% of $${reward.toFixed(3)})`,
           });
         }
 

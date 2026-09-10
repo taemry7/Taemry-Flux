@@ -106,7 +106,7 @@ router.get('/info', verifyToken, async (req, res) => {
       referralCount: totalReferrals,
       teamAdsCount,
       directReferrals,
-      uplineCommissionRate: '50% of direct ad reward (Levels 1-5)',
+      uplineCommissionRate: 'L1: 25%, L2: 20%, L3: 15%, L4: 10%, L5: 5%',
     });
   } catch (error) {
     console.error('Error in GET /api/referrals/info:', error);
