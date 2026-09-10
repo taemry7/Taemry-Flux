@@ -102,16 +102,12 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If user signs in while on login page, smoothly transition to dashboard or admin
+  // If user signs in while on login page, smoothly transition to member dashboard
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
-      if (isAdmin) {
-        navigateTo('admin');
-      } else {
-        navigateTo('dashboard');
-      }
+      navigateTo('dashboard');
     }
-  }, [currentUser, currentPage, isAdmin]);
+  }, [currentUser, currentPage]);
 
   // If user is on the dedicated admin panel
   if (currentPage === 'admin') {
@@ -154,7 +150,7 @@ function AppContent() {
         )}
 
         {currentPage === 'login' && (
-          <LoginPage onNavigate={navigateTo} />
+          <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
         )}
 
         {currentPage === 'dashboard' && (

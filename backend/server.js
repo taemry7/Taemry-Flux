@@ -18,6 +18,7 @@ import transactionsRoutes from './routes/transactions.js';
 import settingsRoutes from './routes/settings.js';
 import adminRoutes from './routes/admin.js';
 import supportRoutes from './routes/support.js';
+import whitepaperRoutes from './routes/whitepaper.js';
 import { sendAdminErrorAlert } from './utils/email.js';
 
 // Load environment variables
@@ -60,9 +61,10 @@ app.use('/api/transactions', transactionsRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/support', supportRoutes);
+app.use('/api/whitepaper', whitepaperRoutes);
 
 // 404 Handler for undefined API routes
-app.use('/api/*', (req, res) => {
+app.all(['/api', '/api/*'], (req, res) => {
   res.status(404).json({
     error: 'Not Found',
     message: `Endpoint ${req.originalUrl} not found.`,

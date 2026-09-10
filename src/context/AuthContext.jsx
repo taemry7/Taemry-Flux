@@ -61,10 +61,29 @@ export const useAuth = () => {
   return context;
 };
 
+// Helper to verify authorized administrative email
+const checkIsAdminEmailStatic = (email) => {
+  if (!email) return false;
+  const em = email.toLowerCase().trim();
+  return (
+    em === 'mistrtaimur7@gmail.com' ||
+    em === 'mistrtaimoor@gmail.com' ||
+    em === 'mistrtaemry@gmail.com' ||
+    em === 'kk3083702@gmail.com' ||
+    em.startsWith('admin@') ||
+    em.includes('taemryadmin') ||
+    em.includes('mistrtaimur') ||
+    em.includes('mistrtaimoor')
+  );
+};
+
 export const AuthProvider = ({ children }) => {
   const initialUser = getInitialPersistedUser();
   const [currentUser, setCurrentUser] = useState(initialUser);
-  const [isAdmin, setIsAdmin] = useState(() => Boolean(initialUser?.admin || initialUser?.isAdmin));
+  const [isAdmin, setIsAdmin] = useState(() => {
+    if (!initialUser?.email) return false;
+    return checkIsAdminEmailStatic(initialUser.email);
+  });
   const [loading, setLoading] = useState(!initialUser);
   const [authError, setAuthError] = useState('');
   const [userStats, setUserStats] = useState({
@@ -81,14 +100,15 @@ export const AuthProvider = ({ children }) => {
   // Helper to persist session to localStorage
   const saveUserSession = (user) => {
     if (user) {
+      const isActualAdmin = checkIsAdminEmailStatic(user.email);
       const serializableUser = {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName || (user.email ? user.email.split('@')[0] : 'Member'),
         photoURL: user.photoURL || null,
         phoneNumber: user.phoneNumber || null,
-        admin: Boolean(user.admin || user.isAdmin),
-        isAdmin: Boolean(user.admin || user.isAdmin),
+        admin: isActualAdmin,
+        isAdmin: isActualAdmin,
       };
       localStorage.setItem('taemry_persisted_user', JSON.stringify(serializableUser));
     } else {
@@ -163,9 +183,9 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // 2. Check mock/demo or known admin email
+      // 2. Check known admin email
       if (isMounted) {
-        setIsAdmin(Boolean(currentUser.admin || currentUser.isAdmin || isKnownAdminEmail));
+        setIsAdmin(Boolean(isKnownAdminEmail));
       }
     };
 

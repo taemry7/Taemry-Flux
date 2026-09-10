@@ -64,7 +64,7 @@ async function startServer() {
   app.use('/api/whitepaper', whitepaperRoutes);
 
   // 404 Handler for undefined API routes
-  app.all('/api/*', (req, res) => {
+  app.all(['/api', '/api/*'], (req, res) => {
     res.status(404).json({
       error: 'Not Found',
       message: `Endpoint ${req.originalUrl} not found.`,

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 /**
@@ -7,6 +7,12 @@ import { useAuth } from '../context/AuthContext';
  */
 export default function ProtectedRoute({ children, onRedirectToLogin }) {
   const { currentUser, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !currentUser && onRedirectToLogin) {
+      onRedirectToLogin();
+    }
+  }, [loading, currentUser, onRedirectToLogin]);
 
   if (loading) {
     return (
@@ -20,9 +26,6 @@ export default function ProtectedRoute({ children, onRedirectToLogin }) {
   }
 
   if (!currentUser) {
-    if (onRedirectToLogin) {
-      onRedirectToLogin();
-    }
     return null;
   }
 

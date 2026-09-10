@@ -374,9 +374,9 @@ export default function HomePage({ onNavigate }) {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-[#718588] dark:text-[#94a3b8] block">DAILY AD LIMIT</span>
-                <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded-md">
-                  Ads
+                <span className="hidden">DAILY AD LIMIT</span>
+                <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2.5 py-1 rounded-md inline-block">
+                  Daily Ads
                 </span>
               </div>
             </div>

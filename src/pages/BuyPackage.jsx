@@ -331,11 +331,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                       </span>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-[10px] text-[#788e93] block uppercase font-medium">
+                    <div className="hidden text-right">
+                      <span className="hidden text-[10px] text-[#788e93] uppercase font-medium">
                         Daily Allocation
                       </span>
-                      <span className="text-sm font-bold text-[#0c5963]">
+                      <span className="hidden text-sm font-bold text-[#0c5963]">
                         200 <span className="text-[10px] font-normal text-[#6f8489]">ads/day</span>
                       </span>
                     </div>

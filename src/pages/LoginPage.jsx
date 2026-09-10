@@ -4,8 +4,12 @@ import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { firebaseConfig } from '../firebase/firebase.config';
 
-export default function LoginPage({ onNavigate }) {
-  const [isSignUp, setIsSignUp] = useState(false);
+export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
+  const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
+
+  React.useEffect(() => {
+    setIsSignUp(initialMode === 'signup');
+  }, [initialMode]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -308,10 +312,10 @@ export default function LoginPage({ onNavigate }) {
           )}
         </div>
 
-        {/* Firebase Live Status & Fast Access */}
-        <div className="mt-6 pt-5 border-t border-[#eee9df]">
+        {/* Firebase Live Status & Fast Access (Hidden per request) */}
+        <div className="hidden mt-6 pt-5 border-t border-[#eee9df]">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-[#0f766e] flex items-center gap-1.5 bg-[#e6f4f1] px-2 py-0.5 rounded-full">
+            <span className="hidden text-[11px] font-semibold text-[#0f766e] items-center gap-1.5 bg-[#e6f4f1] px-2 py-0.5 rounded-full">
               <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
               Firebase Connected ({firebaseConfig.projectId || 'taemry-flux'})
             </span>
@@ -321,7 +325,7 @@ export default function LoginPage({ onNavigate }) {
                 demoLogin('mistrtaimoor@gmail.com');
                 onNavigate('dashboard');
               }}
-              className="text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#f1ede4] hover:bg-[#e4ded2] px-2.5 py-1 rounded-lg transition-colors"
+              className="hidden text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#f1ede4] hover:bg-[#e4ded2] px-2.5 py-1 rounded-lg transition-colors"
               title="Quick demo preview login"
             >
               Quick Preview Login
