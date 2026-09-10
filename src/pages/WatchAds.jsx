@@ -51,8 +51,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const hasActivePkg = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
   const pkgKey = (userStats?.currentPackage || 'None').toLowerCase();
   const pkgPrice = PACKAGE_PRICES[pkgKey] || 0.00;
-  // 25% daily return across 200 ads = 0.125% per ad (pkgPrice * 0.25 / 200)
-  const computedReward = hasActivePkg ? +(pkgPrice * 0.00125).toFixed(4) : 0;
+  // 20% daily return across 200 ads = 0.10% per ad (pkgPrice * 0.20 / 200)
+  const computedReward = hasActivePkg ? +(pkgPrice * 0.001).toFixed(4) : 0;
 
   // Component state
   const [adStatus, setAdStatus] = useState({
@@ -352,7 +352,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                 Package Activation Required
               </h3>
               <p className="text-xs text-[#92400e] mt-0.5">
-                New accounts are only eligible for deposit and buying a package. Once you activate a package, 200 daily ads and guaranteed 25% daily returns will be unlocked immediately!
+                New accounts are only eligible for deposit and buying a package. Once you activate a package, 200 daily ads and guaranteed daily returns will be unlocked immediately!
               </p>
             </div>
           </div>
@@ -436,7 +436,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         {/* Reward Per Ad */}
         <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs">
           <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589] block mb-1">
-            Reward Per Ad (25% Daily)
+            Reward Per Ad
           </span>
           <p className="text-2xl font-black text-[#0c5963]">
             +${Number(adStatus.rewardPerAd).toFixed(4)} USD

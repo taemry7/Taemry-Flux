@@ -27,7 +27,8 @@ import {
   History,
   Coins,
   Settings,
-  Gift
+  Gift,
+  ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -160,7 +161,7 @@ export default function DashboardPage({
                 <button
                   key={item.id}
                   onClick={() => handleTabChange(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
                     isActive
                       ? 'bg-[#0c5963] text-white shadow-xs'
                       : 'bg-white text-[#526a6f] border border-[#e4ded2]'
@@ -168,6 +169,9 @@ export default function DashboardPage({
                 >
                   <Icon className="w-3.5 h-3.5" />
                   <span>{item.label}</span>
+                  {item.id === 'overview' && (
+                    <ChevronRight className="w-3 h-3 opacity-85 ml-0.5" />
+                  )}
                 </button>
               );
             })}
@@ -202,6 +206,9 @@ export default function DashboardPage({
                     <div className="flex items-center gap-3">
                       <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#74898e]'}`} />
                       <span>{item.label}</span>
+                      {item.id === 'overview' && (
+                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'text-white/90 translate-x-0.5' : 'text-[#82999f]'}`} />
+                      )}
                     </div>
 
                     {item.tag && (
@@ -265,11 +272,11 @@ export default function DashboardPage({
                 </div>
 
                 {/* Quick Action Buttons */}
-                <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+                <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
                   <button
                     id="btn-overview-deposit"
                     onClick={() => handleTabChange('deposit')}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-[#146e7b] via-[#0c5963] to-[#074048] hover:brightness-110 text-white text-xs font-bold rounded-xl border border-[#0e606b] shadow-[0_3px_0_#052c31,0_4px_6px_rgba(12,89,99,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] active:translate-y-[2px] active:shadow-[0_1px_0_#052c31] transition-all cursor-pointer select-none"
                   >
                     <ArrowDownCircle className="w-3.5 h-3.5" />
                     <span>Deposit</span>
@@ -279,9 +286,9 @@ export default function DashboardPage({
                     <button
                       id="btn-overview-withdraw"
                       onClick={() => handleTabChange('withdraw')}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] shadow-xs transition-all cursor-pointer"
+                      className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-white via-[#fcfaf7] to-[#eee8dd] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] hover:brightness-105 text-[#09353e] dark:text-white text-xs font-bold rounded-xl border border-[#d8d1c3] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.4)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0] dark:active:shadow-[0_1px_0_#051318] transition-all cursor-pointer select-none"
                     >
-                      <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963]" />
+                      <ArrowUpRight className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
                       <span>Quick Withdraw</span>
                     </button>
                   )}
@@ -289,9 +296,9 @@ export default function DashboardPage({
                   <button
                     id="btn-overview-buy-package"
                     onClick={() => handleTabChange('buy-package')}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#faf8f5] hover:bg-[#ede7dc] text-[#526d72] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-all cursor-pointer"
+                    className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-linear-to-b from-[#fefce8] via-[#fef08a] to-[#fde047] hover:brightness-105 text-[#713f12] text-xs font-bold rounded-xl border border-[#facc15] shadow-[0_3px_0_#ca8a04,0_3px_6px_rgba(202,138,4,0.25),inset_0_1px_0_rgba(255,255,255,0.8)] active:translate-y-[2px] active:shadow-[0_1px_0_#ca8a04] transition-all cursor-pointer select-none"
                   >
-                    <Package className="w-3.5 h-3.5 text-[#ca8a04]" />
+                    <Package className="w-3.5 h-3.5 text-[#854d0e]" />
                     <span>Buy Package</span>
                   </button>
                 </div>
@@ -392,10 +399,7 @@ export default function DashboardPage({
                 {/* 4. Team Network & Ads */}
                 <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-5 border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col justify-between hover:border-[#0c5963]/40 transition-all">
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-bold text-[#73888d] dark:text-[#94a3b8] uppercase tracking-wider">
-                        My Team & Team Ads
-                      </span>
+                    <div className="flex items-center justify-end mb-2">
                       <div className="w-8 h-8 rounded-xl bg-[#e0f2fe] dark:bg-[#082836] text-[#0284c7] dark:text-[#38bdf8] flex items-center justify-center">
                         <Users className="w-4 h-4" />
                       </div>
@@ -493,7 +497,7 @@ export default function DashboardPage({
 
                 <button
                   onClick={() => handleTabChange('buy-package')}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all self-start sm:self-auto cursor-pointer shrink-0"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-linear-to-b from-[#146e7b] via-[#0c5963] to-[#074048] hover:brightness-110 text-white text-xs font-bold rounded-xl border border-[#0e606b] shadow-[0_3px_0_#052c31,0_4px_6px_rgba(12,89,99,0.3),inset_0_1px_0_rgba(255,255,255,0.25)] active:translate-y-[2px] active:shadow-[0_1px_0_#052c31] transition-all self-start sm:self-auto cursor-pointer shrink-0 select-none"
                 >
                   <span>Browse & Upgrade Packages</span>
                   <ArrowRight className="w-3.5 h-3.5" />

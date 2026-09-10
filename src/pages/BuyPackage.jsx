@@ -127,9 +127,9 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
               ...pkg,
               name: 'PACKAGE',
               tierName: pkg.tierName || fallback.tierName || (pkg.id ? pkg.id.toUpperCase() : 'Tier'),
-              rewardRate: '25%',
+              rewardRate: 'Daily Ads',
               dailyLimit: 200,
-              motivationText: fallback.motivationText || '✨ Empower your financial future with guaranteed 25% daily asset returns upon activation.',
+              motivationText: fallback.motivationText || '✨ Empower your financial future with guaranteed daily asset returns upon activation.',
             };
           });
           setPackages(sanitized);
@@ -316,7 +316,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                   {pkg.tierName || `${pkg.id?.toUpperCase()} Tier`} (${Number(pkg.price).toFixed(2)})
                 </p>
                 <p className="text-xs text-[#5e757a] mb-5 leading-relaxed">
-                  {pkg.description || 'Guaranteed 25% daily returns with 200 daily ads allocation.'}
+                  {pkg.description || 'Active contract tier with 200 daily ads allocation.'}
                 </p>
 
                 {/* Pricing and Stats */}
@@ -333,10 +333,10 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
 
                     <div className="text-right">
                       <span className="text-[10px] text-[#788e93] block uppercase font-medium">
-                        Daily Return
+                        Daily Allocation
                       </span>
                       <span className="text-sm font-bold text-[#0c5963]">
-                        20% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
+                        200 <span className="text-[10px] font-normal text-[#6f8489]">ads/day</span>
                       </span>
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                     <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
                       <span className="leading-snug font-medium">
-                        {pkg.motivationText || '✨ Build your digital earnings foundation with guaranteed 20% daily returns.'}
+                        {pkg.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.'}
                       </span>
                     </div>
                   )}

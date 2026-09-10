@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notificationRef = useRef(null);
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('taemry_theme') || 'light';
   });
@@ -28,6 +30,42 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
     window.addEventListener('taemry-theme-change', handleThemeChange);
     return () => window.removeEventListener('taemry-theme-change', handleThemeChange);
   }, []);
+
+  const notificationUpdates = [
+    {
+      id: 1,
+      title: 'Daily Ads Rhythm Active',
+      desc: '200 daily ads allocation unlocked for active contract packages.',
+      time: 'Live',
+      isNew: true
+    },
+    {
+      id: 2,
+      title: 'Instant Withdrawal Channels',
+      desc: 'Local Bank, Easypaisa, JazzCash & Crypto payouts running 24/7.',
+      time: '2h ago',
+      isNew: false
+    },
+    {
+      id: 3,
+      title: 'Team Milestone Rewards',
+      desc: 'Reach referral milestones to claim up to $600 directly to your balance.',
+      time: '1d ago',
+      isNew: false
+    }
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (notificationRef.current && !notificationRef.current.contains(e.target)) {
+        setShowNotifications(false);
+      }
+    };
+    if (showNotifications) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showNotifications]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
@@ -103,32 +141,78 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 </button>
               )}
 
-              {/* 3D Theme Toggle (White Mode / Dark Mode) */}
+              {/* Clean Theme Toggle: ONLY Sun / Moon icon, NO 3D, NO text */}
               <button
                 type="button"
                 id="btn-nav-theme-toggle"
                 onClick={toggleTheme}
-                className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-linear-to-b from-[#ffffff] via-[#f7f4ee] to-[#e4ded2] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] border border-[#d6cfc0] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0,inset_0_2px_4px_rgba(0,0,0,0.2)] dark:active:shadow-[0_1px_0_#051318,inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer select-none"
-                title={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
-                aria-label={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    theme === 'dark'
-                      ? 'bg-linear-to-b from-[#38bdf8] to-[#0284c7] text-white shadow-[0_2px_4px_rgba(2,132,199,0.5),inset_0_1px_1px_rgba(255,255,255,0.6)]'
-                      : 'bg-linear-to-b from-[#fde047] to-[#eab308] text-[#78350f] shadow-[0_2px_4px_rgba(202,138,4,0.4),inset_0_1px_1px_rgba(255,255,255,0.8)]'
-                  }`}
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="w-3 h-3 text-white" />
-                  ) : (
-                    <Moon className="w-3 h-3 text-amber-950" />
-                  )}
-                </div>
-                <span className="text-[10px] font-black tracking-wider uppercase hidden sm:inline text-[#09353e] dark:text-[#f1f5f9] pr-0.5">
-                  {theme === 'dark' ? 'Dark 3D' : 'Light 3D'}
-                </span>
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#09353e]" />
+                )}
               </button>
+
+              {/* Notification Updates Icon on Right Side */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  type="button"
+                  id="btn-nav-notifications"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                  title="Notification Updates"
+                  aria-label="Notification Updates"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#07151a]" />
+                </button>
+
+                {/* Notifications Panel */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white dark:bg-[#0a1c22] border border-[#e5dfd3] dark:border-[#193d48] rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#f1ece1] dark:border-[#15343d]">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                        <span className="text-xs font-bold text-[#09353e] dark:text-white uppercase tracking-wider">
+                          Notification Updates
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className="p-1 text-[#72888e] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white rounded-lg transition-colors cursor-pointer"
+                        aria-label="Close Notifications"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-[#f4f0e6] dark:divide-[#15343d] mt-2 max-h-72 overflow-y-auto">
+                      {notificationUpdates.map((item) => (
+                        <div key={item.id} className="py-2.5 flex items-start gap-2.5">
+                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${item.isNew ? 'bg-emerald-500' : 'bg-[#0c5963] dark:bg-[#38bdf8]'}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] truncate">
+                                {item.title}
+                              </p>
+                              <span className="text-[10px] text-[#768c91] dark:text-[#64748b] shrink-0 font-medium">
+                                {item.time}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#556e73] dark:text-[#94a3b8] leading-relaxed mt-0.5">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Wallet quick balance pill */}
               <button
@@ -157,33 +241,79 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 sm:gap-4">
-              {/* 3D Theme Toggle for guest */}
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Clean Theme Toggle for guest: ONLY Sun / Moon icon, NO 3D, NO text */}
               <button
                 type="button"
                 id="btn-nav-theme-toggle-guest"
                 onClick={toggleTheme}
-                className="relative inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-linear-to-b from-[#ffffff] via-[#f7f4ee] to-[#e4ded2] dark:from-[#1b3a44] dark:via-[#112d36] dark:to-[#07191f] border border-[#d6cfc0] dark:border-[#1e4854] shadow-[0_3px_0_#c3bbb0,0_3px_6px_rgba(0,0,0,0.12),inset_0_1px_0_rgba(255,255,255,0.9)] dark:shadow-[0_3px_0_#051318,0_3px_6px_rgba(0,0,0,0.45),inset_0_1px_0_rgba(255,255,255,0.12)] active:translate-y-[2px] active:shadow-[0_1px_0_#c3bbb0,inset_0_2px_4px_rgba(0,0,0,0.2)] dark:active:shadow-[0_1px_0_#051318,inset_0_2px_4px_rgba(0,0,0,0.5)] transition-all cursor-pointer select-none"
-                title={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
-                aria-label={theme === 'dark' ? 'Switch to White Mode (3D)' : 'Switch to Dark Mode (3D)'}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
               >
-                <div
-                  className={`w-5 h-5 rounded-full flex items-center justify-center transition-all duration-300 ${
-                    theme === 'dark'
-                      ? 'bg-linear-to-b from-[#38bdf8] to-[#0284c7] text-white shadow-[0_2px_4px_rgba(2,132,199,0.5),inset_0_1px_1px_rgba(255,255,255,0.6)]'
-                      : 'bg-linear-to-b from-[#fde047] to-[#eab308] text-[#78350f] shadow-[0_2px_4px_rgba(202,138,4,0.4),inset_0_1px_1px_rgba(255,255,255,0.8)]'
-                  }`}
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="w-3 h-3 text-white" />
-                  ) : (
-                    <Moon className="w-3 h-3 text-amber-950" />
-                  )}
-                </div>
-                <span className="text-[10px] font-black tracking-wider uppercase hidden sm:inline text-[#09353e] dark:text-[#f1f5f9] pr-0.5">
-                  {theme === 'dark' ? 'Dark 3D' : 'Light 3D'}
-                </span>
+                {theme === 'dark' ? (
+                  <Sun className="w-4 h-4 text-amber-400" />
+                ) : (
+                  <Moon className="w-4 h-4 text-[#09353e]" />
+                )}
               </button>
+
+              {/* Notification Updates Icon for guest */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  type="button"
+                  id="btn-nav-notifications-guest"
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] transition-colors cursor-pointer"
+                  title="Notification Updates"
+                  aria-label="Notification Updates"
+                >
+                  <Bell className="w-4 h-4" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white dark:ring-[#07151a]" />
+                </button>
+
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 sm:w-88 bg-white dark:bg-[#0a1c22] border border-[#e5dfd3] dark:border-[#193d48] rounded-2xl shadow-xl z-50 p-4 animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="flex items-center justify-between pb-3 border-b border-[#f1ece1] dark:border-[#15343d]">
+                      <div className="flex items-center gap-2">
+                        <Bell className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                        <span className="text-xs font-bold text-[#09353e] dark:text-white uppercase tracking-wider">
+                          Notification Updates
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => setShowNotifications(false)}
+                        className="p-1 text-[#72888e] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white rounded-lg transition-colors cursor-pointer"
+                        aria-label="Close Notifications"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    <div className="divide-y divide-[#f4f0e6] dark:divide-[#15343d] mt-2 max-h-72 overflow-y-auto">
+                      {notificationUpdates.map((item) => (
+                        <div key={item.id} className="py-2.5 flex items-start gap-2.5">
+                          <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${item.isNew ? 'bg-emerald-500' : 'bg-[#0c5963] dark:bg-[#38bdf8]'}`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] truncate">
+                                {item.title}
+                              </p>
+                              <span className="text-[10px] text-[#768c91] dark:text-[#64748b] shrink-0 font-medium">
+                                {item.time}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-[#556e73] dark:text-[#94a3b8] leading-relaxed mt-0.5">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <button
                 id="btn-nav-signin"
                 onClick={() => onNavigate('login')}

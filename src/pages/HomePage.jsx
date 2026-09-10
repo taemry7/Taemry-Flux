@@ -29,8 +29,8 @@ export default function HomePage({ onNavigate }) {
       a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
     },
     {
-      q: 'Q3. How does the 20% daily return on packages work?',
-      a: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
+      q: 'Q3. How do daily ad returns on packages work?',
+      a: 'Every package delivers guaranteed daily returns through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
     },
     {
       q: 'Q4. What are the deposit and withdrawal methods?',
@@ -308,7 +308,7 @@ export default function HomePage({ onNavigate }) {
           <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm text-[#486065] dark:text-[#94a3b8] pt-2">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
-              <span>Transparent 25% Daily Returns</span>
+              <span>Guaranteed Daily Ad Returns</span>
             </div>
             <div className="flex items-center gap-2">
               <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
@@ -376,9 +376,9 @@ export default function HomePage({ onNavigate }) {
                 </div>
               </div>
               <div className="text-right">
-                <span className="text-[10px] text-[#718588] dark:text-[#94a3b8] block">DAILY RETURN</span>
+                <span className="text-[10px] text-[#718588] dark:text-[#94a3b8] block">DAILY AD LIMIT</span>
                 <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded-md">
-                  +25%
+                  200 Ads
                 </span>
               </div>
             </div>
@@ -487,10 +487,10 @@ export default function HomePage({ onNavigate }) {
 
                         <div className="text-right">
                           <span className="text-[10px] text-[#71868a] block uppercase font-medium">
-                            Daily Return
+                            Daily Allocation
                           </span>
                           <span className="text-sm font-bold text-[#0c5963]">
-                            20% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
+                            200 <span className="text-[10px] font-normal text-[#6f8489]">ads/day</span>
                           </span>
                         </div>
                       </div>
@@ -505,7 +505,7 @@ export default function HomePage({ onNavigate }) {
                         <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
                           <span className="leading-snug font-medium">
-                            {pkg.motivationText || '✨ Empower your financial future with guaranteed 20% daily asset returns upon activation.'}
+                            {pkg.motivationText || '✨ Empower your financial future with guaranteed daily asset returns upon activation.'}
                           </span>
                         </div>
                       )}

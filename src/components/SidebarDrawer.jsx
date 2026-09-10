@@ -14,7 +14,8 @@ import {
   ShieldCheck,
   FileText,
   LifeBuoy,
-  Settings
+  Settings,
+  Gift
 } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';

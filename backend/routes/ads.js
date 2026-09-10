@@ -55,8 +55,8 @@ router.get('/status', verifyToken, async (req, res) => {
 
     const dailyLimit = Number(settings.dailyAdLimit || 200);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    // 25% daily return distributed across 200 ads = 0.125% per ad (25% / 200)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.125;
+    // 20% daily return distributed across 200 ads = 0.10% per ad (20% / 200)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.1;
     const rewardRate = rewardPercentage / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
@@ -201,8 +201,8 @@ router.post('/watch', verifyToken, async (req, res) => {
 
     const settings = await getSystemSettings();
     const dailyLimit = Number(settings.dailyAdLimit || 200);
-    // 25% daily return distributed across 200 ads = 0.125% per ad (25% / 200)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.125;
+    // 20% daily return distributed across 200 ads = 0.10% per ad (20% / 200)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.1;
     const rewardRate = rewardPercentage / 100;
 
     // 1. Strict eligibility: new accounts only eligible for deposit and buying a package
