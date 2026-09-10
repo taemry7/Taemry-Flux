@@ -38,9 +38,14 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 
 ## STRICT INVARIANT: Codebase Stabilization & Modification Lock (PERMANENT)
 - The core platform architecture, business calculations, reward equations, package motivations, theme toggle, and UI styling decisions are permanently finalized.
+- **Button Auth Navigation Invariant**:
+  - Navbar "Open your wallet" (`#btn-nav-getstarted`) -> Sign In page (`login`, `signin`).
+  - Navbar "Sign Up" (`#btn-nav-signup`) -> Hidden.
+  - Hero "Start with TAEMRY" (`#btn-hero-start`) -> Sign Up page (`login`, `signup`).
 - Assistants must NOT make speculative, unsolicited, or automated modifications to working features.
 - Any change to existing functionality, commission rates, or layouts requires explicit, direct user instructions.
 - Auto-reverting or resetting working code is strictly prohibited.
+- **TOTAL CODEBASE FREEZE**: As instructed by the user ("all coding ko lock karo taky khud ba khud changing na hojay"), the entire codebase across frontend, backend, routes, config, and components is under permanent lock. No file shall be modified or altered without clear, explicit, word-for-word instructions from the user.
 
 ## STRICT INVARIANT: First Page (HomePage.jsx) PERMANENT LOCK
 - **`src/pages/HomePage.jsx` is COMPLETELY FINALIZED AND PERMANENTLY LOCKED.**

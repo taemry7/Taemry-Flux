@@ -290,24 +290,26 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
               {/* Hidden sign in button per request */}
               <button
                 id="btn-nav-signin"
-                onClick={() => onNavigate('login')}
+                onClick={() => onNavigate('login', 'signin')}
                 className="hidden"
                 aria-hidden="true"
               >
                 Sign in
               </button>
 
+              {/* Hidden sign up button per request */}
               <button
                 id="btn-nav-signup"
                 onClick={() => onNavigate('login', 'signup')}
-                className="inline-flex items-center justify-center px-4 py-2 bg-transparent hover:bg-[#eef5f4] dark:hover:bg-[#12313c] text-[#0c5963] dark:text-[#38bdf8] border border-[#b8ded7] dark:border-[#1a4450] text-sm font-semibold rounded-full transition-all cursor-pointer whitespace-nowrap"
+                className="hidden"
+                aria-hidden="true"
               >
-                <span className="leading-none font-semibold">Sign Up</span>
+                Sign Up
               </button>
 
               <button
                 id="btn-nav-getstarted"
-                onClick={() => onNavigate('login')}
+                onClick={() => onNavigate('login', 'signin')}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0c5963] hover:bg-[#08424b] active:scale-[0.98] text-white text-sm font-semibold rounded-full shadow-sm shadow-[#0c5963]/20 transition-all cursor-pointer whitespace-nowrap"
               >
                 <span className="text-white font-semibold leading-none">Open your wallet</span>

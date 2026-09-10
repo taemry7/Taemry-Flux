@@ -201,7 +201,7 @@ export default function HomePage({ onNavigate }) {
     if (currentUser) {
       onNavigate('dashboard');
     } else {
-      onNavigate('login');
+      onNavigate('login', 'signup');
     }
   };
 

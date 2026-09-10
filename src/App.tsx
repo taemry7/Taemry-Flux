@@ -47,8 +47,14 @@ function AppContent() {
 
       const effectiveRoute = rawHash || rawPath;
 
-      if (effectiveRoute === 'login') {
+      if (effectiveRoute === 'login' || effectiveRoute.startsWith('login/')) {
         setCurrentPage('login');
+        const parts = effectiveRoute.split('/');
+        if (parts[1]) {
+          setActiveTab(parts[1]);
+        } else {
+          setActiveTab('signin');
+        }
       } else if (effectiveRoute === 'whitepaper') {
         setCurrentPage('whitepaper');
       } else if (effectiveRoute === 'support') {
