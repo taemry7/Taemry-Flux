@@ -42,6 +42,7 @@ import AdminAuditLogs from '../pages/admin/AdminAuditLogs';
 import AdminBroadcast from '../pages/admin/AdminBroadcast';
 import AdminSupport from '../pages/admin/AdminSupport';
 import AdminMaintenance from '../pages/admin/AdminMaintenance';
+import AdminWhitepaper from '../pages/admin/AdminWhitepaper';
 
 export default function AdminLayout({ onNavigate }) {
   const { currentUser, isAdmin, logout, loading } = useAuth();
@@ -175,6 +176,7 @@ export default function AdminLayout({ onNavigate }) {
       badge: stats?.pendingTickets || 0,
       badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
     },
+    { id: 'whitepaper', label: 'Whitepaper & FAQs', icon: FileText },
     { id: 'maintenance', label: 'Maintenance & Operations', icon: Wrench },
     { id: 'settings', label: 'System Settings', icon: Sliders },
     { id: 'ads-settings', label: 'Ads Settings', icon: PlaySquare },
@@ -328,6 +330,8 @@ export default function AdminLayout({ onNavigate }) {
           {activeTab === 'withdrawals' && <AdminWithdrawals />}
 
           {activeTab === 'support' && <AdminSupport />}
+
+          {activeTab === 'whitepaper' && <AdminWhitepaper />}
 
           {activeTab === 'maintenance' && <AdminMaintenance />}
 

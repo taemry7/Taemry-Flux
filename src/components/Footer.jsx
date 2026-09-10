@@ -3,25 +3,25 @@ import Logo from './Logo';
 
 export default function Footer({ onNavigate }) {
   return (
-    <footer className="border-t border-[#eae4d8] bg-[#f5f1e8] py-12 px-4 sm:px-6">
+    <footer className="border-t border-[#eae4d8] dark:border-[#17323b] bg-[#f5f1e8] dark:bg-[#061418] py-12 px-4 sm:px-6 transition-colors">
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
         {/* Brand identity */}
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <Logo size="sm" />
-          <span className="hidden sm:inline text-[#cbd5e1]">•</span>
-          <p className="text-xs text-[#52666a]">
+          <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#334e57]">•</span>
+          <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
             Your daily progress, made visible.
           </p>
         </div>
 
         {/* Navigation Quick Links */}
-        <div className="flex flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e]">
+        <div className="flex flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e] dark:text-[#94a3b8]">
           <button
             onClick={() => {
               onNavigate('home');
               window.scrollTo({ top: 0, behavior: 'smooth' });
             }}
-            className="hover:text-[#0c5963] transition-colors"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
           >
             Home
           </button>
@@ -31,7 +31,7 @@ export default function Footer({ onNavigate }) {
               const el = document.getElementById('packages-section');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="hover:text-[#0c5963] transition-colors"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
           >
             Packages
           </button>
@@ -41,32 +41,32 @@ export default function Footer({ onNavigate }) {
               const el = document.getElementById('how-it-works');
               if (el) el.scrollIntoView({ behavior: 'smooth' });
             }}
-            className="hover:text-[#0c5963] transition-colors"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
           >
             How it works
           </button>
           <button
             onClick={() => onNavigate('login')}
-            className="hover:text-[#0c5963] transition-colors"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
           >
             Member Login
           </button>
           <button
             onClick={() => onNavigate('support')}
-            className="hover:text-[#0c5963] transition-colors font-semibold"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors font-semibold cursor-pointer"
           >
             Support Desk
           </button>
           <button
             onClick={() => onNavigate('whitepaper')}
-            className="hover:text-[#0c5963] transition-colors font-semibold"
+            className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors font-semibold cursor-pointer"
           >
             Whitepaper (v1.0)
           </button>
         </div>
 
         {/* Copyright notice required by user prompt */}
-        <div className="text-xs text-[#718286]">
+        <div className="text-xs text-[#718286] dark:text-[#627a80]">
           © 2026 TAEMRY FLUX. All rights reserved.
         </div>
       </div>

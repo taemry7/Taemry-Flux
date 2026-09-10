@@ -12,10 +12,12 @@ import {
   Mail,
   ShieldCheck,
   HelpCircle,
-  ArrowLeft
+  ArrowLeft,
+  Phone,
+  ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { apiGet, apiPost } from '../api/client';
+import apiClient, { apiGet, apiPost } from '../api/client';
 
 export default function SupportPage({ onNavigate }) {
   const { currentUser } = useAuth();
@@ -34,6 +36,15 @@ export default function SupportPage({ onNavigate }) {
   // FAQ open/close states
   const [openFaq, setOpenFaq] = useState(null);
 
+  // Dynamic whitepaper & support info state
+  const [supportInfo, setSupportInfo] = useState({
+    email: 'support@taemryflux.com',
+    whatsapp: '+92 300 0000000',
+    telegram: '@TaemryFluxOfficial',
+    hours: '24/7 Available (Response within 2-4 hours)',
+  });
+  const [faqsList, setFaqsList] = useState([]);
+
   const fetchTickets = async () => {
     if (!currentUser) return;
     try {
@@ -48,6 +59,26 @@ export default function SupportPage({ onNavigate }) {
       setLoading(false);
     }
   };
+
+  // Fetch live support channels and FAQs
+  useEffect(() => {
+    const fetchContent = async () => {
+      try {
+        const res = await apiClient.get('/whitepaper');
+        if (res.data?.success && res.data.whitepaper) {
+          if (res.data.whitepaper.supportContact) {
+            setSupportInfo(res.data.whitepaper.supportContact);
+          }
+          if (Array.isArray(res.data.whitepaper.faqs) && res.data.whitepaper.faqs.length > 0) {
+            setFaqsList(res.data.whitepaper.faqs);
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to load dynamic support desk info:', e.message);
+      }
+    };
+    fetchContent();
+  }, []);
 
   useEffect(() => {
     fetchTickets();
@@ -152,6 +183,74 @@ export default function SupportPage({ onNavigate }) {
               <Mail className="w-3.5 h-3.5" />
               <span>Direct Email</span>
             </a>
+          </div>
+        </div>
+
+        {/* Official Channels Banner */}
+        <div className="p-5 rounded-3xl bg-white dark:bg-[#0c2027] border border-[#e4ded2] dark:border-[#173740] shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-3">
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0d5963] dark:text-[#38bdf8]">
+                DIRECT HELPLINES
+              </span>
+              <h3 className="text-sm sm:text-base font-bold text-[#09353e] dark:text-white flex items-center gap-2">
+                <Phone className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                <span>Admin Support Desk Channels</span>
+              </h3>
+            </div>
+            <span className="text-xs text-[#5a7277] dark:text-[#94a3b8] font-medium flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <span>{supportInfo.hours}</span>
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+            <a
+              href={`mailto:${supportInfo.email}`}
+              className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-center gap-3 hover:border-[#0c5963] transition-colors"
+            >
+              <div className="w-8 h-8 rounded-xl bg-[#e6f4f1] dark:bg-[#122e38] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center font-bold shrink-0">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <span className="text-[10px] text-[#71868a] block">Email Inquiries</span>
+                <span className="font-bold text-[#09353e] dark:text-white truncate block">{supportInfo.email}</span>
+              </div>
+            </a>
+
+            {supportInfo.whatsapp && (
+              <a
+                href={supportInfo.whatsapp.startsWith('http') ? supportInfo.whatsapp : `https://wa.me/${supportInfo.whatsapp.replace(/[^0-9]/g, '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-center gap-3 hover:border-emerald-500 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-bold shrink-0">
+                  <Phone className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <span className="text-[10px] text-[#71868a] block">WhatsApp Support</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 truncate block">{supportInfo.whatsapp}</span>
+                </div>
+              </a>
+            )}
+
+            {supportInfo.telegram && (
+              <a
+                href={supportInfo.telegram.startsWith('http') ? supportInfo.telegram : `https://t.me/${supportInfo.telegram.replace('@', '')}`}
+                target="_blank"
+                rel="noreferrer"
+                className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-center gap-3 hover:border-sky-500 transition-colors"
+              >
+                <div className="w-8 h-8 rounded-xl bg-sky-500/10 text-sky-500 flex items-center justify-center font-bold shrink-0">
+                  <Send className="w-4 h-4" />
+                </div>
+                <div className="truncate">
+                  <span className="text-[10px] text-[#71868a] block">Telegram Channel</span>
+                  <span className="font-bold text-sky-500 truncate block">{supportInfo.telegram}</span>
+                </div>
+              </a>
+            )}
           </div>
         </div>
 
@@ -411,7 +510,7 @@ export default function SupportPage({ onNavigate }) {
               </p>
 
               <div className="space-y-2">
-                {faqs.map((faq, idx) => (
+                {(faqsList.length > 0 ? faqsList : faqs).map((faq, idx) => (
                   <div key={idx} className="border border-[#e7e1d5] rounded-xl overflow-hidden">
                     <button
                       type="button"

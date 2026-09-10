@@ -29,16 +29,16 @@ export default function HomePage({ onNavigate }) {
       a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
     },
     {
-      q: 'Q3. Why can\'t I withdraw money if I have 0 referrals?',
-      a: 'To build an active and genuine community, you must invite at least 1 active direct referral before requesting a withdrawal.'
+      q: 'Q3. How does the 20% daily return on packages work?',
+      a: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
     },
     {
-      q: 'Q4. How does the 5-level referral commission system work?',
-      a: 'You earn commissions up to 5 levels deep: Level 1 (20%), Level 2 (10%), Level 3 (5%), Level 4 (3%), and Level 5 (2%). All team milestones count across unlimited depth.'
+      q: 'Q4. What are the deposit and withdrawal methods?',
+      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto (USDT / BTC).'
     },
     {
-      q: 'Q5. What are the deposit and withdrawal methods and limits?',
-      a: 'Methods: Local Bank Transfer, Easypaisa, JazzCash (1 USD = 300 PKR), and Crypto (USDT/BTC). Minimum withdrawal is $1.00 USD and maximum is $1,000.00 USD per request.'
+      q: 'Q5. What is the minimum and maximum withdrawal?',
+      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request). You can withdraw once per day with a 5-minute cooldown.'
     },
   ];
 
@@ -51,12 +51,12 @@ export default function HomePage({ onNavigate }) {
       tagline: 'A measured first step into daily digital earnings',
       entryPrice: '$1.00',
       minWallet: '$0.10',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#d97706]/10 text-[#b45309] border-[#d97706]/30',
       badge: 'STARTER',
       circleColor: 'bg-[#b45309]',
-      motivationText: '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
+      motivationText: '✨ Empower your financial freedom with guaranteed 20% daily returns upon activation.',
     },
     {
       id: 'silver',
@@ -65,7 +65,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'For accelerated daily revenue momentum',
       entryPrice: '$5.00',
       minWallet: '$0.50',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0f766e]/10 text-[#0f766e] border-[#0f766e]/30',
       badge: 'POPULAR',
@@ -79,7 +79,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'For committed momentum with high-velocity returns',
       entryPrice: '$10.00',
       minWallet: '$1.00',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#ca8a04]/10 text-[#ca8a04] border-[#ca8a04]/30',
       badge: 'RECOMMENDED',
@@ -93,7 +93,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'High-velocity professional plan',
       entryPrice: '$50.00',
       minWallet: '$5.00',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH DEMAND',
@@ -107,7 +107,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'Accelerated daily velocity and high-tier returns',
       entryPrice: '$100.00',
       minWallet: '$10.00',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH CAPACITY',
@@ -121,7 +121,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'Elite daily multiplier for advanced digital leaders',
       entryPrice: '$500.00',
       minWallet: '$50.00',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#db2777]/10 text-[#db2777] border-[#db2777]/30',
       badge: 'PRO MASTER',
@@ -135,7 +135,7 @@ export default function HomePage({ onNavigate }) {
       tagline: 'Unbounded reward scale with peak return rate',
       entryPrice: '$1,000.00',
       minWallet: '$100.00',
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: '200 ads/day',
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
       badge: 'APEX MASTER',
@@ -170,15 +170,15 @@ export default function HomePage({ onNavigate }) {
               id: pkg.id,
               name: cleanName,
               tierLabel: matchingDefault.tierLabel || (pkg.tierName ? `${pkg.tierName} Tier` : `${cleanName} Tier`),
-              tagline: matchingDefault.tagline || 'Guaranteed 25% daily returns with 200 ads/day allocation.',
+              tagline: matchingDefault.tagline || 'Guaranteed 20% daily returns with 200 ads/day allocation.',
               entryPrice: `$${Number(pkg.price || 0).toFixed(2)}`,
               minWallet: `$${Number(pkg.minWallet || 0).toFixed(2)}`,
-              rewardRate: '25%',
+              rewardRate: '20%',
               dailyLimit: '200 ads/day',
               badge: pkg.badge || matchingDefault.badge || null,
               circleColor: pkg.color ? `bg-[${pkg.color}]` : matchingDefault.circleColor || 'bg-[#0f766e]',
               accentColor: matchingDefault.accentColor || 'bg-[#0f766e]/10 text-[#0f766e]',
-              motivationText: matchingDefault.motivationText || '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
+              motivationText: matchingDefault.motivationText || '✨ Empower your financial freedom with guaranteed 20% daily returns upon activation.',
             };
           });
           setPackageList(mapped);
@@ -490,7 +490,7 @@ export default function HomePage({ onNavigate }) {
                             Daily Return
                           </span>
                           <span className="text-sm font-bold text-[#0c5963]">
-                            25% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
+                            20% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
                           </span>
                         </div>
                       </div>
@@ -505,7 +505,7 @@ export default function HomePage({ onNavigate }) {
                         <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
                           <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
                           <span className="leading-snug font-medium">
-                            {pkg.motivationText || '✨ Empower your financial future with guaranteed 25% daily asset returns upon activation.'}
+                            {pkg.motivationText || '✨ Empower your financial future with guaranteed 20% daily asset returns upon activation.'}
                           </span>
                         </div>
                       )}

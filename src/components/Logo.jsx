@@ -27,10 +27,10 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
 
       {showText && (
         <div className="flex flex-col">
-          <span className="font-display font-extrabold tracking-widest text-[#0a3a46] text-base leading-none uppercase">
+          <span className="font-display font-extrabold tracking-widest text-[#0a3a46] dark:text-white text-base leading-none uppercase transition-colors">
             TAEMRY
           </span>
-          <span className="text-[10px] tracking-[0.25em] font-semibold text-[#0f766e] uppercase">
+          <span className="text-[10px] tracking-[0.25em] font-semibold text-[#0f766e] dark:text-[#38bdf8] uppercase transition-colors">
             FLUX
           </span>
         </div>

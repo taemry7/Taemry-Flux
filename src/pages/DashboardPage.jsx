@@ -26,7 +26,8 @@ import {
   ArrowUpRight,
   History,
   Coins,
-  Settings
+  Settings,
+  Gift
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -132,7 +133,7 @@ export default function DashboardPage({
     { id: 'transactions', label: 'Transactions', icon: History },
     { id: 'buy-package', label: 'Buy Package', icon: Package },
     { id: 'referrals', label: 'Referrals', icon: Users },
-    { id: 'milestones', label: 'Milestones', icon: Trophy },
+    { id: 'milestones', label: 'Team Rewards', icon: Gift, tag: 'Cash' },
     { id: 'settings', label: 'Settings & Profile', icon: Settings },
   ];
 
@@ -435,48 +436,49 @@ export default function DashboardPage({
                 </div>
               </div>
 
-              {/* PERSONAL MILESTONE PROGRESS BAR (e.g. 1,200 / 2,000 -> 60%) */}
-              <div className="bg-white rounded-3xl p-6 sm:p-7 border border-[#e4ded2] shadow-xs">
+              {/* TEAM REFERRAL REWARDS ACCELERATOR (e.g. 5 refs -> $1 | 15 -> $5 | 40 -> $10 | 90 -> $25 etc.) */}
+              <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-7 border border-[#e4ded2] dark:border-[#173740] shadow-xs">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0d5963]">
-                      MILESTONE ACCELERATOR
+                    <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#0d5963] dark:text-[#38bdf8]">
+                      DIRECT REFERRAL BONUS LADDER
                     </span>
-                    <h3 className="text-lg font-bold text-[#09353e]">
-                      Next Personal Milestone
+                    <h3 className="text-lg font-bold text-[#09353e] dark:text-white flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-[#0c5963] dark:text-[#38bdf8]" />
+                      <span>Team Rewards Accelerator</span>
                     </h3>
                   </div>
 
                   <div className="flex items-baseline gap-1.5 self-start sm:self-auto">
-                    <span className="text-2xl font-extrabold text-[#09353e]">
-                      {Number(stats.milestone?.current || stats.lifetimeAds).toLocaleString()}
+                    <span className="text-2xl font-extrabold text-[#09353e] dark:text-white">
+                      {Number(stats.referralCount || 0).toLocaleString()}
                     </span>
                     <span className="text-sm font-bold text-[#86999e]">
-                      / {Number(stats.milestone?.target || 2000).toLocaleString()}
+                      / {(stats.referralCount || 0) < 5 ? 5 : (stats.referralCount || 0) < 15 ? 15 : (stats.referralCount || 0) < 40 ? 40 : (stats.referralCount || 0) < 90 ? 90 : (stats.referralCount || 0) < 190 ? 190 : (stats.referralCount || 0) < 250 ? 250 : (stats.referralCount || 0) < 500 ? 500 : 1000} Referrals
                     </span>
-                    <span className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-2.5 py-0.5 rounded-full ml-1">
-                      {stats.milestone?.percentage || 60}%
+                    <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2.5 py-0.5 rounded-full ml-1">
+                      {Math.min(100, Math.round(((stats.referralCount || 0) / ((stats.referralCount || 0) < 5 ? 5 : (stats.referralCount || 0) < 15 ? 15 : (stats.referralCount || 0) < 40 ? 40 : (stats.referralCount || 0) < 90 ? 90 : (stats.referralCount || 0) < 190 ? 190 : (stats.referralCount || 0) < 250 ? 250 : (stats.referralCount || 0) < 500 ? 500 : 1000)) * 100))}%
                     </span>
                   </div>
                 </div>
 
                 {/* Progress Bar Container */}
-                <div className="w-full bg-[#f1eee7] h-3.5 rounded-full overflow-hidden mb-3">
+                <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-3.5 rounded-full overflow-hidden mb-3">
                   <div
-                    className="bg-gradient-to-r from-[#0c5963] to-[#10b981] h-full rounded-full transition-all duration-1000 shadow-xs"
-                    style={{ width: `${Math.min(100, stats.milestone?.percentage || 60)}%` }}
+                    className="bg-linear-to-r from-[#0c5963] via-[#0ea5e9] to-[#10b981] h-full rounded-full transition-all duration-1000 shadow-xs"
+                    style={{ width: `${Math.max(4, Math.min(100, Math.round(((stats.referralCount || 0) / ((stats.referralCount || 0) < 5 ? 5 : (stats.referralCount || 0) < 15 ? 15 : (stats.referralCount || 0) < 40 ? 40 : (stats.referralCount || 0) < 90 ? 90 : (stats.referralCount || 0) < 190 ? 190 : (stats.referralCount || 0) < 250 ? 250 : (stats.referralCount || 0) < 500 ? 500 : 1000)) * 100)))}%` }}
                   />
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#5f757a] gap-2 pt-1">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-[#5f757a] dark:text-[#94a3b8] gap-2 pt-1">
                   <span>
-                    <strong>{Number(stats.milestone?.adsRemaining || 800).toLocaleString()} views</strong> remaining to reach the next tier unlock.
+                    Invite members with your link to unlock up to <strong>$600.00 cash rewards</strong> credited directly to your wallet.
                   </span>
                   <button
                     onClick={() => handleTabChange('milestones')}
-                    className="text-[#0c5963] hover:text-[#083a41] font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
+                    className="text-[#0c5963] dark:text-[#38bdf8] hover:underline font-bold flex items-center gap-1.5 self-start sm:self-auto cursor-pointer"
                   >
-                    <span>View & Claim Milestones</span>
+                    <span>View & Claim Team Rewards</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -562,9 +564,9 @@ export default function DashboardPage({
           )}
 
           {/* ========================================================================= */}
-          {/* TAB 5: MILESTONES (Phase 3)                                               */}
+          {/* TAB 5: TEAM REWARDS (Direct Referral Cash Milestones)                     */}
           {/* ========================================================================= */}
-          {activeTab === 'milestones' && (
+          {(activeTab === 'milestones' || activeTab === 'team-rewards') && (
             <Milestones
               onSelectTab={handleTabChange}
             />

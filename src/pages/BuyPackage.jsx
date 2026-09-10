@@ -32,23 +32,23 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Bronze',
       price: 1.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: null,
       color: '#b45309',
-      description: 'The starter tier ($1.00) generating guaranteed 25% daily returns with 200 daily ads.',
-      motivationText: '✨ Start your journey to consistent daily cashflow with guaranteed 25% returns upon activation.',
+      description: 'The starter tier ($1.00) generating guaranteed 20% daily returns with 200 daily ads.',
+      motivationText: '✨ Start your journey to consistent daily cashflow with guaranteed 20% returns upon activation.',
     },
     {
       id: 'silver',
       name: 'PACKAGE',
       tierName: 'Silver',
       price: 5.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'POPULAR',
       color: '#0f766e',
-      description: 'Accelerated revenue pace with guaranteed 25% daily returns and 200 ads allocation.',
+      description: 'Accelerated revenue pace with guaranteed 20% daily returns and 200 ads allocation.',
       motivationText: '🚀 Step up your capital accumulation with verified daily asset compounding.',
     },
     {
@@ -56,11 +56,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Gold',
       price: 10.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'RECOMMENDED',
       color: '#ca8a04',
-      description: 'High-yield momentum tier with 25% daily returns and 200 ads allocation.',
+      description: 'High-yield momentum tier with 20% daily returns and 200 ads allocation.',
       motivationText: '💼 Accelerate your financial future with maximum daily asset growth and momentum.',
     },
     {
@@ -68,11 +68,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Premium',
       price: 50.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'HIGH DEMAND',
       color: '#0284c7',
-      description: 'Substantial daily earnings yield with 25% daily returns across 200 ads.',
+      description: 'Substantial daily earnings yield with 20% daily returns across 200 ads.',
       motivationText: '🌟 Optimize your earnings portfolio with accelerated automated returns.',
     },
     {
@@ -80,11 +80,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Elite',
       price: 100.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'HIGH CAPACITY',
       color: '#7c3aed',
-      description: 'Accelerated volume capacity yielding 25% daily returns across 200 ads.',
+      description: 'Accelerated volume capacity yielding 20% daily returns across 200 ads.',
       motivationText: '⚡ Unlock high-tier digital income with boundless daily earning power.',
     },
     {
@@ -92,11 +92,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Master',
       price: 500.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'PRO TIER',
       color: '#db2777',
-      description: 'Elite return multiplier delivering 25% daily returns across 200 ads.',
+      description: 'Elite return multiplier delivering 20% daily returns across 200 ads.',
       motivationText: '👑 Experience top-tier financial scaling and exponential revenue independence.',
     },
     {
@@ -104,11 +104,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       name: 'PACKAGE',
       tierName: 'Apex',
       price: 1000.00,
-      rewardRate: '25%',
+      rewardRate: '20%',
       dailyLimit: 200,
       badge: 'TOP TIER',
       color: '#ea580c',
-      description: 'Peak performance tier generating 25% daily returns across 200 ads.',
+      description: 'Peak performance tier generating 20% daily returns across 200 ads.',
       motivationText: '🏆 Reach pinnacle financial status with supreme daily capital returns and full power.',
     },
   ];
@@ -336,7 +336,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                         Daily Return
                       </span>
                       <span className="text-sm font-bold text-[#0c5963]">
-                        25% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
+                        20% <span className="text-[10px] font-normal text-[#6f8489]">daily</span>
                       </span>
                     </div>
                   </div>
@@ -351,7 +351,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                     <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
                       <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
                       <span className="leading-snug font-medium">
-                        {pkg.motivationText || '✨ Build your digital earnings foundation with guaranteed 25% daily returns.'}
+                        {pkg.motivationText || '✨ Build your digital earnings foundation with guaranteed 20% daily returns.'}
                       </span>
                     </div>
                   )}

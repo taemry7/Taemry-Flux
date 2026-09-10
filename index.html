@@ -13,6 +13,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          var saved = localStorage.getItem('taemry_theme');
+          if (saved === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.body && document.body.classList.add('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body class="bg-[#faf8f5] text-[#132e35] antialiased selection:bg-[#0c5963] selection:text-white">
     <div id="root"></div>

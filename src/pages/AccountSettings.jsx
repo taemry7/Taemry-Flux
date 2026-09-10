@@ -51,6 +51,16 @@ export default function AccountSettings({ onSelectTab }) {
     return localStorage.getItem('taemry_theme') || 'light';
   });
 
+  // Listen for theme toggle events from Navbar
+  useEffect(() => {
+    const handleSyncTheme = (e) => {
+      const newTheme = e?.detail || localStorage.getItem('taemry_theme') || 'light';
+      setTheme(newTheme);
+    };
+    window.addEventListener('taemry-theme-change', handleSyncTheme);
+    return () => window.removeEventListener('taemry-theme-change', handleSyncTheme);
+  }, []);
+
   // Feedback State
   const [saving, setSaving] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '' });
@@ -78,6 +88,7 @@ export default function AccountSettings({ onSelectTab }) {
       document.documentElement.classList.remove('dark');
       document.body.classList.remove('dark');
     }
+    window.dispatchEvent(new CustomEvent('taemry-theme-change', { detail: newTheme }));
 
     try {
       await apiClient.put('/user/profile', { theme: newTheme });

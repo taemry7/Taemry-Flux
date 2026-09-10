@@ -13,6 +13,7 @@ import transactionsRoutes from './backend/routes/transactions.js';
 import settingsRoutes from './backend/routes/settings.js';
 import adminRoutes from './backend/routes/admin.js';
 import supportRoutes from './backend/routes/support.js';
+import whitepaperRoutes from './backend/routes/whitepaper.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
 import { sendAdminErrorAlert } from './backend/utils/email.js';
 
@@ -60,6 +61,7 @@ async function startServer() {
   app.use('/api/settings', settingsRoutes);
   app.use('/api/admin', adminRoutes);
   app.use('/api/support', supportRoutes);
+  app.use('/api/whitepaper', whitepaperRoutes);
 
   // 404 Handler for undefined API routes
   app.all('/api/*', (req, res) => {

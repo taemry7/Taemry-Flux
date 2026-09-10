@@ -1,4 +1,12 @@
-import React, { useState } from 'react';
+/**
+ * TAEMRY FLUX - Official Protocol Whitepaper (v2.0)
+ * Fully dynamic: loads live from backend /api/whitepaper
+ * Editable by Admin via Admin Control Panel
+ * Features: Guaranteed 20% Daily Return statement, 8-Tier Direct Referral Team Rewards,
+ * 5-Level Commission structure, and Comprehensive FAQs.
+ */
+
+import React, { useState, useEffect } from 'react';
 import {
   FileText,
   ShieldCheck,
@@ -18,13 +26,124 @@ import {
   ChevronUp,
   Layers,
   ArrowRight,
-  Wallet
+  Wallet,
+  Phone,
+  Mail,
+  Send,
+  Clock,
+  ExternalLink,
+  Gift
 } from 'lucide-react';
+import apiClient from '../api/client';
 import Logo from '../components/Logo';
 
 export default function WhitepaperPage({ onNavigate }) {
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // Default whitepaper content state
+  const [data, setData] = useState({
+    title: 'TAEMRY FLUX Official Protocol Whitepaper',
+    subtitle: 'Decentralized Reward-Based Advertising & Team Distribution Network',
+    version: '2.0.0',
+    lastUpdated: 'March 2025',
+    executiveSummary: 'TAEMRY FLUX is a decentralized, reward-based advertising and referral growth ecosystem. Members activate advertising allocation contracts from their wallet balances, unlock consecutive daily ad streams delivering up to 20% daily returns, and participate in a 5-tier direct downline commission structure alongside direct referral Team Rewards.',
+    packagesNote: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.',
+    teamRewards: [
+      { referrals: 5, bonus: 1.00, label: '5 Referrals', note: 'Invite 5 members from your direct link' },
+      { referrals: 15, bonus: 5.00, label: '15 Referrals', note: '10 more members (+10) = 15 total' },
+      { referrals: 40, bonus: 10.00, label: '40 Referrals', note: '25 more members (+25) = 40 total' },
+      { referrals: 90, bonus: 25.00, label: '90 Referrals', note: '50 more members (+50) = 90 total' },
+      { referrals: 190, bonus: 50.00, label: '190 Referrals', note: '100 more members (+100) = 190 total' },
+      { referrals: 250, bonus: 100.00, label: '250 Referrals', note: 'Reach 250 total direct downlines' },
+      { referrals: 500, bonus: 250.00, label: '500 Referrals', note: 'Reach 500 total direct downlines' },
+      { referrals: 1000, bonus: 600.00, label: '1,000 Referrals', note: '$500 Base + $100 Special Mega Bonus ($600 Total)' },
+    ],
+    packages: [
+      { name: 'Bronze', price: '$1.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'STARTER' },
+      { name: 'Silver', price: '$5.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'POPULAR' },
+      { name: 'Gold', price: '$10.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'RECOMMENDED' },
+      { name: 'Premium', price: '$50.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'PRO' },
+      { name: 'Elite', price: '$100.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'HIGH CAPACITY' },
+      { name: 'Master', price: '$500.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ENTERPRISE' },
+      { name: 'Apex', price: '$1,000.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ELITE MASTER' },
+    ],
+    faqs: [
+      {
+        q: 'Q1. What is TAEMRY FLUX?',
+        a: 'It is a verified reward-based advertising and referral growth ecosystem. You earn US Dollars ($) by watching ads, inviting friends via your direct link to claim Team Rewards, and building an organization.'
+      },
+      {
+        q: 'Q2. Do I have to pay to start earning?',
+        a: 'Yes. You must activate a starter package (starting from $1) to unlock daily ad viewing. This prevents bot automation and guarantees legitimate user attention for our advertising partners.'
+      },
+      {
+        q: 'Q3. What is the daily return rate on packages?',
+        a: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
+      },
+      {
+        q: 'Q4. How do Team Rewards work?',
+        a: 'Team Rewards are direct referral cash bonuses credited straight to your balance when you invite members from your link: 5 referrals = $1, 15 referrals = $5, 40 referrals = $10, 90 referrals = $25, 190 referrals = $50, 250 referrals = $100, 500 referrals = $250, and 1,000 referrals = $600 ($500 + $100 Mega Bonus)!'
+      },
+      {
+        q: 'Q5. How deep is the referral network for commissions?',
+        a: 'Downline commissions are paid 5 Levels deep (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%) whenever direct downlines purchase advertising packages.'
+      },
+      {
+        q: 'Q6. Why can\'t I withdraw money if I have 0 referrals?',
+        a: 'To build an authentic, active member community and protect ecosystem liquidity, each member must have at least 1 active direct referral before requesting a withdrawal.'
+      },
+      {
+        q: 'Q7. What happens if I do not watch ads for a few days?',
+        a: 'Your account remains active. Your accumulated wallet balance and earned referral rewards never expire. You can resume watching ads whenever you wish.'
+      },
+      {
+        q: 'Q8. What deposit and withdrawal methods are supported?',
+        a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Pegged exchange rate: 1 USD = 300 PKR), 3. Cryptocurrency (USDT TRC20 / BEP20 and Bitcoin).'
+      },
+      {
+        q: 'Q9. What are the minimum and maximum withdrawal thresholds?',
+        a: 'Minimum withdrawal is $1.00 USD. Maximum withdrawal per single request is $1,000.00 USD.'
+      },
+      {
+        q: 'Q10. Are there restrictions on withdrawal frequency?',
+        a: 'Members may submit one withdrawal request per calendar day, processed within 1 to 24 hours after admin approval.'
+      },
+      {
+        q: 'Q11. Is TAEMRY FLUX a get-rich-quick scheme?',
+        a: 'No. TAEMRY FLUX distributes real corporate advertising revenue generated through high-engagement sponsor impressions.'
+      },
+      {
+        q: 'Q12. What are the consequences of using VPNs or multiple accounts?',
+        a: 'Strictly prohibited. Operating VPNs, proxy tunnels, headless automation bots, or multi-accounting results in immediate, irreversible suspension and forfeiture of balances.'
+      }
+    ],
+    supportContact: {
+      email: 'support@taemryflux.com',
+      whatsapp: '+92 300 0000000',
+      telegram: '@TaemryFluxOfficial',
+      hours: '24/7 Available (Response within 2-4 hours)',
+    }
+  });
+
+  // Fetch live whitepaper from backend
+  useEffect(() => {
+    const fetchLiveWhitepaper = async () => {
+      try {
+        setLoading(true);
+        const res = await apiClient.get('/whitepaper');
+        if (res.data?.success && res.data.whitepaper) {
+          setData(res.data.whitepaper);
+        }
+      } catch (err) {
+        console.warn('Using default whitepaper fallback:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchLiveWhitepaper();
+  }, []);
 
   const handleCopyAll = () => {
     const text = document.getElementById('whitepaper-content')?.innerText || '';
@@ -44,24 +163,6 @@ export default function WhitepaperPage({ onNavigate }) {
     }
   };
 
-  const personalMilestones = [
-    { ads: '1,000', bonus: '$5' },
-    { ads: '2,000', bonus: '$10' },
-    { ads: '3,000', bonus: '$15' },
-    { ads: '4,000', bonus: '$20' },
-    { ads: '5,000', bonus: '$25' },
-    { ads: '10,000', bonus: '$50' },
-    { ads: '20,000', bonus: '$100' },
-    { ads: '30,000', bonus: '$150' },
-    { ads: '40,000', bonus: '$200' },
-    { ads: '50,000', bonus: '$250' },
-    { ads: '100,000', bonus: '$500' },
-    { ads: '200,000', bonus: '$1,000' },
-    { ads: '300,000', bonus: '$1,500' },
-    { ads: '400,000', bonus: '$2,000' },
-    { ads: '500,000', bonus: '$2,500' },
-  ];
-
   const teamMilestones = [
     { ads: '2,500', bonus: '$1' },
     { ads: '5,000', bonus: '$2' },
@@ -78,261 +179,216 @@ export default function WhitepaperPage({ onNavigate }) {
     { ads: '10,240,000', bonus: '$4,096' },
   ];
 
-  const packages = [
-    { name: 'Bronze', price: '$1', dailyLimit: '20 ads/day', reward: '0.1% per ad', badge: 'STARTER' },
-    { name: 'Silver', price: '$5', dailyLimit: '40 ads/day', reward: '0.1% per ad', badge: 'POPULAR' },
-    { name: 'Gold', price: '$10', dailyLimit: '60 ads/day', reward: '0.1% per ad', badge: 'RECOMMENDED' },
-    { name: 'Premium', price: '$50', dailyLimit: '80 ads/day', reward: '0.1% per ad', badge: 'PRO' },
-    { name: 'Elite', price: '$100', dailyLimit: '100 ads/day', reward: '0.1% per ad', badge: 'HIGH CAPACITY' },
-    { name: 'Master', price: '$500', dailyLimit: '150 ads/day', reward: '0.1% per ad', badge: 'ELITE' },
-    { name: 'Apex', price: '$1,000', dailyLimit: '200 ads/day', reward: '0.1% per ad', badge: 'ELITE MASTER' },
-  ];
-
-  const faqs = [
-    {
-      q: 'Q1. What is TAEMRY FLUX?',
-      a: 'It is a reward-based advertising platform. You earn US Dollars ($) by watching ads, referring friends, and achieving milestones.'
-    },
-    {
-      q: 'Q2. Do I have to pay to start earning?',
-      a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
-    },
-    {
-      q: 'Q3. Why can\'t I withdraw money if I have 0 referrals?',
-      a: 'To build a strong community, you must invite at least 1 active friend (direct referral) before you can withdraw any amount.'
-    },
-    {
-      q: 'Q4. How many levels deep is the referral network?',
-      a: 'For Commissions: 5 Levels deep (L1 to L5: 20%, 10%, 5%, 3%, 2%). For Team Milestones: NO depth limit (Level 1 to 100 all count!).'
-    },
-    {
-      q: 'Q5. What happens if I don\'t watch ads for a few days?',
-      a: 'Your account stays active. Your lifetime ad counter never resets. You can start again anytime.'
-    },
-    {
-      q: 'Q6. How do I claim my Milestone Bonuses?',
-      a: 'Go to your Dashboard. Click the Green "Claim" button next to the achieved milestone. The bonus is instantly added to your wallet balance.'
-    },
-    {
-      q: 'Q7. Can I claim the same milestone twice?',
-      a: 'No. Each milestone is claimable ONLY ONCE. The system tracks your claimed history automatically.'
-    },
-    {
-      q: 'Q8. What are the deposit and withdrawal methods?',
-      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto (USDT / BTC).'
-    },
-    {
-      q: 'Q9. What is the minimum and maximum withdrawal?',
-      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request).'
-    },
-    {
-      q: 'Q10. Are there any limits on withdrawals?',
-      a: 'Yes: You can withdraw only ONCE per day, and you must wait at least 5 minutes between requests.'
-    },
-    {
-      q: 'Q11. Is TAEMRY FLUX a scam or an investment scheme?',
-      a: 'Absolutely NOT. It is a legitimate reward-based advertising platform, NOT a "get-rich-quick" scheme. Earnings come from real advertising revenue shared with users.'
-    },
-    {
-      q: 'Q12. What happens if I use a VPN or create multiple accounts?',
-      a: 'Strict action will be taken. Using VPNs, proxies, bots, or creating multiple accounts to cheat will result in a permanent ban and forfeiture of all funds.'
-    },
-    {
-      q: 'Q13. What is the difference between Personal and Team Milestones?',
-      a: '- Personal: Counts ONLY the ads YOU watch.\n- Team: Counts the TOTAL ads watched by YOU + YOUR ENTIRE DOWNLINE (Level 1 to 100 combined).'
-    },
-    {
-      q: 'Q14. How do I get my referral link?',
-      a: 'Log in to your dashboard. Go to the "Referrals" or "Team" section. Your unique referral link and code will be displayed there to share with friends.'
-    },
-    {
-      q: 'Q15. Who do I contact if I face an issue?',
-      a: 'Contact admin directly through the Support section on the website. Our team resolves queries within 24 hours.'
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#faf8f5] py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
-        {/* Top Action Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-[#e7e1d5]">
-          <button
-            onClick={() => onNavigate('home')}
-            className="inline-flex items-center gap-2 text-sm font-semibold text-[#0c5963] hover:text-[#093e4a] transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </button>
+    <div className="min-h-screen bg-[#faf8f5] dark:bg-[#07171d] text-[#1c2e33] dark:text-[#f0f4f6] font-sans antialiased transition-colors duration-200">
+      {/* Top Floating Control Bar */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-[#0b1f26]/95 backdrop-blur-md border-b border-[#e4ded2] dark:border-[#173740] px-4 sm:px-8 py-3.5 shadow-xs">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => onNavigate('home')}
+              className="p-2 rounded-xl bg-[#f0eae0] dark:bg-[#122b33] text-[#093e4a] dark:text-[#38bdf8] hover:bg-[#e6decf] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+              title="Return to Home"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Back</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <Logo className="w-8 h-8" />
+              <div>
+                <span className="text-sm font-black text-[#093e4a] dark:text-white tracking-wider uppercase block">
+                  TAEMRY FLUX
+                </span>
+                <span className="text-[10px] font-bold text-[#0c5963] dark:text-[#38bdf8] uppercase tracking-widest block -mt-1">
+                  Official Protocol Whitepaper
+                </span>
+              </div>
+            </div>
+          </div>
 
+          {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <button
               onClick={handleCopyAll}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-white border border-[#dcd4c5] text-[#334b4f] hover:bg-[#f3eee5] transition-colors cursor-pointer shadow-xs"
-              title="Copy full whitepaper text"
+              className="px-3 py-1.5 rounded-xl bg-[#f4eee4] dark:bg-[#122b33] hover:bg-[#eae1d3] text-[#093e4a] dark:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Copy entire document text"
             >
-              {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5 text-emerald-600" />
-                  <span className="text-emerald-700">Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5 text-[#52666a]" />
-                  <span>Copy Text</span>
-                </>
-              )}
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-[#0c5963]" />}
+              <span className="hidden md:inline">{copied ? 'Copied!' : 'Copy Text'}</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#0c5963] text-white hover:bg-[#093e4a] transition-colors cursor-pointer shadow-xs"
+              className="px-3 py-1.5 rounded-xl bg-[#f4eee4] dark:bg-[#122b33] hover:bg-[#eae1d3] text-[#093e4a] dark:text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer"
+              title="Print or Save as PDF"
             >
-              <Download className="w-3.5 h-3.5" />
-              <span>Print / PDF</span>
+              <Download className="w-3.5 h-3.5 text-[#0c5963]" />
+              <span className="hidden md:inline">Print / PDF</span>
+            </button>
+
+            <button
+              onClick={() => onNavigate('dashboard')}
+              className="px-4 py-1.5 rounded-xl bg-[#0c5963] hover:bg-[#08424a] text-white text-xs font-black flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <Wallet className="w-3.5 h-3.5 text-emerald-300" />
+              <span>Dashboard</span>
             </button>
           </div>
         </div>
+      </header>
 
-        {/* Document Container */}
-        <div
-          id="whitepaper-content"
-          className="bg-white rounded-2xl border border-[#e5ded0] shadow-sm p-6 sm:p-10 text-[#1f2937]"
-        >
-          {/* Header Banner */}
-          <div className="text-center pb-8 border-b border-[#ece5d8]">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0c5963]/10 text-[#0c5963] mb-4">
-              <FileText className="w-3.5 h-3.5" />
-              Official Documentation
+      {/* Main Container */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+        {/* Document Header Card */}
+        <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-10 border border-[#e4ded2] dark:border-[#173740] shadow-sm mb-8 text-center sm:text-left relative overflow-hidden">
+          <div className="absolute -right-12 -top-12 w-48 h-48 rounded-full bg-[#0c5963]/5 dark:bg-[#38bdf8]/5 pointer-events-none" />
+
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#e6f4f1] dark:bg-[#0d2a33] text-[#0c5963] dark:text-[#38bdf8] text-xs font-black uppercase tracking-widest border border-[#bce3dc] dark:border-[#173d47]">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Official Protocol Document</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold text-[#093e4a] tracking-tight">
-              TAEMRY FLUX
-            </h1>
-            <p className="text-lg font-medium text-[#4b5563] mt-2">
-              Official User Whitepaper & Earnings Guide
-            </p>
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-3 text-xs font-semibold text-[#6b7280]">
-              <span className="px-2.5 py-0.5 rounded-md bg-[#f3efe8] text-[#374151]">Version 1.0</span>
-              <span>•</span>
-              <span>September 2026</span>
-              <span>•</span>
-              <span className="text-[#0c5963] font-bold">Founder: Taimur Khan'X</span>
+
+            <div className="text-xs text-[#6b7280] dark:text-[#94a3b8] font-mono">
+              Version: <strong className="text-[#093e4a] dark:text-white">{data.version}</strong> • Updated: {data.lastUpdated}
             </div>
           </div>
 
-          {/* Table of Contents Pill Bar */}
-          <div className="my-8 p-4 rounded-xl bg-[#faf7f2] border border-[#ebe3d5]">
-            <div className="text-xs font-bold uppercase tracking-wider text-[#64748b] mb-3">
-              Table of Contents
-            </div>
-            <div className="flex flex-wrap gap-2 text-xs">
-              {[
-                { id: 'sec-welcome', title: '1. Welcome' },
-                { id: 'sec-get-started', title: '2. Get Started' },
-                { id: 'sec-packages', title: '3. The 7 Packages' },
-                { id: 'sec-how-to-earn', title: '4. 4 Income Streams' },
-                { id: 'sec-withdrawal-rules', title: '5. Withdrawal Rules' },
-                { id: 'sec-methods', title: '6. Payment Methods' },
-                { id: 'sec-claim-milestones', title: '7. Claim Milestones' },
-                { id: 'sec-fair-play', title: '8. Fair Play' },
-                { id: 'sec-disclaimer', title: '9. Disclaimer' },
-                { id: 'sec-faqs', title: '10. FAQs (15 Qs)' },
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToSection(item.id)}
-                  className="px-2.5 py-1 rounded-md bg-white border border-[#e2d9cb] text-[#2c3e50] hover:bg-[#0c5963] hover:text-white hover:border-[#0c5963] transition-all cursor-pointer font-medium"
-                >
-                  {item.title}
-                </button>
-              ))}
-            </div>
-          </div>
+          <h1 className="text-2xl sm:text-4xl font-black text-[#093e4a] dark:text-white tracking-tight leading-tight mb-2">
+            {data.title}
+          </h1>
+          <p className="text-sm sm:text-base font-semibold text-[#5a7277] dark:text-[#cbd5e1] max-w-3xl">
+            {data.subtitle}
+          </p>
 
-          {/* SECTION 1: WELCOME */}
-          <section id="sec-welcome" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">1</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">WELCOME TO TAEMRY FLUX</h2>
+          {/* Quick Table of Contents Jump Links */}
+          <div className="mt-6 pt-6 border-t border-[#ece5d8] dark:border-[#173740] flex flex-wrap gap-2 text-xs">
+            {[
+              { label: '1. Welcome', id: 'sec-welcome' },
+              { label: '2. Getting Started', id: 'sec-get-started' },
+              { label: '3. Packages & 20% Returns', id: 'sec-packages' },
+              { label: '4. Team Rewards Ladder', id: 'sec-team-rewards' },
+              { label: '5. 5-Level Commissions', id: 'sec-commissions' },
+              { label: '6. Withdrawal Policy', id: 'sec-withdrawal-rules' },
+              { label: '7. Payment Channels', id: 'sec-methods' },
+              { label: '8. FAQs & Rules', id: 'sec-faqs' },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => scrollToSection(item.id)}
+                className="px-3 py-1 rounded-lg bg-[#faf8f5] dark:bg-[#122b33] hover:bg-[#0c5963] hover:text-white dark:hover:bg-[#38bdf8] dark:hover:text-[#0c2027] text-[#5a7277] dark:text-[#94a3b8] border border-[#e4ded2] dark:border-[#1e4450] font-bold transition-all cursor-pointer"
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content Body Container */}
+        <div id="whitepaper-content" className="bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-10 border border-[#e4ded2] dark:border-[#173740] shadow-sm space-y-12">
+          
+          {/* SECTION 1: WELCOME & EXECUTIVE SUMMARY */}
+          <section id="sec-welcome" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">1</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                WELCOME & EXECUTIVE PROTOCOL SUMMARY
+              </h2>
             </div>
-            <div className="pl-9 space-y-3 text-sm leading-relaxed text-[#374151]">
+            <div className="pl-9 space-y-3 text-sm leading-relaxed text-[#374151] dark:text-[#cbd5e1]">
               <p>
-                <strong>TAEMRY FLUX</strong> is a revolutionary reward-based advertising platform.
-                We share advertising revenue with <strong>YOU</strong>. By watching ads, referring friends,
-                and completing milestones, you earn real US Dollars ($) that you can withdraw to your bank,
-                Easypaisa, JazzCash, or Crypto wallet.
+                {data.executiveSummary}
               </p>
-              <div className="p-3.5 rounded-xl bg-[#0c5963]/5 border border-[#0c5963]/20 flex items-center justify-between">
-                <span className="text-xs font-semibold text-[#093e4a]">
-                  Platform Visionary & Architecture:
+              <div className="p-4 rounded-2xl bg-[#0c5963]/5 dark:bg-[#0c2e38] border border-[#0c5963]/20 dark:border-[#174653] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <span className="text-xs font-semibold text-[#093e4a] dark:text-[#e2e8f0]">
+                  Protocol Architecture & Community Stewardship:
                 </span>
-                <span className="text-xs font-bold text-[#0c5963] px-2.5 py-1 rounded-md bg-white border border-[#0c5963]/30">
-                  Founded by: Taimur Khan'X
+                <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] px-3 py-1 rounded-lg bg-white dark:bg-[#091f26] border border-[#0c5963]/30">
+                  Founder & Director: Taimur Khan'X
                 </span>
               </div>
             </div>
           </section>
 
           {/* SECTION 2: HOW TO GET STARTED */}
-          <section id="sec-get-started" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">2</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">HOW TO GET STARTED (3 Easy Steps)</h2>
+          <section id="sec-get-started" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">2</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                HOW TO GET STARTED (3 Steps)
+              </h2>
             </div>
-            <div className="pl-9 space-y-4 text-sm text-[#374151]">
+            <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                  <div className="w-6 h-6 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">1</div>
-                  <div className="font-bold text-[#093e4a] text-sm">Step 1: Sign Up</div>
-                  <p className="text-xs text-[#52666a] mt-1">Sign up with your email to create your verified user account.</p>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                  <div className="w-7 h-7 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">1</div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Step 1: Sign Up</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] mt-1">Register using your email or Google Account to establish your member wallet.</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                  <div className="w-6 h-6 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">2</div>
-                  <div className="font-bold text-[#093e4a] text-sm">Step 2: Deposit Funds</div>
-                  <p className="text-xs text-[#52666a] mt-1">Deposit funds into your wallet ($1 to $1,000 USD equivalent).</p>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                  <div className="w-7 h-7 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">2</div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Step 2: Deposit Funds</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] mt-1">Deposit funds via Easypaisa, JazzCash, Bank Transfer, or Crypto ($1 - $1,000 USD).</p>
                 </div>
-                <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                  <div className="w-6 h-6 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">3</div>
-                  <div className="font-bold text-[#093e4a] text-sm">Step 3: Buy a Package</div>
-                  <p className="text-xs text-[#52666a] mt-1">Choose any package to unlock the system and begin watching ads.</p>
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                  <div className="w-7 h-7 rounded-full bg-[#0c5963] text-white font-bold text-xs flex items-center justify-center mb-2">3</div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Step 3: Buy a Package</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] mt-1">Select your allocation package to instantly unlock daily ads and live 20% daily returns.</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 flex items-start gap-2.5 text-amber-900 text-xs">
-                <AlertTriangle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+              <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-start gap-2.5 text-amber-900 dark:text-amber-200 text-xs">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  <strong>Important Notice:</strong> You <strong>CANNOT</strong> watch ads or earn money without buying an active package. Package ownership activates your daily viewing allocation.
+                  <strong>Package Prerequisite:</strong> An active package is mandatory to unlock ad view earnings. This ensures human verification and prevents automated scraping bots.
                 </span>
               </div>
             </div>
           </section>
 
-          {/* SECTION 3: THE 7 PACKAGES */}
-          <section id="sec-packages" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">3</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">THE 7 PACKAGES</h2>
+          {/* SECTION 3: THE 7 PACKAGES & GUARANTEED 20% DAILY RETURN */}
+          <section id="sec-packages" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">3</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                THE 7 PACKAGES & GUARANTEED 20% DAILY RETURN
+              </h2>
             </div>
+            
             <div className="pl-9 space-y-4">
-              <div className="overflow-x-auto rounded-xl border border-[#e5ded0]">
+              {/* Highlighted Guaranteed Return Callout */}
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-950 dark:text-emerald-200 text-xs sm:text-sm font-semibold leading-relaxed flex items-start gap-3">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                <div>
+                  <strong className="block text-emerald-800 dark:text-emerald-300 font-black mb-0.5">
+                    GUARANTEED DAILY RETURN MANDATE
+                  </strong>
+                  {data.packagesNote}
+                </div>
+              </div>
+
+              <div className="overflow-x-auto rounded-2xl border border-[#e5ded0] dark:border-[#173e49]">
                 <table className="w-full text-left text-sm">
-                  <thead className="bg-[#f5f0e6] text-[#093e4a] font-bold text-xs uppercase tracking-wider border-b border-[#e5ded0]">
+                  <thead className="bg-[#f5f0e6] dark:bg-[#0f2831] text-[#093e4a] dark:text-white font-bold text-xs uppercase tracking-wider border-b border-[#e5ded0] dark:border-[#173e49]">
                     <tr>
                       <th className="py-3 px-4">Package</th>
                       <th className="py-3 px-4">Price (USD)</th>
                       <th className="py-3 px-4">Daily Quota</th>
-                      <th className="py-3 px-4">Reward Rate</th>
+                      <th className="py-3 px-4">Guaranteed Return</th>
                       <th className="py-3 px-4">Status</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-[#ece5d8] text-[#374151]">
-                    {packages.map((pkg) => (
-                      <tr key={pkg.name} className="hover:bg-[#fbf9f6] transition-colors">
-                        <td className="py-3 px-4 font-bold text-[#093e4a]">{pkg.name}</td>
-                        <td className="py-3 px-4 font-black text-[#0c5963]">{pkg.price}</td>
+                  <tbody className="divide-y divide-[#ece5d8] dark:divide-[#173e49] text-[#374151] dark:text-[#cbd5e1]">
+                    {data.packages?.map((pkg) => (
+                      <tr key={pkg.name} className="hover:bg-[#fbf9f6] dark:hover:bg-[#122e38] transition-colors">
+                        <td className="py-3 px-4 font-bold text-[#093e4a] dark:text-white">{pkg.name}</td>
+                        <td className="py-3 px-4 font-black text-[#0c5963] dark:text-[#38bdf8]">{pkg.price}</td>
                         <td className="py-3 px-4 text-xs font-semibold">{pkg.dailyLimit}</td>
-                        <td className="py-3 px-4 text-xs font-medium text-emerald-700">{pkg.reward}</td>
+                        <td className="py-3 px-4 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                          {pkg.dailyReturn || '20% Daily Return'}
+                        </td>
                         <td className="py-3 px-4">
-                          <span className="inline-block px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-[#eef2f5] text-[#334155]">
+                          <span className="inline-block px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-[#eef2f5] dark:bg-[#15343e] text-[#334155] dark:text-[#94a3b8]">
                             {pkg.badge}
                           </span>
                         </td>
@@ -344,177 +400,131 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 4: HOW TO EARN */}
-          <section id="sec-how-to-earn" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">4</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">HOW TO EARN (4 Income Streams)</h2>
+          {/* SECTION 4: TEAM REWARDS LADDER (REPLACES PERSONAL ADS) */}
+          <section id="sec-team-rewards" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">4</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                TEAM REWARDS LADDER (DIRECT REFERRAL CASH BONUSES)
+              </h2>
             </div>
 
-            <div className="pl-9 space-y-6 text-sm text-[#374151]">
-              {/* Stream A */}
-              <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                <h3 className="font-bold text-[#093e4a] text-base mb-1.5 flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-[#0c5963] text-white text-xs">A</span>
-                  DAILY AD REWARDS
-                </h3>
-                <ul className="list-disc list-inside space-y-1 text-xs sm:text-sm text-[#4b5563] ml-2">
-                  <li>You watch 60-second verified advertisements.</li>
-                  <li>Daily limit: Up to <strong>200 ads per day</strong> (based on package).</li>
-                  <li>Reward: <strong>0.1%</strong> of your package price PER ad watched.</li>
-                </ul>
-                <div className="mt-3 p-3 rounded-lg bg-white border border-[#e2d9cb] text-xs font-medium text-[#093e4a]">
-                  <strong>Real Example (Gold $10 package):</strong> 200 ads × $0.01 = <strong>$2.00 / day</strong> ($60.00 / month).
-                </div>
+            <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
+              <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
+                Every time you invite new members with your personal referral link, your direct referral counter increases. As you hit each milestone threshold below, an instant cash reward is unlocked and credited straight to your balance:
+              </p>
+
+              <div className="overflow-x-auto rounded-2xl border border-[#e2d9cb] dark:border-[#173e49]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#f0eae0] dark:bg-[#0f2831] text-[#093e4a] dark:text-white font-black uppercase tracking-wider">
+                    <tr>
+                      <th className="py-3 px-4">Tier</th>
+                      <th className="py-3 px-4">Direct Referrals Required</th>
+                      <th className="py-3 px-4">Cash Reward ($ USD)</th>
+                      <th className="py-3 px-4">Requirement Details</th>
+                      <th className="py-3 px-4">Claim Mode</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#ece5d8] dark:divide-[#173e49]">
+                    {data.teamRewards?.map((tier, idx) => (
+                      <tr key={idx} className="hover:bg-[#fbf9f6] dark:hover:bg-[#122e38] transition-colors">
+                        <td className="py-3 px-4 font-mono font-bold text-[#0c5963] dark:text-[#38bdf8]">
+                          Tier {idx + 1}
+                        </td>
+                        <td className="py-3 px-4 font-black text-sm text-[#093e4a] dark:text-white">
+                          {tier.referrals} Direct Members
+                        </td>
+                        <td className="py-3 px-4 font-black text-sm text-emerald-600 dark:text-emerald-400">
+                          +${Number(tier.bonus).toFixed(2)} USD
+                        </td>
+                        <td className="py-3 px-4 text-xs text-[#52666a] dark:text-[#94a3b8]">
+                          {tier.note || tier.stepNote || `Reach ${tier.referrals} referrals`}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            Instant Wallet Credit
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              {/* Stream B */}
-              <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                <h3 className="font-bold text-[#093e4a] text-base mb-1.5 flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-[#0c5963] text-white text-xs">B</span>
-                  UPLINE COMMISSION (When your referrals buy packages)
-                </h3>
-                <p className="text-xs text-[#52666a] mb-2">
-                  Your network is structured <strong>5 levels deep</strong>. You earn these percentages whenever your downline purchases or upgrades a package:
+              {/* Team Ad Views Milestone Note */}
+              <div className="mt-4 p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#093e4a] dark:text-white mb-2 flex items-center gap-1.5">
+                  <Users className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                  <span>Team Ad Milestones (Unlimited Network Depth Level 1 to 100+)</span>
+                </h4>
+                <p className="text-xs text-[#52666a] dark:text-[#94a3b8] mb-3">
+                  In addition to direct cash rewards, all ad views across your entire team tree accumulate toward unlimited-depth Team Milestones ($1 to $4,096 bonuses).
                 </p>
-                <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                  <div className="p-2 rounded-lg bg-white border border-[#e2d9cb]">
-                    <div className="text-[#64748b] text-[10px]">Level 1</div>
-                    <div className="text-base font-extrabold text-[#0c5963]">20%</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white border border-[#e2d9cb]">
-                    <div className="text-[#64748b] text-[10px]">Level 2</div>
-                    <div className="text-base font-extrabold text-[#0c5963]">10%</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white border border-[#e2d9cb]">
-                    <div className="text-[#64748b] text-[10px]">Level 3</div>
-                    <div className="text-base font-extrabold text-[#0c5963]">5%</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white border border-[#e2d9cb]">
-                    <div className="text-[#64748b] text-[10px]">Level 4</div>
-                    <div className="text-base font-extrabold text-[#0c5963]">3%</div>
-                  </div>
-                  <div className="p-2 rounded-lg bg-white border border-[#e2d9cb]">
-                    <div className="text-[#64748b] text-[10px]">Level 5</div>
-                    <div className="text-base font-extrabold text-[#0c5963]">2%</div>
-                  </div>
-                </div>
-                <p className="text-[11px] text-[#718286] mt-2 italic">
-                  Note: You earn on your downline team members (you do NOT earn commissions on your own package purchases).
-                </p>
-              </div>
-
-              {/* Stream C */}
-              <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                <h3 className="font-bold text-[#093e4a] text-base mb-1.5 flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-[#0c5963] text-white text-xs">C</span>
-                  UPLINE COMMISSION (When your referrals watch ads)
-                </h3>
-                <p className="text-xs text-[#52666a]">
-                  You earn <strong>50% commission</strong> of the standard rate when your direct and extended downline members watch daily ads. (Applies across Levels 1 through 5).
-                </p>
-              </div>
-
-              {/* Stream D: MILESTONE BONUSES */}
-              <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                <h3 className="font-bold text-[#093e4a] text-base mb-1.5 flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-md bg-[#0c5963] text-white text-xs">D</span>
-                  MILESTONE BONUSES (Claimable Rewards)
-                </h3>
-                <p className="text-xs text-[#52666a] mb-4">
-                  Your ad view count <strong>NEVER resets</strong>. Once you hit a milestone threshold, a bright <strong>"Claim"</strong> button appears in your dashboard. Click it to deposit the bonus directly into your wallet.
-                </p>
-
-                {/* Sub D-1: Personal */}
-                <div className="mb-6">
-                  <div className="font-bold text-xs uppercase tracking-wider text-[#093e4a] mb-2 flex items-center gap-1.5">
-                    <Award className="w-3.5 h-3.5 text-[#0c5963]" />
-                    D-1) Personal Milestones (Your own ads):
-                  </div>
-                  <div className="overflow-x-auto rounded-lg border border-[#e2d9cb]">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-[#f0eae0] text-[#093e4a] font-bold">
-                        <tr>
-                          <th className="py-2 px-3">Ads Watched</th>
-                          <th className="py-2 px-3">Bonus ($)</th>
-                          <th className="py-2 px-3">Status</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#ece5d8]">
-                        {personalMilestones.map((m) => (
-                          <tr key={m.ads} className="hover:bg-white transition-colors">
-                            <td className="py-2 px-3 font-semibold text-[#1e293b]">{m.ads}</td>
-                            <td className="py-2 px-3 font-black text-emerald-700">{m.bonus} USD</td>
-                            <td className="py-2 px-3 text-[11px] text-[#64748b]">Instant Claim</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="text-[11px] text-[#718286] mt-1.5 italic">(More personal milestones coming soon!)</p>
-                </div>
-
-                {/* Sub D-2: Team */}
-                <div>
-                  <div className="font-bold text-xs uppercase tracking-wider text-[#093e4a] mb-1 flex items-center gap-1.5">
-                    <Users className="w-3.5 h-3.5 text-[#0c5963]" />
-                    D-2) Team Milestones (Collective ads of your whole team)
-                  </div>
-                  <div className="p-2.5 mb-2 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-semibold">
-                    ⭐ IMPORTANT: Your team depth is UNLIMITED (Level 1 to Level 100+). Ads watched by anyone in your entire downline count here!
-                  </div>
-                  <div className="overflow-x-auto rounded-lg border border-[#e2d9cb]">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-[#f0eae0] text-[#093e4a] font-bold">
-                        <tr>
-                          <th className="py-2 px-3">Total Downline Ads</th>
-                          <th className="py-2 px-3">Bonus ($)</th>
-                          <th className="py-2 px-3">Scope</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#ece5d8]">
-                        {teamMilestones.map((m) => (
-                          <tr key={m.ads} className="hover:bg-white transition-colors">
-                            <td className="py-2 px-3 font-semibold text-[#1e293b]">{m.ads}</td>
-                            <td className="py-2 px-3 font-black text-emerald-700">{m.bonus} USD</td>
-                            <td className="py-2 px-3 text-[11px] text-[#64748b]">Unlimited Team Depth</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <p className="text-[11px] text-[#718286] mt-1.5 italic">(More team milestones coming soon!)</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+                  {teamMilestones.slice(0, 8).map((m) => (
+                    <div key={m.ads} className="p-2 rounded-xl bg-white dark:bg-[#122e38] border border-[#e4ded2] dark:border-[#1e4854]">
+                      <span className="text-[10px] text-[#718286] dark:text-[#94a3b8] block">{m.ads} Team Ads</span>
+                      <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{m.bonus} USD</strong>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* SECTION 5: WITHDRAWAL RULES */}
-          <section id="sec-withdrawal-rules" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">5</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">WITHDRAWAL RULES (Read Carefully)</h2>
+          {/* SECTION 5: 5-LEVEL COMMISSIONS */}
+          <section id="sec-commissions" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">5</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                5-LEVEL DOWNLINE PACKAGE COMMISSIONS
+              </h2>
             </div>
-            <div className="pl-9 space-y-3 text-sm text-[#374151]">
-              <p className="text-xs text-[#52666a]">
-                To maintain security, platform solvency, and fairness for the entire ecosystem, the following rules apply to all withdrawal requests:
+            <div className="pl-9 space-y-3 text-sm text-[#374151] dark:text-[#cbd5e1]">
+              <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
+                Whenever downline members in your organizational hierarchy purchase or upgrade packages, commissions are distributed automatically across 5 tiers:
               </p>
+
+              <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                {[
+                  { lvl: 'Level 1', pct: '20%', label: 'Direct' },
+                  { lvl: 'Level 2', pct: '10%', label: 'Tier 2' },
+                  { lvl: 'Level 3', pct: '5%', label: 'Tier 3' },
+                  { lvl: 'Level 4', pct: '3%', label: 'Tier 4' },
+                  { lvl: 'Level 5', pct: '2%', label: 'Tier 5' },
+                ].map((item) => (
+                  <div key={item.lvl} className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                    <span className="text-[10px] font-bold text-[#718286] dark:text-[#94a3b8] block">{item.lvl}</span>
+                    <strong className="text-base font-black text-[#0c5963] dark:text-[#38bdf8] block my-0.5">{item.pct}</strong>
+                    <span className="text-[10px] text-[#52666a] dark:text-[#94a3b8]">{item.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 6: WITHDRAWAL RULES */}
+          <section id="sec-withdrawal-rules" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">6</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                WITHDRAWAL RULES & COMPLIANCE
+              </h2>
+            </div>
+            <div className="pl-9 space-y-3 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="space-y-2">
                 {[
                   { title: '1. Minimum Withdrawal', desc: '$1.00 USD' },
                   { title: '2. Maximum Withdrawal', desc: '$1,000.00 USD (per single request)' },
-                  { title: '3. Daily Request Limit', desc: 'Only 1 withdrawal request per day' },
-                  { title: '4. Time Gap Policy', desc: 'You must wait at least 5 minutes between consecutive requests' },
-                  {
-                    title: '5. Referral Requirement',
-                    desc: 'You MUST have at least 1 active direct referral to withdraw any amount. (If you have 0 referrals, you cannot withdraw).'
-                  },
+                  { title: '3. Daily Request Frequency', desc: '1 withdrawal request per calendar day' },
+                  { title: '4. Active Referral Requirement', desc: 'You MUST have at least 1 active direct referral to withdraw any balance.' },
+                  { title: '5. Anti-VPN & Multi-Account Policy', desc: 'VPNs, proxies, and emulator automation are strictly forbidden.' },
                 ].map((rule) => (
-                  <div key={rule.title} className="p-3 rounded-lg bg-[#faf8f5] border border-[#e8e0d3] flex items-start gap-3">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                  <div key={rule.title} className="p-3 rounded-xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-start gap-3">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold text-[#093e4a] text-xs">{rule.title}: </span>
-                      <span className="text-xs text-[#4b5563]">{rule.desc}</span>
+                      <span className="font-bold text-[#093e4a] dark:text-white text-xs">{rule.title}: </span>
+                      <span className="text-xs text-[#4b5563] dark:text-[#cbd5e1]">{rule.desc}</span>
                     </div>
                   </div>
                 ))}
@@ -522,192 +532,79 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 6: DEPOSIT & WITHDRAWAL METHODS */}
-          <section id="sec-methods" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">6</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">DEPOSIT & WITHDRAWAL METHODS</h2>
+          {/* SECTION 7: PAYMENT CHANNELS & EXCHANGE RATE */}
+          <section id="sec-methods" className="scroll-mt-24 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">7</span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
+                DEPOSIT & WITHDRAWAL PAYMENT CHANNELS
+              </h2>
             </div>
-            <div className="pl-9 space-y-4 text-sm text-[#374151]">
-              <p className="text-xs text-[#52666a]">
-                We offer 3 secure payment channels to ensure frictionless access for global and regional members:
-              </p>
-
+            <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Method A: Local */}
-                <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                  <div className="font-bold text-[#093e4a] text-sm mb-1">
-                    A) LOCAL PAYMENTS (Bank / Easypaisa / JazzCash)
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-2">
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">
+                    A) LOCAL CURRENCY (Bank / Easypaisa / JazzCash)
                   </div>
-                  <div className="inline-block px-2.5 py-1 rounded-md bg-[#0c5963] text-white text-xs font-black mb-3">
-                    Exchange Rate: 1 USD = 300 PKR (Fixed)
+                  <div className="inline-block px-3 py-1 rounded-lg bg-[#0c5963] text-white text-xs font-black">
+                    Pegged Exchange Rate: 1 USD = 300 PKR
                   </div>
-                  <ul className="space-y-2 text-xs text-[#4b5563]">
-                    <li>
-                      <strong>For Deposits:</strong> You send PKR to the official admin account and upload the transaction screenshot/proof. The admin verifies and credits your wallet in USD ($).
-                    </li>
-                    <li>
-                      <strong>For Withdrawals:</strong> You enter your Account Name and Account Number (JazzCash / Easypaisa / Bank). Admin sends the payout directly in PKR.
-                    </li>
-                  </ul>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
+                    Deposit PKR directly to our verified company accounts and upload your transaction receipt. Withdrawals are processed back to your mobile wallet or IBAN within 1 to 24 hours.
+                  </p>
                 </div>
 
-                {/* Method B: Crypto */}
-                <div className="p-4 rounded-xl bg-[#faf8f5] border border-[#e8e0d3]">
-                  <div className="font-bold text-[#093e4a] text-sm mb-1">
-                    B) CRYPTO (USDT / BTC)
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-2">
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">
+                    B) CRYPTOCURRENCY CHANNELS (USDT & BTC)
                   </div>
-                  <div className="inline-block px-2.5 py-1 rounded-md bg-purple-700 text-white text-xs font-black mb-3">
-                    Decentralized & Global
+                  <div className="inline-block px-3 py-1 rounded-lg bg-emerald-700 text-white text-xs font-black">
+                    Global Borderless Settlement
                   </div>
-                  <ul className="space-y-2 text-xs text-[#4b5563]">
-                    <li>
-                      <strong>For Deposits:</strong> You send crypto to the verified admin wallet address and upload the transaction receipt. Admin credits your wallet in USD ($).
-                    </li>
-                    <li>
-                      <strong>For Withdrawals:</strong> You provide your TRC20/BEP20 USDT or Bitcoin address. The finance department sends crypto directly to your wallet.
-                    </li>
-                  </ul>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
+                    Supports USDT (TRC-20 / BEP-20) and Bitcoin (BTC). Instant on-chain tracking for deposits and direct wallet payouts worldwide.
+                  </p>
                 </div>
               </div>
             </div>
           </section>
 
-          {/* SECTION 7: HOW TO CLAIM */}
-          <section id="sec-claim-milestones" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#0c5963] text-white font-bold text-xs">7</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">HOW TO CLAIM YOUR MILESTONES</h2>
-            </div>
-            <div className="pl-9 space-y-2 text-xs sm:text-sm text-[#374151]">
-              <div className="p-3.5 rounded-xl bg-[#faf8f5] border border-[#e8e0d3] space-y-2">
-                <div className="flex items-center gap-2 font-bold text-[#093e4a]">
-                  <span className="w-5 h-5 rounded-full bg-[#0c5963] text-white text-[11px] flex items-center justify-center">1</span>
-                  <span>Log in and open your Member Dashboard.</span>
-                </div>
-                <div className="flex items-center gap-2 font-bold text-[#093e4a]">
-                  <span className="w-5 h-5 rounded-full bg-[#0c5963] text-white text-[11px] flex items-center justify-center">2</span>
-                  <span>Navigate to the "Milestones" section on the menu.</span>
-                </div>
-                <div className="flex items-center gap-2 font-bold text-[#093e4a]">
-                  <span className="w-5 h-5 rounded-full bg-[#0c5963] text-white text-[11px] flex items-center justify-center">3</span>
-                  <span>Once your goal is reached, the "Claim" button turns bright Green.</span>
-                </div>
-                <div className="flex items-center gap-2 font-bold text-[#093e4a]">
-                  <span className="w-5 h-5 rounded-full bg-[#0c5963] text-white text-[11px] flex items-center justify-center">4</span>
-                  <span>Click "Claim" — the cash bonus is added instantly to your wallet balance.</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* SECTION 8: FAIR PLAY */}
-          <section id="sec-fair-play" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-red-600 text-white font-bold text-xs">8</span>
-              <h2 className="text-xl font-bold text-[#991b1b]">FAIR PLAY POLICY (Anti-Cheating)</h2>
-            </div>
-            <div className="pl-9 space-y-3 text-xs sm:text-sm text-[#374151]">
-              <p className="text-xs text-[#52666a]">
-                To protect the community and guarantee the long-term sustainability of the ad revenue share model:
-              </p>
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-950 space-y-2 text-xs">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <span><strong>Do NOT create multiple accounts</strong> from the same IP address or device.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <span><strong>Do NOT use VPNs, Tor, or Proxies</strong> to artificially simulate ad views.</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
-                  <span><strong>Do NOT use bots, macros, or auto-clicker extensions.</strong></span>
-                </div>
-              </div>
-              <p className="text-xs font-semibold text-red-800">
-                ⚠️ Violating these rules will result in an immediate, permanent account ban and forfeiture of all accumulated funds. We value honesty and transparency.
-              </p>
-            </div>
-          </section>
-
-          {/* SECTION 9: DISCLAIMER */}
-          <section id="sec-disclaimer" className="mb-10 scroll-mt-20">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-[#64748b] text-white font-bold text-xs">9</span>
-              <h2 className="text-xl font-bold text-[#093e4a]">IMPORTANT DISCLAIMER</h2>
-            </div>
-            <div className="pl-9 text-xs sm:text-sm leading-relaxed text-[#4b5563] space-y-2">
-              <p>
-                <strong>TAEMRY FLUX</strong> is a reward-based advertising platform. It is <strong>NOT</strong> an investment scheme, high-yield investment program (HYIP), or get-rich-quick program.
-              </p>
-              <p>
-                Your earnings depend on your active participation (watching ads, referring users, and building your team). Past earnings do not guarantee future results. The platform reserves the right to update rules with prior notice to ensure long-term sustainability, solvency, and security for all users.
-              </p>
-            </div>
-          </section>
-
-          {/* SECTION 10: JOIN US TODAY */}
-          <section id="sec-join-us" className="mb-12 scroll-mt-20">
-            <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-r from-[#0c5963] to-[#093e4a] text-white text-center">
-              <h2 className="text-2xl font-black mb-2">10. JOIN US TODAY!</h2>
-              <p className="text-sm text-[#d0e5e8] max-w-xl mx-auto mb-6">
-                Ready to start your journey? Log in to your dashboard, buy your package, and begin watching ads to earn real money. Build your team, hit your milestones, and achieve financial growth with TAEMRY FLUX.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-3">
-                <button
-                  onClick={() => onNavigate('login')}
-                  className="px-6 py-3 rounded-xl bg-white text-[#0c5963] font-bold text-sm hover:bg-[#f0f9fa] transition-all shadow-md cursor-pointer inline-flex items-center gap-2"
-                >
-                  <span>Go to Login / Dashboard</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => onNavigate('home')}
-                  className="px-6 py-3 rounded-xl bg-white/10 text-white border border-white/20 font-semibold text-sm hover:bg-white/20 transition-all cursor-pointer"
-                >
-                  Explore Home Page
-                </button>
-              </div>
-            </div>
-          </section>
-
-          {/* FREQUENTLY ASKED QUESTIONS (FAQs) */}
-          <section id="sec-faqs" className="pt-8 border-t border-[#ece5d8] scroll-mt-20">
+          {/* SECTION 8: FREQUENTLY ASKED QUESTIONS (ADMIN EDITABLE) */}
+          <section id="sec-faqs" className="scroll-mt-24 pt-8 border-t border-[#ece5d8] dark:border-[#173740]">
             <div className="text-center mb-8">
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0c5963]/10 text-[#0c5963] mb-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0c5963]/10 dark:bg-[#38bdf8]/10 text-[#0c5963] dark:text-[#38bdf8] mb-2">
                 <HelpCircle className="w-3.5 h-3.5" />
                 Frequently Asked Questions
               </div>
-              <h2 className="text-2xl font-extrabold text-[#093e4a]">
+              <h2 className="text-2xl font-extrabold text-[#093e4a] dark:text-white">
                 Everything You Need to Know (FAQs)
               </h2>
-              <p className="text-xs text-[#6b7280] mt-1">
-                Official answers to the top 15 questions asked by TAEMRY FLUX members.
+              <p className="text-xs text-[#6b7280] dark:text-[#94a3b8] mt-1">
+                Official answers to questions regarding packages, returns, Team Rewards, and withdrawals.
               </p>
             </div>
 
             <div className="space-y-3">
-              {faqs.map((faq, index) => {
+              {data.faqs?.map((faq, index) => {
                 const isOpen = openFaq === index;
                 return (
                   <div
-                    key={faq.q}
-                    className="rounded-xl border border-[#e5ded0] bg-[#faf8f5] overflow-hidden transition-all"
+                    key={index}
+                    className="rounded-2xl border border-[#e5ded0] dark:border-[#173e49] bg-[#faf8f5] dark:bg-[#0f2831] overflow-hidden transition-all"
                   >
                     <button
                       onClick={() => setOpenFaq(isOpen ? null : index)}
-                      className="w-full text-left p-4 flex items-center justify-between gap-4 font-bold text-sm text-[#093e4a] hover:bg-[#f5efe4] transition-colors cursor-pointer"
+                      className="w-full text-left p-4 flex items-center justify-between gap-4 font-bold text-sm text-[#093e4a] dark:text-white hover:bg-[#f5efe4] dark:hover:bg-[#13303a] transition-colors cursor-pointer"
                     >
                       <span>{faq.q}</span>
                       {isOpen ? (
-                        <ChevronUp className="w-4 h-4 text-[#0c5963] shrink-0" />
+                        <ChevronUp className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8] shrink-0" />
                       ) : (
                         <ChevronDown className="w-4 h-4 text-[#718286] shrink-0" />
                       )}
                     </button>
                     {isOpen && (
-                      <div className="p-4 pt-0 text-xs sm:text-sm text-[#4b5563] leading-relaxed border-t border-[#efe9dd] bg-white whitespace-pre-line">
+                      <div className="p-4 pt-0 text-xs sm:text-sm text-[#4b5563] dark:text-[#cbd5e1] leading-relaxed border-t border-[#efe9dd] dark:border-[#173e49] bg-white dark:bg-[#0c2027] whitespace-pre-line">
                         {faq.a}
                       </div>
                     )}
@@ -717,11 +614,51 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
+          {/* SECTION 9: SUPPORT DESK CONTACT CHANNELS */}
+          {data.supportContact && (
+            <section className="p-6 rounded-3xl bg-[#f5f0e6] dark:bg-[#0f2831] border border-[#e4ded2] dark:border-[#173e49] space-y-3">
+              <div className="flex items-center gap-2">
+                <Phone className="w-5 h-5 text-[#0c5963] dark:text-[#38bdf8]" />
+                <h3 className="text-base font-bold text-[#093e4a] dark:text-white">
+                  Official Support Desk & Community Assistance
+                </h3>
+              </div>
+              <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
+                Need help with deposits, account verification, or Team Rewards? Contact our official customer care channels:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs font-semibold">
+                <div className="p-3 rounded-xl bg-white dark:bg-[#122e38] border border-[#e4ded2] dark:border-[#1e4854] flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                  <div>
+                    <span className="text-[10px] text-[#718286] block">Email Support:</span>
+                    <span className="text-[#093e4a] dark:text-white font-mono">{data.supportContact.email}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white dark:bg-[#122e38] border border-[#e4ded2] dark:border-[#1e4854] flex items-center gap-2">
+                  <Phone className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <div>
+                    <span className="text-[10px] text-[#718286] block">WhatsApp Helpline:</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-mono">{data.supportContact.whatsapp}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-white dark:bg-[#122e38] border border-[#e4ded2] dark:border-[#1e4854] flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-amber-500" />
+                  <div>
+                    <span className="text-[10px] text-[#718286] block">Operating Hours:</span>
+                    <span className="text-[#093e4a] dark:text-white">{data.supportContact.hours}</span>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Document Footer Signature */}
-          <div className="mt-12 pt-6 border-t border-[#ece5d8] text-center text-xs text-[#718286]">
-            <p className="font-bold text-[#093e4a]">© 2026 TAEMRY FLUX. All rights reserved.</p>
+          <div className="mt-8 pt-6 border-t border-[#ece5d8] dark:border-[#173740] text-center text-xs text-[#718286] dark:text-[#94a3b8]">
+            <p className="font-bold text-[#093e4a] dark:text-white">© 2026 TAEMRY FLUX PROTOCOL. All rights reserved.</p>
             <p className="mt-1">Founder & Executive Director: <strong>Taimur Khan'X</strong></p>
-            <p className="text-[11px] text-[#9ca3af] mt-0.5">Published September 2026 • Official Platform Whitepaper v1.0</p>
+            <p className="text-[11px] text-[#9ca3af] mt-0.5">Published & Maintained by TAEMRY FLUX Network Administration</p>
           </div>
         </div>
       </div>
