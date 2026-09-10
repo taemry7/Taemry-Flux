@@ -28,7 +28,9 @@
 
   /* Ensure text-white is always pure crisp white in dark and light modes */
   .text-white,
-  .dark .text-white {
+  .dark .text-white,
+  .dark #btn-google-auth,
+  .dark #btn-google-auth span {
     color: #ffffff !important;
   }
 

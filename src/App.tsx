@@ -171,7 +171,7 @@ function AppContent() {
       </main>
 
       {/* Global Footer with 2026 Copyright */}
-      <Footer onNavigate={navigateTo} />
+      <Footer onNavigate={navigateTo} currentPage={currentPage} />
     </div>
   );
 }
