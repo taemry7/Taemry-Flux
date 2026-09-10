@@ -83,23 +83,36 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - `isEligible`: false
 - No account shall ever be pre-seeded with fake balances (e.g. $2500, $5000) or fake packages (e.g. Apex, Gold) upon refresh or update. Package activation and wallet balances must only change through actual deposits and genuine package purchases.
 
-## STRICT INVARIANT: Navigation & Profile Menu Rules (PERMANENT)
+## STRICT INVARIANT: Navigation & Profile Menu Rules (PERMANENT & LOCKED)
+- **2x2 Dots Options Menu in Navbar**: Located next to the user avatar in the top navbar (`#btn-nav-more-menu`), permanently uses a 2x2 dots grid icon (`grid grid-cols-2 gap-[3px] p-0.5` with four `rounded-full` dots). It provides instant access to Profile Information (marked Eligible), Overview Dashboard, Deposit Funds, and Sign Out.
 - **User Profile Info Div in Drawer**: Positioned at the top of the drawer right beneath the header logo & close button, clickable to open Profile Information, and marked Eligible.
-- **3-Dots Options Menu in Navbar**: Located next to the user avatar in the top navbar (`#btn-nav-more-menu`), providing instant access to Profile Information (marked Eligible), Overview Dashboard, Deposit Funds, and Sign Out.
-- **Sign Out Button**: Hidden from the drawer footer (`#btn-drawer-signout`); accessible via the 3-dots navbar menu and profile area.
+- **Sign Out Button**: Hidden from the drawer footer (`#btn-drawer-signout`); accessible via the 2x2 dots navbar menu and profile area.
 - **LK Avatar Button in Navbar**: The standalone user initials avatar button in the top navbar is permanently hidden per user specification.
 - **Dashboard Overview Fallback**: Dashboard route and internal state must always default to `'overview'` so the dashboard never renders blank or empty. Clicking Overview switches smoothly to the full overview splash view.
 
-## STRICT INVARIANT: Deposit Page & Footer Layout Rules (PERMANENT)
-- **Rate Span & Instant Verification Span**: Permanently hidden in `src/pages/DepositPage.jsx`.
-- **Payment Method Brand Logos**: Dedicated vector logos are displayed for each payment method:
-  - **JazzCash**: Official red and yellow brand logo.
-  - **Easypaisa**: Official green and white brand logo.
-  - **Bank Transfer**: Official bank pediment and transfer symbol.
-  - **Crypto (USDT)**: Official Tether green USDT logo.
-- **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently hidden.
-- **Records Count Format**: The recent deposits count badge in `src/pages/DepositPage.jsx` strictly displays "{count} Rec" (e.g., "0 Rec").
+## STRICT INVARIANT: Deposit Page & Payment Gateway Rules (PERMANENT & LOCKED)
+- **Strict Method Availability & "Not Available for Now" Lock**:
+  - **JazzCash**: Official red and yellow brand logo (`/jazzcash.png`). Fully active and operational for deposits.
+  - **Easypaisa**: Official green and white brand logo (`/easypaisa.png`). Fully active and operational for deposits.
+  - **Bank Transfer**: Permanently locked to "Not Available for Now":
+    - Button displays a "Not Available for Now" badge (`bg-[#fef3c7] text-[#b45309]`).
+    - Clicking displays an alert banner ("Not Available for Now" with advice to use JazzCash or Easypaisa).
+    - Step 2 instructions display an unavailable status card with action buttons to switch to JazzCash or Easypaisa.
+    - Submit deposit button is disabled with the label "Not Available for Now".
+  - **Crypto (USDT)**: Official Tether green logo (`/usdt.png`). Permanently locked to "Not Available for Now":
+    - Button displays a "Not Available for Now" badge (`bg-[#fef3c7] text-[#b45309]`).
+    - Clicking displays an alert banner ("Not Available for Now" with advice to use JazzCash or Easypaisa).
+    - Step 2 instructions display an unavailable status card with action buttons to switch to JazzCash or Easypaisa.
+    - Submit deposit button is disabled with the label "Not Available for Now".
+- **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently visible with live balance and direct routing to withdraw funds.
+- **Hidden Deposit Spans**: Rate span and Instant Verification badge span are permanently hidden in `src/pages/DepositPage.jsx`.
+- **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
 - **Footer Navigation & Copyright**: The navigation quick links div and copyright notice div in `src/components/Footer.jsx` are permanently hidden per user directive.
+
+## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
+- All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.
+- No automated, spontaneous, or unsolicited modifications may be made to any file.
+- Any future modification strictly requires explicit, word-for-word instructions from the project owner.
 
 
 

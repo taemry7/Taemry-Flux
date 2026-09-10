@@ -274,7 +274,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                 )}
               </button>
 
-              {/* 3 Dots More Options Menu */}
+              {/* 2x2 Dots More Options Menu */}
               <div className="relative" ref={moreMenuRef}>
                 <button
                   type="button"
@@ -284,7 +284,13 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                   title="More Options & Profile"
                   aria-label="More Options & Profile"
                 >
-                  <MoreVertical className="w-4 h-4" />
+                  {/* 2x2 Dots Grid */}
+                  <div className="grid grid-cols-2 gap-[3px] p-0.5" aria-hidden="true">
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                  </div>
                 </button>
 
                 {/* 3 Dots Dropdown Menu */}

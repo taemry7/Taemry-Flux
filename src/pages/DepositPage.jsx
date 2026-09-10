@@ -177,6 +177,14 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     e.preventDefault();
     setToastMessage({ type: '', text: '' });
 
+    if (selectedMethod === 'bank' || selectedMethod === 'crypto') {
+      setToastMessage({
+        type: 'error',
+        text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
+      });
+      return;
+    }
+
     const parsedAmount = parseFloat(amountUSD);
     if (isNaN(parsedAmount) || parsedAmount < 1 || parsedAmount > 1000) {
       setToastMessage({
@@ -315,13 +323,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#D91B24] flex items-center justify-center shadow-xs overflow-hidden p-1">
-                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
-                  <rect width="32" height="32" rx="6" fill="#D91B24" />
-                  <path d="M12 7C12 11 16 13 16 17C16 20 13.5 22 13.5 24C13.5 25.5 14.8 26.8 16.5 26.8C18.2 26.8 19.5 25.5 19.5 24C19.5 21 16 19 16 15C16 11 19 8 19 8C17 9.5 15 10.5 14 10.5C13 10.5 12 9.5 12 7Z" fill="#FDB813" />
-                  <circle cx="21" cy="11" r="2" fill="#FDB813" />
-                  <text x="16" y="29.5" fill="#FFFFFF" fontSize="5.5" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">JazzCash</text>
-                </svg>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
+                <img src="/jazzcash.png" alt="JazzCash" className="w-full h-full object-contain rounded-lg" />
               </div>
               <span className="text-xs font-bold">JazzCash</span>
             </button>
@@ -335,28 +338,28 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#00A859] flex items-center justify-center shadow-xs overflow-hidden p-1">
-                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
-                  <rect width="32" height="32" rx="6" fill="#00A859" />
-                  <circle cx="16" cy="13.5" r="7.5" stroke="#FFFFFF" strokeWidth="2.2" strokeDasharray="34 10" />
-                  <path d="M21 8.5L24 12.5L20 13.5" fill="#FFFFFF" />
-                  <circle cx="16" cy="13.5" r="3" fill="#6EE7B7" />
-                  <text x="16" y="28.5" fill="#FFFFFF" fontSize="4.6" fontWeight="900" textAnchor="middle" fontFamily="sans-serif">easypaisa</text>
-                </svg>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
+                <img src="/easypaisa.png" alt="Easypaisa" className="w-full h-full object-contain rounded-lg" />
               </div>
               <span className="text-xs font-bold">Easypaisa</span>
             </button>
 
             <button
               type="button"
-              onClick={() => setSelectedMethod('bank')}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
+              onClick={() => {
+                setSelectedMethod('bank');
+                setToastMessage({
+                  type: 'error',
+                  text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
+                });
+              }}
+              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                 selectedMethod === 'bank'
-                  ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
+                  ? 'border-[#ea580c] bg-[#ea580c]/5 text-[#c2410c] ring-2 ring-[#ea580c]/20 shadow-xs'
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#0284c7] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
+              <div className="w-10 h-10 rounded-xl bg-[#0284c7] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
                 <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
                   <rect width="32" height="32" rx="6" fill="#0284c7" />
                   <path d="M7 11L16 6L25 11H7Z" fill="#FFFFFF" />
@@ -370,28 +373,66 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                 </svg>
               </div>
               <span className="text-xs font-bold">Bank Transfer</span>
+              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] px-1.5 py-0.5 rounded-md leading-none">
+                Not Available for Now
+              </span>
             </button>
 
             <button
               type="button"
-              onClick={() => setSelectedMethod('crypto')}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
+              onClick={() => {
+                setSelectedMethod('crypto');
+                setToastMessage({
+                  type: 'error',
+                  text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
+                });
+              }}
+              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                 selectedMethod === 'crypto'
-                  ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
+                  ? 'border-[#ea580c] bg-[#ea580c]/5 text-[#c2410c] ring-2 ring-[#ea580c]/20 shadow-xs'
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-9 h-9 rounded-xl bg-[#26A17B] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
-                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
-                  <rect width="32" height="32" rx="6" fill="#26A17B" />
-                  <path d="M16 15.6C12.8 15.6 10.2 15.1 10.2 14.5C10.2 13.9 12.8 13.4 16 13.4C19.2 13.4 21.8 13.9 21.8 14.5C21.8 15.1 19.2 15.6 16 15.6ZM16 11.2C10.6 11.2 6.2 12.7 6.2 14.5C6.2 16.1 9.9 17.5 14.6 17.7V25H17.4V17.7C22.1 17.5 25.8 16.1 25.8 14.5C25.8 12.7 21.4 11.2 16 11.2Z" fill="#FFFFFF" />
-                  <rect x="14.2" y="7" width="3.6" height="5" fill="#FFFFFF" />
-                  <rect x="9.5" y="7" width="13" height="2.8" rx="0.5" fill="#FFFFFF" />
-                </svg>
+              <div className="w-10 h-10 rounded-xl bg-[#26A17B] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
+                <img src="/usdt.png" alt="Crypto (USDT)" className="w-full h-full object-contain" />
               </div>
               <span className="text-xs font-bold">Crypto (USDT)</span>
+              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] px-1.5 py-0.5 rounded-md leading-none">
+                Not Available for Now
+              </span>
             </button>
           </div>
+
+          {/* Not Available for Now Alert for Bank / Crypto */}
+          {(selectedMethod === 'bank' || selectedMethod === 'crypto') && (
+            <div className="p-4 rounded-2xl bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] flex items-start gap-3 animate-in fade-in duration-200">
+              <AlertCircle className="w-5 h-5 flex-shrink-0 text-[#ea580c] mt-0.5" />
+              <div className="flex-1 text-xs">
+                <p className="font-black uppercase tracking-wider text-[#9a3412]">
+                  Not Available for Now
+                </p>
+                <p className="text-[#c2410c] mt-0.5">
+                  {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available for deposit. Please use{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod('jazzcash')}
+                    className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                  >
+                    JazzCash
+                  </button>{' '}
+                  or{' '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod('easypaisa')}
+                    className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                  >
+                    Easypaisa
+                  </button>{' '}
+                  instead.
+                </p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmitDeposit} className="space-y-5">
             {/* Amount Input */}
@@ -519,23 +560,34 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             </div>
 
             {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full py-3.5 px-6 bg-[#0c5963] hover:bg-[#08424b] text-white text-sm font-extrabold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Submitting Deposit Request...</span>
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>Submit Deposit Request (${amountUSD || '0'})</span>
-                </>
-              )}
-            </button>
+            {selectedMethod === 'bank' || selectedMethod === 'crypto' ? (
+              <button
+                type="button"
+                disabled
+                className="w-full py-3.5 px-6 bg-[#fed7aa] text-[#9a3412] text-sm font-extrabold rounded-2xl cursor-not-allowed flex items-center justify-center gap-2 select-none border border-[#fdba74]"
+              >
+                <AlertCircle className="w-4 h-4 text-[#ea580c]" />
+                <span>Not Available for Now</span>
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full py-3.5 px-6 bg-[#0c5963] hover:bg-[#08424b] text-white text-sm font-extrabold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {submitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Submitting Deposit Request...</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Submit Deposit Request (${amountUSD || '0'})</span>
+                  </>
+                )}
+              </button>
+            )}
           </form>
         </div>
 
@@ -613,78 +665,35 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                 </div>
               )}
 
-              {/* BANK DETAILS */}
-              {selectedMethod === 'bank' && (
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      Bank Name
-                    </span>
-                    <p className="text-sm font-bold text-white">{paymentDetails.bankName}</p>
+              {/* NOT AVAILABLE FOR NOW (BANK & CRYPTO) */}
+              {(selectedMethod === 'bank' || selectedMethod === 'crypto') && (
+                <div className="py-6 text-center space-y-3 bg-white/5 rounded-2xl p-4 border border-white/10">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 text-amber-300 flex items-center justify-center mx-auto">
+                    <AlertCircle className="w-6 h-6" />
                   </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      Account Title
-                    </span>
-                    <p className="text-sm font-bold text-white">{paymentDetails.bankAccountName}</p>
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-black text-white uppercase tracking-wide">
+                      Not Available for Now
+                    </h3>
+                    <p className="text-xs text-white/70 max-w-xs mx-auto leading-relaxed">
+                      {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available. Please switch to JazzCash or Easypaisa to proceed with your deposit.
+                    </p>
                   </div>
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      Account Number / IBAN
-                    </span>
-                    <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
-                      <span className="text-xs font-mono font-bold text-[#38bdf8] break-all">
-                        {paymentDetails.bankAccountNumber}
-                      </span>
-                      <button
-                        onClick={() => handleCopy(paymentDetails.bankAccountNumber, 'bank')}
-                        className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 ml-2"
-                      >
-                        {copiedKey === 'bank' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey === 'bank' ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* CRYPTO DETAILS */}
-              {selectedMethod === 'crypto' && (
-                <div className="space-y-3">
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      USDT Deposit Address (TRC20 / BEP20)
-                    </span>
-                    <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
-                      <span className="text-xs font-mono text-[#fde047] break-all">
-                        {paymentDetails.cryptoAddresses?.USDT || '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d'}
-                      </span>
-                      <button
-                        onClick={() => handleCopy(paymentDetails.cryptoAddresses?.USDT || '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d', 'crypto_usdt')}
-                        className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 ml-2"
-                      >
-                        {copiedKey === 'crypto_usdt' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey === 'crypto_usdt' ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      BTC Deposit Address
-                    </span>
-                    <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
-                      <span className="text-xs font-mono text-white/90 break-all">
-                        {paymentDetails.cryptoAddresses?.BTC || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa'}
-                      </span>
-                      <button
-                        onClick={() => handleCopy(paymentDetails.cryptoAddresses?.BTC || '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa', 'crypto_btc')}
-                        className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 ml-2"
-                      >
-                        {copiedKey === 'crypto_btc' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey === 'crypto_btc' ? 'Copied' : 'Copy'}</span>
-                      </button>
-                    </div>
+                  <div className="pt-2 flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod('jazzcash')}
+                      className="px-3 py-1.5 bg-[#e89b27] hover:bg-[#d98a18] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                    >
+                      Use JazzCash
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod('easypaisa')}
+                      className="px-3 py-1.5 bg-[#00a859] hover:bg-[#008f4c] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                    >
+                      Use Easypaisa
+                    </button>
                   </div>
                 </div>
               )}
@@ -698,8 +707,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             </div>
           </div>
 
-          {/* Quick Wallet Summary Card - Hidden per user directive */}
-          <div className="hidden bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs items-center justify-between">
+          {/* Quick Wallet Summary Card */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex items-center justify-between">
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589]">
                 Current Wallet Balance
