@@ -107,7 +107,7 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently visible with live balance and direct routing to withdraw funds.
 - **Hidden Deposit Spans**: Rate span and Instant Verification badge span are permanently hidden in `src/pages/DepositPage.jsx`.
 - **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
-- **Footer Navigation & Copyright**: The navigation quick links div and copyright notice div in `src/components/Footer.jsx` are permanently hidden per user directive.
+- **Footer Navigation & Copyright**: Re-enabled per user explicit directive ("is footer pehly wala dobara add karo") with quick links (Home, Packages, How it works, Sign In/Dashboard, Support, Whitepaper) and copyright notice active on Home and Dashboard pages.
 
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
 - All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.

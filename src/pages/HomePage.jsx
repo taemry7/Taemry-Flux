@@ -9,6 +9,8 @@ import {
   Sparkles,
   TrendingUp,
   LifeBuoy,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
@@ -381,6 +383,43 @@ export default function HomePage({ onNavigate }) {
             <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
             <span>Secure Session Architecture</span>
           </div>
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+            <span>Verified Payout Ledger</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Zap className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+            <span>Instant Daily Credits</span>
+          </div>
+        </div>
+
+        {/* Informative Highlights & Platform Trust Details */}
+        <div className="max-w-3xl mx-auto mt-7 text-center">
+          <div className="inline-flex flex-wrap items-center justify-center gap-2.5 sm:gap-6 px-5 py-3 rounded-2xl bg-[#f0eae0]/70 dark:bg-[#0a1f26]/60 border border-[#e4ded2] dark:border-[#173740] text-xs text-[#486065] dark:text-[#94a3b8] shadow-xs">
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#10b981]" />
+              Daily Watch Ads
+            </span>
+            <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#1e3f49]">•</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#0c5963] dark:bg-[#38bdf8]" />
+              Min. Withdrawal $1.00 USD
+            </span>
+            <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#1e3f49]">•</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
+              JazzCash &amp; Easypaisa Live
+            </span>
+            <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#1e3f49]">•</span>
+            <span className="flex items-center gap-1.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-[#8b5cf6]" />
+              5-Level Matching Bonus
+            </span>
+          </div>
+
+          <p className="text-xs text-[#6e858a] dark:text-[#647b80] mt-3.5 max-w-xl mx-auto leading-relaxed">
+            Experience verified advertising yields with transparent session auditing, automated matching bonuses, and instant wallet balance synchronization.
+          </p>
         </div>
       </section>
 

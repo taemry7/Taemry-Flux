@@ -20,9 +20,9 @@ export default function Footer({ onNavigate, currentPage }) {
             </p>
           </div>
 
-          {/* Navigation Quick Links (Selector 10) - Hidden per user directive */}
+          {/* Navigation Quick Links - Re-enabled per user directive */}
           {shouldShowNavAndCopyright && (
-            <div className="hidden flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e] dark:text-[#94a3b8]">
+            <div className="flex flex-wrap justify-center items-center gap-6 text-xs font-medium text-[#465a5e] dark:text-[#94a3b8]">
               <button
                 id="btn-footer-home"
                 onClick={() => {
@@ -55,7 +55,7 @@ export default function Footer({ onNavigate, currentPage }) {
               >
                 How it works
               </button>
-              {/* Button 4 (Selector 3) - Updated from "Member Login" to contextual Sign In / My Dashboard */}
+              {/* Button 4 - Contextual Sign In / My Dashboard */}
               <button
                 id="btn-footer-auth"
                 onClick={() => onNavigate(currentUser ? 'dashboard' : 'login')}
@@ -81,9 +81,9 @@ export default function Footer({ onNavigate, currentPage }) {
           )}
         </div>
 
-        {/* Copyright notice (Selector 11) - Hidden per user directive */}
+        {/* Copyright notice - Re-enabled per user directive */}
         {shouldShowNavAndCopyright && (
-          <div className="hidden w-full pt-6 border-t border-[#eae4d8]/60 dark:border-[#17323b]/60 items-center justify-center text-center text-xs text-[#718286] dark:text-[#627a80]">
+          <div className="flex w-full pt-6 border-t border-[#eae4d8]/60 dark:border-[#17323b]/60 items-center justify-center text-center text-xs text-[#718286] dark:text-[#627a80]">
             © 2026 TAEMRY FLUX. All rights reserved.
           </div>
         )}
