@@ -89,7 +89,7 @@ export default function DashboardPage({
   onSelectTab = (_tab) => {},
   onNavigate = (_page, _tab) => {}
 }) {
-  const { currentUser, userStats } = useAuth();
+  const { currentUser, userStats, updateLocalStats, fetchUserStats } = useAuth();
 
   const validTabs = [
     'overview',
@@ -113,19 +113,41 @@ export default function DashboardPage({
   const [activeTab, setActiveTab] = useState(() => sanitizeTab(propActiveTab));
 
   // Live dashboard statistics loaded from GET /api/dashboard/stats
-  const [stats, setStats] = useState({
-    walletBalance: userStats?.walletBalance ?? 0,
-    currentPackage: userStats?.currentPackage || 'None',
-    lifetimeAds: userStats?.lifetimeAds ?? 0,
-    teamAdsCount: userStats?.teamAdsCount ?? 0,
-    referralCount: userStats?.referralCount ?? 0,
-    totalEarned: userStats?.totalEarned ?? 0,
-    milestone: {
-      current: userStats?.lifetimeAds ?? 0,
-      target: 500,
-      percentage: 0,
-      adsRemaining: 500,
-    },
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('taemry_cached_user_stats');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          walletBalance: parsed.walletBalance !== undefined ? Number(parsed.walletBalance) : 0,
+          currentPackage: parsed.currentPackage || 'None',
+          lifetimeAds: Number(parsed.lifetimeAds || 0),
+          teamAdsCount: Number(parsed.teamAdsCount || 0),
+          referralCount: Number(parsed.referralCount || 0),
+          totalEarned: Number(parsed.totalEarned || 0),
+          milestone: {
+            current: Number(parsed.lifetimeAds || 0),
+            target: 500,
+            percentage: 0,
+            adsRemaining: 500,
+          },
+        };
+      }
+    } catch {}
+    return {
+      walletBalance: userStats?.walletBalance !== undefined ? Number(userStats.walletBalance) : 0,
+      currentPackage: userStats?.currentPackage || 'None',
+      lifetimeAds: userStats?.lifetimeAds !== undefined ? Number(userStats.lifetimeAds) : 0,
+      teamAdsCount: userStats?.teamAdsCount !== undefined ? Number(userStats.teamAdsCount) : 0,
+      referralCount: userStats?.referralCount !== undefined ? Number(userStats.referralCount) : 0,
+      totalEarned: userStats?.totalEarned !== undefined ? Number(userStats.totalEarned) : 0,
+      milestone: {
+        current: userStats?.lifetimeAds ?? 0,
+        target: 500,
+        percentage: 0,
+        adsRemaining: 500,
+      },
+    };
   });
 
   const [loadingStats, setLoadingStats] = useState(true);
@@ -136,6 +158,25 @@ export default function DashboardPage({
   useEffect(() => {
     setActiveTab(sanitizeTab(propActiveTab));
   }, [propActiveTab]);
+
+  // Continuously synchronize stats whenever AuthContext userStats updates
+  useEffect(() => {
+    if (userStats && typeof userStats === 'object') {
+      setStats((prev) => ({
+        ...prev,
+        ...userStats,
+        walletBalance: userStats.walletBalance !== undefined ? Number(userStats.walletBalance) : prev.walletBalance,
+        currentPackage: userStats.currentPackage || prev.currentPackage,
+      }));
+    }
+  }, [userStats]);
+
+  // Re-fetch dashboard stats when currentUser is restored or changes
+  useEffect(() => {
+    if (currentUser) {
+      setRefreshKey((k) => k + 1);
+    }
+  }, [currentUser]);
 
   const handleTabChange = (tabId) => {
     const sanitized = sanitizeTab(tabId);
@@ -157,6 +198,12 @@ export default function DashboardPage({
         
         if (isMounted && res.data?.stats) {
           setStats(res.data.stats);
+          if (typeof updateLocalStats === 'function') {
+            updateLocalStats(res.data.stats);
+          }
+          try {
+            localStorage.setItem('taemry_cached_user_stats', JSON.stringify(res.data.stats));
+          } catch {}
         }
       } catch (err) {
         console.warn('Could not fetch live dashboard stats, using initial data:', err.message);

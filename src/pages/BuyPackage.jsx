@@ -121,17 +121,30 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         setLoadingPackages(true);
         const res = await apiClient.get('/packages');
         if (isMounted && res.data?.packages?.length > 0) {
-          const sanitized = res.data.packages.map((pkg) => {
-            const fallback = fallbackPackages.find((f) => f.id === pkg.id) || {};
-            return {
-              ...pkg,
-              name: 'PACKAGE',
-              tierName: pkg.tierName || fallback.tierName || (pkg.id ? pkg.id.toUpperCase() : 'Tier'),
-              rewardRate: 'Daily Ads',
-              dailyLimit: 200,
-              motivationText: fallback.motivationText || '✨ Empower your financial future with guaranteed daily asset returns upon activation.',
-            };
-          });
+          const sanitized = res.data.packages
+            .filter((pkg) => pkg.isActive !== false)
+            .map((pkg) => {
+              const fallback = fallbackPackages.find((f) => f.id === pkg.id) || {};
+              const resolvedTierName =
+                pkg.tierName ||
+                (pkg.name && pkg.name !== 'PACKAGE' ? pkg.name : null) ||
+                fallback.tierName ||
+                (pkg.id ? pkg.id.charAt(0).toUpperCase() + pkg.id.slice(1) : 'Package');
+              return {
+                ...fallback,
+                ...pkg,
+                id: pkg.id || fallback.id,
+                tierName: resolvedTierName,
+                name: resolvedTierName,
+                price: Number(pkg.price !== undefined ? pkg.price : fallback.price || 0),
+                dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : fallback.dailyLimit || 200),
+                rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
+                badge: pkg.badge !== undefined ? pkg.badge : fallback.badge,
+                color: pkg.color || fallback.color || '#0284c7',
+                description: pkg.description || fallback.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+                motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
+              };
+            });
           setPackages(sanitized);
         } else if (isMounted) {
           setPackages(fallbackPackages);

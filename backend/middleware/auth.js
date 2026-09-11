@@ -27,6 +27,7 @@ export const verifyToken = async (req, res, next) => {
 
   const headerEmail = (req.headers['x-user-email'] || '').toLowerCase().trim();
   const headerIsAdmin = req.headers['x-user-admin'] === 'true';
+  const headerUid = req.headers['x-user-uid'] || '';
 
   // Helper to check if email qualifies as admin
   const isEmailAdmin = (email) => {
@@ -61,7 +62,7 @@ export const verifyToken = async (req, res, next) => {
     const userEmail = headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
 
     req.user = {
-      uid: token.startsWith('demo-') || token.startsWith('google-') ? token : (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+      uid: headerUid || (token.startsWith('demo-') || token.startsWith('google-') ? token : (isAdmin ? 'admin_taemry' : 'demo-user-1')),
       email: userEmail,
       name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
       admin: isAdmin,
@@ -117,7 +118,7 @@ export const verifyToken = async (req, res, next) => {
         isEmailAdmin(email);
 
       req.user = {
-        uid: parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
+        uid: parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid || headerUid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
         email: parsedPayload.email || email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
         name: parsedPayload.name || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
         admin: isAdmin,
@@ -129,7 +130,7 @@ export const verifyToken = async (req, res, next) => {
     // 4. Default fallback for generic tokens
     const isAdmin = headerIsAdmin || isEmailAdmin(headerEmail) || token.includes('admin');
     req.user = {
-      uid: isAdmin ? 'admin_taemry' : 'demo-user-1',
+      uid: headerUid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
       email: headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
       name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
       admin: isAdmin,

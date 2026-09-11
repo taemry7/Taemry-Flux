@@ -17,6 +17,25 @@ import {
 const router = express.Router();
 
 /**
+ * Helper to get live configurable milestones from Firestore systemSettings
+ */
+export async function getLiveMilestonesConfig(db) {
+  try {
+    const doc = await db.collection('systemSettings').doc('milestones').get();
+    if (doc && doc.exists && doc.data()) {
+      const data = doc.data();
+      return {
+        teamRewards: Array.isArray(data.teamRewards) && data.teamRewards.length > 0 ? data.teamRewards : TEAM_REWARDS,
+        teamMilestones: Array.isArray(data.teamMilestones) && data.teamMilestones.length > 0 ? data.teamMilestones : TEAM_MILESTONES,
+      };
+    }
+  } catch (err) {
+    console.warn('Failed to load systemSettings/milestones:', err.message);
+  }
+  return { teamRewards: TEAM_REWARDS, teamMilestones: TEAM_MILESTONES };
+}
+
+/**
  * GET /api/milestones/status
  * Protected: Returns progress status and claimed rewards for Team Rewards ladder.
  */
@@ -40,17 +59,20 @@ router.get('/status', verifyToken, async (req, res) => {
       // fallback to stored referralCount
     }
 
+    const { teamRewards: activeRewards, teamMilestones: activeMilestones } = await getLiveMilestonesConfig(db);
+
     const teamAdsCount = user.teamAdsCount !== undefined ? Number(user.teamAdsCount) : 0;
     const claimedTeamRewards = Array.isArray(user.claimedTeamRewards) ? user.claimedTeamRewards : [];
     const claimedTeamMilestones = Array.isArray(user.claimedTeamMilestones) ? user.claimedTeamMilestones : [];
 
-    const teamRewardsStatus = calculateTeamRewardsStatus(referralCount, claimedTeamRewards);
-    const teamAdsStatus = calculateMilestoneStatus(teamAdsCount, TEAM_MILESTONES, claimedTeamMilestones);
+    const teamRewardsStatus = calculateTeamRewardsStatus(referralCount, claimedTeamRewards, activeRewards);
+    const teamAdsStatus = calculateMilestoneStatus(teamAdsCount, activeMilestones, claimedTeamMilestones);
 
     return res.json({
       success: true,
       teamRewards: teamRewardsStatus,
-      rewardsList: TEAM_REWARDS,
+      rewardsList: activeRewards,
+      teamMilestones: activeMilestones,
       claimedTeamRewards,
       // Backwards compatible fields
       team: teamAdsStatus,
@@ -91,6 +113,8 @@ router.post('/claim', verifyToken, async (req, res) => {
     const user = doc.data();
 
     // 1. Check if claiming Team Reward (referral milestone)
+    const { teamRewards: activeRewards, teamMilestones: activeMilestones } = await getLiveMilestonesConfig(db);
+
     if (type === 'team-reward' || referralsRequired || rewardId || type === 'personal') {
       // Find actual referral count
       let currentRefs = user.referralCount !== undefined ? Number(user.referralCount) : 0;
@@ -106,12 +130,12 @@ router.post('/claim', verifyToken, async (req, res) => {
 
       let target = null;
       if (referralsRequired) {
-        target = TEAM_REWARDS.find((r) => r.referrals === Number(referralsRequired));
+        target = activeRewards.find((r) => r.referrals === Number(referralsRequired));
       } else if (rewardId) {
-        target = TEAM_REWARDS.find((r) => r.id === rewardId);
+        target = activeRewards.find((r) => r.id === rewardId);
       } else {
         // Find next eligible unclaimed reward
-        target = TEAM_REWARDS.find((r) => currentRefs >= r.referrals && !claimedSet.has(String(r.referrals)) && !claimedSet.has(r.id));
+        target = activeRewards.find((r) => currentRefs >= r.referrals && !claimedSet.has(String(r.referrals)) && !claimedSet.has(r.id));
       }
 
       if (!target) {
@@ -179,8 +203,8 @@ router.post('/claim', verifyToken, async (req, res) => {
       const claimedSet = new Set(claimedArray.map(Number));
 
       let targetMilestone = milestoneAds
-        ? TEAM_MILESTONES.find((m) => m.ads === Number(milestoneAds))
-        : TEAM_MILESTONES.find((m) => currentAds >= m.ads && !claimedSet.has(m.ads));
+        ? activeMilestones.find((m) => m.ads === Number(milestoneAds))
+        : activeMilestones.find((m) => currentAds >= m.ads && !claimedSet.has(m.ads));
 
       if (!targetMilestone) {
         return res.status(400).json({

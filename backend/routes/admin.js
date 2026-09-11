@@ -15,6 +15,8 @@ import { getDb } from '../firebaseAdmin.js';
 import { verifyAdmin } from '../middleware/admin.js';
 import { sendDailyReportEmail, sendAdminErrorAlert } from '../utils/email.js';
 import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
+import { TEAM_REWARDS, TEAM_MILESTONES } from '../milestoneLogic.js';
+import { DEFAULT_PACKAGES, normalizePackages } from './package.js';
 
 const router = express.Router();
 
@@ -964,6 +966,99 @@ router.put('/settings', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * m2) GET /api/admin/milestones
+ * Retrieves live configurable team referral rewards and team ads milestones.
+ */
+router.get('/milestones', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const doc = await db.collection('systemSettings').doc('milestones').get();
+    let teamRewards = TEAM_REWARDS;
+    let teamMilestones = TEAM_MILESTONES;
+
+    if (doc && doc.exists && doc.data()) {
+      const data = doc.data();
+      if (Array.isArray(data.teamRewards) && data.teamRewards.length > 0) {
+        teamRewards = data.teamRewards;
+      }
+      if (Array.isArray(data.teamMilestones) && data.teamMilestones.length > 0) {
+        teamMilestones = data.teamMilestones;
+      }
+    }
+
+    return res.json({
+      success: true,
+      teamRewards,
+      teamMilestones,
+      updatedAt: doc && doc.exists ? doc.data()?.updatedAt : null,
+      updatedBy: doc && doc.exists ? doc.data()?.updatedBy : null,
+    });
+  } catch (error) {
+    console.error('Error in GET /api/admin/milestones:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch milestones settings',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * m3) PUT /api/admin/milestones
+ * Updates configurable team rewards ladder and team ads milestones live in Firestore.
+ */
+router.put('/milestones', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const { teamRewards, teamMilestones } = req.body || {};
+
+    if (!Array.isArray(teamRewards) && !Array.isArray(teamMilestones)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payload: teamRewards or teamMilestones array is required.',
+      });
+    }
+
+    const milestonesRef = db.collection('systemSettings').doc('milestones');
+    const existingDoc = await milestonesRef.get();
+    const existing = existingDoc.exists ? existingDoc.data() : {};
+
+    const updatedData = {
+      ...existing,
+      teamRewards: Array.isArray(teamRewards) ? teamRewards : (existing.teamRewards || TEAM_REWARDS),
+      teamMilestones: Array.isArray(teamMilestones) ? teamMilestones : (existing.teamMilestones || TEAM_MILESTONES),
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.user.email,
+    };
+
+    await milestonesRef.set(updatedData, { merge: true });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'update_milestones',
+      targetUid: null,
+      targetEmail: null,
+      amountUSD: null,
+      details: `Updated platform milestones ladder (${updatedData.teamRewards.length} referral rewards, ${updatedData.teamMilestones.length} ads milestones)`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: 'Milestones and Team Rewards updated live in database!',
+      milestones: updatedData,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/milestones:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update milestones settings',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * n) POST /api/admin/notifications/broadcast
  * Broadcast notification to all members.
  */
@@ -1319,6 +1414,229 @@ router.post('/maintenance/test-error', verifyAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to dispatch test error',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * u) GET /api/admin/packages
+ * Retrieves live packages list directly from systemSettings/packages.
+ */
+router.get('/packages', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const doc = await db.collection('systemSettings').doc('packages').get();
+    const packages = normalizePackages(doc.exists ? doc.data() : null);
+
+    return res.json({
+      success: true,
+      packages,
+      updatedAt: doc.exists ? doc.data()?.updatedAt : null,
+      updatedBy: doc.exists ? doc.data()?.updatedBy : null,
+    });
+  } catch (error) {
+    console.error('Error in GET /api/admin/packages:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch packages catalog',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * v) PUT /api/admin/packages
+ * Saves and publishes the entire package tiers catalog live to Firestore and audit logs.
+ */
+router.put('/packages', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const { packages } = req.body || {};
+
+    if (!Array.isArray(packages)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payload: packages array is required.',
+      });
+    }
+
+    // Clean & normalize each package
+    const cleanPackages = packages.map((pkg, idx) => {
+      const id = (pkg.id || `pkg_${idx}`).toLowerCase().trim();
+      const tierName = (pkg.tierName || pkg.name || id).trim();
+      return {
+        id,
+        tierName,
+        name: pkg.name || tierName,
+        price: Math.max(0, Number(pkg.price || 0)),
+        minWallet: Math.max(0, Number(pkg.minWallet !== undefined ? pkg.minWallet : Number(pkg.price || 0) * 0.1)),
+        rewardRate: pkg.rewardRate || '20%',
+        dailyLimit: Math.max(1, Number(pkg.dailyLimit || 200)),
+        badge: pkg.badge ? String(pkg.badge).trim() : null,
+        color: pkg.color || '#0284c7',
+        description: pkg.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+        motivationText: pkg.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
+        isActive: pkg.isActive !== false,
+        order: Number(pkg.order !== undefined ? pkg.order : idx + 1),
+      };
+    });
+
+    const packagesDocRef = db.collection('systemSettings').doc('packages');
+    const updatePayload = {
+      packages: cleanPackages,
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.user.email,
+    };
+
+    await packagesDocRef.set(updatePayload);
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'update_packages',
+      targetUid: null,
+      targetEmail: null,
+      amountUSD: null,
+      details: `Saved & published ${cleanPackages.length} package tiers to systemSettings`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: 'Packages successfully updated and published live to all users!',
+      packages: cleanPackages,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/packages:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update packages',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * w) POST /api/admin/packages
+ * Adds or modifies an individual package.
+ */
+router.post('/packages', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const pkg = req.body || {};
+
+    if (!pkg.id || !pkg.tierName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Package id and tierName are required.',
+      });
+    }
+
+    const doc = await db.collection('systemSettings').doc('packages').get();
+    let currentPackages = normalizePackages(doc.exists ? doc.data() : null);
+
+    const normId = pkg.id.toLowerCase().trim();
+    const existingIndex = currentPackages.findIndex((p) => p.id === normId);
+
+    const newPkg = {
+      id: normId,
+      tierName: pkg.tierName.trim(),
+      name: pkg.name || pkg.tierName.trim(),
+      price: Math.max(0, Number(pkg.price || 0)),
+      minWallet: Math.max(0, Number(pkg.minWallet !== undefined ? pkg.minWallet : Number(pkg.price || 0) * 0.1)),
+      rewardRate: pkg.rewardRate || '20%',
+      dailyLimit: Math.max(1, Number(pkg.dailyLimit || 200)),
+      badge: pkg.badge ? String(pkg.badge).trim() : null,
+      color: pkg.color || '#0284c7',
+      description: pkg.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+      motivationText: pkg.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
+      isActive: pkg.isActive !== false,
+      order: Number(pkg.order !== undefined ? pkg.order : currentPackages.length + 1),
+    };
+
+    if (existingIndex >= 0) {
+      currentPackages[existingIndex] = { ...currentPackages[existingIndex], ...newPkg };
+    } else {
+      currentPackages.push(newPkg);
+    }
+
+    currentPackages.sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price);
+
+    await db.collection('systemSettings').doc('packages').set({
+      packages: currentPackages,
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.user.email,
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'save_single_package',
+      details: `Admin ${existingIndex >= 0 ? 'updated' : 'added'} package '${newPkg.tierName}' ($${newPkg.price})`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `Package ${newPkg.tierName} saved successfully!`,
+      package: newPkg,
+      packages: currentPackages,
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/packages:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to save package',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * x) DELETE /api/admin/packages/:id
+ * Deactivates or removes a package from systemSettings/packages.
+ */
+router.delete('/packages/:id', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const pkgId = (req.params.id || '').toLowerCase().trim();
+
+    const doc = await db.collection('systemSettings').doc('packages').get();
+    let currentPackages = normalizePackages(doc.exists ? doc.data() : null);
+
+    const initialLength = currentPackages.length;
+    // Mark as inactive or remove if hard delete
+    const filtered = currentPackages.filter((p) => p.id !== pkgId);
+
+    if (filtered.length === initialLength) {
+      return res.status(404).json({
+        success: false,
+        message: `Package with id '${pkgId}' not found.`,
+      });
+    }
+
+    await db.collection('systemSettings').doc('packages').set({
+      packages: filtered,
+      updatedAt: new Date().toISOString(),
+      updatedBy: req.user.email,
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'delete_package',
+      details: `Admin removed package id '${pkgId}'`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `Package '${pkgId}' deleted successfully!`,
+      packages: filtered,
+    });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/packages/:id:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to delete package',
       message: error.message,
     });
   }

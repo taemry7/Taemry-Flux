@@ -31,15 +31,16 @@ export const TEAM_MILESTONES = [
 /**
  * Calculates user's progression across the Team Rewards ladder.
  */
-export const calculateTeamRewardsStatus = (referralsCount = 0, claimedArray = []) => {
+export const calculateTeamRewardsStatus = (referralsCount = 0, claimedArray = [], rewardsList = TEAM_REWARDS) => {
   const count = Number(referralsCount) || 0;
   const claimedSet = new Set(claimedArray.map((x) => String(x)));
+  const list = Array.isArray(rewardsList) && rewardsList.length > 0 ? rewardsList : TEAM_REWARDS;
 
   // Next target reward tier
-  const nextTier = TEAM_REWARDS.find((t) => t.referrals > count) || TEAM_REWARDS[TEAM_REWARDS.length - 1];
+  const nextTier = list.find((t) => t.referrals > count) || list[list.length - 1];
 
   // Highest achieved tier that is not claimed yet (or first unachieved)
-  const claimableTier = TEAM_REWARDS.find((t) => count >= t.referrals && !claimedSet.has(String(t.referrals)) && !claimedSet.has(t.id));
+  const claimableTier = list.find((t) => count >= t.referrals && !claimedSet.has(String(t.referrals)) && !claimedSet.has(t.id));
 
   const targetRefs = nextTier ? nextTier.referrals : 5;
   const progressPercentage = Math.min(100, Math.round((count / targetRefs) * 100));

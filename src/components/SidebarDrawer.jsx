@@ -94,7 +94,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80] shrink-0">
+          <span className="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80] shrink-0">
             Eligible
           </span>
         </button>

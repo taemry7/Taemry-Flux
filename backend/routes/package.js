@@ -10,92 +10,163 @@ import { verifyToken } from '../middleware/auth.js';
 const router = express.Router();
 
 // Fallback catalog of packages with user-specified specifications
-const DEFAULT_PACKAGES = {
-  bronze: {
+export const DEFAULT_PACKAGES = [
+  {
     id: 'bronze',
-    name: 'PACKAGE',
     tierName: 'Bronze',
+    name: 'Bronze',
     price: 1.00,
     minWallet: 0.10,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
-    badge: null,
-    color: '#b45309',
+    badge: 'STARTER',
+    color: '#0284c7',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '🌱 Take your first step into daily advertising earnings with minimal capital.',
+    isActive: true,
+    order: 1,
   },
-  silver: {
+  {
     id: 'silver',
-    name: 'PACKAGE',
     tierName: 'Silver',
+    name: 'Silver',
     price: 5.00,
     minWallet: 0.50,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
     badge: 'POPULAR',
     color: '#0f766e',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '⚡ Amplify your daily revenue with an optimized Silver contract allocation.',
+    isActive: true,
+    order: 2,
   },
-  gold: {
+  {
     id: 'gold',
-    name: 'PACKAGE',
     tierName: 'Gold',
+    name: 'Gold',
     price: 10.00,
     minWallet: 1.00,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
     badge: 'RECOMMENDED',
     color: '#ca8a04',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '🌟 Accelerate your growth and unlock higher advertising rewards every single day.',
+    isActive: true,
+    order: 3,
   },
-  premium: {
+  {
     id: 'premium',
-    name: 'PACKAGE',
     tierName: 'Premium',
+    name: 'Premium',
     price: 50.00,
     minWallet: 5.00,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
-    badge: 'POPULAR',
+    badge: 'PRO',
     color: '#0284c7',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '💎 Experience pro-grade earning power with enhanced daily reward allocations.',
+    isActive: true,
+    order: 4,
   },
-  elite: {
+  {
     id: 'elite',
-    name: 'PACKAGE',
     tierName: 'Elite',
+    name: 'Elite',
     price: 100.00,
     minWallet: 10.00,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
     badge: 'HIGH CAPACITY',
     color: '#7c3aed',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '🚀 High-velocity contract tier crafted for dedicated digital earners.',
+    isActive: true,
+    order: 5,
   },
-  master: {
+  {
     id: 'master',
-    name: 'PACKAGE',
     tierName: 'Master',
+    name: 'Master',
     price: 500.00,
     minWallet: 50.00,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
-    badge: 'ELITE',
+    badge: 'ENTERPRISE',
     color: '#db2777',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '👑 Command the network with enterprise-level rewards and maximum earning capacity.',
+    isActive: true,
+    order: 6,
   },
-  apex: {
+  {
     id: 'apex',
-    name: 'PACKAGE',
     tierName: 'Apex',
+    name: 'Apex',
     price: 1000.00,
     minWallet: 100.00,
-    rewardRate: 'Daily Ads',
+    rewardRate: '20%',
     dailyLimit: 200,
     badge: 'ELITE MASTER',
     color: '#ea580c',
     description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    motivationText: '🔥 The absolute pinnacle of earning power — unbounded potential and supreme rewards.',
+    isActive: true,
+    order: 7,
   },
-};
+];
+
+export function normalizePackages(data) {
+  if (!data) return DEFAULT_PACKAGES;
+
+  let rawList = [];
+  if (Array.isArray(data.packages)) {
+    rawList = data.packages;
+  } else if (Array.isArray(data)) {
+    rawList = data;
+  } else if (typeof data === 'object') {
+    const keys = Object.keys(data).filter(
+      (k) =>
+        k !== 'updatedAt' &&
+        k !== 'updatedBy' &&
+        k !== 'id' &&
+        typeof data[k] === 'object' &&
+        data[k] !== null
+    );
+    if (keys.length > 0) {
+      rawList = keys.map((k) => ({ id: k, ...data[k] }));
+    }
+  }
+
+  if (!rawList || rawList.length === 0) {
+    return DEFAULT_PACKAGES;
+  }
+
+  return rawList
+    .map((pkg, idx) => {
+      const id = (pkg.id || `pkg_${idx}`).toLowerCase().trim();
+      const fallback = DEFAULT_PACKAGES.find((p) => p.id === id) || {};
+      const tierName = pkg.tierName || pkg.name || fallback.tierName || (id ? id.charAt(0).toUpperCase() + id.slice(1) : 'Package');
+      return {
+        id,
+        tierName,
+        name: pkg.name || tierName,
+        price: Number(pkg.price !== undefined ? pkg.price : (fallback.price || 0)),
+        minWallet: Number(pkg.minWallet !== undefined ? pkg.minWallet : (fallback.minWallet || (Number(pkg.price || 0) * 0.1))),
+        rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
+        dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : (fallback.dailyLimit || 200)),
+        badge: pkg.badge !== undefined ? pkg.badge : fallback.badge,
+        color: pkg.color || fallback.color || '#0284c7',
+        description: pkg.description || fallback.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+        motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
+        isActive: pkg.isActive !== false,
+        order: Number(pkg.order !== undefined ? pkg.order : idx + 1),
+      };
+    })
+    .sort((a, b) => (a.order || 0) - (b.order || 0) || a.price - b.price);
+}
 
 /**
  * GET /api/packages
@@ -107,21 +178,18 @@ router.get('/', async (req, res) => {
     const settingsRef = db.collection('systemSettings').doc('packages');
     const doc = await settingsRef.get();
 
-    let packagesData = DEFAULT_PACKAGES;
-
-    if (doc.exists && doc.data()) {
-      packagesData = { ...DEFAULT_PACKAGES, ...doc.data() };
-    }
+    const allPackages = normalizePackages(doc.exists ? doc.data() : null);
+    const activePackages = allPackages.filter((p) => p.isActive !== false);
 
     return res.json({
       success: true,
-      packages: Object.values(packagesData),
+      packages: activePackages,
     });
   } catch (error) {
     console.error('Error fetching packages:', error);
     return res.json({
       success: true,
-      packages: Object.values(DEFAULT_PACKAGES),
+      packages: DEFAULT_PACKAGES,
     });
   }
 });
@@ -146,15 +214,14 @@ router.post('/buy', verifyToken, async (req, res) => {
     const db = getDb();
 
     // 1. Fetch package pricing from systemSettings (or fallback to defaults)
-    let packageInfo = DEFAULT_PACKAGES[normalizedPackageId];
-    try {
-      const settingsDoc = await db.collection('systemSettings').doc('packages').get();
-      if (settingsDoc.exists && settingsDoc.data()?.[normalizedPackageId]) {
-        packageInfo = settingsDoc.data()[normalizedPackageId];
-      }
-    } catch (e) {
-      console.warn('System settings fetch warning:', e.message);
-    }
+    const settingsDoc = await db.collection('systemSettings').doc('packages').get();
+    const allPackages = normalizePackages(settingsDoc.exists ? settingsDoc.data() : null);
+    const packageInfo = allPackages.find(
+      (p) =>
+        p.id?.toLowerCase() === normalizedPackageId ||
+        p.tierName?.toLowerCase() === normalizedPackageId ||
+        p.name?.toLowerCase() === normalizedPackageId
+    );
 
     if (!packageInfo) {
       return res.status(404).json({
@@ -191,9 +258,10 @@ router.post('/buy', verifyToken, async (req, res) => {
 
     // 3. Check if user's walletBalance >= package price
     if (currentBalance < packagePrice) {
+      const pkgDisplayName = packageInfo.tierName || packageInfo.name || packageInfo.id;
       return res.status(400).json({
         error: 'Insufficient Funds',
-        message: `Your wallet balance ($${currentBalance.toFixed(2)}) is insufficient to purchase the ${packageInfo.name} package ($${packagePrice.toFixed(2)}).`,
+        message: `Your wallet balance ($${currentBalance.toFixed(2)}) is insufficient to purchase the ${pkgDisplayName} package ($${packagePrice.toFixed(2)}).`,
         requiredAmount: packagePrice,
         currentBalance,
       });
@@ -201,12 +269,13 @@ router.post('/buy', verifyToken, async (req, res) => {
 
     // 4. Deduct price from walletBalance
     const newBalance = Number((currentBalance - packagePrice).toFixed(2));
+    const assignedPackageName = packageInfo.tierName || packageInfo.name || packageInfo.id;
 
     // 5. Update user's currentPackage and eligibility
     const updatedUserData = {
       ...userData,
       walletBalance: newBalance,
-      currentPackage: packageInfo.name,
+      currentPackage: assignedPackageName,
       isEligible: true,
       lastPackagePurchase: new Date().toISOString(),
     };
@@ -218,13 +287,13 @@ router.post('/buy', verifyToken, async (req, res) => {
       uid,
       type: 'package_purchase',
       packageId: packageInfo.id,
-      packageName: packageInfo.name,
+      packageName: assignedPackageName,
       amount: -packagePrice,
       previousBalance: currentBalance,
       newBalance,
       status: 'completed',
       createdAt: new Date().toISOString(),
-      description: `Purchased ${packageInfo.name} package for $${packagePrice.toFixed(2)}`,
+      description: `Purchased ${assignedPackageName} package for $${packagePrice.toFixed(2)}`,
     };
 
     const txDoc = await db.collection('transactions').add(transactionData);
@@ -238,8 +307,8 @@ router.post('/buy', verifyToken, async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: `${packageInfo.name} package bought successfully!`,
-      currentPackage: packageInfo.name,
+      message: `${assignedPackageName} package bought successfully!`,
+      currentPackage: assignedPackageName,
       walletBalance: newBalance,
       transaction: {
         id: txDoc.id,

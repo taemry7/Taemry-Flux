@@ -241,97 +241,169 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
 
       {/* 7-Day Visual Performance & Financials */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* User Growth Chart */}
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <TrendingUp className="w-4 h-4 text-sky-400" />
-                <span>User Registrations (Last 7 Days)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Daily influx of verified member accounts</p>
+        {/* User Growth Chart (3D Live Stream) */}
+        <div className="relative p-6 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950 border border-sky-500/25 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.08),0_0_35px_rgba(14,165,233,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15),0_0_50px_rgba(14,165,233,0.22)] transition-all duration-300 space-y-4 group overflow-hidden">
+          {/* 3D Ambient Radial Splashes */}
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-sky-500/15 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+          <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-indigo-500/10 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-sky-500/30 to-indigo-600/30 text-sky-400 border border-sky-400/30 flex items-center justify-center shadow-lg shadow-sky-500/20 shrink-0">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+                  <span>User Registrations (Live Flow)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Real-time member account onboarding from Firestore</p>
+              </div>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-semibold">
-              7-Day Range
-            </span>
+
+            <div className="flex items-center gap-2">
+              <span className="hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/80 border border-sky-500/30 text-[10px] font-bold text-sky-300 shadow-[inset_0_1px_2px_rgba(255,255,255,0.1)]">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>LIVE FIRESTORE</span>
+              </span>
+            </div>
           </div>
 
-          <div className="pt-6">
+          <div className="relative z-10 pt-4">
             <div className="h-44 flex items-end justify-between gap-2 sm:gap-3 px-2">
               {charts.growth.map((item, idx) => {
-                const heightPercent = Math.max(12, Math.round((item.users / maxGrowth) * 100));
+                const heightPercent = Math.max(14, Math.round((item.users / maxGrowth) * 100));
                 return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                    <span className="text-[10px] font-bold text-sky-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group/bar">
+                    <span className="text-[11px] font-black text-sky-300 opacity-0 group-hover/bar:opacity-100 transition-all duration-200 -translate-y-1 group-hover/bar:translate-y-0 drop-shadow-md">
                       +{item.users}
                     </span>
-                    <div className="w-full max-w-[32px] bg-slate-800 rounded-t-lg overflow-hidden flex items-end h-full">
+                    <div className="w-full max-w-[34px] bg-slate-950/80 rounded-t-xl overflow-hidden flex items-end h-full p-0.5 border border-slate-800/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
                       <div
-                        className="w-full bg-gradient-to-t from-sky-600 to-sky-400 rounded-t-lg transition-all duration-500 group-hover:from-sky-500 group-hover:to-sky-300"
+                        className="w-full bg-gradient-to-t from-sky-700 via-sky-500 to-sky-300 rounded-t-lg transition-all duration-500 shadow-[0_-4px_12px_rgba(56,189,248,0.4)] group-hover/bar:brightness-125"
                         style={{ height: `${heightPercent}%` }}
                       />
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium truncate w-full text-center">
+                    <span className="text-[10px] text-slate-400 font-bold truncate w-full text-center">
                       {item.label.split(',')[0]}
                     </span>
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* 3D Metric Footer Bar */}
+          <div className="relative z-10 grid grid-cols-3 gap-2 pt-3 border-t border-slate-800/80 text-center">
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">7-Day Total</span>
+              <span className="text-xs font-black text-white">
+                {charts.growth.reduce((acc, curr) => acc + curr.users, 0)} Members
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">Daily Average</span>
+              <span className="text-xs font-black text-sky-400">
+                {(charts.growth.reduce((acc, curr) => acc + curr.users, 0) / (charts.growth.length || 1)).toFixed(1)}/day
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">System Status</span>
+              <span className="text-xs font-black text-emerald-400 flex items-center justify-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                Active
+              </span>
             </div>
           </div>
         </div>
 
-        {/* Financial Flow: Approved Deposits vs Payouts */}
-        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Activity className="w-4 h-4 text-emerald-400" />
-                <span>Revenue vs Payouts (Last 7 Days)</span>
-              </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Comparison of capital inflow ($) and payout disbursements ($)</p>
-            </div>
-            <div className="flex items-center gap-3 text-[11px]">
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
-                <span className="text-slate-300 font-semibold">Deposits</span>
+        {/* Financial Flow: Approved Deposits vs Payouts (3D Live Stream) */}
+        <div className="relative p-6 rounded-3xl bg-gradient-to-br from-slate-900/95 via-slate-900/80 to-slate-950 border border-emerald-500/25 shadow-[0_20px_50px_rgba(0,0,0,0.6),inset_0_1px_1px_rgba(255,255,255,0.08),0_0_35px_rgba(16,185,129,0.12)] hover:shadow-[0_25px_60px_rgba(0,0,0,0.8),inset_0_1px_2px_rgba(255,255,255,0.15),0_0_50px_rgba(16,185,129,0.22)] transition-all duration-300 space-y-4 group overflow-hidden">
+          {/* 3D Ambient Radial Splashes */}
+          <div className="absolute -top-16 -right-16 w-48 h-48 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+          <div className="absolute -bottom-16 -left-16 w-40 h-40 bg-teal-500/10 rounded-full blur-2xl pointer-events-none group-hover:scale-125 transition-transform duration-700" />
+
+          <div className="relative z-10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500/30 to-teal-600/30 text-emerald-400 border border-emerald-400/30 flex items-center justify-center shadow-lg shadow-emerald-500/20 shrink-0">
+                <Activity className="w-5 h-5" />
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2.5 h-2.5 rounded-full bg-sky-400" />
-                <span className="text-slate-300 font-semibold">Payouts</span>
+              <div>
+                <h3 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+                  <span>Revenue vs Payouts (Live Flow)</span>
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">Real capital inflow ($) & settled withdrawal disbursements ($)</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 text-[11px]">
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]" />
+                <span className="text-slate-200 font-bold text-[10px]">Deposits</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-slate-950/80 border border-slate-800">
+                <span className="w-2 h-2 rounded-full bg-sky-400 shadow-[0_0_8px_rgba(56,189,248,0.8)]" />
+                <span className="text-slate-200 font-bold text-[10px]">Payouts</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-6">
+          <div className="relative z-10 pt-4">
             <div className="h-44 flex items-end justify-between gap-2 sm:gap-3 px-2">
               {charts.financials.map((item, idx) => {
-                const revHeight = Math.max(8, Math.round((item.revenue / maxFinancial) * 100));
-                const payHeight = Math.max(8, Math.round((item.payouts / maxFinancial) * 100));
+                const revHeight = Math.max(10, Math.round((item.revenue / maxFinancial) * 100));
+                const payHeight = Math.max(10, Math.round((item.payouts / maxFinancial) * 100));
                 return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
+                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group/bar">
                     <div className="w-full flex items-end justify-center gap-1 h-full">
-                      <div className="w-1/2 max-w-[14px] bg-slate-800 rounded-t overflow-hidden flex items-end h-full">
+                      {/* Deposit 3D Pillar */}
+                      <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
                         <div
-                          className="w-full bg-emerald-400 rounded-t transition-all duration-500"
+                          className="w-full bg-gradient-to-t from-emerald-600 via-emerald-400 to-emerald-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(52,211,153,0.4)] group-hover/bar:brightness-125"
                           style={{ height: `${revHeight}%` }}
-                          title={`Deposit: $${item.revenue}`}
+                          title={`Approved Deposit: $${item.revenue}`}
                         />
                       </div>
-                      <div className="w-1/2 max-w-[14px] bg-slate-800 rounded-t overflow-hidden flex items-end h-full">
+                      {/* Payout 3D Pillar */}
+                      <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
                         <div
-                          className="w-full bg-sky-400 rounded-t transition-all duration-500"
+                          className="w-full bg-gradient-to-t from-sky-600 via-sky-400 to-sky-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(56,189,248,0.4)] group-hover/bar:brightness-125"
                           style={{ height: `${payHeight}%` }}
-                          title={`Payout: $${item.payouts}`}
+                          title={`Settled Payout: $${item.payouts}`}
                         />
                       </div>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-medium truncate w-full text-center">
+                    <span className="text-[10px] text-slate-400 font-bold truncate w-full text-center">
                       {item.label.split(',')[0]}
                     </span>
                   </div>
                 );
               })}
+            </div>
+          </div>
+
+          {/* 3D Financial Metric Footer */}
+          <div className="relative z-10 grid grid-cols-3 gap-2 pt-3 border-t border-slate-800/80 text-center">
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">7-Day Inflow</span>
+              <span className="text-xs font-black text-emerald-400">
+                +${charts.financials.reduce((acc, curr) => acc + curr.revenue, 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">7-Day Outflow</span>
+              <span className="text-xs font-black text-sky-400">
+                -${charts.financials.reduce((acc, curr) => acc + curr.payouts, 0).toFixed(2)}
+              </span>
+            </div>
+            <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
+              <span className="text-[10px] text-slate-400 font-medium block">Net Liquidity</span>
+              <span className={`text-xs font-black ${
+                charts.financials.reduce((acc, curr) => acc + (curr.revenue - curr.payouts), 0) >= 0
+                  ? 'text-emerald-400'
+                  : 'text-rose-400'
+              }`}>
+                ${charts.financials.reduce((acc, curr) => acc + (curr.revenue - curr.payouts), 0).toFixed(2)}
+              </span>
             </div>
           </div>
         </div>

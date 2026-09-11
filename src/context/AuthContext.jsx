@@ -86,15 +86,33 @@ export const AuthProvider = ({ children }) => {
   });
   const [loading, setLoading] = useState(!initialUser);
   const [authError, setAuthError] = useState('');
-  const [userStats, setUserStats] = useState({
-    walletBalance: 0,
-    currentPackage: 'None',
-    lifetimeAds: 0,
-    dailyAdCount: 0,
-    teamAdsCount: 0,
-    referralCount: 0,
-    totalEarned: 0,
-    isEligible: false,
+  const [userStats, setUserStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('taemry_cached_user_stats');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return {
+          walletBalance: parsed.walletBalance !== undefined ? Number(parsed.walletBalance) : 0,
+          currentPackage: parsed.currentPackage || 'None',
+          lifetimeAds: Number(parsed.lifetimeAds || 0),
+          dailyAdCount: Number(parsed.dailyAdCount || 0),
+          teamAdsCount: Number(parsed.teamAdsCount || 0),
+          referralCount: Number(parsed.referralCount || 0),
+          totalEarned: Number(parsed.totalEarned || 0),
+          isEligible: Boolean(parsed.isEligible),
+        };
+      }
+    } catch {}
+    return {
+      walletBalance: 0,
+      currentPackage: 'None',
+      lifetimeAds: 0,
+      dailyAdCount: 0,
+      teamAdsCount: 0,
+      referralCount: 0,
+      totalEarned: 0,
+      isEligible: false,
+    };
   });
 
   // Helper to persist session to localStorage
@@ -114,6 +132,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       localStorage.removeItem('taemry_persisted_user');
       localStorage.removeItem('taemry_demo_user');
+      localStorage.removeItem('taemry_cached_user_stats');
     }
   };
 
@@ -127,6 +146,9 @@ export const AuthProvider = ({ children }) => {
           ...prev,
           ...res.data.stats,
         }));
+        try {
+          localStorage.setItem('taemry_cached_user_stats', JSON.stringify(res.data.stats));
+        } catch {}
         return res.data.stats;
       }
     } catch (err) {
@@ -137,10 +159,16 @@ export const AuthProvider = ({ children }) => {
 
   // Method to immediately update local stats without waiting for server roundtrip
   const updateLocalStats = useCallback((partial) => {
-    setUserStats((prev) => ({
-      ...prev,
-      ...partial,
-    }));
+    setUserStats((prev) => {
+      const updated = {
+        ...prev,
+        ...partial,
+      };
+      try {
+        localStorage.setItem('taemry_cached_user_stats', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
   }, []);
 
   // Refresh stats when user logs in or changes

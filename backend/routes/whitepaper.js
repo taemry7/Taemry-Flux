@@ -100,10 +100,31 @@ export const DEFAULT_WHITEPAPER = {
 export async function getWhitepaperContent() {
   try {
     const db = getDb();
-    const doc = await db.collection('systemSettings').doc('whitepaper').get();
-    if (doc.exists && doc.data()) {
-      return { ...DEFAULT_WHITEPAPER, ...doc.data() };
+    const [wpDoc, pkgDoc] = await Promise.all([
+      db.collection('systemSettings').doc('whitepaper').get(),
+      db.collection('systemSettings').doc('packages').get(),
+    ]);
+
+    let base = { ...DEFAULT_WHITEPAPER };
+    if (wpDoc.exists && wpDoc.data()) {
+      base = { ...base, ...wpDoc.data() };
     }
+
+    if (pkgDoc.exists && pkgDoc.data()) {
+      const { normalizePackages } = await import('./package.js');
+      const livePackages = normalizePackages(pkgDoc.data());
+      base.packages = livePackages
+        .filter((p) => p.isActive !== false)
+        .map((p) => ({
+          name: p.tierName || p.name,
+          price: `$${Number(p.price || 0).toFixed(2)}`,
+          dailyLimit: `${p.dailyLimit || 200} ads/day`,
+          dailyReturn: `${p.rewardRate || '20%'} Daily Return`,
+          badge: p.badge || 'ACTIVE',
+        }));
+    }
+
+    return base;
   } catch (err) {
     console.warn('Could not read whitepaper from Firestore:', err.message);
   }

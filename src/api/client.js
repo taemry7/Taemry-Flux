@@ -50,27 +50,39 @@ apiClient.interceptors.request.use(
     try {
       let token = null;
 
-      // 1. Try real Firebase Auth current user
-      if (isFirebaseConfigured && auth.currentUser) {
+      // 1. Ensure Firebase Auth session is restored on page refresh/cold load
+      if (isFirebaseConfigured && auth) {
         try {
-          token = await auth.currentUser.getIdToken(false);
-          if (auth.currentUser.email) {
-            config.headers['x-user-email'] = auth.currentUser.email;
+          if (!auth.currentUser && typeof auth.authStateReady === 'function') {
+            await Promise.race([
+              auth.authStateReady(),
+              new Promise((resolve) => setTimeout(resolve, 800)),
+            ]);
+          }
+          if (auth.currentUser) {
+            token = await auth.currentUser.getIdToken(false);
+            if (auth.currentUser.email) {
+              config.headers['x-user-email'] = auth.currentUser.email;
+            }
+            if (auth.currentUser.uid) {
+              config.headers['x-user-uid'] = auth.currentUser.uid;
+            }
           }
         } catch (tokenErr) {
           console.warn('Could not retrieve live ID token, checking demo session:', tokenErr.message);
         }
       }
 
-      // 2. If no live token, check localStorage for active demo session
+      // 2. If no live token, check localStorage for persisted user or demo session
       if (!token) {
-        const savedDemo = localStorage.getItem('taemry_demo_user');
-        if (savedDemo) {
+        const savedRaw = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+        if (savedRaw) {
           try {
-            const demoUser = JSON.parse(savedDemo);
-            const userEmail = (demoUser.email || '').toLowerCase().trim();
+            const savedUser = JSON.parse(savedRaw);
+            const userEmail = (savedUser.email || '').toLowerCase().trim();
+            const userUid = savedUser.uid || '';
             const isAdmin =
-              Boolean(demoUser.admin || demoUser.isAdmin) ||
+              Boolean(savedUser.admin || savedUser.isAdmin) ||
               userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
               userEmail === 'mistrtaemry@gmail.com' ||
@@ -80,24 +92,28 @@ apiClient.interceptors.request.use(
               userEmail.includes('mistrtaimur') ||
               userEmail.includes('mistrtaimoor');
 
+            const finalUid = userUid || (isAdmin ? 'admin_taemry' : 'demo-user-1');
+
             // Construct standard JWT-like structure (alg: none) so backend can reliably decode payload
             const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
             const payload = btoa(
               JSON.stringify({
-                user_id: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-                sub: demoUser.uid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-                email: demoUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
-                name: demoUser.displayName || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
+                user_id: finalUid,
+                sub: finalUid,
+                uid: finalUid,
+                email: savedUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
+                name: savedUser.displayName || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
                 admin: isAdmin,
               })
             );
             token = `${header}.${payload}.demo_sig`;
-            config.headers['x-user-email'] = demoUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
+            config.headers['x-user-email'] = savedUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
+            config.headers['x-user-uid'] = finalUid;
             if (isAdmin) {
               config.headers['x-user-admin'] = 'true';
             }
           } catch (e) {
-            token = 'preview-admin-test-token';
+            token = null;
           }
         }
       }

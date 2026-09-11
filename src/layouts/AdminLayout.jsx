@@ -25,7 +25,13 @@ import {
   LifeBuoy,
   Wrench,
   LogIn,
-  ShieldAlert
+  ShieldAlert,
+  MoreVertical,
+  Award,
+  User,
+  Sparkles,
+  FileCode2,
+  Package
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -43,6 +49,9 @@ import AdminBroadcast from '../pages/admin/AdminBroadcast';
 import AdminSupport from '../pages/admin/AdminSupport';
 import AdminMaintenance from '../pages/admin/AdminMaintenance';
 import AdminWhitepaper from '../pages/admin/AdminWhitepaper';
+import AdminMilestones from '../pages/admin/AdminMilestones';
+import AdminPackages from '../pages/admin/AdminPackages';
+import AdminProfileModal from '../components/admin/AdminProfileModal';
 
 export default function AdminLayout({ onNavigate }) {
   const { currentUser, isAdmin, logout, loading } = useAuth();
@@ -50,6 +59,14 @@ export default function AdminLayout({ onNavigate }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
+  // Compute admin first name for display in header
+  const adminFirstName = (
+    currentUser?.displayName?.trim().split(/\s+/)[0] ||
+    (currentUser?.email ? (currentUser.email.toLowerCase().includes('taim') ? 'TAIMOOR' : currentUser.email.split('@')[0].toUpperCase()) : 'TAIMOOR')
+  ).toUpperCase();
 
   // Fetch admin stats for pending badges
   const fetchStats = async () => {
@@ -154,6 +171,8 @@ export default function AdminLayout({ onNavigate }) {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'packages', label: 'Package Management', icon: Package },
+    { id: 'milestones', label: 'Milestones & Rewards', icon: Award },
     { id: 'users', label: 'Users Directory', icon: Users },
     {
       id: 'deposits',
@@ -205,45 +224,180 @@ export default function AdminLayout({ onNavigate }) {
                 TAEMRY FLUX
               </span>
               <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">
-                Admin Control Center
+                ADMIN {adminFirstName}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Right: Quick actions & Portal link */}
-        <div className="flex items-center gap-3">
+        {/* Right: Quick actions, Profile, User Panel & 3-Dots Dropdown */}
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
-            onClick={() => onNavigate('dashboard')}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer border border-slate-700/60"
-            title="Switch to Member App View"
+            onClick={fetchStats}
+            className="hidden p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-colors cursor-pointer border border-slate-700/60"
+            title="Refresh Platform Analytics"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
-            <span>Member View</span>
+            <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${loadingStats ? 'animate-spin' : ''}`} />
           </button>
 
+          {/* Admin Profile Info Card (Clickable to open profile info) */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-800 text-xs">
-            <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 text-sky-400 flex items-center justify-center font-black">
-              {currentUser?.email?.substring(0, 2).toUpperCase() || 'AD'}
+            <div
+              onClick={() => setShowProfileModal(true)}
+              className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-sky-400 flex items-center justify-center font-black cursor-pointer hover:ring-2 hover:ring-sky-400 hover:border-sky-400 hover:shadow-lg hover:shadow-sky-500/30 transition-all active:scale-95 group"
+              title="Click to view Admin Profile Information"
+            >
+              {currentUser?.email?.substring(0, 2).toUpperCase() || 'MI'}
             </div>
-            <div className="hidden lg:block text-left">
+            <div
+              onClick={() => setShowProfileModal(true)}
+              className="hidden lg:block text-left cursor-pointer hover:opacity-90 transition-opacity"
+              title="Click to view Admin Profile Information"
+            >
               <p className="font-bold text-white text-[11px] truncate max-w-[140px]">
-                {currentUser?.email}
+                {currentUser?.displayName || currentUser?.email}
               </p>
-              <span className="text-[10px] text-emerald-400 font-semibold block">System Admin</span>
+              <span className="text-[10px] text-emerald-400 font-semibold block">System Admin &bull; Profile Info</span>
             </div>
           </div>
 
+          {/* Button 2: User Panel Button (Replaces logout button) */}
           <button
-            onClick={async () => {
-              await logout();
-              onNavigate('home');
-            }}
-            className="p-2 rounded-xl bg-slate-800/80 hover:bg-rose-950 text-slate-400 hover:text-rose-400 transition-colors cursor-pointer"
-            title="Sign Out"
+            onClick={() => onNavigate('dashboard')}
+            id="btn-admin-user-panel"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-sky-600/30 hover:shadow-sky-500/50 cursor-pointer border border-sky-400/30 hover:-translate-y-0.5 active:translate-y-0"
+            title="Open User Panel"
           >
-            <LogOut className="w-4 h-4" />
+            <ExternalLink className="w-3.5 h-3.5 text-sky-200" />
+            <span>User Panel</span>
           </button>
+
+          {/* 3-Dots Dropdown Menu (Hidden per user request) */}
+          <div className="relative hidden">
+            <button
+              onClick={() => setMoreMenuOpen(!moreMenuOpen)}
+              className={`p-2 rounded-xl transition-all cursor-pointer border ${
+                moreMenuOpen
+                  ? 'bg-sky-600 text-white border-sky-400 shadow-md shadow-sky-600/30'
+                  : 'bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border-slate-700/60'
+              }`}
+              title="More Administrative Options"
+            >
+              <MoreVertical className="w-4 h-4" />
+            </button>
+
+            {moreMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
+                  onClick={() => setMoreMenuOpen(false)}
+                />
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-slate-900 border border-sky-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 p-2 space-y-1 animate-in fade-in slide-from-top-2 duration-150">
+                  <div className="px-3 py-2 border-b border-slate-800 text-[11px]">
+                    <span className="font-bold text-white block">Control & Edit Center</span>
+                    <span className="text-[10px] text-slate-400 font-mono truncate block">{currentUser?.email}</span>
+                  </div>
+
+                  {/* 1. Packages (User requested: admin panel me package ko edits kya ab wo user ko nhi dekaraha mtlb me chahta hon keh admin panel sy kuch bi edits kary wo user panel me edited hoga) */}
+                  <button
+                    onClick={() => {
+                      setActiveTab('packages');
+                      setMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package className="w-4 h-4 text-sky-400 group-hover:text-white" />
+                      <span>Package Management</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-sky-500/20 text-sky-300 border border-sky-500/30 group-hover:bg-white group-hover:text-sky-700">
+                      LIVE SYNC
+                    </span>
+                  </button>
+
+                  {/* 2. Milestones (User requested: "3 dots me milestones add karo A.P me or admin panel me edits option add karo OK live hogi fix and updates it please..") */}
+                  <button
+                    onClick={() => {
+                      setActiveTab('milestones');
+                      setMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer group"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Award className="w-4 h-4 text-amber-400 group-hover:text-white" />
+                      <span>Milestones & Rewards</span>
+                    </div>
+                    <span className="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 group-hover:bg-white group-hover:text-sky-700">
+                      LIVE EDIT
+                    </span>
+                  </button>
+
+                  {/* 3. Admin Panel Settings & Edits */}
+                  <button
+                    onClick={() => {
+                      setActiveTab('settings');
+                      setMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <Sliders className="w-4 h-4 text-sky-400" />
+                    <span>Admin Panel Settings & Edits</span>
+                  </button>
+
+                  {/* 3. Profile Information */}
+                  <button
+                    onClick={() => {
+                      setShowProfileModal(true);
+                      setMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <User className="w-4 h-4 text-indigo-400" />
+                    <span>Admin Profile Information</span>
+                  </button>
+
+                  {/* 4. Switch to User Panel */}
+                  <button
+                    onClick={() => {
+                      setMoreMenuOpen(false);
+                      onNavigate('dashboard');
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <ExternalLink className="w-4 h-4 text-teal-400" />
+                    <span>Open User Panel</span>
+                  </button>
+
+                  {/* 5. Refresh Data */}
+                  <button
+                    onClick={() => {
+                      fetchStats();
+                      setMoreMenuOpen(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-slate-800 transition-colors cursor-pointer"
+                  >
+                    <RefreshCw className="w-4 h-4 text-slate-400" />
+                    <span>Refresh Platform Data</span>
+                  </button>
+
+                  <div className="pt-1 border-t border-slate-800">
+                    {/* 6. Log out (Moved to 3 dots per user request: "log out ko hide ko 3 dots me move karo..") */}
+                    <button
+                      onClick={async () => {
+                        setMoreMenuOpen(false);
+                        await logout();
+                        onNavigate('home');
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-950/60 hover:text-rose-300 transition-colors cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Log Out Administrator</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
@@ -333,6 +487,12 @@ export default function AdminLayout({ onNavigate }) {
 
           {activeTab === 'whitepaper' && <AdminWhitepaper />}
 
+          {activeTab === 'packages' && <AdminPackages />}
+
+          {activeTab === 'milestones' && (
+            <AdminMilestones onNavigateTab={(tab) => setActiveTab(tab)} />
+          )}
+
           {activeTab === 'maintenance' && <AdminMaintenance />}
 
           {activeTab === 'settings' && <AdminSettings />}
@@ -344,6 +504,12 @@ export default function AdminLayout({ onNavigate }) {
           {activeTab === 'broadcast' && <AdminBroadcast />}
         </main>
       </div>
+
+      {/* Admin Profile Information Modal */}
+      <AdminProfileModal
+        isOpen={showProfileModal}
+        onClose={() => setShowProfileModal(false)}
+      />
     </div>
   );
 }

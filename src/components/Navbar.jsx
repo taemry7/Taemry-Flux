@@ -325,7 +325,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
                           <User className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
                           <span>Profile Information</span>
                         </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80]">
+                        <span className="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80]">
                           Eligible
                         </span>
                       </button>
