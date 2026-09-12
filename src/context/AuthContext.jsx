@@ -127,6 +127,20 @@ export const AuthProvider = ({ children }) => {
         isAdmin: isActualAdmin,
       };
       localStorage.setItem('taemry_persisted_user', JSON.stringify(serializableUser));
+
+      // Restore user-specific cached stats instantly so real balance and package load with 0 delay
+      try {
+        const userSpecificCache = localStorage.getItem(`taemry_cached_user_stats_${user.uid}`);
+        if (userSpecificCache) {
+          const parsed = JSON.parse(userSpecificCache);
+          if (parsed && typeof parsed === 'object') {
+            setUserStats((prev) => ({
+              ...prev,
+              ...parsed,
+            }));
+          }
+        }
+      } catch {}
     } else {
       localStorage.removeItem('taemry_persisted_user');
       localStorage.removeItem('taemry_demo_user');
@@ -146,13 +160,17 @@ export const AuthProvider = ({ children }) => {
         }));
         try {
           localStorage.setItem('taemry_cached_user_stats', JSON.stringify(res.data.stats));
+          if (currentUser.uid) {
+            localStorage.setItem(`taemry_cached_user_stats_${currentUser.uid}`, JSON.stringify(res.data.stats));
+          }
         } catch {}
         return res.data.stats;
       }
     } catch (err) {
       // Fallback cleanly to locally cached stats during weak internet or offline mode
       try {
-        const cached = localStorage.getItem('taemry_cached_user_stats');
+        const cached = (currentUser?.uid && localStorage.getItem(`taemry_cached_user_stats_${currentUser.uid}`)) ||
+          localStorage.getItem('taemry_cached_user_stats');
         if (cached) {
           const parsed = JSON.parse(cached);
           if (parsed && typeof parsed === 'object') {
@@ -178,10 +196,13 @@ export const AuthProvider = ({ children }) => {
       };
       try {
         localStorage.setItem('taemry_cached_user_stats', JSON.stringify(updated));
+        if (currentUser?.uid) {
+          localStorage.setItem(`taemry_cached_user_stats_${currentUser.uid}`, JSON.stringify(updated));
+        }
       } catch {}
       return updated;
     });
-  }, []);
+  }, [currentUser]);
 
   // Refresh stats when user logs in or changes
   useEffect(() => {
@@ -378,22 +399,27 @@ export const AuthProvider = ({ children }) => {
               const created = await createUserWithEmailAndPassword(auth, cleanEmail, password);
               if (db && created.user) {
                 try {
-                  await setDoc(doc(db, 'users', created.user.uid), {
-                    uid: created.user.uid,
-                    email: created.user.email,
-                    name: 'Mistr Taimoor (Admin)',
-                    admin: true,
-                    isAdmin: true,
-                    role: 'admin',
-                    walletBalance: 0,
-                    currentPackage: 'None',
-                    isEligible: false,
-                    lifetimeAds: 0,
-                    dailyAdCount: 0,
-                    teamAdsCount: 0,
-                    referralCount: 0,
-                    totalEarned: 0,
-                  }, { merge: true });
+                  const adminRef = doc(db, 'users', created.user.uid);
+                  const adminSnap = await getDoc(adminRef);
+                  if (!adminSnap.exists()) {
+                    await setDoc(adminRef, {
+                      uid: created.user.uid,
+                      email: created.user.email,
+                      name: 'Mistr Taimoor (Admin)',
+                      admin: true,
+                      isAdmin: true,
+                      role: 'admin',
+                      walletBalance: 0,
+                      currentPackage: 'None',
+                      isEligible: false,
+                      lifetimeAds: 0,
+                      dailyAdCount: 0,
+                      teamAdsCount: 0,
+                      referralCount: 0,
+                      totalEarned: 0,
+                      createdAt: new Date().toISOString(),
+                    });
+                  }
                 } catch (dberr) {
                   console.warn('Could not write admin firestore doc:', dberr);
                 }
@@ -466,21 +492,32 @@ export const AuthProvider = ({ children }) => {
         const result = await signInWithPopup(auth, googleProvider);
         if (db && result.user) {
           try {
-            await setDoc(doc(db, 'users', result.user.uid), {
-              uid: result.user.uid,
-              email: result.user.email,
-              name: result.user.displayName || result.user.email.split('@')[0],
-              currentPackage: 'None',
-              walletBalance: 0,
-              referralCount: 0,
-              lifetimeAds: 0,
-              dailyAdCount: 0,
-              teamAdsCount: 0,
-              totalEarned: 0,
-              isEligible: false,
-              isBlocked: false,
-              createdAt: new Date().toISOString(),
-            }, { merge: true });
+            const userDocRef = doc(db, 'users', result.user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            if (!userDocSnap.exists()) {
+              await setDoc(userDocRef, {
+                uid: result.user.uid,
+                email: result.user.email,
+                name: result.user.displayName || result.user.email.split('@')[0],
+                currentPackage: 'None',
+                walletBalance: 0,
+                referralCount: 0,
+                lifetimeAds: 0,
+                dailyAdCount: 0,
+                teamAdsCount: 0,
+                totalEarned: 0,
+                isEligible: false,
+                isBlocked: false,
+                createdAt: new Date().toISOString(),
+              });
+            } else {
+              // Existing user profile: NEVER overwrite walletBalance or currentPackage
+              await setDoc(userDocRef, {
+                email: result.user.email,
+                name: result.user.displayName || result.user.email.split('@')[0],
+                lastLoginAt: new Date().toISOString(),
+              }, { merge: true });
+            }
           } catch (firestoreErr) {
             console.warn('Could not write Google user to Firestore:', firestoreErr.message);
           }

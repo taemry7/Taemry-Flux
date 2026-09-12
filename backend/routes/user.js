@@ -23,12 +23,20 @@ router.get('/me', verifyToken, async (req, res) => {
     let userData;
 
     if (!doc.exists) {
-      // Initialize default user document if newly registered (Clean zeroed account)
+      let initialBalance = 0;
+      try {
+        const depSnap = await db.collection('deposits').where('userId', '==', uid).where('status', '==', 'approved').get();
+        depSnap.docs.forEach((d) => {
+          initialBalance += Number(d.data().amountUSD || 0);
+        });
+      } catch (e) {}
+
+      // Initialize default user document if newly registered (Clean zeroed account, or approved deposits)
       userData = {
         uid,
         email: req.user.email || 'member@taemryflux.com',
         name: req.user.name || req.user.email?.split('@')[0] || 'TAEMRY Member',
-        walletBalance: 0,
+        walletBalance: initialBalance,
         currentPackage: 'None',
         isEligible: false,
         lifetimeAds: 0,

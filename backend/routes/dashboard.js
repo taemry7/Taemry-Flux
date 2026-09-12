@@ -50,9 +50,18 @@ router.get('/stats', verifyToken, async (req, res) => {
     let data;
 
     if (!doc.exists) {
-      // Default clean initial record for new user (0 balance, live from start)
+      // Check if user has existing approved deposits
+      let initialBalance = 0;
+      try {
+        const depSnap = await db.collection('deposits').where('userId', '==', uid).where('status', '==', 'approved').get();
+        depSnap.docs.forEach((d) => {
+          initialBalance += Number(d.data().amountUSD || 0);
+        });
+      } catch (e) {}
+
+      // Default clean initial record for new user (0 balance if new, or approved deposits)
       data = {
-        walletBalance: 0,
+        walletBalance: initialBalance,
         currentPackage: 'None',
         lifetimeAds: 0,
         dailyAdCount: 0,

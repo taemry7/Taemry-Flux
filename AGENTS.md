@@ -129,8 +129,8 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - Profile photo upload is integrated directly within the Account Information form (`<form onSubmit={handleSaveProfile}>`).
   - Allows direct local photo upload (`image/*`) and photo removal only.
 
-## STRICT INVARIANT: Deposit Page Logo Loading (PERMANENT & LOCKED)
-- **Zero Network Loading Delay**: JazzCash and Easypaisa payment method selectors use clean, inline vector SVGs instead of external `img` network requests. They render in 0ms without layout shift or loading delay.
+## STRICT INVARIANT: Deposit & Withdrawal Page Brand Logos (PERMANENT & LOCKED)
+- **Official Brand Logos**: JazzCash (`/jazzcash.png`), Easypaisa (`/easypaisa.png`), and Crypto USDT (`/usdt.png`) use the user's official uploaded brand photos/logos across both Deposit and Withdrawal pages (`DepositPage.jsx` and `WithdrawPage.jsx`).
 
 ## STRICT INVARIANT: Live Leaderboard Access & Admin Management (PERMANENT & LOCKED)
 - **Live Leaderboard Navigation**: Accessible from Drawer and URL route (`#/dashboard/leaderboard`). Stored in `validTabs` in `DashboardPage.jsx` and URL router in `App.tsx`.
@@ -148,6 +148,13 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - In the directory catalog: description `<p>`, filter buttons (`All`, `Available`, `Completed`), search input, and range batch switcher divs are permanently removed.
   - Direct 1 to 200 clean ad card directory rendered with individual "Watch Now" action buttons.
   - Ready for external ad network (Monetag, Adsterra) integration on button click as specified by user.
+
+## STRICT INVARIANT: User Balance & Funds Security (PERMANENT & LOCKED)
+- **Zero Involuntary Balance Deduction**: User wallet balances deposited or earned can ONLY ever be deducted for:
+  1. Buying an Advertising Package (`/api/package/buy`)
+  2. Requesting a Withdrawal (`/api/withdrawals/request` upon admin processing)
+- Wallet balance is strictly protected and can never be deducted, expired, or reset anywhere else.
+- User profile logins (Email, Password, Google Auth) and session refreshes check document existence first and strictly preserve existing `walletBalance` and `currentPackage`, preventing any accidental reset to 0.
 
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
 - All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.

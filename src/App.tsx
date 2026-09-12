@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageLoader from './components/PageLoader';
+import AppOpeningSplash from './components/AppOpeningSplash';
 import WelcomeOnboardingModal from './components/WelcomeOnboardingModal';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -58,7 +59,8 @@ function AppContent() {
   });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [showOpeningSplash, setShowOpeningSplash] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [targetLabel, setTargetLabel] = useState('');
   const [pendingNav, setPendingNav] = useState<{ page: string; tab?: string | null } | null>(null);
@@ -225,16 +227,18 @@ function AppContent() {
   if (currentPage === 'admin') {
     return (
       <>
-        <PageLoader
-          isLoading={isInitialLoading || isNavigating}
-          targetPage={isInitialLoading ? 'Admin Portal' : targetLabel}
-          onFinished={() => {
-            if (isInitialLoading) {
+        {showOpeningSplash && (
+          <AppOpeningSplash
+            onComplete={() => {
+              setShowOpeningSplash(false);
               setIsInitialLoading(false);
-            } else {
-              handleLoadingFinished();
-            }
-          }}
+            }}
+          />
+        )}
+        <PageLoader
+          isLoading={!showOpeningSplash && isNavigating}
+          targetPage={targetLabel}
+          onFinished={handleLoadingFinished}
         />
         <AdminLayout onNavigate={navigateTo} />
       </>
@@ -248,17 +252,21 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* Adaptive Page Transition Loader */}
-      <PageLoader
-        isLoading={isInitialLoading || isNavigating}
-        targetPage={isInitialLoading ? 'TAEMRY FLUX' : targetLabel}
-        onFinished={() => {
-          if (isInitialLoading) {
+      {/* Immersive Mobile & Web App Opening Splash Screen */}
+      {showOpeningSplash && (
+        <AppOpeningSplash
+          onComplete={() => {
+            setShowOpeningSplash(false);
             setIsInitialLoading(false);
-          } else {
-            handleLoadingFinished();
-          }
-        }}
+          }}
+        />
+      )}
+
+      {/* Adaptive Page Transition Loader for in-app navigation */}
+      <PageLoader
+        isLoading={!showOpeningSplash && isNavigating}
+        targetPage={targetLabel}
+        onFinished={handleLoadingFinished}
       />
 
       {/* Smart Slide Menu (Rendered underneath/alongside the main screen) */}

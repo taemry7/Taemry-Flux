@@ -278,22 +278,51 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
-                  { id: 'jazzcash', name: 'JazzCash', icon: Smartphone, color: 'text-[#b91c1c]' },
-                  { id: 'easypaisa', name: 'Easypaisa', icon: Smartphone, color: 'text-[#15803d]' },
-                  { id: 'bank', name: 'Bank Transfer', icon: Building2, color: 'text-[#0284c7]' },
-                  { id: 'crypto', name: 'Crypto (USDT)', icon: Coins, color: 'text-[#ca8a04]' },
+                  {
+                    id: 'jazzcash',
+                    name: 'JazzCash',
+                    image: '/jazzcash.png',
+                    bg: 'bg-white',
+                    border: 'border-[#e4ded2]',
+                  },
+                  {
+                    id: 'easypaisa',
+                    name: 'Easypaisa',
+                    image: '/easypaisa.png',
+                    bg: 'bg-white',
+                    border: 'border-[#e4ded2]',
+                  },
+                  {
+                    id: 'bank',
+                    name: 'Bank Transfer',
+                    icon: Building2,
+                    bg: 'bg-[#0284c7]',
+                    iconColor: 'text-white',
+                  },
+                  {
+                    id: 'crypto',
+                    name: 'Crypto (USDT)',
+                    image: '/usdt.png',
+                    bg: 'bg-[#26A17B]',
+                  },
                 ].map((item) => (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => setMethod(item.id)}
-                    className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                    className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
                       method === item.id
                         ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
                         : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
                     }`}
                   >
-                    <item.icon className={`w-4 h-4 ${item.color}`} />
+                    <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center shadow-xs overflow-hidden p-0.5 border ${item.border || 'border-transparent'}`}>
+                      {item.image ? (
+                        <img src={item.image} alt={item.name} className="w-full h-full object-contain rounded-lg" />
+                      ) : (
+                        <item.icon className={`w-5 h-5 ${item.iconColor}`} />
+                      )}
+                    </div>
                     <span className="text-xs font-bold">{item.name}</span>
                   </button>
                 ))}
