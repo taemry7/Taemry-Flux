@@ -233,19 +233,6 @@ export default function DashboardPage({
   // Check if user has an active package (new users without package do not see Watch Ads or Withdrawal)
   const hasActivePackage = Boolean(stats.currentPackage && stats.currentPackage !== 'None');
 
-  // Sidebar navigation menu items with explicit eligibility rules
-  const navItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard, eligible: true },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare, eligible: hasActivePackage },
-    { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle, tag: 'Instant', eligible: true },
-    { id: 'buy-package', label: 'Buy Package', icon: Package, tag: 'Active', eligible: true },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight, eligible: hasActivePackage },
-    { id: 'referrals', label: 'Referrals', icon: Users, eligible: hasActivePackage },
-    { id: 'milestones', label: 'Team Rewards', icon: Gift, tag: 'Cash', eligible: hasActivePackage },
-    { id: 'transactions', label: 'Transactions', icon: History, eligible: hasActivePackage },
-    { id: 'settings', label: 'Profile Information', icon: User, eligible: true },
-  ];
-
   const currentActiveTab = sanitizeTab(activeTab);
 
   const rawDisplayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Member';
@@ -254,139 +241,24 @@ export default function DashboardPage({
   const userEmail = currentUser?.email || 'member@taemryflux.com';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* MAIN TWO-COLUMN SIDEBAR LAYOUT */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-8 items-start">
-        {/* SIDEBAR NAVIGATION (Desktop 1 Col, Responsive Header on Mobile) */}
-        <aside className="lg:col-span-1">
-          {/* Mobile Horizontal Scrollable Tab Bar */}
-          <div className="lg:hidden flex items-center gap-1.5 overflow-x-auto pb-3 mb-4 scrollbar-none">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentActiveTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => handleTabChange(item.id)}
-                  className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
-                    isActive
-                      ? 'bg-[#0c5963] text-white shadow-xs'
-                      : 'bg-white dark:bg-[#0c2027] text-[#526a6f] dark:text-[#94a3b8] border border-[#e4ded2] dark:border-[#173740]'
-                  }`}
-                >
-                  <Icon className="w-3.5 h-3.5" />
-                  <span>{item.label}</span>
-                  {!item.eligible && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-[#fee2e2] text-[#dc2626] dark:bg-[#7f1d1d]/50 dark:text-[#fca5a5]">
-                      Ineligible
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Desktop Sidebar Card */}
-          <div className="hidden lg:block bg-white dark:bg-[#0c2027] rounded-3xl p-4 border border-[#e4ded2] dark:border-[#173740] shadow-xs sticky top-24">
-            <div className="p-3 mb-2 border-b border-[#f1eee7] dark:border-[#173740]">
-              <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#768b90] dark:text-[#94a3b8]">
-                NAVIGATION
-              </span>
-              <p className="text-xs font-bold text-[#09353e] dark:text-white truncate mt-0.5">
-                {userName}
-              </p>
-            </div>
-
-            <nav className="space-y-1">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = currentActiveTab === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    id={`sidebar-btn-${item.id}`}
-                    onClick={() => handleTabChange(item.id)}
-                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-[#0c5963] text-white shadow-sm shadow-[#0c5963]/20'
-                        : 'text-[#375258] dark:text-[#cbd5e1] hover:bg-[#f7f4ee] dark:hover:bg-[#122e37] hover:text-[#0c5963]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#74898e] dark:text-[#94a3b8]'}`} />
-                      <span>{item.label}</span>
-                      {item.id === 'overview' && (
-                        <ChevronRight className={`w-3.5 h-3.5 transition-transform ${isActive ? 'text-white/90 translate-x-0.5' : 'text-[#82999f]'}`} />
-                      )}
-                    </div>
-
-                    {!item.eligible ? (
-                      <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#dc2626] dark:bg-[#7f1d1d]/50 dark:text-[#fca5a5]">
-                        Ineligible
-                      </span>
-                    ) : item.tag ? (
-                      <span
-                        className={`text-[9px] font-semibold px-2 py-0.5 rounded-full ${
-                          isActive
-                            ? 'bg-white/20 text-white'
-                            : 'bg-[#f4f0e7] dark:bg-[#173740] text-[#718589] dark:text-[#94a3b8]'
-                        }`}
-                      >
-                        {item.tag}
-                      </span>
-                    ) : null}
-                  </button>
-                );
-              })}
-            </nav>
-
-            {/* Quick Wallet Summary in Sidebar */}
-            <div className="mt-6 p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#081c22] border border-[#e9e3d7] dark:border-[#123640]">
-              <span className="text-[10px] uppercase font-bold text-[#7b8f94] dark:text-[#94a3b8] tracking-wider block">
-                Active Tier
-              </span>
-              <div className="flex items-center justify-between mt-1">
-                <span className="text-sm font-extrabold text-[#09353e] dark:text-white">
-                  {hasActivePackage ? stats.currentPackage : 'No Package'}
-                </span>
-                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
-                  hasActivePackage
-                    ? 'text-[#16a34a] bg-[#dcfce7] dark:bg-[#064e3b]/50 dark:text-[#4ade80]'
-                    : 'text-[#dc2626] bg-[#fee2e2] dark:bg-[#7f1d1d]/40 dark:text-[#f87171]'
-                }`}>
-                  {hasActivePackage ? 'Eligible' : 'Ineligible'}
-                </span>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      {/* MAIN VIEW CONTENT AREA (Full Width) */}
+      <section className="w-full">
+        {/* ========================================================================= */}
+        {/* TAB 1: OVERVIEW (/dashboard)                                             */}
+        {/* ========================================================================= */}
+        {currentActiveTab === 'overview' && (
+          <div className="space-y-6 animate-in fade-in duration-200">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                  Welcome Back, {userFirstName}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] mt-1">
+                  Real-time protected balance, verified earnings, and instant fund management.
+                </p>
               </div>
-              <div className="mt-3 pt-3 border-t border-[#ebe4d8] dark:border-[#123640] flex items-center justify-between text-xs">
-                <span className="text-[#647b80] dark:text-[#94a3b8]">Balance:</span>
-                <span className="font-extrabold text-[#09353e] dark:text-white">
-                  ${Number(stats.walletBalance).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </aside>
-
-        {/* MAIN VIEW CONTENT AREA (Desktop 3 Cols) */}
-        <section className="lg:col-span-3">
-          {/* ========================================================================= */}
-          {/* TAB 1: OVERVIEW (/dashboard)                                             */}
-          {/* ========================================================================= */}
-          {currentActiveTab === 'overview' && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              {/* Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] dark:text-[#38bdf8] uppercase">
-                    MEMBER DASHBOARD
-                  </span>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-[#09353e] dark:text-[#f1f5f9] mt-0.5">
-                    Welcome Back, {userFirstName}
-                  </h1>
-                  <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] mt-0.5">
-                    Real-time protected balance, verified earnings, and instant fund management.
-                  </p>
-                </div>
 
                 {/* Quick Action Buttons (Normal, clean styling - No 3D) */}
                 <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
@@ -790,7 +662,6 @@ export default function DashboardPage({
             <AccountSettings onSelectTab={handleTabChange} />
           )}
         </section>
-      </div>
     </div>
   );
 }

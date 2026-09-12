@@ -40,6 +40,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     setLoading(true);
     try {
       if (isSignUp) {
+        sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
         await signup(email, password, displayName);
       } else {
         await login(email, password);

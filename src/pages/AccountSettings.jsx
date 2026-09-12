@@ -104,7 +104,7 @@ export default function AccountSettings({ onSelectTab }) {
     setTimeout(() => setNotification({ type: '', message: '' }), 4000);
   };
 
-  // Profile Picture File Upload Handler (with FileReader DataURL preview)
+  // Profile Picture File Upload Handler (with FileReader DataURL preview and auto-compression)
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -114,19 +114,54 @@ export default function AccountSettings({ onSelectTab }) {
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      setNotification({ type: 'error', message: 'Image size should be under 2MB.' });
+    if (file.size > 5 * 1024 * 1024) {
+      setNotification({ type: 'error', message: 'Image size should be under 5MB.' });
       return;
     }
 
     const reader = new FileReader();
     reader.onload = (uploadEvent) => {
-      const dataUri = uploadEvent.target.result;
-      setPhotoURL(dataUri);
-      setNotification({
-        type: 'success',
-        message: 'Profile picture preview loaded. Click "Save Profile Changes" to finalize.',
-      });
+      const rawData = uploadEvent.target.result;
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX_SIZE = 256;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(img, 0, 0, width, height);
+            const optimizedUri = canvas.toDataURL('image/jpeg', 0.85);
+            setPhotoURL(optimizedUri);
+          } else {
+            setPhotoURL(rawData);
+          }
+        } catch {
+          setPhotoURL(rawData);
+        }
+        setNotification({
+          type: 'success',
+          message: 'Profile picture preview loaded. Click "Save Profile Changes" to finalize.',
+        });
+      };
+      img.onerror = () => {
+        setPhotoURL(rawData);
+      };
+      img.src = rawData;
     };
     reader.readAsDataURL(file);
   };

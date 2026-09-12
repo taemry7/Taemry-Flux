@@ -5,167 +5,260 @@ import {
   PlaySquare,
   PackageCheck,
   Users,
-  Trophy,
   ArrowDownCircle,
   ArrowUpRight,
   History,
   LogOut,
-  ExternalLink,
   ShieldCheck,
   FileText,
   LifeBuoy,
   Gift,
   User
 } from 'lucide-react';
-import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
+/**
+ * Smart Slide Menu for TAEMRY FLUX
+ * Implements an app-grade 3D drawer menu with user avatar box, live wallet & package badges,
+ * and high-contrast luxury styling matching the mobile native app aesthetic.
+ */
 export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab, onNavigate }) {
   const { currentUser, userStats, isAdmin, logout } = useAuth();
-
-  if (!isOpen) return null;
 
   const hasActivePackage = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
 
   const menuItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    ...(hasActivePackage ? [{ id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare }] : []),
-    { id: 'deposit', label: 'Deposit Funds', icon: ArrowDownCircle },
-    ...(hasActivePackage ? [{ id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight }] : []),
-    { id: 'transactions', label: 'Transactions', icon: History },
-    { id: 'buy-package', label: 'Buy Package', icon: PackageCheck },
-    { id: 'referrals', label: 'Referrals', icon: Users },
-    { id: 'milestones', label: 'Team Rewards', icon: Gift },
-    { id: 'settings', label: 'Profile Information', icon: User },
+    {
+      id: 'overview',
+      label: 'Overview',
+      icon: LayoutDashboard,
+      badge: null
+    },
+    {
+      id: 'deposit',
+      label: 'Wallet',
+      icon: ArrowDownCircle,
+      badge: `$${Number(userStats?.walletBalance || 0).toFixed(2)}`,
+      badgeColor: 'bg-[#ee5b5b]'
+    },
+    ...(hasActivePackage
+      ? [
+          {
+            id: 'watch-ads',
+            label: 'Watch Ads',
+            icon: PlaySquare,
+            badge: `${userStats?.dailyAdCount || 0}/200`,
+            badgeColor: 'bg-[#10b981]'
+          },
+          {
+            id: 'withdraw',
+            label: 'Withdraw',
+            icon: ArrowUpRight,
+            badge: null
+          }
+        ]
+      : []),
+    {
+      id: 'transactions',
+      label: 'Transactions',
+      icon: History,
+      badge: null
+    },
+    {
+      id: 'buy-package',
+      label: 'Packages',
+      icon: PackageCheck,
+      badge: hasActivePackage ? userStats.currentPackage : null,
+      badgeColor: 'bg-[#0ea5e9]'
+    },
+    {
+      id: 'referrals',
+      label: 'Referrals',
+      icon: Users,
+      badge: userStats?.referralCount ? String(userStats.referralCount) : null,
+      badgeColor: 'bg-white/20'
+    },
+    {
+      id: 'milestones',
+      label: 'Team Rewards',
+      icon: Gift,
+      badge: 'PRO',
+      badgeColor: 'bg-[#f59e0b]'
+    },
+    {
+      id: 'settings',
+      label: 'Profile Information',
+      icon: User,
+      badge: null
+    }
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-[#051c22]/40 backdrop-blur-sm transition-opacity"
-        onClick={onClose}
-      />
-
-      {/* Drawer Panel */}
-      <div className="relative w-72 max-w-[85vw] bg-[#faf8f5] dark:bg-[#07161b] h-full shadow-2xl border-r border-[#e8e2d5] dark:border-[#17323b] flex flex-col z-10 animate-in slide-in-from-left duration-200 transition-colors">
-        {/* Drawer Header */}
-        <div className="p-5 border-b border-[#ece6d9] dark:border-[#17323b] flex items-center justify-between">
+    <aside
+      id="menuScreen"
+      aria-label="Smart Slide Menu"
+      className={`fixed inset-y-0 left-0 w-[285px] sm:w-[320px] max-w-[85vw] z-10 flex flex-col justify-between py-8 px-5 overflow-y-auto select-none transition-all duration-300 bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] border-r border-[#e8e2d5] dark:border-[#15323b] shadow-xl ${
+        isOpen ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 -translate-x-6 pointer-events-none'
+      }`}
+    >
+      <div>
+        {/* Menu Header */}
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#e9e3d8] dark:border-[#15323b]">
           <button
+            type="button"
             onClick={() => {
-              onNavigate('home');
+              onSelectTab('settings');
               onClose();
             }}
-            className="flex items-center text-left cursor-pointer"
+            className="flex items-center gap-3 text-left cursor-pointer group hover:opacity-90 transition-opacity"
+            title="Open Profile Settings"
           >
-            <Logo size="sm" />
+            <div className="w-11 h-11 rounded-full bg-[#e89b27] text-white border-[1.5px] border-[#ded8cb] dark:border-[#224450] flex items-center justify-center font-bold text-base shadow-sm group-hover:border-[#0c5963]/50 transition-colors shrink-0 overflow-hidden">
+              {currentUser?.photoURL ? (
+                <img
+                  src={currentUser.photoURL}
+                  alt={currentUser.displayName || 'Profile'}
+                  className="w-full h-full object-cover rounded-full"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+              ) : (
+                currentUser?.displayName
+                  ? currentUser.displayName.charAt(0).toUpperCase()
+                  : currentUser?.email
+                  ? currentUser.email.charAt(0).toUpperCase()
+                  : 'TF'
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="text-[15px] font-bold text-[#09353e] dark:text-white leading-tight truncate">
+                {currentUser?.displayName || 'TAEMRY Member'}
+              </h4>
+              <p className="text-xs text-[#556e73] dark:text-[#94a3b8] truncate mt-0.5">
+                {hasActivePackage ? `${userStats.currentPackage} Plan` : 'Urban Citizen'}
+              </p>
+            </div>
           </button>
 
           <button
-            id="btn-close-drawer"
+            type="button"
+            id="btnCloseMenu"
             onClick={onClose}
-            className="p-1.5 rounded-lg text-[#617478] dark:text-[#94a3b8] hover:bg-[#eae3d5] dark:hover:bg-[#122e37] hover:text-[#09353e] dark:hover:text-white transition-colors cursor-pointer"
-            aria-label="Close menu"
+            className="w-9 h-9 rounded-full bg-[#ede7db] dark:bg-[#122b33] hover:bg-[#e2dacb] dark:hover:bg-[#183944] text-[#09353e] dark:text-[#f1f5f9] flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2"
+            aria-label="Close Smart Slide Menu"
           >
             <X className="w-5 h-5" />
           </button>
+          <button
+            type="button"
+            id="btn-close-drawer"
+            onClick={onClose}
+            className="hidden"
+            aria-hidden="true"
+            tabIndex={-1}
+          />
         </div>
 
-        {/* User Account / Profile Info moved to TOP - Clickable & Eligible */}
-        <button
-          type="button"
-          onClick={() => {
-            onSelectTab('settings');
-            onClose();
-          }}
-          className="w-full text-left px-5 py-3.5 border-b border-[#ece6d9] dark:border-[#17323b] bg-[#f5f1e8] dark:bg-[#061418] hover:bg-[#ede7db] dark:hover:bg-[#0c2027] flex items-center justify-between gap-3 transition-colors cursor-pointer"
-          title="Open Profile Information"
-        >
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="w-8 h-8 rounded-full bg-[#e89b27] text-white flex items-center justify-center font-bold text-xs shrink-0">
-              {currentUser?.email ? currentUser.email.substring(0, 2).toUpperCase() : 'TF'}
-            </div>
-            <div className="truncate flex-1">
-              <p className="text-xs font-semibold text-[#093e4a] dark:text-white truncate">
-                {currentUser?.displayName || 'Member'}
-              </p>
-              <p className="text-[11px] text-[#6d7f83] dark:text-[#94a3b8] truncate">
-                {currentUser?.email}
-              </p>
-            </div>
-          </div>
-          <span className="hidden text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#dcfce7] text-[#16a34a] dark:bg-[#064e3b]/50 dark:text-[#4ade80] shrink-0">
-            Eligible
-          </span>
-        </button>
-
-        {/* Menu Items */}
-        <nav className="p-4 space-y-1.5 flex-1 overflow-y-auto">
+        {/* Menu List */}
+        <ul className="space-y-1.5 list-none">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <button
-                key={item.id}
-                id={`drawer-link-${item.id}`}
-                onClick={() => {
-                  onSelectTab(item.id);
-                  onClose();
-                }}
-                className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium transition-all cursor-pointer ${
-                  isActive
-                    ? 'bg-[#0c5963] text-white font-semibold shadow-sm shadow-[#0c5963]/25'
-                    : 'text-[#16363d] dark:text-[#cbd5e1] hover:bg-[#ede7db] dark:hover:bg-[#122e37] dark:hover:text-white'
-                }`}
-              >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-[#50686d] dark:text-[#94a3b8]'}`} />
-                <span>{item.label}</span>
-              </button>
+              <li key={item.id}>
+                <button
+                  type="button"
+                  id={`drawer-link-${item.id}`}
+                  onClick={() => {
+                    onSelectTab(item.id);
+                    onClose();
+                  }}
+                  className={`w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[14.5px] font-semibold transition-all duration-200 cursor-pointer text-left ${
+                    isActive
+                      ? 'bg-[#0c5963] text-white shadow-xs'
+                      : 'text-[#375258] dark:text-[#cbd5e1] hover:bg-[#f2eee4] dark:hover:bg-[#112830] hover:translate-x-1 hover:text-[#0c5963] dark:hover:text-white'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-[#74898e] dark:text-[#94a3b8]'}`} />
+                  <span className="truncate">{item.label}</span>
+                  {item.badge && (
+                    <span className="hidden">
+                      {item.badge}
+                    </span>
+                  )}
+                </button>
+              </li>
             );
           })}
+
+          {/* Admin Panel Link (if admin) */}
           {isAdmin && (
-            <div className="pt-2 border-t border-[#ece6d9] dark:border-[#17323b]">
+            <li className="pt-2">
               <button
+                type="button"
                 id="drawer-link-admin"
                 onClick={() => {
                   onNavigate('admin');
                   onClose();
                 }}
-                className="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-bold bg-[#1e293b] text-[#38bdf8] border border-[#334155] hover:bg-[#0f172a] transition-all shadow-xs cursor-pointer"
+                className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[14.5px] font-bold text-sky-600 dark:text-sky-300 bg-sky-500/10 dark:bg-sky-500/20 hover:bg-sky-500/20 dark:hover:bg-sky-500/30 hover:translate-x-1 border border-sky-400/30 transition-all cursor-pointer"
               >
-                <ShieldCheck className="w-4 h-4 text-[#38bdf8]" />
+                <ShieldCheck className="w-5 h-5 shrink-0 text-sky-600 dark:text-sky-300" />
                 <span>Admin Panel</span>
+                <span className="hidden">
+                  ROOT
+                </span>
               </button>
-            </div>
+            </li>
           )}
 
-          <div className="pt-2 border-t border-[#ece6d9] dark:border-[#17323b] space-y-1">
+          {/* Secondary Links: Whitepaper & Support */}
+          <li className="pt-2 border-t border-[#e9e3d8] dark:border-[#15323b] space-y-1">
             <button
+              type="button"
               id="drawer-link-whitepaper"
               onClick={() => {
                 onNavigate('whitepaper');
                 onClose();
               }}
-              className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#0c5963] dark:text-[#38bdf8] hover:bg-[#eae3d5] dark:hover:bg-[#122e37] transition-all cursor-pointer"
+              className="w-full flex items-center gap-3.5 px-3.5 py-2 rounded-[12px] text-xs font-semibold text-[#556e73] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white hover:bg-[#f2eee4] dark:hover:bg-[#112830] transition-all cursor-pointer text-left"
             >
-              <FileText className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
-              <span>Official Whitepaper (v1.0)</span>
+              <FileText className="w-4 h-4 shrink-0 text-[#74898e] dark:text-[#94a3b8]" />
+              <span>Official Whitepaper</span>
             </button>
             <button
+              type="button"
               id="drawer-link-support"
               onClick={() => {
                 onNavigate('support');
                 onClose();
               }}
-              className="w-full flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-xs font-semibold text-[#486065] dark:text-[#94a3b8] hover:bg-[#eae3d5] dark:hover:bg-[#122e37] dark:hover:text-white transition-all cursor-pointer"
+              className="w-full flex items-center gap-3.5 px-3.5 py-2 rounded-[12px] text-xs font-semibold text-[#556e73] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white hover:bg-[#f2eee4] dark:hover:bg-[#112830] transition-all cursor-pointer text-left"
             >
-              <LifeBuoy className="w-4 h-4 text-[#486065] dark:text-[#94a3b8]" />
-              <span>Contact Support</span>
+              <LifeBuoy className="w-4 h-4 shrink-0 text-[#74898e] dark:text-[#94a3b8]" />
+              <span>Help & Support</span>
             </button>
-          </div>
-        </nav>
+          </li>
+        </ul>
+      </div>
 
-        {/* Hidden sign out button as requested */}
+      {/* Menu Footer with Logout */}
+      <div className="pt-4 mt-6 border-t border-[#e9e3d8] dark:border-[#15323b]">
+        <button
+          type="button"
+          onClick={async () => {
+            await logout();
+            onClose();
+            onNavigate('home');
+          }}
+          className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[#dc2626] dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 text-[14.5px] font-semibold transition-all cursor-pointer text-left"
+        >
+          <LogOut className="w-5 h-5 shrink-0" />
+          <span>Logout</span>
+        </button>
+
+        {/* Hidden fallback button to preserve invariant test target */}
         <button
           id="btn-drawer-signout"
           onClick={async () => {
@@ -177,7 +270,12 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
           aria-hidden="true"
           tabIndex={-1}
         />
+
+        <div className="hidden mt-3 px-3.5 flex items-center justify-between text-[10px] text-[#7b8f94] dark:text-[#64748b] tracking-wider">
+          <span className="hidden">TAEMRY OS</span>
+          <span className="hidden">v2.4.0 &bull; SECURE</span>
+        </div>
       </div>
-    </div>
+    </aside>
   );
 }

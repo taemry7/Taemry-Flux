@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
 import PageLoader from './components/PageLoader';
+import WelcomeOnboardingModal from './components/WelcomeOnboardingModal';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -14,6 +15,34 @@ import AdminLayout from './layouts/AdminLayout';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
+  const [showNewUserWelcome, setShowNewUserWelcome] = useState(() => {
+    try {
+      return sessionStorage.getItem('taemry_show_new_user_welcome') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('taemry_show_new_user_welcome') === 'true') {
+        setShowNewUserWelcome(true);
+      }
+    } catch {}
+  }, [currentUser]);
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window === 'undefined') return 'home';
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
@@ -55,6 +84,29 @@ function AppContent() {
   };
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
+  useEffect(() => {
+    let touchStartX = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.changedTouches[0].screenX;
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      const diff = e.changedTouches[0].screenX - touchStartX;
+      if (diff > 65 && !isDrawerOpen && currentUser) {
+        setIsDrawerOpen(true);
+      } else if (diff < -55 && isDrawerOpen) {
+        setIsDrawerOpen(false);
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [isDrawerOpen, currentUser]);
+
   useEffect(() => {
     const handleLocationChange = () => {
       const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
@@ -186,7 +238,12 @@ function AppContent() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf8f5] text-[#112d35]">
+    <div
+      id="appViewport"
+      className={`app-viewport relative w-full min-h-screen overflow-x-hidden bg-[#faf8f5] dark:bg-[#07151a] transition-colors ${
+        isDrawerOpen ? 'menu-open' : ''
+      }`}
+    >
       {/* Adaptive Page Transition Loader */}
       <PageLoader
         isLoading={isInitialLoading || isNavigating}
@@ -200,56 +257,116 @@ function AppContent() {
         }}
       />
 
-      {/* Top Navigation Bar */}
-      <Navbar
-        currentPage={currentPage}
-        onNavigate={navigateTo}
-        onOpenDrawer={() => setIsDrawerOpen(true)}
-      />
-
-      {/* Sidebar Navigation Drawer */}
+      {/* Smart Slide Menu (Rendered underneath/alongside the main screen) */}
       <SidebarDrawer
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         activeTab={activeTab}
         onSelectTab={(tab) => {
+          // Direct instantaneous navigation without artificial loader delay
           setActiveTab(tab);
-          navigateTo('dashboard', tab);
+          setCurrentPage('dashboard');
+          window.location.hash = `#/${'dashboard'}/${tab}`;
+          setIsDrawerOpen(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
-        onNavigate={navigateTo}
+        onNavigate={(page, tab) => {
+          // Direct navigation from menu without artificial loader delay
+          setCurrentPage(page);
+          if (page === 'dashboard') {
+            setActiveTab(tab || 'overview');
+          } else if (tab) {
+            setActiveTab(tab);
+          }
+          window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
+          setIsDrawerOpen(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
       />
 
-      {/* Main Page Routing */}
-      <main className="flex-1">
-        {currentPage === 'home' && (
-          <HomePage onNavigate={navigateTo} />
+      {/* 3D Welcome Splash & Full Name Onboarding for newly registered users */}
+      <WelcomeOnboardingModal
+        isOpen={showNewUserWelcome}
+        onComplete={() => {
+          try {
+            sessionStorage.removeItem('taemry_show_new_user_welcome');
+          } catch {}
+          setShowNewUserWelcome(false);
+          setCurrentPage('dashboard');
+          setActiveTab('overview');
+          window.location.hash = '#/dashboard/overview';
+        }}
+      />
+
+      {/* Offline Connectivity Notification Banner */}
+      {!isOnline && (
+        <div className="fixed top-0 inset-x-0 z-50 bg-[#b45309] text-white text-xs font-bold py-2 px-4 flex items-center justify-center gap-2 shadow-md">
+          <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+          <span>No internet connection detected &bull; Using offline cached mode</span>
+        </div>
+      )}
+
+      {/* Main Screen (Scales down and slides to the right with 3D perspective shadow) */}
+      <div
+        id="mainScreen"
+        className={`main-screen relative w-full min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] transition-all duration-400 ease-[cubic-bezier(0.2,0.9,0.3,1.15)] origin-left z-20 ${
+          isDrawerOpen
+            ? 'scale-[0.82] sm:scale-[0.84] translate-x-[76%] sm:translate-x-[320px] rounded-[28px] shadow-[-20px_25px_50px_rgba(0,0,0,0.55)] cursor-pointer overflow-hidden max-h-screen select-none ring-1 ring-black/5 dark:ring-white/10'
+            : 'scale-100 translate-x-0 rounded-none shadow-none'
+        }`}
+      >
+        {/* Transparent tap-to-close backdrop when menu is open */}
+        {isDrawerOpen && (
+          <div
+            id="menuBackdrop"
+            className="menu-backdrop-overlay absolute inset-0 z-50 bg-black/15 dark:bg-black/35 backdrop-blur-[1px] cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsDrawerOpen(false);
+            }}
+            aria-label="Close menu backdrop"
+          />
         )}
 
-        {currentPage === 'whitepaper' && (
-          <WhitepaperPage onNavigate={navigateTo} />
-        )}
+        {/* Top Navigation Bar */}
+        <Navbar
+          currentPage={currentPage}
+          onNavigate={navigateTo}
+          onOpenDrawer={() => setIsDrawerOpen(true)}
+        />
 
-        {currentPage === 'support' && (
-          <SupportPage onNavigate={navigateTo} />
-        )}
+        {/* Main Page Routing */}
+        <main className="flex-1">
+          {currentPage === 'home' && (
+            <HomePage onNavigate={navigateTo} />
+          )}
 
-        {currentPage === 'login' && (
-          <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
-        )}
+          {currentPage === 'whitepaper' && (
+            <WhitepaperPage onNavigate={navigateTo} />
+          )}
 
-        {currentPage === 'dashboard' && (
-          <ProtectedRoute onRedirectToLogin={() => navigateTo('login')}>
-            <DashboardPage
-              activeTab={activeTab}
-              onSelectTab={(tab) => setActiveTab(tab)}
-              onNavigate={navigateTo}
-            />
-          </ProtectedRoute>
-        )}
-      </main>
+          {currentPage === 'support' && (
+            <SupportPage onNavigate={navigateTo} />
+          )}
 
-      {/* Global Footer with 2026 Copyright */}
-      <Footer onNavigate={navigateTo} currentPage={currentPage} />
+          {currentPage === 'login' && (
+            <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
+          )}
+
+          {currentPage === 'dashboard' && (
+            <ProtectedRoute onRedirectToLogin={() => navigateTo('login')}>
+              <DashboardPage
+                activeTab={activeTab}
+                onSelectTab={(tab) => setActiveTab(tab)}
+                onNavigate={navigateTo}
+              />
+            </ProtectedRoute>
+          )}
+        </main>
+
+        {/* Global Footer with 2026 Copyright */}
+        <Footer onNavigate={navigateTo} currentPage={currentPage} />
+      </div>
     </div>
   );
 }

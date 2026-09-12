@@ -83,10 +83,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - `isEligible`: false
 - No account shall ever be pre-seeded with fake balances (e.g. $2500, $5000) or fake packages (e.g. Apex, Gold) upon refresh or update. Package activation and wallet balances must only change through actual deposits and genuine package purchases.
 
-## STRICT INVARIANT: Navigation & Profile Menu Rules (PERMANENT & LOCKED)
-- **2x2 Dots Options Menu in Navbar**: Located next to the user avatar in the top navbar (`#btn-nav-more-menu`), permanently uses a 2x2 dots grid icon (`grid grid-cols-2 gap-[3px] p-0.5` with four `rounded-full` dots). It provides instant access to Profile Information (marked Eligible), Overview Dashboard, Deposit Funds, and Sign Out.
+## STRICT INVARIANT: Navigation & Dashboard Layout Rules (PERMANENT & LOCKED)
+- **Navbar More Menu Removal**: The 2x2 dots menu button in the top navbar (`#btn-nav-more-menu`) has been permanently removed per explicit user directive.
+- **Dashboard Full-Width Layout**: The `aside` navigation container and mobile tab bar div in `src/pages/DashboardPage.jsx` are permanently removed. The dashboard content area renders clean, full-width (`w-full`), and directly accessible.
+- **MEMBER DASHBOARD Eyebrow Span Removal**: The uppercase "MEMBER DASHBOARD" span above "Welcome Back, {userFirstName}" in `src/pages/DashboardPage.jsx` has been permanently removed per user directive. The header heading sits naturally at the top with clean spacing and alignment.
 - **User Profile Info Div in Drawer**: Positioned at the top of the drawer right beneath the header logo & close button, clickable to open Profile Information, and marked Eligible.
-- **Sign Out Button**: Hidden from the drawer footer (`#btn-drawer-signout`); accessible via the 2x2 dots navbar menu and profile area.
+- **Sign Out Button**: Hidden from the drawer footer (`#btn-drawer-signout`).
 - **LK Avatar Button in Navbar**: The standalone user initials avatar button in the top navbar is permanently hidden per user specification.
 - **Dashboard Overview Fallback**: Dashboard route and internal state must always default to `'overview'` so the dashboard never renders blank or empty. Clicking Overview switches smoothly to the full overview splash view.
 

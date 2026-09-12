@@ -548,9 +548,26 @@ export const AuthProvider = ({ children }) => {
         if (isFirebaseConfigured && auth.currentUser) {
           const authUpdates = {};
           if (displayName !== undefined) authUpdates.displayName = displayName;
-          if (photoURL !== undefined) authUpdates.photoURL = photoURL;
+
+          // Firebase Auth profile photoURL has a strict length limit (~2048 characters).
+          // Base64 data URIs (data:image/...) or excessively long URLs exceed this limit and cause:
+          // "Firebase: Photo URL too long. (auth/invalid-profile-attribute)"
+          // Therefore, only valid http/https URLs that are under 1500 characters are passed to Firebase Auth.
+          // Base64 / data URI avatars are persisted in Firestore and local user session.
+          if (photoURL !== undefined) {
+            if (typeof photoURL === 'string' && /^https?:\/\//i.test(photoURL.trim()) && photoURL.trim().length < 1500) {
+              authUpdates.photoURL = photoURL.trim();
+            } else if (!photoURL) {
+              authUpdates.photoURL = null;
+            }
+          }
+
           if (Object.keys(authUpdates).length > 0) {
-            await updateProfile(auth.currentUser, authUpdates);
+            try {
+              await updateProfile(auth.currentUser, authUpdates);
+            } catch (authErr) {
+              console.warn('Firebase Auth updateProfile warning (skipped):', authErr.message);
+            }
           }
         }
 
