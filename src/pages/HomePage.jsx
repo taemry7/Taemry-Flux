@@ -17,7 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 
 export default function HomePage({ onNavigate }) {
-  const { currentUser, userStats } = useAuth();
+  const { currentUser, userStats, fetchUserStats } = useAuth();
   const [selectedViewMode, setSelectedViewMode] = useState('all'); // 'core' or 'all'
   const [openFaq, setOpenFaq] = useState(null);
 
@@ -195,6 +195,13 @@ export default function HomePage({ onNavigate }) {
     };
   }, []);
 
+  // Ensure live user stats & wallet balance are synchronized on home view
+  useEffect(() => {
+    if (fetchUserStats && currentUser) {
+      fetchUserStats();
+    }
+  }, [fetchUserStats, currentUser]);
+
   const displayedPackages =
     selectedViewMode === 'core' ? packageList.slice(0, 3) : packageList;
 
@@ -216,10 +223,24 @@ export default function HomePage({ onNavigate }) {
     }
   };
 
-  // Compute live card preview values based on user authentication
-  const displayBalance = currentUser
-    ? Number(userStats?.walletBalance ?? 0).toFixed(2)
-    : '0.00';
+  // Resolve live wallet balance directly from live stats or persisted storage
+  const resolvedWalletBalance = (() => {
+    if (userStats?.walletBalance !== undefined && userStats?.walletBalance !== null) {
+      return Number(userStats.walletBalance);
+    }
+    try {
+      const cached = localStorage.getItem('taemry_cached_user_stats');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.walletBalance !== undefined && parsed?.walletBalance !== null) {
+          return Number(parsed.walletBalance);
+        }
+      }
+    } catch {}
+    return 0;
+  })();
+
+  const displayBalance = resolvedWalletBalance.toFixed(2);
   const displayProgress = currentUser
     ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 200) * 100))
     : 0;
@@ -317,16 +338,22 @@ export default function HomePage({ onNavigate }) {
               <span className="tracking-widest">
                 {currentUser ? `MEMBER / ${currentUser.email?.split('@')[0]}` : 'TAEMRY / PERSONAL WALLET'}
               </span>
-              <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
+              <span className="hidden">
+                <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                LIVE
+              </span>
             </div>
 
-            <p className="text-xs text-[#6e8286] dark:text-[#94a3b8] mb-1">
-              {currentUser ? 'Your Live Available Balance' : 'Available balance'}
+            <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+              Live Available Balance
             </p>
-            <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5">
-              ${displayBalance.split('.')[0]}
+            <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5 flex items-baseline">
+              <span>${displayBalance.split('.')[0]}</span>
               <span className="text-2xl sm:text-3xl text-[#0d5963] dark:text-[#38bdf8]">
                 .{displayBalance.split('.')[1] || '00'}
+              </span>
+              <span className="text-xs font-bold text-[#546e73] dark:text-[#94a3b8] ml-2 tracking-normal">
+                USD
               </span>
             </div>
 
@@ -359,7 +386,9 @@ export default function HomePage({ onNavigate }) {
                       : 'Attention to Value'}
                   </p>
                   <p className="text-[11px] text-[#6b7f83] dark:text-[#94a3b8]">
-                    Activate Package to start daily ads
+                    {resolvedWalletBalance > 0
+                      ? `Live Balance: $${displayBalance} USD`
+                      : 'Activate Package to start daily ads'}
                   </p>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
+import PageLoader from './components/PageLoader';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -28,6 +29,30 @@ function AppContent() {
   });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const [targetLabel, setTargetLabel] = useState('');
+  const [pendingNav, setPendingNav] = useState<{ page: string; tab?: string | null } | null>(null);
+
+  // Friendly names for display in loader
+  const getPageDisplayName = (page: string, tab?: string | null) => {
+    if (page === 'home') return 'Home';
+    if (page === 'login') return tab === 'signup' ? 'Sign Up' : 'Sign In';
+    if (page === 'whitepaper') return 'Whitepaper';
+    if (page === 'support') return 'Support';
+    if (page === 'dashboard') {
+      if (tab === 'deposit') return 'Deposit Funds';
+      if (tab === 'withdraw') return 'Withdraw Funds';
+      if (tab === 'buy-package') return 'Packages';
+      if (tab === 'watch-ads') return 'Daily Ads';
+      if (tab === 'referrals') return 'Referrals';
+      if (tab === 'transactions') return 'Transactions';
+      if (tab === 'profile') return 'Profile';
+      return 'Dashboard';
+    }
+    if (page === 'admin') return 'Admin Portal';
+    return page;
+  };
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
   useEffect(() => {
@@ -102,18 +127,35 @@ function AppContent() {
     };
   }, []);
 
-  // Update hash when navigating
-  const navigateTo = (page, tab = null) => {
-    setCurrentPage(page);
-    if (page === 'dashboard') {
-      setActiveTab(tab || 'overview');
-    } else if (tab) {
-      setActiveTab(tab);
-    } else {
-      setActiveTab('overview');
+  // Update hash when navigating with adaptive loading
+  const navigateTo = (page: string, tab: string | null = null) => {
+    // If navigating to the exact same page and tab, scroll to top
+    if (currentPage === page && (!tab || activeTab === tab)) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
-    window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    setTargetLabel(getPageDisplayName(page, tab));
+    setPendingNav({ page, tab });
+    setIsNavigating(true);
+  };
+
+  const handleLoadingFinished = () => {
+    if (pendingNav) {
+      const { page, tab } = pendingNav;
+      setCurrentPage(page);
+      if (page === 'dashboard') {
+        setActiveTab(tab || 'overview');
+      } else if (tab) {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('overview');
+      }
+      window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setPendingNav(null);
+    }
+    setIsNavigating(false);
   };
 
   // If user signs in while on login page, smoothly transition to member dashboard
@@ -125,11 +167,39 @@ function AppContent() {
 
   // If user is on the dedicated admin panel
   if (currentPage === 'admin') {
-    return <AdminLayout onNavigate={navigateTo} />;
+    return (
+      <>
+        <PageLoader
+          isLoading={isInitialLoading || isNavigating}
+          targetPage={isInitialLoading ? 'Admin Portal' : targetLabel}
+          onFinished={() => {
+            if (isInitialLoading) {
+              setIsInitialLoading(false);
+            } else {
+              handleLoadingFinished();
+            }
+          }}
+        />
+        <AdminLayout onNavigate={navigateTo} />
+      </>
+    );
   }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8f5] text-[#112d35]">
+      {/* Adaptive Page Transition Loader */}
+      <PageLoader
+        isLoading={isInitialLoading || isNavigating}
+        targetPage={isInitialLoading ? 'TAEMRY FLUX' : targetLabel}
+        onFinished={() => {
+          if (isInitialLoading) {
+            setIsInitialLoading(false);
+          } else {
+            handleLoadingFinished();
+          }
+        }}
+      />
+
       {/* Top Navigation Bar */}
       <Navbar
         currentPage={currentPage}

@@ -68,8 +68,6 @@ const checkIsAdminEmailStatic = (email) => {
   return (
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
-    em === 'mistrtaemry@gmail.com' ||
-    em === 'kk3083702@gmail.com' ||
     em.startsWith('admin@') ||
     em.includes('taemryadmin') ||
     em.includes('mistrtaimur') ||
@@ -152,7 +150,21 @@ export const AuthProvider = ({ children }) => {
         return res.data.stats;
       }
     } catch (err) {
-      console.warn('Failed to fetch user stats:', err.message);
+      // Fallback cleanly to locally cached stats during weak internet or offline mode
+      try {
+        const cached = localStorage.getItem('taemry_cached_user_stats');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && typeof parsed === 'object') {
+            setUserStats((prev) => ({
+              ...prev,
+              ...parsed,
+            }));
+            return parsed;
+          }
+        }
+      } catch {}
+      console.warn('Could not refresh live stats from network, keeping existing stats:', err.message);
     }
     return null;
   }, [currentUser]);
@@ -191,8 +203,6 @@ export const AuthProvider = ({ children }) => {
       const isKnownAdminEmail =
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
-        email === 'mistrtaemry@gmail.com' ||
-        email === 'kk3083702@gmail.com' ||
         email.startsWith('admin@') ||
         email.includes('taemryadmin') ||
         email.includes('mistrtaimur') ||
@@ -230,8 +240,6 @@ export const AuthProvider = ({ children }) => {
     return (
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
-      em === 'mistrtaemry@gmail.com' ||
-      em === 'kk3083702@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taemryadmin') ||
       em.includes('mistrtaimur') ||

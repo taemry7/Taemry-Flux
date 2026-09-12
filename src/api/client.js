@@ -139,16 +139,35 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response Interceptor: Provide clean error handling
+// Response Interceptor: Provide resilient error handling with automatic retry for transient network glitches
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const config = error.config;
+
+    // Retry once on transient network errors (e.g. server reboot or brief network hiccup)
+    if (config && !config._retry && (!error.response || error.code === 'ECONNABORTED' || error.message === 'Network Error')) {
+      config._retry = true;
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        return await apiClient(config);
+      } catch (retryErr) {
+        // Fall through to error handler
+      }
+    }
+
     const message =
       error.response?.data?.message ||
       error.response?.data?.error ||
       error.message ||
       'Network communication error';
-    console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, message);
+    
+    // Log non-fatal warning for offline/transient network errors, error for HTTP status codes
+    if (!error.response) {
+      console.warn(`[API Network Notice] ${error.config?.method?.toUpperCase()} ${error.config?.url}: ${message} (Using resilient cached state)`);
+    } else {
+      console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, message);
+    }
     return Promise.reject(error);
   }
 );
