@@ -109,6 +109,11 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
 - **Footer Navigation & Copyright**: Re-enabled per user explicit directive ("is footer pehly wala dobara add karo") with quick links (Home, Packages, How it works, Sign In/Dashboard, Support, Whitepaper) and copyright notice active on Home and Dashboard pages.
 
+## STRICT INVARIANT: Referral Sharing System (PERMANENT)
+- **Referral Link Share System**:
+  - Direct "Share Link" button (`#btn-share-referral`) and quick "WhatsApp" share button (`#btn-share-whatsapp`) integrated in the referral link card.
+  - Native Web Share API support when available on mobile/desktop browsers, with an interactive Share Modal offering WhatsApp, Telegram, and 1-click clipboard link copying.
+
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
 - All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.
 - No automated, spontaneous, or unsolicited modifications may be made to any file.

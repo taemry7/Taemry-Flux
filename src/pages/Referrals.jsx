@@ -17,7 +17,10 @@ import {
   ExternalLink,
   ShieldCheck,
   UserCheck,
-  Clock
+  Clock,
+  MessageCircle,
+  X,
+  Send
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -36,6 +39,7 @@ export default function Referrals({ onSelectTab }) {
 
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Fetch referrals information
   const fetchReferralInfo = async () => {
@@ -68,6 +72,46 @@ export default function Referrals({ onSelectTab }) {
     }
   };
 
+  // Smart Share Trigger: Web Share API if supported, or open Share Modal
+  const handleShareLink = async () => {
+    const shareTitle = 'Join TAEMRY FLUX';
+    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Use my referral code: ${referralData.referralCode || ''}`;
+    const shareUrl = referralData.referralLink || window.location.href;
+
+    if (typeof navigator !== 'undefined' && navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          setShowShareModal(true);
+        }
+      }
+    } else {
+      setShowShareModal(true);
+    }
+  };
+
+  // Direct WhatsApp Share
+  const handleWhatsAppShare = () => {
+    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Use my referral code: ${referralData.referralCode || ''}`;
+    const shareUrl = referralData.referralLink || window.location.href;
+    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Direct Telegram Share
+  const handleTelegramShare = () => {
+    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads! Referral Code: ${referralData.referralCode || ''}`;
+    const shareUrl = referralData.referralLink || window.location.href;
+    const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="space-y-6">
       {/* Top Header */}
@@ -85,11 +129,12 @@ export default function Referrals({ onSelectTab }) {
 
         {/* Quick Share / Invite button */}
         <button
-          onClick={handleCopyLink}
+          id="btn-header-share-referral"
+          onClick={handleShareLink}
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-sm shadow-[#0c5963]/25 transition-all self-start sm:self-auto cursor-pointer"
         >
-          {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-          <span>{copied ? 'Link Copied!' : 'Share Referral Link'}</span>
+          <Share2 className="w-4 h-4" />
+          <span>Share Referral Link</span>
         </button>
       </div>
 
@@ -119,7 +164,7 @@ export default function Referrals({ onSelectTab }) {
           </div>
         </div>
 
-        {/* Copy input bar */}
+        {/* Copy & Share input bar */}
         <div className="mt-6 flex flex-col sm:flex-row items-stretch gap-2.5">
           <div className="relative flex-1">
             <input
@@ -129,10 +174,12 @@ export default function Referrals({ onSelectTab }) {
               className="w-full py-3 pl-4 pr-10 bg-[#f7f5f0] border border-[#d8d1c3] rounded-2xl text-xs sm:text-sm font-mono text-[#09353e] font-semibold focus:outline-none select-all"
             />
           </div>
+
+          {/* Copy Link Button */}
           <button
             id="btn-copy-referral"
             onClick={handleCopyLink}
-            className={`inline-flex items-center justify-center gap-2 px-6 py-3 text-xs font-bold rounded-2xl transition-all shadow-xs cursor-pointer ${
+            className={`inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold rounded-2xl transition-all shadow-xs cursor-pointer ${
               copied
                 ? 'bg-[#059669] text-white shadow-none'
                 : 'bg-[#09353e] hover:bg-[#052127] text-white'
@@ -141,7 +188,7 @@ export default function Referrals({ onSelectTab }) {
             {copied ? (
               <>
                 <Check className="w-4 h-4" />
-                <span>Copied to Clipboard!</span>
+                <span>Copied!</span>
               </>
             ) : (
               <>
@@ -149,6 +196,28 @@ export default function Referrals({ onSelectTab }) {
                 <span>Copy Link</span>
               </>
             )}
+          </button>
+
+          {/* Dedicated Share Link Button */}
+          <button
+            id="btn-share-referral"
+            onClick={handleShareLink}
+            className="inline-flex items-center justify-center gap-2 px-5 py-3 text-xs font-bold rounded-2xl bg-[#0c5963] hover:bg-[#08424b] text-white transition-all shadow-xs cursor-pointer"
+            title="Share referral link"
+          >
+            <Share2 className="w-4 h-4" />
+            <span>Share Link</span>
+          </button>
+
+          {/* Direct WhatsApp Share Button */}
+          <button
+            id="btn-share-whatsapp"
+            onClick={handleWhatsAppShare}
+            className="inline-flex items-center justify-center gap-2 px-4 py-3 text-xs font-bold rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white transition-all shadow-xs cursor-pointer"
+            title="Share directly to WhatsApp"
+          >
+            <MessageCircle className="w-4 h-4" />
+            <span>WhatsApp</span>
           </button>
         </div>
       </div>
@@ -314,6 +383,85 @@ export default function Referrals({ onSelectTab }) {
           </p>
         </div>
       </div>
+
+      {/* SHARE REFERRAL MODAL */}
+      {showShareModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#e4ded2] shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowShareModal(false)}
+              className="absolute top-5 right-5 p-2 text-[#798e92] hover:text-[#09353e] hover:bg-[#f3eee5] rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Modal Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center font-bold">
+                <Share2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[#09353e]">Share Referral Link</h3>
+                <p className="text-xs text-[#526d72]">Earn 5-level matching commission on all ad views</p>
+              </div>
+            </div>
+
+            {/* Referral Code Display */}
+            <div className="bg-[#faf8f5] p-3.5 rounded-2xl border border-[#e2dcce] mb-5 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-[#798e92] block">Your Referral Code</span>
+                <span className="text-base font-black font-mono text-[#0c5963]">{referralData.referralCode}</span>
+              </div>
+              <button
+                onClick={handleCopyLink}
+                className="px-3 py-1.5 bg-[#09353e] hover:bg-[#052127] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition-all cursor-pointer"
+              >
+                {copied ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? 'Copied' : 'Copy'}</span>
+              </button>
+            </div>
+
+            {/* Social Share Channels */}
+            <div className="space-y-2.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#798e92] block">Choose Channel</span>
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* WhatsApp */}
+                <button
+                  id="btn-modal-share-whatsapp"
+                  onClick={handleWhatsAppShare}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp</span>
+                </button>
+
+                {/* Telegram */}
+                <button
+                  id="btn-modal-share-telegram"
+                  onClick={handleTelegramShare}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-2xl bg-[#229ED9] hover:bg-[#1c8ec4] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Telegram</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Direct Link Copy Bar */}
+            <div className="mt-5 pt-4 border-t border-[#eee9df]">
+              <button
+                id="btn-modal-copy-link"
+                onClick={handleCopyLink}
+                className="w-full py-3 px-4 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm shadow-[#0c5963]/20"
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <span>{copied ? 'Link Copied to Clipboard!' : 'Copy Full Invitation Link'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
