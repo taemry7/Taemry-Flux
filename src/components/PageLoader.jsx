@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Logo from './Logo';
-import { Wifi, WifiOff, Loader2 } from 'lucide-react';
+import { Wifi, WifiOff } from 'lucide-react';
 
 /**
  * TAEMRY FLUX Splash Screen Loader
@@ -140,38 +140,17 @@ export default function PageLoader({ isLoading, targetPage = '', onFinished }) {
           </span>
         </div>
 
-        {/* Subtitle / Platform identifier */}
-        <p className="text-[11px] font-semibold tracking-[0.25em] text-[#647c81] dark:text-[#94a3b8] uppercase mb-8">
-          Personal Wallet & Ad Ecosystem
-        </p>
-
         {/* Dynamic Status / Progress Note */}
         <div className="min-h-[22px] flex items-center justify-center text-xs font-medium text-[#0a3a46]/80 dark:text-slate-300">
           {isOffline ? (
             <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-semibold animate-pulse">
               <WifiOff className="w-3.5 h-3.5" /> Reconnecting to network...
             </span>
-          ) : isSlowConnection ? (
-            <span className="text-[#0d5963] dark:text-[#38bdf8] flex items-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Optimizing connection...
-            </span>
           ) : targetPage ? (
             <span className="text-[#0d5963] dark:text-[#38bdf8] font-semibold tracking-wide">
               {targetPage}
             </span>
-          ) : (
-            <span className="text-[#647c81] dark:text-[#94a3b8]">
-              Initializing...
-            </span>
-          )}
-        </div>
-
-        {/* Splash Progress Line */}
-        <div className="w-48 sm:w-56 bg-[#e5dfd5] dark:bg-[#132c35] h-1.5 rounded-full overflow-hidden mt-3 shadow-inner">
-          <div
-            className="h-full bg-gradient-to-r from-[#0d5963] via-[#0f766e] to-[#10b981] dark:from-[#38bdf8] dark:via-[#0f766e] dark:to-[#10b981] rounded-full transition-all duration-100 ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)]"
-            style={{ width: `${progress}%` }}
-          />
+          ) : null}
         </div>
       </div>
 
