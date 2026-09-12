@@ -4,8 +4,8 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
-import PageLoader from './components/PageLoader';
 import AppOpeningSplash from './components/AppOpeningSplash';
+import PageLoader from './components/PageLoader';
 import WelcomeOnboardingModal from './components/WelcomeOnboardingModal';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
@@ -60,31 +60,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showOpeningSplash, setShowOpeningSplash] = useState(true);
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-  const [targetLabel, setTargetLabel] = useState('');
-  const [pendingNav, setPendingNav] = useState<{ page: string; tab?: string | null } | null>(null);
-
-  // Friendly names for display in loader
-  const getPageDisplayName = (page: string, tab?: string | null) => {
-    if (page === 'home') return 'Home';
-    if (page === 'login') return tab === 'signup' ? 'Sign Up' : 'Sign In';
-    if (page === 'whitepaper') return 'Whitepaper';
-    if (page === 'support') return 'Support';
-    if (page === 'dashboard') {
-      if (tab === 'deposit') return 'Deposit Funds';
-      if (tab === 'withdraw') return 'Withdraw Funds';
-      if (tab === 'buy-package') return 'Packages';
-      if (tab === 'watch-ads') return 'Daily Ads';
-      if (tab === 'referrals') return 'Referrals';
-      if (tab === 'transactions') return 'Transactions';
-      if (tab === 'leaderboard') return 'Live Leaderboard';
-      if (tab === 'profile') return 'Profile';
-      return 'Dashboard';
-    }
-    if (page === 'admin') return 'Admin Portal';
-    return page;
-  };
+  const [isPageLoading, setIsPageLoading] = useState(false);
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
   useEffect(() => {
@@ -185,35 +161,27 @@ function AppContent() {
     };
   }, []);
 
-  // Update hash when navigating with adaptive loading
-  const navigateTo = (page: string, tab: string | null = null) => {
+  // Update hash when navigating (optional loader parameter)
+  const navigateTo = (page: string, tab: string | null = null, withLoader: boolean = true) => {
     // If navigating to the exact same page and tab, scroll to top
     if (currentPage === page && (!tab || activeTab === tab)) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    setTargetLabel(getPageDisplayName(page, tab));
-    setPendingNav({ page, tab });
-    setIsNavigating(true);
-  };
-
-  const handleLoadingFinished = () => {
-    if (pendingNav) {
-      const { page, tab } = pendingNav;
-      setCurrentPage(page);
-      if (page === 'dashboard') {
-        setActiveTab(tab || 'overview');
-      } else if (tab) {
-        setActiveTab(tab);
-      } else {
-        setActiveTab('overview');
-      }
-      window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setPendingNav(null);
+    if (withLoader) {
+      setIsPageLoading(true);
     }
-    setIsNavigating(false);
+    setCurrentPage(page);
+    if (page === 'dashboard') {
+      setActiveTab(tab || 'overview');
+    } else if (tab) {
+      setActiveTab(tab);
+    } else {
+      setActiveTab('overview');
+    }
+    window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // If user signs in while on login page, smoothly transition to member dashboard
@@ -231,14 +199,12 @@ function AppContent() {
           <AppOpeningSplash
             onComplete={() => {
               setShowOpeningSplash(false);
-              setIsInitialLoading(false);
             }}
           />
         )}
         <PageLoader
-          isLoading={!showOpeningSplash && isNavigating}
-          targetPage={targetLabel}
-          onFinished={handleLoadingFinished}
+          isLoading={!showOpeningSplash && (isPageLoading || !isOnline)}
+          onFinished={() => setIsPageLoading(false)}
         />
         <AdminLayout onNavigate={navigateTo} />
       </>
@@ -257,16 +223,14 @@ function AppContent() {
         <AppOpeningSplash
           onComplete={() => {
             setShowOpeningSplash(false);
-            setIsInitialLoading(false);
           }}
         />
       )}
 
-      {/* Adaptive Page Transition Loader for in-app navigation */}
+      {/* High-Performance 200ms Network-Aware Page Loader */}
       <PageLoader
-        isLoading={!showOpeningSplash && isNavigating}
-        targetPage={targetLabel}
-        onFinished={handleLoadingFinished}
+        isLoading={!showOpeningSplash && (isPageLoading || !isOnline)}
+        onFinished={() => setIsPageLoading(false)}
       />
 
       {/* Smart Slide Menu (Rendered underneath/alongside the main screen) */}
@@ -275,7 +239,7 @@ function AppContent() {
         onClose={() => setIsDrawerOpen(false)}
         activeTab={activeTab}
         onSelectTab={(tab) => {
-          // Direct instantaneous navigation without artificial loader delay
+          // Direct instantaneous switch from menu without any loader
           setActiveTab(tab);
           setCurrentPage('dashboard');
           window.location.hash = `#/${'dashboard'}/${tab}`;
@@ -283,16 +247,9 @@ function AppContent() {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onNavigate={(page, tab) => {
-          // Direct navigation from menu without artificial loader delay
-          setCurrentPage(page);
-          if (page === 'dashboard') {
-            setActiveTab(tab || 'overview');
-          } else if (tab) {
-            setActiveTab(tab);
-          }
-          window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
+          // Instantaneous navigation from menu without loader
           setIsDrawerOpen(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          navigateTo(page, tab, false);
         }}
       />
 
