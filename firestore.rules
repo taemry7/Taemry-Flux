@@ -1,32 +1,35 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper functions
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
-    
+
     function isAdmin() {
       return isAuthenticated() && (
         request.auth.token.admin == true ||
-        request.auth.token.email in ['admin@taemryflux.com', 'taemryflux@gmail.com', 'admin_taemry@taemryflux.com', 'mistrtaimur7@gmail.com', 'mistrtaimoor@gmail.com', 'mistrtaemry@gmail.com', 'kk3083702@gmail.com']
+        request.auth.token.email in [
+          'admin@taemryflux.com',
+          'taemryflux@gmail.com',
+          'admin_taemry@taemryflux.com',
+          'mistrtaimur7@gmail.com',
+          'mistrtaimoor@gmail.com',
+          'mistrtaemry@gmail.com',
+          'kk3083702@gmail.com'
+        ]
       );
     }
 
-    // Users Collection
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      // Users can update their basic profile, but cannot mutate walletBalance or role directly from client
-      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['walletBalance', 'role', 'isAdmin', 'currentPackage'])) || isAdmin();
-      allow create: if isOwner(userId) || isAdmin();
+      allow create, update: if isOwner(userId) || isAdmin();
       allow delete: if isAdmin();
-      
-      // User Sub-collections
+
       match /transactions/{txId} {
         allow read: if isOwner(userId) || isAdmin();
         allow write: if isAdmin();
@@ -37,51 +40,47 @@ service cloud.firestore {
       }
     }
 
-    // Deposits Collection
     match /deposits/{depositId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Users can submit a pending deposit request
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
-      // Only administrators can approve, reject, or update deposit requests
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
       allow update, delete: if isAdmin();
     }
 
-    // Withdrawals Collection
     match /withdrawals/{withdrawalId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
-      // Users can request a withdrawal
-      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
-      // Only administrators can mark paid, reject, or modify withdrawals
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
       allow update, delete: if isAdmin();
     }
 
-    // System-wide Transactions Collection
     match /transactions/{txId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || resource.data.uid == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
       allow write: if isAdmin();
     }
 
-    // Milestones Collection
     match /milestones/{userId} {
       allow read: if isOwner(userId) || isAdmin();
       allow write: if isAdmin();
     }
 
-    // System Settings Collection (Exchange rate, banking, limits, ads settings)
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /supportTickets/{ticketId} {
+      allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+
     match /systemSettings/{docId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 
-    // Audit Logs Collection
-    match /auditLogs/{logId} {
-      allow read, write: if isAdmin();
-    }
-
-    // Broadcast Notifications Collection
-    match /notifications/{notifId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
   }
 }
