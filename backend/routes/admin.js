@@ -196,10 +196,10 @@ router.get('/users', verifyAdmin, async (req, res) => {
         uid: doc.id,
         email: data.email || 'N/A',
         name: data.name || data.displayName || 'TAEMRY Member',
-        currentPackage: data.currentPackage || 'Bronze',
+        currentPackage: data.currentPackage || 'None',
         walletBalance: Number(data.walletBalance || 0),
         referralCount: Number(data.referralCount || 0),
-        isEligible: data.isEligible !== false,
+        isEligible: Boolean(data.isEligible),
         isBlocked: Boolean(data.isBlocked),
         createdAt: data.createdAt || new Date().toISOString(),
       };
@@ -1638,6 +1638,71 @@ router.delete('/packages/:id', verifyAdmin, async (req, res) => {
       success: false,
       error: 'Failed to delete package',
       message: error.message,
+    });
+  }
+});
+
+/**
+ * y) POST /api/admin/reset-system-data
+ * Completely resets all user balances to 0, clears all dummy records,
+ * purges deposits and withdrawals, and starts all accounts completely clean and live.
+ */
+router.post('/reset-system-data', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    if (db && db.data && typeof db.data.delete === 'function') {
+      const keysToDelete = [];
+      for (const [key] of db.data.entries()) {
+        if (
+          key.startsWith('deposits/') ||
+          key.startsWith('withdrawals/') ||
+          key.startsWith('auditLogs/') ||
+          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+            key.includes('user_tariq') ||
+            key.includes('user_sara') ||
+            key.includes('user_bilal') ||
+            key.includes('user_hamza') ||
+            key.includes('demo-user-1') ||
+            key.includes('transactions/')
+          ))
+        ) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((k) => db.data.delete(k));
+
+      // Reset all remaining users to 0 balance & clean state
+      for (const [key, val] of db.data.entries()) {
+        if (key.startsWith('users/')) {
+          db.data.set(key, {
+            ...val,
+            walletBalance: 0,
+            currentPackage: 'None',
+            lifetimeAds: 0,
+            dailyAdCount: 0,
+            teamAdsCount: 0,
+            referralCount: 0,
+            totalEarned: 0,
+            isEligible: false,
+          });
+        }
+      }
+
+      if (typeof db._persist === 'function') {
+        db._persist();
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: 'All balances reset to 0, dummy records removed, and all deposit/withdrawal records cleared successfully.',
+    });
+  } catch (err) {
+    console.error('Error in /api/admin/reset-system-data:', err);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to reset system data',
+      message: err.message,
     });
   }
 });

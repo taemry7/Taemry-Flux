@@ -103,17 +103,17 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
     >
       <div>
         {/* Menu Header */}
-        <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#e9e3d8] dark:border-[#15323b]">
+        <div className="flex items-center justify-between mb-6 p-3.5 rounded-2xl bg-[#0c5963] text-white shadow-sm border border-[#0c5963]">
           <button
             type="button"
             onClick={() => {
               onSelectTab('settings');
               onClose();
             }}
-            className="flex items-center gap-3 text-left cursor-pointer group hover:opacity-90 transition-opacity"
+            className="flex items-center gap-3 text-left cursor-pointer group hover:opacity-95 transition-opacity min-w-0 flex-1"
             title="Open Profile Settings"
           >
-            <div className="w-11 h-11 rounded-full bg-[#e89b27] text-white border-[1.5px] border-[#ded8cb] dark:border-[#224450] flex items-center justify-center font-bold text-base shadow-sm group-hover:border-[#0c5963]/50 transition-colors shrink-0 overflow-hidden">
+            <div className="w-11 h-11 rounded-full bg-[#e89b27] text-white border-[1.5px] border-white/40 flex items-center justify-center font-bold text-base shadow-sm group-hover:border-white transition-colors shrink-0 overflow-hidden">
               {currentUser?.photoURL ? (
                 <img
                   src={currentUser.photoURL}
@@ -132,10 +132,10 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="text-[15px] font-bold text-[#09353e] dark:text-white leading-tight truncate">
+              <h4 className="text-[15px] font-bold text-white leading-tight truncate">
                 {currentUser?.displayName || 'TAEMRY Member'}
               </h4>
-              <p className="text-xs text-[#556e73] dark:text-[#94a3b8] truncate mt-0.5">
+              <p className="text-xs text-white/80 truncate mt-0.5 font-medium">
                 {hasActivePackage ? `${userStats.currentPackage} Plan` : 'Urban Citizen'}
               </p>
             </div>
@@ -145,7 +145,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
             type="button"
             id="btnCloseMenu"
             onClick={onClose}
-            className="w-9 h-9 rounded-full bg-[#ede7db] dark:bg-[#122b33] hover:bg-[#e2dacb] dark:hover:bg-[#183944] text-[#09353e] dark:text-[#f1f5f9] flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2"
+            className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all cursor-pointer shrink-0 ml-2"
             aria-label="Close Smart Slide Menu"
           >
             <X className="w-5 h-5" />

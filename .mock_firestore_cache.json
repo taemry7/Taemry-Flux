@@ -11,14 +11,14 @@
       "jazzcashNumber": "03009876543",
       "jazzcashName": "TAEMRY OFFICIAL",
       "cryptoAddresses": {
-        "USDT": "0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d",
+        "USDT": "0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)",
         "BTC": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
       },
       "minWithdrawal": 1,
       "maxWithdrawal": 1000,
       "withdrawalCooldownMinutes": 5,
       "referralRequired": true,
-      "updatedAt": "2026-09-08T20:15:04.160Z"
+      "updatedAt": "2026-09-12T00:00:00.000Z"
     }
   ],
   [
@@ -27,56 +27,107 @@
       "bronze": {
         "id": "bronze",
         "name": "Bronze",
+        "tierName": "Bronze",
         "price": 1,
         "minWallet": 0.1,
-        "rewardRate": "2.0%",
-        "dailyLimit": 20,
-        "description": "Starter tier to begin daily earnings."
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "STARTER",
+        "color": "#0284c7",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "🌱 Take your first step into daily advertising earnings with minimal capital.",
+        "isActive": true,
+        "order": 1
       },
       "silver": {
         "id": "silver",
         "name": "Silver",
+        "tierName": "Silver",
         "price": 5,
         "minWallet": 0.5,
-        "rewardRate": "2.5%",
-        "dailyLimit": 40,
-        "description": "Higher daily capacity and rewards."
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "POPULAR",
+        "color": "#0f766e",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "⚡ Amplify your daily revenue with an optimized Silver contract allocation.",
+        "isActive": true,
+        "order": 2
       },
       "gold": {
         "id": "gold",
         "name": "Gold",
+        "tierName": "Gold",
         "price": 10,
         "minWallet": 1,
-        "rewardRate": "3.0%",
-        "dailyLimit": 60,
-        "description": "Accelerated views and earning potential."
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "RECOMMENDED",
+        "color": "#ca8a04",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "🌟 Accelerate your growth and unlock higher advertising rewards every single day.",
+        "isActive": true,
+        "order": 3
+      },
+      "premium": {
+        "id": "premium",
+        "name": "Premium",
+        "tierName": "Premium",
+        "price": 50,
+        "minWallet": 5,
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "PRO",
+        "color": "#0284c7",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "💎 Experience pro-grade earning power with enhanced daily reward allocations.",
+        "isActive": true,
+        "order": 4
       },
       "elite": {
         "id": "elite",
         "name": "Elite",
+        "tierName": "Elite",
         "price": 100,
         "minWallet": 10,
-        "rewardRate": "4.5%",
-        "dailyLimit": 100,
-        "description": "High-velocity tier with premium returns."
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "HIGH CAPACITY",
+        "color": "#7c3aed",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "🚀 High-velocity contract tier crafted for dedicated digital earners.",
+        "isActive": true,
+        "order": 5
       },
       "master": {
         "id": "master",
         "name": "Master",
+        "tierName": "Master",
         "price": 500,
         "minWallet": 50,
-        "rewardRate": "6.0%",
-        "dailyLimit": 150,
-        "description": "Elite volume multiplier with maximum tier returns."
+        "rewardRate": "20%",
+        "dailyLimit": 200,
+        "badge": "ENTERPRISE",
+        "color": "#db2777",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "👑 Command the network with enterprise-level rewards and maximum earning capacity.",
+        "isActive": true,
+        "order": 6
       },
       "apex": {
         "id": "apex",
         "name": "Apex",
+        "tierName": "Apex",
         "price": 1000,
         "minWallet": 100,
-        "rewardRate": "7.5%",
+        "rewardRate": "20%",
         "dailyLimit": 200,
-        "description": "Top tier package with unbounded reward scale."
+        "badge": "TOP TIER",
+        "color": "#ea580c",
+        "description": "Active contract tier with 200 ads/day allocation and guaranteed daily rewards.",
+        "motivationText": "🏆 Reach pinnacle financial status with supreme daily capital returns and full power.",
+        "isActive": true,
+        "order": 7
       }
     }
   ],
@@ -93,224 +144,12 @@
       "isBlocked": false,
       "dailyAdCount": 0,
       "lifetimeAds": 0,
+      "teamAdsCount": 0,
       "totalEarned": 0,
       "role": "admin",
       "admin": true,
       "isAdmin": true,
       "createdAt": "2026-08-01T10:00:00.000Z"
-    }
-  ],
-  [
-    "users/demo-user-1",
-    {
-      "uid": "demo-user-1",
-      "email": "member@taemryflux.com",
-      "name": "TAEMRY Member",
-      "currentPackage": "None",
-      "walletBalance": 0,
-      "referralCount": 0,
-      "isEligible": false,
-      "isBlocked": false,
-      "dailyAdCount": 0,
-      "lifetimeAds": 0,
-      "totalEarned": 0,
-      "createdAt": "2026-08-15T10:00:00.000Z",
-      "referralCode": "FLUX-DEMOUS"
-    }
-  ],
-  [
-    "users/user_tariq",
-    {
-      "uid": "user_tariq",
-      "email": "tariq.khan@gmail.com",
-      "name": "Tariq Khan",
-      "currentPackage": "Elite",
-      "walletBalance": 128,
-      "referralCount": 7,
-      "isEligible": true,
-      "isBlocked": false,
-      "dailyAdCount": 22,
-      "lifetimeAds": 3450,
-      "createdAt": "2026-08-20T14:30:00.000Z"
-    }
-  ],
-  [
-    "users/user_sara",
-    {
-      "uid": "user_sara",
-      "email": "sara.ahmed@yahoo.com",
-      "name": "Sara Ahmed",
-      "currentPackage": "Silver",
-      "walletBalance": 14.2,
-      "referralCount": 2,
-      "isEligible": true,
-      "isBlocked": false,
-      "dailyAdCount": 15,
-      "lifetimeAds": 890,
-      "createdAt": "2026-08-28T09:15:00.000Z"
-    }
-  ],
-  [
-    "users/user_bilal",
-    {
-      "uid": "user_bilal",
-      "email": "bilal.malik@outlook.com",
-      "name": "Bilal Malik",
-      "currentPackage": "Master",
-      "walletBalance": 612.5,
-      "referralCount": 14,
-      "isEligible": true,
-      "isBlocked": false,
-      "dailyAdCount": 45,
-      "lifetimeAds": 6800,
-      "createdAt": "2026-09-01T11:45:00.000Z"
-    }
-  ],
-  [
-    "users/user_hamza",
-    {
-      "uid": "user_hamza",
-      "email": "hamza.dev@gmail.com",
-      "name": "Hamza Dev",
-      "currentPackage": "Bronze",
-      "walletBalance": 2.1,
-      "referralCount": 0,
-      "isEligible": true,
-      "isBlocked": true,
-      "dailyAdCount": 0,
-      "lifetimeAds": 40,
-      "createdAt": "2026-09-02T16:20:00.000Z"
-    }
-  ],
-  [
-    "deposits/dep_1001",
-    {
-      "depositId": "dep_1001",
-      "id": "dep_1001",
-      "userId": "demo-user-1",
-      "userEmail": "member@taemryflux.com",
-      "method": "jazzcash",
-      "amountUSD": 10,
-      "amountPKR": 3000,
-      "screenshotURL": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&auto=format&fit=crop&q=80",
-      "status": "rejected",
-      "createdAt": "2026-09-08T19:15:04.161Z",
-      "rejectReason": "Screenshot unreadable or unconfirmed transaction",
-      "rejectedBy": "mistrtaemry@gmail.com",
-      "rejectedAt": "2026-09-08T20:18:40.361Z"
-    }
-  ],
-  [
-    "deposits/dep_1002",
-    {
-      "depositId": "dep_1002",
-      "id": "dep_1002",
-      "userId": "user_tariq",
-      "userEmail": "tariq.khan@gmail.com",
-      "method": "bank_transfer",
-      "amountUSD": 100,
-      "amountPKR": 30000,
-      "screenshotURL": "https://images.unsplash.com/photo-1559526324-4b87b5e36e44?w=600&auto=format&fit=crop&q=80",
-      "status": "rejected",
-      "createdAt": "2026-09-08T18:15:04.161Z",
-      "rejectReason": "Screenshot unreadable or unconfirmed transaction",
-      "rejectedBy": "mistrtaemry@gmail.com",
-      "rejectedAt": "2026-09-08T20:18:38.047Z"
-    }
-  ],
-  [
-    "deposits/dep_1003",
-    {
-      "depositId": "dep_1003",
-      "id": "dep_1003",
-      "userId": "user_sara",
-      "userEmail": "sara.ahmed@yahoo.com",
-      "method": "easypaisa",
-      "amountUSD": 5,
-      "amountPKR": 1500,
-      "screenshotURL": "https://images.unsplash.com/photo-1554224154-26032ffc0d07?w=600&auto=format&fit=crop&q=80",
-      "status": "approved",
-      "createdAt": "2026-09-07T20:15:04.161Z"
-    }
-  ],
-  [
-    "withdrawals/wd_2001",
-    {
-      "withdrawalId": "wd_2001",
-      "id": "wd_2001",
-      "userId": "demo-user-1",
-      "userEmail": "member@taemryflux.com",
-      "method": "easypaisa",
-      "accountName": "TAEMRY Member",
-      "accountNumber": "03451122334",
-      "amountUSD": 20,
-      "amountPKR": 6000,
-      "status": "rejected",
-      "createdAt": "2026-09-08T19:45:04.161Z",
-      "rejectReason": "Recipient account details mismatch or bank failure.",
-      "rejectedBy": "mistrtaemry@gmail.com",
-      "rejectedAt": "2026-09-08T20:17:26.793Z"
-    }
-  ],
-  [
-    "withdrawals/wd_2002",
-    {
-      "withdrawalId": "wd_2002",
-      "id": "wd_2002",
-      "userId": "user_bilal",
-      "userEmail": "bilal.malik@outlook.com",
-      "method": "bank_transfer",
-      "accountName": "Bilal Malik",
-      "accountNumber": "PK44BAHL0001234567890123",
-      "amountUSD": 150,
-      "amountPKR": 45000,
-      "status": "rejected",
-      "createdAt": "2026-09-08T18:45:04.161Z",
-      "rejectReason": "Recipient account details mismatch or bank failure.",
-      "rejectedBy": "mistrtaemry@gmail.com",
-      "rejectedAt": "2026-09-08T20:17:28.977Z"
-    }
-  ],
-  [
-    "withdrawals/wd_2003",
-    {
-      "withdrawalId": "wd_2003",
-      "id": "wd_2003",
-      "userId": "user_tariq",
-      "userEmail": "tariq.khan@gmail.com",
-      "method": "crypto_usdt",
-      "accountName": "Tariq Crypto",
-      "accountNumber": "0x33445566778899aabbccddeeff00112233445566",
-      "amountUSD": 50,
-      "amountPKR": 15000,
-      "status": "paid",
-      "createdAt": "2026-09-06T20:15:04.161Z"
-    }
-  ],
-  [
-    "auditLogs/log_1",
-    {
-      "id": "log_1",
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "approved_deposit",
-      "targetUid": "user_sara",
-      "targetEmail": "sara.ahmed@yahoo.com",
-      "amountUSD": 5,
-      "details": "Approved $5 deposit for Sara Ahmed",
-      "timestamp": "2026-09-07T20:15:04.161Z"
-    }
-  ],
-  [
-    "auditLogs/log_2",
-    {
-      "id": "log_2",
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "block_user",
-      "targetUid": "user_hamza",
-      "targetEmail": "hamza.dev@gmail.com",
-      "amountUSD": null,
-      "details": "User flagged for multi-account abuse",
-      "timestamp": "2026-09-08T08:15:04.161Z"
     }
   ],
   [
@@ -322,12 +161,12 @@
       "subject": "Inquiry regarding JazzCash deposit verification timeframe",
       "message": "Hello support team, I submitted a 10 USD deposit via JazzCash an hour ago. How long does verification usually take?",
       "priority": "normal",
-      "status": "resolved",
-      "adminReply": "Issue resolved by administration.",
-      "repliedAt": "2026-09-08T20:18:01.766Z",
-      "repliedBy": "mistrtaemry@gmail.com",
-      "createdAt": "2026-09-08T19:15:04.161Z",
-      "updatedAt": "2026-09-08T20:18:01.766Z"
+      "status": "open",
+      "adminReply": null,
+      "repliedAt": null,
+      "repliedBy": null,
+      "createdAt": "2026-09-12T16:44:19.235Z",
+      "updatedAt": "2026-09-12T16:44:19.235Z"
     }
   ],
   [
@@ -341,453 +180,10 @@
       "priority": "low",
       "status": "resolved",
       "adminReply": "Hi Tariq, direct Level 1 referrals award 50% commission on all ads viewed by your downline. Level 2 through Level 5 receive respective tiered team bonuses. Thank you!",
-      "repliedAt": "2026-09-08T18:15:04.161Z",
+      "repliedAt": "2026-09-12T15:44:19.235Z",
       "repliedBy": "mistrtaemry@gmail.com",
-      "createdAt": "2026-09-08T16:15:04.161Z",
-      "updatedAt": "2026-09-08T18:15:04.161Z"
-    }
-  ],
-  [
-    "deposits/tx_1788897546154_231",
-    {
-      "id": "tx_1788897546154_231",
-      "depositId": "tx_1788897546154_231",
-      "userId": "demo-user-1",
-      "userEmail": "member@taemryflux.com",
-      "amountUSD": 10,
-      "amountPKR": 3000,
-      "method": "jazzcash",
-      "status": "approved",
-      "createdAt": "2026-09-08T20:15:05.672Z",
-      "approvedBy": "mistrtaemry@gmail.com",
-      "approvedAt": "2026-09-08T20:15:05.673Z"
-    }
-  ],
-  [
-    "users/demo-user-1/transactions/tx_1788897546154_231",
-    {
-      "type": "deposit",
-      "amount": 10,
-      "balanceAfter": 55.5,
-      "description": "Deposit approved (jazzcash)",
-      "depositId": "tx_1788897546154_231",
-      "timestamp": "2026-09-08T20:15:05.673Z",
-      "id": "tx_1788897546154_231"
-    }
-  ],
-  [
-    "auditLogs/tx_1788897546154_231",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "approved_deposit",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "amountUSD": 10,
-      "depositId": "tx_1788897546154_231",
-      "details": "Approved $10 deposit via jazzcash for member@taemryflux.com",
-      "timestamp": "2026-09-08T20:15:05.673Z",
-      "id": "tx_1788897546154_231"
-    }
-  ],
-  [
-    "deposits/tx_999999999",
-    {
-      "id": "tx_999999999",
-      "depositId": "tx_999999999",
-      "userId": "demo-user-1",
-      "userEmail": "member@taemryflux.com",
-      "amountUSD": 10,
-      "amountPKR": 3000,
-      "method": "jazzcash",
-      "status": "rejected",
-      "createdAt": "2026-09-08T20:15:18.834Z",
-      "rejectReason": "Test rejection",
-      "rejectedBy": "mistrtaemry@gmail.com",
-      "rejectedAt": "2026-09-08T20:15:18.834Z"
-    }
-  ],
-  [
-    "auditLogs/tx_999999999",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "rejected_deposit",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "amountUSD": 10,
-      "depositId": "tx_999999999",
-      "details": "Rejected deposit of $10. Reason: Test rejection",
-      "timestamp": "2026-09-08T20:15:18.834Z",
-      "id": "tx_999999999"
-    }
-  ],
-  [
-    "withdrawals/wd_999999999",
-    {
-      "id": "wd_999999999",
-      "withdrawalId": "wd_999999999",
-      "userId": "demo-user-1",
-      "userEmail": "member@taemryflux.com",
-      "amountUSD": 20,
-      "amountPKR": 6000,
-      "method": "easypaisa",
-      "accountName": "TAEMRY Member",
-      "accountNumber": "03451122334",
-      "status": "paid",
-      "createdAt": "2026-09-08T20:15:20.910Z",
-      "paidBy": "mistrtaemry@gmail.com",
-      "paidAt": "2026-09-08T20:15:20.910Z"
-    }
-  ],
-  [
-    "users/demo-user-1/transactions/tx_1788898520910_319",
-    {
-      "type": "withdrawal",
-      "amount": -20,
-      "balanceAfter": 35.5,
-      "description": "Withdrawal paid via easypaisa",
-      "withdrawalId": "wd_999999999",
-      "timestamp": "2026-09-08T20:15:20.910Z",
-      "id": "tx_1788898520910_319",
-      "depositId": "tx_1788898520910_319"
-    }
-  ],
-  [
-    "auditLogs/tx_1788898520911_595",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "mark_withdrawal_paid",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "amountUSD": 20,
-      "withdrawalId": "wd_999999999",
-      "details": "Settled withdrawal of $20 (6000 PKR) to TAEMRY Member via easypaisa",
-      "timestamp": "2026-09-08T20:15:20.911Z",
-      "id": "tx_1788898520911_595",
-      "depositId": "tx_1788898520911_595"
-    }
-  ],
-  [
-    "users/k7xukvuXl7QYp8geVHjN2XxajBN2",
-    {
-      "walletBalance": 45.5,
-      "currentPackage": "Gold",
-      "lifetimeAds": 1200,
-      "teamAdsCount": 5000,
-      "referralCount": 3,
-      "totalEarned": 138.2,
-      "isEligible": true,
-      "uid": "k7xukvuXl7QYp8geVHjN2XxajBN2",
-      "email": "mistrtaemry@gmail.com",
-      "name": "Mistr Taemry",
-      "createdAt": "2026-09-08T20:16:29.118Z"
-    }
-  ],
-  [
-    "auditLogs/tx_1788898646794_831",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "reject_withdrawal",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "amountUSD": 20,
-      "withdrawalId": "wd_2001",
-      "details": "Rejected withdrawal of $20. Reason: Recipient account details mismatch or bank failure.",
-      "timestamp": "2026-09-08T20:17:26.794Z",
-      "id": "tx_1788898646794_831",
-      "depositId": "tx_1788898646794_831"
-    }
-  ],
-  [
-    "auditLogs/tx_1788898648977_762",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "reject_withdrawal",
-      "targetUid": "user_bilal",
-      "targetEmail": "bilal.malik@outlook.com",
-      "amountUSD": 150,
-      "withdrawalId": "wd_2002",
-      "details": "Rejected withdrawal of $150. Reason: Recipient account details mismatch or bank failure.",
-      "timestamp": "2026-09-08T20:17:28.977Z",
-      "id": "tx_1788898648977_762",
-      "depositId": "tx_1788898648977_762"
-    }
-  ],
-  [
-    "auditLogs/tx_1788898681768_318",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "update_ticket_status",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "details": "Updated TKT-88A01 status to \"resolved\".",
-      "timestamp": "2026-09-08T20:18:01.768Z",
-      "id": "tx_1788898681768_318",
-      "depositId": "tx_1788898681768_318"
-    }
-  ],
-  [
-    "auditLogs/dep_1002",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "rejected_deposit",
-      "targetUid": "user_tariq",
-      "targetEmail": "tariq.khan@gmail.com",
-      "amountUSD": 100,
-      "depositId": "dep_1002",
-      "details": "Rejected deposit of $100. Reason: Screenshot unreadable or unconfirmed transaction",
-      "timestamp": "2026-09-08T20:18:38.047Z",
-      "id": "dep_1002"
-    }
-  ],
-  [
-    "auditLogs/dep_1001",
-    {
-      "adminEmail": "mistrtaemry@gmail.com",
-      "action": "rejected_deposit",
-      "targetUid": "demo-user-1",
-      "targetEmail": "member@taemryflux.com",
-      "amountUSD": 10,
-      "depositId": "dep_1001",
-      "details": "Rejected deposit of $10. Reason: Screenshot unreadable or unconfirmed transaction",
-      "timestamp": "2026-09-08T20:18:40.361Z",
-      "id": "dep_1001"
-    }
-  ],
-  [
-    "users/7rJO83idend3HwUDn9pt7fDUoUn2",
-    {
-      "walletBalance": 45.5,
-      "currentPackage": "Gold",
-      "lifetimeAds": 1200,
-      "teamAdsCount": 5000,
-      "referralCount": 3,
-      "totalEarned": 138.2,
-      "isEligible": true,
-      "uid": "7rJO83idend3HwUDn9pt7fDUoUn2",
-      "email": "mistrtaimurhaider@gmail.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-08T20:19:21.916Z"
-    }
-  ],
-  [
-    "deposits/tx_1788898892462_26",
-    {
-      "userId": "demo-user-token",
-      "userEmail": "member@taemryflux.com",
-      "method": "jazzcash",
-      "amountUSD": 10,
-      "amountPKR": 3000,
-      "exchangeRate": 300,
-      "screenshotURL": null,
-      "transactionId": "TXN123456",
-      "status": "pending",
-      "accountName": "TAEMRY OFFICIAL",
-      "accountNumber": "03009876543",
-      "createdAt": "2026-09-08T20:21:32.462Z",
-      "updatedAt": "2026-09-08T20:21:32.462Z",
-      "id": "tx_1788898892462_26",
-      "depositId": "tx_1788898892462_26",
-      "timestamp": "2026-09-08T20:21:32.463Z"
-    }
-  ],
-  [
-    "deposits/tx_1788898899595_744",
-    {
-      "userId": "demo-user-token",
-      "userEmail": "member@taemryflux.com",
-      "method": "jazzcash",
-      "amountUSD": 10,
-      "amountPKR": 3000,
-      "exchangeRate": 300,
-      "screenshotURL": "data:image/jpeg;base64,ZHVtbXkgaW1hZ2UgY29udGVudAo=",
-      "transactionId": "TXN123456",
-      "status": "pending",
-      "accountName": "TAEMRY OFFICIAL",
-      "accountNumber": "03009876543",
-      "createdAt": "2026-09-08T20:21:39.595Z",
-      "updatedAt": "2026-09-08T20:21:39.595Z",
-      "id": "tx_1788898899595_744",
-      "depositId": "tx_1788898899595_744",
-      "timestamp": "2026-09-08T20:21:39.595Z"
-    }
-  ],
-  [
-    "deposits/tx_1788898988435_643",
-    {
-      "userId": "demo-user-token",
-      "userEmail": "member@taemryflux.com",
-      "method": "easypaisa",
-      "amountUSD": 25,
-      "amountPKR": 7500,
-      "exchangeRate": 300,
-      "screenshotURL": "data:image/jpeg;base64,ZHVtbXkgaW1hZ2UgY29udGVudAo=",
-      "transactionId": "EP-778899",
-      "status": "pending",
-      "accountName": "TAEMRY OFFICIAL",
-      "accountNumber": "03451234567",
-      "createdAt": "2026-09-08T20:23:08.435Z",
-      "updatedAt": "2026-09-08T20:23:08.435Z",
-      "id": "tx_1788898988435_643",
-      "depositId": "tx_1788898988435_643",
-      "timestamp": "2026-09-08T20:23:08.435Z"
-    }
-  ],
-  [
-    "users/xWvy8NoPkXRwbVseXgzlAh89lKI3",
-    {
-      "walletBalance": 45.5,
-      "currentPackage": "Gold",
-      "lifetimeAds": 1200,
-      "teamAdsCount": 5000,
-      "referralCount": 3,
-      "totalEarned": 138.2,
-      "isEligible": true,
-      "uid": "xWvy8NoPkXRwbVseXgzlAh89lKI3",
-      "email": "mistrtaimoor@gmail.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-09T11:30:19.860Z"
-    }
-  ],
-  [
-    "users/demo-new-user-999",
-    {
-      "walletBalance": 0.001,
-      "currentPackage": "None",
-      "lifetimeAds": 1,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0.001,
-      "isEligible": false,
-      "uid": "demo-new-user-999",
-      "email": "freshuser@test.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-09T11:42:15.869Z",
-      "referralCode": "FLUX-DEMONE",
-      "dailyAdCount": 1,
-      "lastAdWatchTime": "2026-09-09T11:42:38.059Z",
-      "lastAdWatchDate": "2026-09-09"
-    }
-  ],
-  [
-    "transactions/tx_1788954158059_14",
-    {
-      "userId": "demo-new-user-999",
-      "uid": "demo-new-user-999",
-      "type": "ad_reward",
-      "adId": "sample",
-      "package": "None",
-      "amount": 0.001,
-      "previousBalance": 0,
-      "balanceAfter": 0.001,
-      "timestamp": "2026-09-09T11:42:38.059Z",
-      "createdAt": "2026-09-09T11:42:38.059Z",
-      "description": "Daily Ad View Reward (#1 / 200 - None tier)",
-      "id": "tx_1788954158059_14",
-      "depositId": "tx_1788954158059_14"
-    }
-  ],
-  [
-    "users/demo-brand-new-user-000",
-    {
-      "uid": "demo-brand-new-user-000",
-      "email": "brandnew@test.com",
-      "name": "TAEMRY Member",
-      "walletBalance": 0.001,
-      "currentPackage": "None",
-      "isEligible": false,
-      "lifetimeAds": 1,
-      "dailyAdCount": 1,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0.001,
-      "createdAt": "2026-09-09T11:42:58.554Z",
-      "lastAdWatchTime": "2026-09-09T11:42:58.555Z",
-      "lastAdWatchDate": "2026-09-09"
-    }
-  ],
-  [
-    "transactions/tx_1788954178555_863",
-    {
-      "userId": "demo-brand-new-user-000",
-      "uid": "demo-brand-new-user-000",
-      "type": "ad_reward",
-      "adId": "sample",
-      "package": "None",
-      "amount": 0.001,
-      "previousBalance": 0,
-      "balanceAfter": 0.001,
-      "timestamp": "2026-09-09T11:42:58.555Z",
-      "createdAt": "2026-09-09T11:42:58.555Z",
-      "description": "Daily Ad View Reward (#1 / 200 - None tier)",
-      "id": "tx_1788954178555_863",
-      "depositId": "tx_1788954178555_863"
-    }
-  ],
-  [
-    "users/demo-brand-new-user-777",
-    {
-      "uid": "demo-brand-new-user-777",
-      "email": "brandnew777@test.com",
-      "name": "TAEMRY Member",
-      "walletBalance": 0,
-      "currentPackage": "None",
-      "isEligible": false,
-      "lifetimeAds": 0,
-      "dailyAdCount": 0,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0,
-      "createdAt": "2026-09-09T11:43:28.024Z"
-    }
-  ],
-  [
-    "users/EGEXFF83UNa80ZNzxIIWVfblIes1",
-    {
-      "walletBalance": 0,
-      "currentPackage": "None",
-      "lifetimeAds": 0,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0,
-      "isEligible": false,
-      "uid": "EGEXFF83UNa80ZNzxIIWVfblIes1",
-      "email": "mistrtaimur7@gmail.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-09T11:58:26.673Z",
-      "referralCode": "FLUX-EGEXFF"
-    }
-  ],
-  [
-    "users/e5mPxvgLTlM8frpfv3CVUpdevmN2",
-    {
-      "walletBalance": 0,
-      "currentPackage": "None",
-      "lifetimeAds": 0,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0,
-      "isEligible": false,
-      "uid": "e5mPxvgLTlM8frpfv3CVUpdevmN2",
-      "email": "lalakhan@gmail.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-10T16:46:45.886Z",
-      "referralCode": "FLUX-E5MPXV"
-    }
-  ],
-  [
-    "users/demo-new-user-token",
-    {
-      "walletBalance": 0,
-      "currentPackage": "None",
-      "lifetimeAds": 0,
-      "teamAdsCount": 0,
-      "referralCount": 0,
-      "totalEarned": 0,
-      "isEligible": false,
-      "uid": "demo-new-user-token",
-      "email": "newuser123@gmail.com",
-      "name": "TAEMRY Member",
-      "createdAt": "2026-09-10T17:11:20.716Z"
+      "createdAt": "2026-09-12T13:44:19.235Z",
+      "updatedAt": "2026-09-12T15:44:19.235Z"
     }
   ]
 ]

@@ -21,6 +21,55 @@ async function startServer() {
   // Initialize Firebase Admin SDK (lazy fallback if keys not in env)
   initFirebaseAdmin();
 
+  // Auto-purge pre-seeded test accounts, dummy deposits, and dummy withdrawals on boot
+  try {
+    const { getDb } = await import('./backend/firebaseAdmin.js');
+    const db = getDb() as any;
+    if (db && db.data && typeof db.data.delete === 'function') {
+      const keysToDelete: string[] = [];
+      for (const [key] of db.data.entries()) {
+        if (
+          key.startsWith('deposits/') ||
+          key.startsWith('withdrawals/') ||
+          key.startsWith('auditLogs/') ||
+          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+            key.includes('user_tariq') ||
+            key.includes('user_sara') ||
+            key.includes('user_bilal') ||
+            key.includes('user_hamza') ||
+            key.includes('demo-user-1') ||
+            key.includes('transactions/')
+          ))
+        ) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((k) => db.data.delete(k));
+
+      // Reset admin_taemry to 0 balance & clean state
+      const adminDoc = db.data.get('users/admin_taemry');
+      if (adminDoc) {
+        db.data.set('users/admin_taemry', {
+          ...adminDoc,
+          walletBalance: 0,
+          currentPackage: 'None',
+          lifetimeAds: 0,
+          dailyAdCount: 0,
+          teamAdsCount: 0,
+          referralCount: 0,
+          totalEarned: 0,
+          isEligible: false,
+        });
+      }
+
+      if (typeof db._persist === 'function') {
+        db._persist();
+      }
+    }
+  } catch (err: any) {
+    console.warn('[Data Purge Notice]:', err.message);
+  }
+
   const app = express();
   const PORT = 3000;
 

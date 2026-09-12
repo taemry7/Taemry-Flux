@@ -20,9 +20,61 @@ import adminRoutes from './routes/admin.js';
 import supportRoutes from './routes/support.js';
 import whitepaperRoutes from './routes/whitepaper.js';
 import { sendAdminErrorAlert } from './utils/email.js';
+import { getDb } from './firebaseAdmin.js';
 
 // Load environment variables
 dotenv.config();
+
+// Auto-purge pre-seeded test accounts, dummy deposits, and dummy withdrawals on boot
+function purgePreSeededData() {
+  try {
+    const db = getDb();
+    if (db && db.data && typeof db.data.delete === 'function') {
+      const keysToDelete = [];
+      for (const [key] of db.data.entries()) {
+        if (
+          key.startsWith('deposits/') ||
+          key.startsWith('withdrawals/') ||
+          key.startsWith('auditLogs/') ||
+          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+            key.includes('user_tariq') ||
+            key.includes('user_sara') ||
+            key.includes('user_bilal') ||
+            key.includes('user_hamza') ||
+            key.includes('demo-user-1') ||
+            key.includes('transactions/')
+          ))
+        ) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((k) => db.data.delete(k));
+
+      // Reset admin_taemry to 0 balance & clean state
+      const adminDoc = db.data.get('users/admin_taemry');
+      if (adminDoc) {
+        db.data.set('users/admin_taemry', {
+          ...adminDoc,
+          walletBalance: 0,
+          currentPackage: 'None',
+          lifetimeAds: 0,
+          dailyAdCount: 0,
+          teamAdsCount: 0,
+          referralCount: 0,
+          totalEarned: 0,
+          isEligible: false,
+        });
+      }
+
+      if (typeof db._persist === 'function') {
+        db._persist();
+      }
+    }
+  } catch (err) {
+    console.warn('[Data Purge Notice]:', err.message);
+  }
+}
+purgePreSeededData();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

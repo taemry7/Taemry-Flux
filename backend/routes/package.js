@@ -144,6 +144,16 @@ export function normalizePackages(data) {
     return DEFAULT_PACKAGES;
   }
 
+  // Ensure all fundamental default packages (especially Premium) are preserved
+  DEFAULT_PACKAGES.forEach((dp) => {
+    const exists = rawList.some(
+      (p) => (p.id || '').toLowerCase().trim() === dp.id.toLowerCase().trim()
+    );
+    if (!exists) {
+      rawList.push({ ...dp });
+    }
+  });
+
   return rawList
     .map((pkg, idx) => {
       const id = (pkg.id || `pkg_${idx}`).toLowerCase().trim();

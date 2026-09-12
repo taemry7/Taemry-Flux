@@ -532,11 +532,31 @@ export const AuthProvider = ({ children }) => {
       saveUserSession(null);
       setCurrentUser(null);
       setIsAdmin(false);
+      setUserStats({
+        walletBalance: 0,
+        currentPackage: 'None',
+        lifetimeAds: 0,
+        dailyAdCount: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
+        isEligible: false,
+      });
     } catch (err) {
       console.error('Firebase logout error:', err);
       saveUserSession(null);
       setCurrentUser(null);
       setIsAdmin(false);
+      setUserStats({
+        walletBalance: 0,
+        currentPackage: 'None',
+        lifetimeAds: 0,
+        dailyAdCount: 0,
+        teamAdsCount: 0,
+        referralCount: 0,
+        totalEarned: 0,
+        isEligible: false,
+      });
     }
   };
 
