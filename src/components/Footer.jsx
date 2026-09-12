@@ -68,7 +68,7 @@ export default function Footer({ onNavigate, currentPage }) {
                 onClick={() => onNavigate('support')}
                 className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors font-semibold cursor-pointer"
               >
-                Support Desk
+                Contact Support
               </button>
               <button
                 id="btn-footer-whitepaper"

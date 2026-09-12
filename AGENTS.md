@@ -109,17 +109,51 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently visible with live balance and direct routing to withdraw funds.
 - **Hidden Deposit Spans**: Rate span and Instant Verification badge span are permanently hidden in `src/pages/DepositPage.jsx`.
 - **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
-- **Footer Navigation & Copyright**: Re-enabled per user explicit directive ("is footer pehly wala dobara add karo") with quick links (Home, Packages, How it works, Sign In/Dashboard, Support, Whitepaper) and copyright notice active on Home and Dashboard pages.
+- **Footer Navigation & Copyright**: Re-enabled per user explicit directive ("is footer pehly wala dobara add karo") with quick links (Home, Packages, How it works, Sign In/Dashboard, Contact Support, Whitepaper) and copyright notice active on Home and Dashboard pages. Support link is strictly labeled "Contact Support".
+
+## STRICT INVARIANT: World Rank Calculation & Display (PERMANENT & LOCKED)
+- **Live World Rank Invariant**: World rank starts dynamically at `# 1000+` for initial and standard account activity instead of fake static numbers. It progresses live based on verified ad watch volume, displaying `World Rank # 1000+` natively.
 
 ## STRICT INVARIANT: Referral Sharing System (PERMANENT)
 - **Referral Link Share System**:
   - Direct "Share Link" button (`#btn-share-referral`) and quick "WhatsApp" share button (`#btn-share-whatsapp`) integrated in the referral link card.
   - Native Web Share API support when available on mobile/desktop browsers, with an interactive Share Modal offering WhatsApp, Telegram, and 1-click clipboard link copying.
 
+## STRICT INVARIANT: Account Settings Page & Profile Rules (PERMANENT & LOCKED)
+- **Status Indicator Invariant**:
+  - For new users or users without an active package: Red `STATUS: INACTIVE` indicator with warning icon.
+  - When an advertising package is purchased: Green `STATUS: ACTIVE` pulsing indicator with shield icon.
+- **Display Mode Removed**: The Display Mode (Theme switcher) section is permanently removed from `AccountSettings.jsx`.
+- **Profile Photo Upload Form**:
+  - The standalone Profile Picture card, avatar presets, and image URL link input are permanently removed.
+  - Profile photo upload is integrated directly within the Account Information form (`<form onSubmit={handleSaveProfile}>`).
+  - Allows direct local photo upload (`image/*`) and photo removal only.
+
+## STRICT INVARIANT: Deposit Page Logo Loading (PERMANENT & LOCKED)
+- **Zero Network Loading Delay**: JazzCash and Easypaisa payment method selectors use clean, inline vector SVGs instead of external `img` network requests. They render in 0ms without layout shift or loading delay.
+
+## STRICT INVARIANT: Live Leaderboard Access & Admin Management (PERMANENT & LOCKED)
+- **Live Leaderboard Navigation**: Accessible from Drawer and URL route (`#/dashboard/leaderboard`). Stored in `validTabs` in `DashboardPage.jsx` and URL router in `App.tsx`.
+- **Admin Leaderboard Editor (`src/pages/admin/AdminLeaderboard.jsx`)**:
+  - Full management suite inside the Admin Portal.
+  - Allows editing any member's name, username, rank, country/flag, city, tier, total earned, ads watched, referrals, daily yield, and status.
+  - Allows adding new members, moving ranks up/down, and deleting entries.
+  - Automatically synchronizes with `LiveLeaderboard.jsx` across Home and Dashboard via `taemry_admin_leaderboard_custom`.
+
+## STRICT INVARIANT: Watch Ads Interface Simplification (PERMANENT & LOCKED)
+- **Watch Ads UI**:
+  - Top header (engine span, tier reward span, h1, and 15s/5s duration buttons) permanently removed.
+  - Metric badges div (Daily Ad Counter, Reward Per Ad, Wallet Balance) permanently removed.
+  - Video screen stream player div permanently removed.
+  - In the directory catalog: description `<p>`, filter buttons (`All`, `Available`, `Completed`), search input, and range batch switcher divs are permanently removed.
+  - Direct 1 to 200 clean ad card directory rendered with individual "Watch Now" action buttons.
+  - Ready for external ad network (Monetag, Adsterra) integration on button click as specified by user.
+
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
 - All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.
 - No automated, spontaneous, or unsolicited modifications may be made to any file.
 - Any future modification strictly requires explicit, word-for-word instructions from the project owner.
+- Assistants MUST NEVER make code changes on their own initiative ("khud ba khud changing bilkul mana hai").
 
 
 

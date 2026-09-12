@@ -28,6 +28,7 @@ import {
   ShieldAlert,
   MoreVertical,
   Award,
+  Trophy,
   User,
   Sparkles,
   FileCode2,
@@ -51,7 +52,9 @@ import AdminMaintenance from '../pages/admin/AdminMaintenance';
 import AdminWhitepaper from '../pages/admin/AdminWhitepaper';
 import AdminMilestones from '../pages/admin/AdminMilestones';
 import AdminPackages from '../pages/admin/AdminPackages';
+import AdminLeaderboard from '../pages/admin/AdminLeaderboard';
 import AdminProfileModal from '../components/admin/AdminProfileModal';
+import LiveLeaderboard from '../components/LiveLeaderboard';
 
 export default function AdminLayout({ onNavigate }) {
   const { currentUser, isAdmin, logout, loading } = useAuth();
@@ -171,6 +174,7 @@ export default function AdminLayout({ onNavigate }) {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'leaderboard', label: 'Live Leaderboard', icon: Trophy },
     { id: 'packages', label: 'Package Management', icon: Package },
     { id: 'milestones', label: 'Milestones & Rewards', icon: Award },
     { id: 'users', label: 'Users Directory', icon: Users },
@@ -475,6 +479,10 @@ export default function AdminLayout({ onNavigate }) {
               onRefresh={fetchStats}
               loading={loadingStats}
             />
+          )}
+
+          {activeTab === 'leaderboard' && (
+            <AdminLeaderboard onNavigate={onNavigate} />
           )}
 
           {activeTab === 'users' && <AdminUsers />}

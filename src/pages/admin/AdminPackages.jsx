@@ -39,7 +39,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'STARTER',
     color: '#0284c7',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '🌱 Take your first step into daily advertising earnings with minimal capital.',
     isActive: true,
     order: 1,
@@ -54,7 +54,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'POPULAR',
     color: '#0f766e',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '⚡ Amplify your daily revenue with an optimized Silver contract allocation.',
     isActive: true,
     order: 2,
@@ -69,7 +69,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'RECOMMENDED',
     color: '#ca8a04',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '🌟 Accelerate your growth and unlock higher advertising rewards every single day.',
     isActive: true,
     order: 3,
@@ -84,7 +84,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'PRO',
     color: '#0284c7',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '💎 Experience pro-grade earning power with enhanced daily reward allocations.',
     isActive: true,
     order: 4,
@@ -99,7 +99,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'HIGH CAPACITY',
     color: '#7c3aed',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '🚀 High-velocity contract tier crafted for dedicated digital earners.',
     isActive: true,
     order: 5,
@@ -114,7 +114,7 @@ export const FACTORY_PACKAGES = [
     dailyLimit: 200,
     badge: 'ENTERPRISE',
     color: '#db2777',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '👑 Command the network with enterprise-level rewards and maximum earning capacity.',
     isActive: true,
     order: 6,
@@ -127,9 +127,9 @@ export const FACTORY_PACKAGES = [
     minWallet: 100.00,
     rewardRate: '20%',
     dailyLimit: 200,
-    badge: 'ELITE MASTER',
+    badge: 'Apex Master',
     color: '#ea580c',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '🔥 The absolute pinnacle of earning power — unbounded potential and supreme rewards.',
     isActive: true,
     order: 7,
@@ -155,7 +155,7 @@ export default function AdminPackages() {
     rewardRate: '20%',
     badge: 'VIP',
     color: '#0284c7',
-    description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+    description: 'Active contract tier delivering guaranteed 20% daily rewards.',
     motivationText: '✨ Unlock consistent daily digital returns with high-engagement advertising quota.',
     isActive: true,
   });
@@ -285,7 +285,7 @@ export default function AdminPackages() {
       rewardRate: '20%',
       badge: 'VIP',
       color: '#0284c7',
-      description: 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+      description: 'Active contract tier delivering guaranteed 20% daily rewards.',
       motivationText: '✨ Unlock consistent daily digital returns with high-engagement advertising quota.',
       isActive: true,
     });
@@ -557,7 +557,7 @@ export default function AdminPackages() {
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-mono text-white focus:outline-hidden focus:border-sky-500"
                   />
                   <span className="text-[10px] text-slate-500 mt-1 block">
-                    Default is 200 ads/day delivering guaranteed 20% daily returns.
+                    Delivering guaranteed 20% daily returns.
                   </span>
                 </div>
 

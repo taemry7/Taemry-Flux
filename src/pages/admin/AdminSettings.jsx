@@ -251,7 +251,7 @@ export default function AdminSettings() {
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
                 required
               />
-              <p className="text-[10px] text-slate-500 mt-1">Standard: 200 ads listing catalog.</p>
+              <p className="text-[10px] text-slate-500 mt-1">Standard listing catalog capacity.</p>
             </div>
 
             {/* Withdrawal Cooldown */}

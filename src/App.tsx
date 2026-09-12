@@ -76,6 +76,7 @@ function AppContent() {
       if (tab === 'watch-ads') return 'Daily Ads';
       if (tab === 'referrals') return 'Referrals';
       if (tab === 'transactions') return 'Transactions';
+      if (tab === 'leaderboard') return 'Live Leaderboard';
       if (tab === 'profile') return 'Profile';
       return 'Dashboard';
     }
@@ -157,6 +158,9 @@ function AppContent() {
       } else if (effectiveRoute === 'transactions') {
         setCurrentPage('dashboard');
         setActiveTab('transactions');
+      } else if (effectiveRoute === 'leaderboard') {
+        setCurrentPage('dashboard');
+        setActiveTab('leaderboard');
       } else if (effectiveRoute.startsWith('dashboard')) {
         setCurrentPage('dashboard');
         const parts = effectiveRoute.split('/');

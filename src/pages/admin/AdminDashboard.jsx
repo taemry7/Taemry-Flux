@@ -19,7 +19,8 @@ import {
   RefreshCw,
   Bell,
   Rocket,
-  LifeBuoy
+  LifeBuoy,
+  Trophy
 } from 'lucide-react';
 import GoLiveModal from '../../components/admin/GoLiveModal';
 
@@ -416,6 +417,13 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
           <p className="text-xs text-slate-400 mt-0.5">Jump directly to specific governance operations</p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
+          <button
+            onClick={() => onNavigateTab('leaderboard')}
+            className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <span>Live Leaderboard</span>
+          </button>
           <button
             onClick={() => onNavigateTab('users')}
             className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"

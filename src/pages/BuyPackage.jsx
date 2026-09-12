@@ -36,7 +36,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: null,
       color: '#b45309',
-      description: 'The starter tier ($1.00) generating guaranteed 20% daily returns with 200 daily ads.',
+      description: 'The starter tier ($1.00) generating guaranteed 20% daily returns.',
       motivationText: '✨ Start your journey to consistent daily cashflow with guaranteed 20% returns upon activation.',
     },
     {
@@ -48,7 +48,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: 'POPULAR',
       color: '#0f766e',
-      description: 'Accelerated revenue pace with guaranteed 20% daily returns and 200 ads allocation.',
+      description: 'Accelerated revenue pace with guaranteed 20% daily returns.',
       motivationText: '🚀 Step up your capital accumulation with verified daily asset compounding.',
     },
     {
@@ -60,7 +60,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: 'RECOMMENDED',
       color: '#ca8a04',
-      description: 'High-yield momentum tier with 20% daily returns and 200 ads allocation.',
+      description: 'High-yield momentum tier with guaranteed 20% daily returns.',
       motivationText: '💼 Accelerate your financial future with maximum daily asset growth and momentum.',
     },
     {
@@ -72,7 +72,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: 'HIGH DEMAND',
       color: '#0284c7',
-      description: 'Substantial daily earnings yield with 20% daily returns across 200 ads.',
+      description: 'Substantial daily earnings yield with 20% daily returns upon activation.',
       motivationText: '🌟 Optimize your earnings portfolio with accelerated automated returns.',
     },
     {
@@ -84,7 +84,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: 'HIGH CAPACITY',
       color: '#7c3aed',
-      description: 'Accelerated volume capacity yielding 20% daily returns across 200 ads.',
+      description: 'Accelerated volume capacity yielding 20% guaranteed daily returns.',
       motivationText: '⚡ Unlock high-tier digital income with boundless daily earning power.',
     },
     {
@@ -96,7 +96,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       dailyLimit: 200,
       badge: 'PRO TIER',
       color: '#db2777',
-      description: 'Elite return multiplier delivering 20% daily returns across 200 ads.',
+      description: 'Elite return multiplier delivering 20% guaranteed daily returns.',
       motivationText: '👑 Experience top-tier financial scaling and exponential revenue independence.',
     },
     {
@@ -106,9 +106,9 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       price: 1000.00,
       rewardRate: '20%',
       dailyLimit: 200,
-      badge: 'TOP TIER',
+      badge: 'Apex Master',
       color: '#ea580c',
-      description: 'Peak performance tier generating 20% daily returns across 200 ads.',
+      description: 'Peak performance tier generating 20% guaranteed daily returns.',
       motivationText: '🏆 Reach pinnacle financial status with supreme daily capital returns and full power.',
     },
   ];
@@ -139,9 +139,9 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                 price: Number(pkg.price !== undefined ? pkg.price : fallback.price || 0),
                 dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : fallback.dailyLimit || 200),
                 rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
-                badge: pkg.badge !== undefined ? pkg.badge : fallback.badge,
+                badge: (pkg.id === 'apex' || fallback.id === 'apex') ? 'Apex Master' : (pkg.badge !== undefined ? pkg.badge : fallback.badge),
                 color: pkg.color || fallback.color || '#0284c7',
-                description: pkg.description || fallback.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+                description: pkg.description || fallback.description || 'Active contract tier with guaranteed daily returns upon activation.',
                 motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
               };
             });
@@ -284,7 +284,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
 
       {/* Packages Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-        {displayList.map((pkg) => {
+        {displayList.map((pkg, idx) => {
           const isCurrent = currentPackage && currentPackage !== 'None' && (
             currentPackage.toLowerCase() === pkg.id?.toLowerCase() ||
             currentPackage.toLowerCase() === pkg.tierName?.toLowerCase() ||
@@ -292,6 +292,17 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
           );
           const userHasPackage = currentPackage && currentPackage !== 'None';
           const canAfford = walletBalance >= pkg.price;
+
+          const teamRewardLines = [
+            'Earn continuous team rewards and matching bonuses whenever your downline watches daily ads.',
+            'Amplify daily earnings with active team ad bonuses across verified network members.',
+            'Maximize team rewards as your downline completes their daily ad viewing tasks.',
+            'Accelerate team ad commissions with priority multi-tier network bonuses.',
+            'Unlock high-yield team rewards and daily matching bonuses from team ad views.',
+            'Command premier team bonuses with substantial daily rewards fueled by team ads.',
+            'Pinnacle team rewards: receive maximum daily bonuses from entire team ad network.',
+          ];
+          const currentTeamRewardLine = teamRewardLines[idx % teamRewardLines.length];
 
           return (
             <div
@@ -316,7 +327,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                     )}
                     {pkg.badge && !isCurrent && (
                       <span className="text-[10px] font-bold uppercase tracking-wider bg-[#fef3c7] text-[#92400e] px-2.5 py-0.5 rounded-full border border-[#fde68a]">
-                        {pkg.badge}
+                        {(pkg.id === 'apex' || pkg.tierName?.toLowerCase() === 'apex') ? 'Apex Master' : pkg.badge}
                       </span>
                     )}
                   </div>
@@ -328,8 +339,9 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                 <p className="hidden text-xs font-semibold text-[#0c5963] mb-1">
                   {pkg.tierName || `${pkg.id?.toUpperCase()} Tier`} (${Number(pkg.price).toFixed(2)})
                 </p>
-                <p className="text-xs text-[#5e757a] mb-5 leading-relaxed">
-                  {pkg.description || 'Active contract tier with 200 daily ads allocation.'}
+                <p className="text-xs text-[#0c5963] font-medium mb-5 min-h-[36px] flex items-start gap-1.5 leading-relaxed">
+                  <Sparkles className="w-3.5 h-3.5 text-[#d97706] shrink-0 mt-0.5" />
+                  <span>{pkg.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.'}</span>
                 </p>
 
                 {/* Pricing and Stats */}
@@ -344,30 +356,26 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
                       </span>
                     </div>
 
-                    <div className="hidden text-right">
-                      <span className="hidden text-[10px] text-[#788e93] uppercase font-medium">
-                        Daily Allocation
+                    <div className="text-right">
+                      <span className="text-[10px] text-[#788e93] block uppercase font-medium">
+                        Daily Return
                       </span>
-                      <span className="hidden text-sm font-bold text-[#0c5963]">
-                        200 <span className="text-[10px] font-normal text-[#6f8489]">ads/day</span>
+                      <span className="text-sm font-bold text-[#0c5963]">
+                        {pkg.rewardRate || '20%'} Daily
                       </span>
                     </div>
                   </div>
 
-                  {/* Quota display: Shown only if user has an active package; Otherwise hidden with motivation text */}
-                  {userHasPackage ? (
-                    <div className="flex items-center justify-between text-xs text-[#065f46] bg-[#ecfdf5] px-3.5 py-2.5 rounded-xl border border-[#a7f3d0]">
-                      <span className="font-medium">Daily Ads Allocation</span>
-                      <span className="font-extrabold text-[#065f46]">200 ads/day (Unlocked)</span>
+                  {/* Team Rewards & Team Ads information (matching first page) */}
+                  <div className="bg-[#fbf8f2] p-3 rounded-xl border border-[#ece4d6] text-xs">
+                    <div className="flex items-center justify-between font-bold mb-1">
+                      <span className="text-[#0c5963]">Team Rewards &amp; Team Ads</span>
+                      <span className="text-[10px] text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md font-semibold">5 Levels</span>
                     </div>
-                  ) : (
-                    <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
-                      <span className="leading-snug font-medium">
-                        {pkg.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.'}
-                      </span>
-                    </div>
-                  )}
+                    <p className="text-[11px] text-[#556e73] leading-snug">
+                      {currentTeamRewardLine}
+                    </p>
+                  </div>
                 </div>
               </div>
 

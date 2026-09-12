@@ -13,6 +13,7 @@ import {
   Zap,
 } from 'lucide-react';
 import Logo from '../components/Logo';
+import LiveLeaderboard from '../components/LiveLeaderboard';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 
@@ -54,7 +55,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$1.00',
       minWallet: '$0.10',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#d97706]/10 text-[#b45309] border-[#d97706]/30',
       badge: 'STARTER',
       circleColor: 'bg-[#b45309]',
@@ -68,7 +69,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$5.00',
       minWallet: '$0.50',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#0f766e]/10 text-[#0f766e] border-[#0f766e]/30',
       badge: 'POPULAR',
       circleColor: 'bg-[#0f766e]',
@@ -82,7 +83,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$10.00',
       minWallet: '$1.00',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#ca8a04]/10 text-[#ca8a04] border-[#ca8a04]/30',
       badge: 'RECOMMENDED',
       circleColor: 'bg-[#ca8a04]',
@@ -96,7 +97,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$50.00',
       minWallet: '$5.00',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH DEMAND',
       circleColor: 'bg-[#0284c7]',
@@ -110,7 +111,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$100.00',
       minWallet: '$10.00',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#0284c7]/10 text-[#0284c7] border-[#0284c7]/30',
       badge: 'HIGH CAPACITY',
       circleColor: 'bg-[#0284c7]',
@@ -124,7 +125,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$500.00',
       minWallet: '$50.00',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#db2777]/10 text-[#db2777] border-[#db2777]/30',
       badge: 'PRO MASTER',
       circleColor: 'bg-[#db2777]',
@@ -138,7 +139,7 @@ export default function HomePage({ onNavigate }) {
       entryPrice: '$1,000.00',
       minWallet: '$100.00',
       rewardRate: '20%',
-      dailyLimit: '200 ads/day',
+      dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
       badge: 'APEX MASTER',
       circleColor: 'bg-[#ea580c]',
@@ -172,11 +173,11 @@ export default function HomePage({ onNavigate }) {
               id: pkg.id,
               name: cleanName,
               tierLabel: matchingDefault.tierLabel || (pkg.tierName ? `${pkg.tierName} Tier` : `${cleanName} Tier`),
-              tagline: matchingDefault.tagline || 'Guaranteed 20% daily returns with 200 ads/day allocation.',
+              tagline: matchingDefault.tagline || 'Guaranteed daily returns with verified advertising yield.',
               entryPrice: `$${Number(pkg.price || 0).toFixed(2)}`,
               minWallet: `$${Number(pkg.minWallet || 0).toFixed(2)}`,
               rewardRate: '20%',
-              dailyLimit: '200 ads/day',
+              dailyLimit: '20% Daily Yield',
               badge: pkg.badge || matchingDefault.badge || null,
               circleColor: pkg.color ? `bg-[${pkg.color}]` : matchingDefault.circleColor || 'bg-[#0f766e]',
               accentColor: matchingDefault.accentColor || 'bg-[#0f766e]/10 text-[#0f766e]',
@@ -471,16 +472,6 @@ export default function HomePage({ onNavigate }) {
             {/* Filter Toggle */}
             <div className="flex items-center bg-[#eae4d8] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold">
               <button
-                onClick={() => setSelectedViewMode('all')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                  selectedViewMode === 'all'
-                    ? 'bg-[#0c5963] text-white shadow-xs'
-                    : 'text-[#50686d] hover:text-[#0c5963]'
-                }`}
-              >
-                All {packageList.length} Packages
-              </button>
-              <button
                 onClick={() => setSelectedViewMode('core')}
                 className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
                   selectedViewMode === 'core'
@@ -489,6 +480,16 @@ export default function HomePage({ onNavigate }) {
                 }`}
               >
                 Starter 3
+              </button>
+              <button
+                onClick={() => setSelectedViewMode('all')}
+                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  selectedViewMode === 'all'
+                    ? 'bg-[#0c5963] text-white shadow-xs'
+                    : 'text-[#50686d] hover:text-[#0c5963]'
+                }`}
+              >
+                All {packageList.length} Packages
               </button>
             </div>
           </div>
@@ -511,6 +512,17 @@ export default function HomePage({ onNavigate }) {
                 '🏆 Reach pinnacle financial freedom with maximum daily capital yields and apex VIP benefits.',
               ];
               const uniqueMotivation = pkg.motivationText || motivationTexts[idx % motivationTexts.length];
+
+              const teamRewardLines = [
+                'Earn continuous team rewards and matching bonuses whenever your downline watches daily ads.',
+                'Amplify daily earnings with active team ad bonuses across verified network members.',
+                'Maximize team rewards as your downline completes their daily ad viewing tasks.',
+                'Accelerate team ad commissions with priority multi-tier network bonuses.',
+                'Unlock high-yield team rewards and daily matching bonuses from team ad views.',
+                'Command premier team bonuses with substantial daily rewards fueled by team ads.',
+                'Pinnacle team rewards: receive maximum daily bonuses from entire team ad network.',
+              ];
+              const currentTeamRewardLine = teamRewardLines[idx % teamRewardLines.length];
 
               return (
                 <div
@@ -549,7 +561,10 @@ export default function HomePage({ onNavigate }) {
                     <p className="hidden text-xs font-semibold text-[#0c5963] mb-1">
                       {pkg.tierLabel || `${pkg.entryPrice} Tier`}
                     </p>
-                    <p className="text-xs text-[#637a7f] mb-5">{pkg.tagline}</p>
+                    <p className="text-xs text-[#0c5963] font-medium mb-5 min-h-[36px] flex items-start gap-1.5 leading-relaxed">
+                      <Sparkles className="w-3.5 h-3.5 text-[#d97706] shrink-0 mt-0.5" />
+                      <span>{uniqueMotivation}</span>
+                    </p>
 
                     <div className="pt-3 border-t border-[#f0ede6] space-y-3">
                       <div className="flex items-baseline justify-between">
@@ -564,28 +579,24 @@ export default function HomePage({ onNavigate }) {
 
                         <div className="text-right">
                           <span className="text-[10px] text-[#71868a] block uppercase font-medium">
-                            Daily Allocation
+                            Daily Return
                           </span>
                           <span className="text-sm font-bold text-[#0c5963]">
-                            ads/day
+                            {pkg.rewardRate || '20%'} Daily
                           </span>
                         </div>
                       </div>
 
-                      {/* Daily Ads Quota: Shown to users who have bought a package; Hidden for non-buyers with motivation copy */}
-                      {hasBoughtPackage ? (
-                        <div className="flex items-center justify-between text-xs text-[#065f46] bg-[#ecfdf5] px-3.5 py-2.5 rounded-xl border border-[#a7f3d0]">
-                          <span className="font-medium">Daily Ads Quota</span>
-                          <span className="font-extrabold">200 ads/day (Unlocked)</span>
+                      {/* Team Rewards & Team Ads information */}
+                      <div className="bg-[#fbf8f2] p-3 rounded-xl border border-[#ece4d6] text-xs">
+                        <div className="flex items-center justify-between font-bold mb-1">
+                          <span className="text-[#0c5963]">Team Rewards &amp; Team Ads</span>
+                          <span className="text-[10px] text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md font-semibold">5 Levels</span>
                         </div>
-                      ) : (
-                        <div className="text-xs text-[#0c5963] bg-[#fbf8f2] px-3.5 py-2.5 rounded-xl border border-[#ece4d6] flex items-center gap-2">
-                          <Sparkles className="w-4 h-4 text-[#d97706] shrink-0" />
-                          <span className="leading-snug font-medium">
-                            {uniqueMotivation}
-                          </span>
-                        </div>
-                      )}
+                        <p className="text-[11px] text-[#556e73] leading-snug">
+                          {currentTeamRewardLine}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
@@ -612,6 +623,9 @@ export default function HomePage({ onNavigate }) {
           </div>
         </div>
       </section>
+
+      {/* Live Leaderboard (Unlimited) */}
+      <LiveLeaderboard onNavigate={onNavigate} />
 
       {/* Support & Clarity Banner (Phase 7 Integration) */}
       <section className="py-12 px-4 sm:px-6 bg-[#f2ede2] border-y border-[#e3dcd0]">

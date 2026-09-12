@@ -13,7 +13,8 @@ import {
   FileText,
   LifeBuoy,
   Gift,
-  User
+  User,
+  Trophy
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -47,7 +48,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
             id: 'watch-ads',
             label: 'Watch Ads',
             icon: PlaySquare,
-            badge: `${userStats?.dailyAdCount || 0}/200`,
+            badge: `${userStats?.dailyAdCount || 0} viewed`,
             badgeColor: 'bg-[#10b981]'
           },
           {
@@ -63,6 +64,13 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
       label: 'Transactions',
       icon: History,
       badge: null
+    },
+    {
+      id: 'leaderboard',
+      label: 'Live Leaderboard',
+      icon: Trophy,
+      badge: 'LIVE',
+      badgeColor: 'bg-emerald-500'
     },
     {
       id: 'buy-package',

@@ -323,8 +323,14 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
-                <img src="/jazzcash.png" alt="JazzCash" className="w-full h-full object-contain rounded-lg" />
+              <div className="w-10 h-10 rounded-xl bg-black flex items-center justify-center shadow-xs overflow-hidden p-1 border border-black/10">
+                <svg viewBox="0 0 40 40" className="w-full h-full" fill="none">
+                  <rect width="40" height="40" rx="8" fill="#111111" />
+                  <circle cx="16" cy="20" r="11" fill="#E61C24" />
+                  <circle cx="24" cy="20" r="9" fill="#FFC20E" opacity="0.95" />
+                  <path d="M12 14h4v7.5a2.5 2.5 0 0 1-2.5 2.5h-1a0.8 0.8 0 0 1-0.8-0.8V14z" fill="#FFFFFF" />
+                  <path d="M21 16.5a3.5 3.5 0 0 1 3.5 3.5v0a3.5 3.5 0 0 1-3.5 3.5h-1v-7h1z" fill="#111111" />
+                </svg>
               </div>
               <span className="text-xs font-bold">JazzCash</span>
             </button>
@@ -338,8 +344,12 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
               }`}
             >
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
-                <img src="/easypaisa.png" alt="Easypaisa" className="w-full h-full object-contain rounded-lg" />
+              <div className="w-10 h-10 rounded-xl bg-[#00A651] flex items-center justify-center shadow-xs overflow-hidden p-1 border border-[#008742]">
+                <svg viewBox="0 0 40 40" className="w-full h-full" fill="none">
+                  <rect width="40" height="40" rx="8" fill="#00A651" />
+                  <path d="M20 9C13.925 9 9 13.925 9 20s4.925 11 11 11 11-4.925 11-11c0-2.8-1.05-5.35-2.8-7.3l-2.2 2.2c1.25 1.4 2 3.15 2 5.1 0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8c1.9 0 3.65.65 5.05 1.75l2.15-2.15C26.35 10.3 23.3 9 20 9z" fill="#FFFFFF" />
+                  <circle cx="20" cy="20" r="3.5" fill="#FFFFFF" />
+                </svg>
               </div>
               <span className="text-xs font-bold">Easypaisa</span>
             </button>

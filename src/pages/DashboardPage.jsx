@@ -4,7 +4,7 @@
  * 4 metric cards, milestone progress tracking, and package purchasing.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, 
   Package, 
@@ -41,6 +41,7 @@ import DepositPage from './DepositPage';
 import WithdrawPage from './WithdrawPage';
 import TransactionHistory from './TransactionHistory';
 import AccountSettings from './AccountSettings';
+import LiveLeaderboard from '../components/LiveLeaderboard';
 
 function IneligibleGate({ featureName, onSelectTab }) {
   return (
@@ -100,6 +101,7 @@ export default function DashboardPage({
     'referrals',
     'milestones',
     'transactions',
+    'leaderboard',
     'settings',
   ];
 
@@ -239,6 +241,21 @@ export default function DashboardPage({
   const userFirstName = rawDisplayName.trim().split(' ')[0];
   const userName = rawDisplayName;
   const userEmail = currentUser?.email || 'member@taemryflux.com';
+
+  const calculatedWorldRank = useMemo(() => {
+    if (stats.worldRank) {
+      const wr = String(stats.worldRank).trim();
+      return wr.startsWith('#') ? wr : `# ${wr}`;
+    }
+    const ads = Number(stats.lifetimeAds || 0);
+    const earned = Number(stats.totalEarned || 0);
+    if (ads >= 10000 || earned >= 2000) return '# 45';
+    if (ads >= 7500 || earned >= 1500) return '# 120';
+    if (ads >= 5000 || earned >= 1000) return '# 350';
+    if (ads >= 3000 || earned >= 500) return '# 680';
+    if (ads >= 2000 || earned >= 250) return '# 920';
+    return '# 1000+';
+  }, [stats.worldRank, stats.lifetimeAds, stats.totalEarned]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -387,12 +404,13 @@ export default function DashboardPage({
                       </div>
                     </div>
 
-                    <div className="flex items-baseline justify-between">
+                    <div className="flex items-baseline justify-between gap-2">
                       <div className="text-3xl font-extrabold text-[#09353e] dark:text-white tracking-tight">
                         {Number(stats.lifetimeAds || 0).toLocaleString()}
                       </div>
-                      <span className="hidden text-xs font-bold text-[#7c3aed] dark:text-[#c084fc] bg-[#f5f3ff] dark:bg-[#2e224e] px-2.5 py-1 rounded-full">
-                        Lifetime Verified
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#7c3aed] dark:text-[#c084fc] bg-[#f5f3ff] dark:bg-[#2e224e] px-2.5 py-1 rounded-full border border-[#7c3aed]/25 shrink-0 shadow-2xs">
+                        <Trophy className="w-3.5 h-3.5 text-[#7c3aed] dark:text-[#c084fc]" />
+                        <span>World Rank {calculatedWorldRank}</span>
                       </span>
                     </div>
 
@@ -400,7 +418,7 @@ export default function DashboardPage({
                     <div className="mt-3 bg-[#faf8f5] dark:bg-[#081c22] p-2.5 rounded-2xl border border-[#ece6d9] dark:border-[#123640]">
                       <div className="flex items-center justify-between text-[10px] font-bold mb-1.5">
                         <span className="text-[#647b80] dark:text-[#94a3b8] uppercase tracking-wider">Today's Ads</span>
-                        <span className="text-[#09353e] dark:text-white">{stats.dailyAdCount ?? 0} / 200 ads</span>
+                        <span className="text-[#09353e] dark:text-white">{stats.dailyAdCount ?? 0} Completed</span>
                       </div>
                       <div className="w-full bg-[#e8e2d5] dark:bg-[#15343d] h-2 rounded-full overflow-hidden">
                         <div
@@ -653,6 +671,13 @@ export default function DashboardPage({
                 onSelectTab={handleTabChange}
               />
             )
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: LIVE LEADERBOARD (TOP 100)                                           */}
+          {/* ========================================================================= */}
+          {currentActiveTab === 'leaderboard' && (
+            <LiveLeaderboard isHomePage={false} onNavigate={onNavigate} />
           )}
 
           {/* ========================================================================= */}

@@ -61,13 +61,13 @@ export default function WhitepaperPage({ onNavigate }) {
       { referrals: 1000, bonus: 600.00, label: '1,000 Referrals', note: '$500 Base + $100 Special Mega Bonus ($600 Total)' },
     ],
     packages: [
-      { name: 'Bronze', price: '$1.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'STARTER' },
-      { name: 'Silver', price: '$5.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'POPULAR' },
-      { name: 'Gold', price: '$10.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'RECOMMENDED' },
-      { name: 'Premium', price: '$50.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'PRO' },
-      { name: 'Elite', price: '$100.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'HIGH CAPACITY' },
-      { name: 'Master', price: '$500.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ENTERPRISE' },
-      { name: 'Apex', price: '$1,000.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ELITE MASTER' },
+      { name: 'Bronze', price: '$1.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'STARTER' },
+      { name: 'Silver', price: '$5.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'POPULAR' },
+      { name: 'Gold', price: '$10.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'RECOMMENDED' },
+      { name: 'Premium', price: '$50.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'PRO' },
+      { name: 'Elite', price: '$100.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'HIGH CAPACITY' },
+      { name: 'Master', price: '$500.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'ENTERPRISE' },
+      { name: 'Apex', price: '$1,000.00', dailyLimit: '20% Daily Yield', dailyReturn: '20% Daily Return', badge: 'ELITE MASTER' },
     ],
     faqs: [
       {

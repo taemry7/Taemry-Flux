@@ -83,6 +83,16 @@ router.get('/stats', verifyToken, async (req, res) => {
       };
     }
 
+    const adsCount = Number(data.lifetimeAds || 0);
+    let worldRank = '# 1000+';
+    if (adsCount >= 10000) worldRank = '# 45';
+    else if (adsCount >= 7500) worldRank = '# 120';
+    else if (adsCount >= 5000) worldRank = '# 350';
+    else if (adsCount >= 3000) worldRank = '# 680';
+    else if (adsCount >= 2000) worldRank = '# 920';
+    else worldRank = '# 1000+';
+    data.worldRank = (doc && doc.exists && doc.data()?.worldRank) ? doc.data().worldRank : worldRank;
+
     const milestone = calculateMilestone(data.lifetimeAds);
 
     return res.json({
