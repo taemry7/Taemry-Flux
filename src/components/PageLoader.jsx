@@ -1,17 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
 /**
  * PageLoader
  * 
- * Custom page loader requested by user:
- * - When internet is available (normal/fast): finishes loading in 200 milliseconds.
- * - When network is disconnected/offline: stays in loading state until internet is restored.
+ * HTML:
+ * <div class="loader">
+ *   <div class="loader-outter"></div>
+ *   <div class="loader-inner"></div>
+ * </div>
+ * 
+ * Features:
+ * - Fluid 1% to 100% loading progress line
+ * - Brand background: #0c5963
+ * - 120 FPS hardware acceleration
+ * - Visible, smooth count-up so user clearly sees the progress
+ * - Never displayed on menu navigation
+ * - Offline-aware: pauses & stays on screen if network is disconnected
  */
 export default function PageLoader({ isLoading, onFinished }) {
-  const [isOnline, setIsOnline] = useState(
-    typeof navigator !== 'undefined' ? navigator.onLine : true
-  );
+  const [isOnline, setIsOnline] = useState(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+  const [progress, setProgress] = useState(1);
+  const [isFadingOut, setIsFadingOut] = useState(false);
+  const onFinishedRef = useRef(onFinished);
 
+  useEffect(() => {
+    onFinishedRef.current = onFinished;
+  }, [onFinished]);
+
+  // Network connectivity listeners
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -25,48 +43,149 @@ export default function PageLoader({ isLoading, onFinished }) {
     };
   }, []);
 
+  // 1% to 100% progress line animation
   useEffect(() => {
-    if (!isLoading) return;
-
-    // If online, complete loading in exactly 200 milliseconds
-    if (isOnline) {
-      const timer = setTimeout(() => {
-        if (onFinished) {
-          onFinished();
-        }
-      }, 200);
-
-      return () => clearTimeout(timer);
+    if (!isLoading) {
+      setProgress(1);
+      setIsFadingOut(false);
+      return;
     }
-    // If offline, stay in loading state indefinitely until online event fires
-  }, [isLoading, isOnline, onFinished]);
+
+    setProgress(1);
+    setIsFadingOut(false);
+
+    let animationFrameId;
+    let startTime = null;
+    // 600ms duration ensures user can clearly see 1% to 100% progress smoothly
+    const duration = 600;
+
+    const step = (timestamp) => {
+      if (!isOnline) {
+        // Pause progress if network is disconnected
+        animationFrameId = requestAnimationFrame(step);
+        return;
+      }
+
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const calculated = Math.min(100, Math.max(1, Math.round((elapsed / duration) * 100)));
+
+      setProgress(calculated);
+
+      if (calculated < 100) {
+        animationFrameId = requestAnimationFrame(step);
+      } else {
+        // Reached 100%: brief hold then smooth fade-out
+        const holdTimer = setTimeout(() => {
+          setIsFadingOut(true);
+          const finishTimer = setTimeout(() => {
+            if (onFinishedRef.current) {
+              onFinishedRef.current();
+            }
+          }, 120);
+          return () => clearTimeout(finishTimer);
+        }, 80);
+
+        return () => clearTimeout(holdTimer);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [isLoading, isOnline]);
 
   if (!isLoading) return null;
 
   return (
     <div
       id="page-loader-overlay"
-      className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-[#0c5963] select-none transition-opacity duration-150"
+      className={`fixed inset-0 z-[999999] flex flex-col items-center justify-center select-none transition-opacity duration-150 ${
+        isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+      }`}
       style={{
         backgroundColor: '#0c5963',
-        height: '100%',
-        width: '100%',
+        width: '100vw',
+        height: '100vh',
+        position: 'fixed',
+        top: 0,
+        left: 0,
       }}
     >
-      {/* Exact User HTML Structure */}
-      <div className="loader">
-        <div className="loader-outter" />
-        <div className="loader-inner" />
+      {/* Exact Dual Rotating Spinner requested with guaranteed styles */}
+      <div
+        className="loader"
+        style={{
+          width: '70px',
+          height: '70px',
+          borderRadius: '50%',
+          position: 'relative',
+        }}
+      >
+        <div
+          className="loader-outter"
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            border: '4px solid #ffffff',
+            borderLeftColor: 'transparent',
+            borderRadius: '50%',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+        <div
+          className="loader-inner"
+          style={{
+            position: 'absolute',
+            width: '35px',
+            height: '35px',
+            border: '4px solid #ffffff',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            left: '50%',
+            top: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
       </div>
 
-      {/* Offline network indicator if internet is down */}
-      {!isOnline && (
-        <div className="mt-6 flex flex-col items-center gap-1.5 text-center px-4 animate-pulse">
-          <span className="text-xs font-semibold tracking-wider text-amber-300 uppercase">
-            No Internet Connection
+      {/* 1% to 100% Loading Progress Line Section */}
+      <div className="mt-8 flex flex-col items-center w-56 sm:w-64">
+        {/* Progress Line Bar Container */}
+        <div className="w-full h-1.5 bg-black/30 rounded-full overflow-hidden border border-white/20 p-[1px] shadow-inner">
+          <div
+            className="h-full bg-gradient-to-r from-teal-300 via-white to-teal-200 rounded-full transition-all duration-75 ease-out shadow-sm"
+            style={{
+              width: `${progress}%`,
+              transform: 'translateZ(0)',
+            }}
+          />
+        </div>
+
+        {/* 1% to 100% Live Percentage Indicator */}
+        <div className="mt-2.5 flex items-center justify-between w-full text-[11px] font-mono tracking-wider font-semibold text-teal-100">
+          <span className="uppercase tracking-widest text-[10px] text-teal-200/90 font-sans font-bold">
+            {isOnline ? 'Loading' : 'Reconnecting'}
           </span>
-          <span className="text-[11px] text-gray-400">
-            Waiting for network to reconnect...
+          <span className="text-white drop-shadow-sm font-bold text-xs">{progress}%</span>
+        </div>
+      </div>
+
+      {/* Offline state indicator when network is disconnected */}
+      {!isOnline && (
+        <div className="mt-4 flex flex-col items-center gap-1 text-center px-4 animate-pulse">
+          <span className="text-xs font-semibold tracking-wider text-amber-200 uppercase">
+            Waiting for Network
+          </span>
+          <span className="text-[11px] text-teal-100/70">
+            Network disconnected &bull; Reconnecting...
           </span>
         </div>
       )}

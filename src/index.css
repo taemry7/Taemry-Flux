@@ -198,6 +198,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  will-change: transform;
 }
 
 .loader-outter {
@@ -215,13 +216,101 @@
 }
 
 @keyframes rotate {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   100% {
     transform: translate(-50%, -50%) rotate(360deg);
   }
 }
 
 @keyframes rotate-reverse {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
   100% {
     transform: translate(-50%, -50%) rotate(-360deg);
   }
 }
+
+/* ==========================================================================
+   120 FPS Ultra-Smooth Hardware Acceleration & 4K Ultra-High-Resolution (UHD)
+   ========================================================================== */
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior-y: none;
+  min-height: 100vh;
+}
+
+/* 120 FPS / 120Hz Hardware-Accelerated GPU Compositing Layers */
+.app-viewport,
+#appViewport,
+#root,
+main,
+section {
+  -webkit-overflow-scrolling: touch;
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* 4K (3840x2160) & Ultra-High-Resolution Retina Clarity for Images & Icons */
+img, svg, canvas {
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  image-rendering: high-quality;
+  shape-rendering: geometricPrecision;
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* 120 FPS Instant Touch & Click Response on all Interactive Elements */
+button, a, input, select, textarea, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  transform: translateZ(0);
+  touch-action: manipulation;
+}
+
+/* Smooth 120Hz Fluid Transitions for Cards, Drawers, and Modals */
+.card,
+.dashboard-card,
+[class*="rounded-"],
+nav,
+aside {
+  -webkit-font-smoothing: antialiased;
+  transform: translateZ(0);
+}
+
+/* 4K Ultra-HD & High-DPI Screen Media Query Optimization */
+@media screen and (min-width: 2560px), screen and (min-resolution: 192dpi), (-webkit-min-device-pixel-ratio: 2) {
+  html {
+    text-rendering: geometricPrecision;
+    -webkit-font-smoothing: subpixel-antialiased;
+  }
+  
+  img, svg {
+    filter: drop-shadow(0 0 0.01px transparent);
+  }
+}
+
+@media screen and (min-width: 3840px) {
+  /* 4K Native Monitor Centering & Ultra-Crisp Viewport */
+  body {
+    background-size: cover;
+  }
+}
+

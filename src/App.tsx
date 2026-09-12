@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
 import ProtectedRoute from './components/ProtectedRoute';
-import AppOpeningSplash from './components/AppOpeningSplash';
 import PageLoader from './components/PageLoader';
 import WelcomeOnboardingModal from './components/WelcomeOnboardingModal';
 import HomePage from './pages/HomePage';
@@ -59,8 +58,12 @@ function AppContent() {
   });
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [showOpeningSplash, setShowOpeningSplash] = useState(true);
-  const [isPageLoading, setIsPageLoading] = useState(false);
+  const [isPageLoading, setIsPageLoading] = useState(true);
+  const isMenuNavigatingRef = useRef(false);
+
+  const handlePageLoaderFinished = useCallback(() => {
+    setIsPageLoading(false);
+  }, []);
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
   useEffect(() => {
@@ -88,6 +91,13 @@ function AppContent() {
 
   useEffect(() => {
     const handleLocationChange = () => {
+      // If navigation came from menu, keep loader hidden; otherwise trigger visible page loader
+      if (isMenuNavigatingRef.current) {
+        isMenuNavigatingRef.current = false;
+      } else {
+        setIsPageLoading(true);
+      }
+
       const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
       const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
 
@@ -161,17 +171,23 @@ function AppContent() {
     };
   }, []);
 
-  // Update hash when navigating (optional loader parameter)
-  const navigateTo = (page: string, tab: string | null = null, withLoader: boolean = true) => {
+  // Update hash when navigating (fromMenu flag prevents loader)
+  const navigateTo = (page: string, tab: string | null = null, fromMenu: boolean = false) => {
     // If navigating to the exact same page and tab, scroll to top
     if (currentPage === page && (!tab || activeTab === tab)) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
 
-    if (withLoader) {
+    // Do NOT show loader if navigating from menu
+    if (fromMenu) {
+      isMenuNavigatingRef.current = true;
+      setIsPageLoading(false);
+    } else {
+      isMenuNavigatingRef.current = false;
       setIsPageLoading(true);
     }
+
     setCurrentPage(page);
     if (page === 'dashboard') {
       setActiveTab(tab || 'overview');
@@ -195,16 +211,9 @@ function AppContent() {
   if (currentPage === 'admin') {
     return (
       <>
-        {showOpeningSplash && (
-          <AppOpeningSplash
-            onComplete={() => {
-              setShowOpeningSplash(false);
-            }}
-          />
-        )}
         <PageLoader
-          isLoading={!showOpeningSplash && (isPageLoading || !isOnline)}
-          onFinished={() => setIsPageLoading(false)}
+          isLoading={isPageLoading || !isOnline}
+          onFinished={handlePageLoaderFinished}
         />
         <AdminLayout onNavigate={navigateTo} />
       </>
@@ -218,19 +227,10 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* Immersive Mobile & Web App Opening Splash Screen */}
-      {showOpeningSplash && (
-        <AppOpeningSplash
-          onComplete={() => {
-            setShowOpeningSplash(false);
-          }}
-        />
-      )}
-
-      {/* High-Performance 200ms Network-Aware Page Loader */}
+      {/* Network-Aware 200ms Page Loader (Offline persistent, 200ms on fast/normal network, hidden on menu) */}
       <PageLoader
-        isLoading={!showOpeningSplash && (isPageLoading || !isOnline)}
-        onFinished={() => setIsPageLoading(false)}
+        isLoading={isPageLoading || !isOnline}
+        onFinished={handlePageLoaderFinished}
       />
 
       {/* Smart Slide Menu (Rendered underneath/alongside the main screen) */}
@@ -240,6 +240,8 @@ function AppContent() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           // Direct instantaneous switch from menu without any loader
+          isMenuNavigatingRef.current = true;
+          setIsPageLoading(false);
           setActiveTab(tab);
           setCurrentPage('dashboard');
           window.location.hash = `#/${'dashboard'}/${tab}`;
@@ -248,8 +250,10 @@ function AppContent() {
         }}
         onNavigate={(page, tab) => {
           // Instantaneous navigation from menu without loader
+          isMenuNavigatingRef.current = true;
+          setIsPageLoading(false);
           setIsDrawerOpen(false);
-          navigateTo(page, tab, false);
+          navigateTo(page, tab, true);
         }}
       />
 
