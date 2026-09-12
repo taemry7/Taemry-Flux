@@ -3,18 +3,18 @@ import Logo from './Logo';
 import { Wifi, WifiOff, Loader2 } from 'lucide-react';
 
 /**
- * Intelligent Adaptive Page Loader
- * - Fast/Normal Internet: Half a second (200ms) smooth loading transition
- * - Slow/Weak Internet: 1.5s - 2s loading with optimization indicator
- * - Offline/No Internet: Stays loading until connection recovers
+ * TAEMRY FLUX Splash Screen Loader
+ * Renders an app-grade immersive splash screen with brand aesthetics,
+ * glowing logo halo, animated progress line, and network-aware timing.
  */
 export default function PageLoader({ isLoading, targetPage = '', onFinished }) {
   const [progress, setProgress] = useState(0);
   const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   const [isSlowConnection, setIsSlowConnection] = useState(false);
   const [visible, setVisible] = useState(isLoading);
+  const [isFadingOut, setIsFadingOut] = useState(false);
 
-  // Monitor online / offline status
+  // Monitor network status
   useEffect(() => {
     const handleOnline = () => setIsOffline(false);
     const handleOffline = () => setIsOffline(true);
@@ -27,18 +27,23 @@ export default function PageLoader({ isLoading, targetPage = '', onFinished }) {
     };
   }, []);
 
-  // Determine network speed and run loading animation
+  // Splash animation timer & progress
   useEffect(() => {
     if (!isLoading) {
       setProgress(100);
-      const timer = setTimeout(() => setVisible(false), 200);
+      setIsFadingOut(true);
+      const timer = setTimeout(() => {
+        setVisible(false);
+        setIsFadingOut(false);
+      }, 200);
       return () => clearTimeout(timer);
     }
 
     setVisible(true);
-    setProgress(15);
+    setIsFadingOut(false);
+    setProgress(20);
 
-    // Detect weak / slow internet
+    // Detect slow internet
     const nav = typeof navigator !== 'undefined' ? navigator : null;
     const conn = nav && (nav.connection || nav.mozConnection || nav.webkitConnection);
     
@@ -56,30 +61,33 @@ export default function PageLoader({ isLoading, targetPage = '', onFinished }) {
     }
     setIsSlowConnection(isSlow);
 
-    // If offline, wait indefinitely until back online
     if (isOffline) {
-      setProgress(35);
+      setProgress(40);
       return;
     }
 
-    // Duration: 200 milliseconds for fast loading, slightly adaptive for slow connections
-    const targetDuration = isSlow ? 600 : 200;
-    const intervalTime = 20;
+    // Splash duration: snappy 250ms on fast connection, 700ms on weak connection
+    const targetDuration = isSlow ? 700 : 250;
+    const intervalTime = 16;
     const steps = Math.max(1, Math.round(targetDuration / intervalTime));
     let currentStep = 0;
 
     const interval = setInterval(() => {
       currentStep++;
-      const pct = Math.min(95, Math.round((currentStep / steps) * 95));
+      const pct = Math.min(96, Math.round((currentStep / steps) * 96));
       setProgress(pct);
 
       if (currentStep >= steps) {
         clearInterval(interval);
         setProgress(100);
         setTimeout(() => {
-          if (onFinished) onFinished();
-          setVisible(false);
-        }, 50);
+          setIsFadingOut(true);
+          setTimeout(() => {
+            if (onFinished) onFinished();
+            setVisible(false);
+            setIsFadingOut(false);
+          }, 120);
+        }, 40);
       }
     }, intervalTime);
 
@@ -90,53 +98,87 @@ export default function PageLoader({ isLoading, targetPage = '', onFinished }) {
 
   return (
     <div
-      id="taemry-page-loader"
-      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#faf8f5]/90 dark:bg-[#07151a]/95 backdrop-blur-md transition-opacity duration-200"
+      id="taemry-splash-loader"
+      className={`fixed inset-0 z-[99999] flex flex-col items-center justify-between py-12 px-6 bg-[#faf8f5] dark:bg-[#07151a] transition-all duration-200 ease-out select-none ${
+        isFadingOut ? 'opacity-0 pointer-events-none scale-[1.02]' : 'opacity-100'
+      }`}
     >
-      <div className="flex flex-col items-center max-w-xs w-full px-6 text-center">
-        {/* Animated Brand Logo */}
-        <div className="relative mb-6">
-          <Logo size="lg" showText={false} />
-        </div>
-        {/* Dynamic Status Text */}
-        <p className="text-xs font-medium text-[#647c81] dark:text-[#94a3b8] mb-4 min-h-[18px]">
+      {/* Subtle Top Ambient Bar / Spacer */}
+      <div className="w-full max-w-sm flex items-center justify-between opacity-50 text-[10px] uppercase font-bold tracking-widest text-[#0a3a46]/60 dark:text-slate-400">
+        <span>TAEMRY OS</span>
+        <span className="flex items-center gap-1">
           {isOffline ? (
-            <span className="text-amber-600 dark:text-amber-400 flex items-center justify-center gap-1.5 font-semibold">
-              <WifiOff className="w-3.5 h-3.5" />
-              Internet weak / disconnected. Waiting to reconnect...
-            </span>
-          ) : isSlowConnection ? (
-            <span className="text-[#0d5963] dark:text-[#38bdf8] flex items-center justify-center gap-1.5">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              Weak connection detected &bull; Optimizing page securely...
+            <span className="text-amber-500 flex items-center gap-1 font-bold">
+              <WifiOff className="w-3 h-3" /> Offline
             </span>
           ) : (
-            <span className="text-[#647c81] dark:text-[#94a3b8] flex items-center justify-center gap-1.5">
-              <Wifi className="w-3.5 h-3.5 text-[#10b981]" />
-              {targetPage ? `Opening ${targetPage}...` : 'Loading page...'}
+            <span className="flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Online
             </span>
           )}
+        </span>
+      </div>
+
+      {/* Main Center Splash Content */}
+      <div className="flex flex-col items-center justify-center text-center my-auto">
+        {/* Glow halo behind the brand icon */}
+        <div className="relative mb-6">
+          <div className="absolute -inset-4 rounded-3xl bg-gradient-to-tr from-[#0d5963]/30 via-[#0f766e]/20 to-[#10b981]/25 dark:from-[#38bdf8]/25 dark:to-[#0f766e]/30 blur-2xl animate-pulse" />
+          <div className="relative transform transition-transform duration-500 hover:scale-105">
+            <Logo size="xl" showText={false} />
+          </div>
+        </div>
+
+        {/* Brand Display Title */}
+        <div className="flex items-center gap-2 mb-2">
+          <h1 className="font-display font-black text-2xl md:text-3xl tracking-wider text-[#0a3a46] dark:text-[#f8fafc] uppercase">
+            TAEMRY
+          </h1>
+          <span className="font-display font-black text-2xl md:text-3xl tracking-wider text-[#0d5963] dark:text-[#38bdf8] uppercase">
+            FLUX
+          </span>
+        </div>
+
+        {/* Subtitle / Platform identifier */}
+        <p className="text-[11px] font-semibold tracking-[0.25em] text-[#647c81] dark:text-[#94a3b8] uppercase mb-8">
+          Personal Wallet & Ad Ecosystem
         </p>
 
-        {/* Progress Bar */}
-        <div className="w-full bg-[#e8e2d8] dark:bg-[#122b33] h-1.5 rounded-full overflow-hidden shadow-inner mb-2">
+        {/* Dynamic Status / Progress Note */}
+        <div className="min-h-[22px] flex items-center justify-center text-xs font-medium text-[#0a3a46]/80 dark:text-slate-300">
+          {isOffline ? (
+            <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1.5 font-semibold animate-pulse">
+              <WifiOff className="w-3.5 h-3.5" /> Reconnecting to network...
+            </span>
+          ) : isSlowConnection ? (
+            <span className="text-[#0d5963] dark:text-[#38bdf8] flex items-center gap-1.5">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Optimizing connection...
+            </span>
+          ) : targetPage ? (
+            <span className="text-[#0d5963] dark:text-[#38bdf8] font-semibold tracking-wide">
+              {targetPage}
+            </span>
+          ) : (
+            <span className="text-[#647c81] dark:text-[#94a3b8]">
+              Initializing...
+            </span>
+          )}
+        </div>
+
+        {/* Splash Progress Line */}
+        <div className="w-48 sm:w-56 bg-[#e5dfd5] dark:bg-[#132c35] h-1.5 rounded-full overflow-hidden mt-3 shadow-inner">
           <div
-            className="bg-gradient-to-r from-[#0d5963] via-[#0f766e] to-[#10b981] h-full rounded-full transition-all duration-75 ease-out"
+            className="h-full bg-gradient-to-r from-[#0d5963] via-[#0f766e] to-[#10b981] dark:from-[#38bdf8] dark:via-[#0f766e] dark:to-[#10b981] rounded-full transition-all duration-100 ease-out shadow-[0_0_8px_rgba(16,185,129,0.5)]"
             style={{ width: `${progress}%` }}
           />
         </div>
+      </div>
 
-        {/* Timing / Speed Hint */}
-        <div className="flex items-center justify-between w-full text-[10px] font-semibold text-[#82979a] dark:text-[#64748b]">
-          <span>
-            {isOffline
-              ? 'Offline'
-              : isSlowConnection
-              ? 'Weak network'
-              : 'Fast network'}
-          </span>
-          <span>{progress}%</span>
-        </div>
+      {/* Splash Footer: Security & Encryption Tag */}
+      <div className="flex flex-col items-center gap-1 text-[11px] text-[#82979a] dark:text-[#64748b]">
+        <span className="font-medium tracking-wide">End-to-End Encrypted Session</span>
+        <span className="text-[10px] opacity-70">v2.4.0 &bull; Secure Cloud Infrastructure</span>
       </div>
     </div>
   );

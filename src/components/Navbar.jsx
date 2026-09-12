@@ -122,7 +122,12 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
               className="p-2 -ml-1 text-[#093e4a] dark:text-[#f1f5f9] hover:bg-[#eae3d5] dark:hover:bg-[#112d36] rounded-xl transition-colors focus:outline-none cursor-pointer"
               aria-label="Open Navigation Drawer"
             >
-              <Menu className="w-5 h-5" />
+              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                <circle cx="6.5" cy="6.5" r="2" />
+                <circle cx="13.5" cy="6.5" r="2" />
+                <circle cx="6.5" cy="13.5" r="2" />
+                <circle cx="13.5" cy="13.5" r="2" />
+              </svg>
             </button>
           )}
 

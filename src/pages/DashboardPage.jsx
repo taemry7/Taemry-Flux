@@ -481,7 +481,7 @@ export default function DashboardPage({
                           {hasActivePackage ? (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#16a34a] dark:text-[#4ade80]">
                               <span className="w-1.5 h-1.5 rounded-full bg-[#16a34a]" />
-                              Eligible (Active)
+                              Active
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-[#dc2626] dark:text-[#f87171]">
@@ -495,9 +495,10 @@ export default function DashboardPage({
                   </div>
 
                   <div className="mt-3 pt-3 border-t border-[#f4f0e7] dark:border-[#173740] flex items-center justify-between text-[11px]">
-                    <span className="text-[#597277] dark:text-[#94a3b8]">Account Tier Status:</span>
-                    <span className={`font-bold ${hasActivePackage ? 'text-[#16a34a] dark:text-[#4ade80]' : 'text-[#dc2626] dark:text-[#f87171]'}`}>
-                      {hasActivePackage ? 'Full Access Active' : 'Restricted (Deposit / Package Only)'}
+                    <span className="text-[#597277] dark:text-[#94a3b8]">Account Status:</span>
+                    <span className={`inline-flex items-center gap-1.5 font-bold ${hasActivePackage ? 'text-[#16a34a] dark:text-[#4ade80]' : 'text-[#dc2626] dark:text-[#f87171]'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${hasActivePackage ? 'bg-[#16a34a] dark:bg-[#4ade80]' : 'bg-[#dc2626] dark:bg-[#f87171]'}`} />
+                      {hasActivePackage ? 'Active' : 'Inactive'}
                     </span>
                   </div>
                 </div>
@@ -518,7 +519,7 @@ export default function DashboardPage({
                       <div className="text-3xl font-extrabold text-[#09353e] dark:text-white tracking-tight">
                         {Number(stats.lifetimeAds || 0).toLocaleString()}
                       </div>
-                      <span className="text-xs font-bold text-[#7c3aed] dark:text-[#c084fc] bg-[#f5f3ff] dark:bg-[#2e224e] px-2.5 py-1 rounded-full">
+                      <span className="hidden text-xs font-bold text-[#7c3aed] dark:text-[#c084fc] bg-[#f5f3ff] dark:bg-[#2e224e] px-2.5 py-1 rounded-full">
                         Lifetime Verified
                       </span>
                     </div>
