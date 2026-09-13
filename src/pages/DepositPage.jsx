@@ -24,10 +24,12 @@ import {
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../config/milestones.config';
 
 export default function DepositPage({ onSelectTab, onNavigate }) {
   const { userStats, fetchUserStats } = useAuth();
+  const toast = useToast();
 
   // Selected payment method
   const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'bank' | 'easypaisa' | 'jazzcash' | 'crypto'
@@ -210,6 +212,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       });
 
       if (res.data?.success) {
+        toast.success('Deposit request submitted! Wait for admin approval.');
         setToastMessage({
           type: 'success',
           text: 'Deposit request submitted! Wait for admin approval.',
@@ -232,6 +235,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       if (err.code === 'ECONNABORTED' || errorMsg.toLowerCase().includes('timeout')) {
         errorMsg = 'Network connection timed out. Please check your internet connection and try submitting again.';
       }
+      toast.error(errorMsg);
       setToastMessage({
         type: 'error',
         text: errorMsg,

@@ -16,8 +16,10 @@ import {
   Loader2
 } from 'lucide-react';
 import apiClient from '../api/client';
+import { useToast } from '../context/ToastContext';
 
 export default function BuyPackage({ walletBalance = 0, currentPackage = 'None', onPackageBought, onSelectTab }) {
+  const toast = useToast();
   const [packages, setPackages] = useState([]);
   const [loadingPackages, setLoadingPackages] = useState(true);
   const [selectedPkg, setSelectedPkg] = useState(null);
@@ -198,9 +200,11 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         });
       }
 
+      const successMsg = `Package bought successfully! You are now on the ${selectedPkg.name} tier.`;
+      toast.success(successMsg);
       setNotification({
         type: 'success',
-        message: `Package bought successfully! You are now on the ${selectedPkg.name} tier.`,
+        message: successMsg,
       });
 
       // Clear toast after 5 seconds
@@ -213,6 +217,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         err.response?.data?.message ||
         err.response?.data?.error ||
         'Purchase transaction could not be processed.';
+      toast.error(errMsg);
       setNotification({
         type: 'error',
         message: errMsg,

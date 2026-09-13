@@ -257,14 +257,13 @@ body {
 /* 120 FPS / 120Hz Hardware-Accelerated GPU Compositing Layers */
 .app-viewport,
 #appViewport,
-#root,
+#root {
+  -webkit-overflow-scrolling: touch;
+}
+
 main,
 section {
   -webkit-overflow-scrolling: touch;
-  transform: translate3d(0, 0, 0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  perspective: 1000px;
 }
 
 /* 4K (3840x2160) & Ultra-High-Resolution Retina Clarity for Images & Icons */
@@ -316,6 +315,19 @@ aside {
 
 /* Prevent any swipe down/up, pull-to-refresh, or bounce on loading/offline splash */
 #page-loader-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  width: 100% !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  min-height: 100vh !important;
+  min-height: 100dvh !important;
+  z-index: 99999999 !important;
   overscroll-behavior: none !important;
   overscroll-behavior-y: none !important;
   overscroll-behavior-x: none !important;
@@ -323,5 +335,14 @@ aside {
   -webkit-touch-callout: none !important;
   user-select: none !important;
   -webkit-user-select: none !important;
+}
+
+/* Sign In & Sign Up Page Container - Up to top & No Swipe Down/Up */
+#loginPageContainer {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 

@@ -17,10 +17,12 @@ import {
   ExternalLink
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import apiClient, { apiGet, apiPost } from '../api/client';
 
 export default function SupportPage({ onNavigate }) {
   const { currentUser } = useAuth();
+  const toast = useToast();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -101,6 +103,7 @@ export default function SupportPage({ onNavigate }) {
       });
 
       if (res.success) {
+        toast.success(`Ticket #${res.ticket.ticketId} created successfully.`);
         setFeedback({
           type: 'success',
           text: `Ticket #${res.ticket.ticketId} created successfully. Our team will review your inquiry shortly.`,
@@ -110,10 +113,14 @@ export default function SupportPage({ onNavigate }) {
         setPriority('normal');
         fetchTickets();
       } else {
-        setFeedback({ type: 'error', text: res.message || 'Failed to submit ticket.' });
+        const errorMsg = res.message || 'Failed to submit ticket.';
+        toast.error(errorMsg);
+        setFeedback({ type: 'error', text: errorMsg });
       }
     } catch (err) {
-      setFeedback({ type: 'error', text: err.message || 'An error occurred while submitting.' });
+      const errorMsg = err.message || 'An error occurred while submitting.';
+      toast.error(errorMsg);
+      setFeedback({ type: 'error', text: errorMsg });
     } finally {
       setSubmitting(false);
     }

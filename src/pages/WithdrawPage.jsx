@@ -24,10 +24,12 @@ import {
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { formatCurrency } from '../config/milestones.config';
 
 export default function WithdrawPage({ onSelectTab, onNavigate }) {
   const { userStats, fetchUserStats } = useAuth();
+  const toast = useToast();
 
   // Form State
   const [method, setMethod] = useState('jazzcash'); // 'bank' | 'easypaisa' | 'jazzcash' | 'crypto'
@@ -138,6 +140,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
       const res = await apiClient.post('/withdrawals/request', payload);
 
       if (res.data?.success) {
+        toast.success('Withdrawal request submitted! Wait for admin approval.');
         setNotification({
           type: 'success',
           message: 'Withdrawal request submitted! Wait for admin approval.',
@@ -155,9 +158,11 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
       }
     } catch (err) {
       console.error('Withdrawal request error:', err);
+      const errMsg = err.response?.data?.message || 'Failed to submit withdrawal request. Please check requirements.';
+      toast.error(errMsg);
       setNotification({
         type: 'error',
-        message: err.response?.data?.message || 'Failed to submit withdrawal request. Please check requirements.',
+        message: errMsg,
       });
     } finally {
       setSubmitting(false);

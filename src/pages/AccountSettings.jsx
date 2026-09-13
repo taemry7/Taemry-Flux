@@ -15,10 +15,12 @@ import {
   LogOut
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import apiClient from '../api/client';
 
 export default function AccountSettings({ onSelectTab }) {
   const { currentUser, updateUserProfile, userStats, fetchUserStats, logout } = useAuth();
+  const toast = useToast();
 
   // Form State
   const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
@@ -160,6 +162,7 @@ export default function AccountSettings({ onSelectTab }) {
         await fetchUserStats();
       }
 
+      toast.success('Profile updated successfully!');
       setNotification({
         type: 'success',
         message: 'Account profile and settings updated successfully!',
@@ -167,9 +170,11 @@ export default function AccountSettings({ onSelectTab }) {
       setTimeout(() => setNotification({ type: '', message: '' }), 4500);
     } catch (err) {
       console.error('Failed to update profile:', err);
+      const errMsg = err.response?.data?.message || err.message || 'Could not update profile. Please try again.';
+      toast.error(errMsg);
       setNotification({
         type: 'error',
-        message: err.response?.data?.message || err.message || 'Could not update profile. Please try again.',
+        message: errMsg,
       });
     } finally {
       setSaving(false);

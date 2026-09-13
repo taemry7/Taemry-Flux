@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SidebarDrawer from './components/SidebarDrawer';
@@ -179,6 +180,13 @@ function AppContent() {
       return;
     }
 
+    // Immediately reset scroll to top so incoming page and overlays start at top 0
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+
     // Do NOT show loader if navigating from menu
     if (fromMenu) {
       isMenuNavigatingRef.current = true;
@@ -348,7 +356,9 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <ToastProvider>
+        <AppContent />
+      </ToastProvider>
     </AuthProvider>
   );
 }

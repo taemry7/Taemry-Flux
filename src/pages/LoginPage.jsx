@@ -30,6 +30,54 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     return () => window.removeEventListener('taemry_set_auth_mode', handleAuthModeEvent);
   }, []);
 
+  // Prevent swipe down / swipe up rubber-banding and ensure page starts at top
+  React.useEffect(() => {
+    try {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    } catch {
+      window.scrollTo(0, 0);
+    }
+
+    let touchStartY = 0;
+    const handleTouchStart = (e) => {
+      if (e.touches && e.touches[0]) {
+        touchStartY = e.touches[0].clientY;
+      }
+    };
+
+    const handleTouchMove = (e) => {
+      if (!e.touches || !e.touches[0]) return;
+      const touchY = e.touches[0].clientY;
+      const diffY = touchY - touchStartY;
+      const target = e.target;
+      const isInteractive = target && (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'BUTTON' ||
+        target.closest('button') ||
+        target.closest('input')
+      );
+
+      // Prevent pull-down swipe when at top
+      if (window.scrollY <= 0 && diffY > 0 && e.cancelable && !isInteractive) {
+        e.preventDefault();
+      }
+      // Prevent pull-up swipe when at bottom
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (window.scrollY >= Math.max(0, maxScroll - 2) && diffY < 0 && e.cancelable && !isInteractive) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      window.removeEventListener('touchstart', handleTouchStart);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
@@ -169,33 +217,42 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-4 py-12 bg-[#faf8f5]">
+    <div
+      id="loginPageContainer"
+      className="min-h-[calc(100vh-4rem)] w-full flex flex-col items-center justify-start pt-3 sm:pt-6 pb-12 px-4 bg-[#faf8f5] dark:bg-[#07151a] select-none-touch"
+      style={{
+        overscrollBehavior: 'none',
+        overscrollBehaviorY: 'none',
+        overscrollBehaviorX: 'none',
+        touchAction: 'pan-y'
+      }}
+    >
       {/* Brand Icon Header */}
-      <div className="mb-6 flex flex-col items-center">
+      <div className="mb-3 sm:mb-4 flex flex-col items-center">
         <button
           onClick={() => onNavigate('home')}
-          className="focus:outline-none transition-transform hover:scale-105"
+          className="focus:outline-none transition-transform hover:scale-105 cursor-pointer"
         >
           <Logo size="lg" showText={false} />
         </button>
-        <div className="mt-3 flex items-center gap-2">
-          <span className="font-display font-extrabold tracking-[0.25em] text-[#0a3a46] text-lg uppercase">
+        <div className="mt-2 flex items-center gap-2">
+          <span className="font-display font-extrabold tracking-[0.25em] text-[#0a3a46] dark:text-[#ecf3f4] text-lg uppercase">
             TAEMRY
           </span>
-          <span className="text-xs tracking-[0.2em] font-bold text-[#0f766e] uppercase bg-[#e6f4f1] px-2 py-0.5 rounded">
+          <span className="text-xs tracking-[0.2em] font-bold text-[#0f766e] dark:text-[#2dd4bf] uppercase bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded">
             FLUX
           </span>
         </div>
       </div>
 
-      {/* Main Auth Card (Matches the video) */}
-      <div className="w-full max-w-md bg-white rounded-3xl p-7 sm:p-9 shadow-lg shadow-[#0c5963]/5 border border-[#e4ded2]">
+      {/* Main Auth Card (Starts cleanly near top, not pushed down) */}
+      <div className="w-full max-w-md bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 shadow-lg shadow-[#0c5963]/5 border border-[#e4ded2] dark:border-[#1e3a44]">
         {/* Title */}
-        <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-[#09353e]">
+        <div className="text-center mb-5">
+          <h2 className="text-2xl font-bold text-[#09353e] dark:text-white">
             {isSignUp ? 'Create your TAEMRY space' : 'Welcome back'}
           </h2>
-          <p className="text-xs sm:text-sm text-[#61777b] mt-1">
+          <p className="text-xs sm:text-sm text-[#61777b] dark:text-[#94a3b8] mt-1">
             {isSignUp
               ? 'Start making progress visible'
               : 'Sign in to your TAEMRY space'}

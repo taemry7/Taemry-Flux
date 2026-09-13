@@ -21,6 +21,7 @@ import {
   Award
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 import apiClient from '../../api/client';
 
 const AVATAR_PRESETS = [
@@ -34,6 +35,7 @@ const AVATAR_PRESETS = [
 
 export default function AdminProfileModal({ isOpen, onClose, onProfileUpdated }) {
   const { currentUser, updateUserProfile } = useAuth();
+  const toast = useToast();
 
   const [displayName, setDisplayName] = useState(currentUser?.displayName || 'Taimoor');
   const [phoneNumber, setPhoneNumber] = useState(currentUser?.phoneNumber || '+92 300 0000000');
@@ -71,6 +73,7 @@ export default function AdminProfileModal({ isOpen, onClose, onProfileUpdated })
         console.warn('Backend user profile sync warning:', err.message);
       }
 
+      toast.success('Admin profile updated successfully!');
       setStatus({ type: 'success', text: 'Admin profile information updated successfully!' });
       if (onProfileUpdated) {
         onProfileUpdated(updates);
@@ -80,6 +83,7 @@ export default function AdminProfileModal({ isOpen, onClose, onProfileUpdated })
       }, 1200);
     } catch (error) {
       console.error('Failed to update admin profile:', error);
+      toast.error(error.message || 'Failed to update profile.');
       setStatus({ type: 'error', text: error.message || 'Failed to update profile.' });
     } finally {
       setSaving(false);

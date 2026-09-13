@@ -26,6 +26,14 @@ export default defineConfig(() => {
         '@': path.resolve(__dirname, '.'),
       },
     },
+    optimizeDeps: {
+      include: [
+        'firebase/app',
+        'firebase/auth',
+        'firebase/firestore',
+        'firebase/analytics',
+      ],
+    },
     server: {
       host: '0.0.0.0',
       port: 3000,

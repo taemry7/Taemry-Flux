@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactDOM from 'react-dom';
 
 /**
  * PageLoader
@@ -16,6 +17,7 @@ import React, { useState, useEffect, useRef } from 'react';
  * - Visible, smooth count-up so user clearly sees the progress
  * - Never displayed on menu navigation
  * - Offline-aware: pauses & stays on screen if network is disconnected
+ * - Guaranteed 100% full-screen coverage via React Portal directly into document.body
  */
 export default function PageLoader({ isLoading, onFinished }) {
   const [isOnline, setIsOnline] = useState(() => {
@@ -135,19 +137,23 @@ export default function PageLoader({ isLoading, onFinished }) {
 
   if (!isLoading) return null;
 
-  return (
+  const loaderContent = (
     <div
       id="page-loader-overlay"
-      className={`fixed inset-0 z-[999999] flex flex-col items-center justify-center select-none transition-opacity duration-150 ${
+      className={`fixed inset-0 z-[99999999] flex flex-col items-center justify-center select-none transition-opacity duration-150 ${
         isFadingOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
       }`}
       style={{
         backgroundColor: '#0c5963',
         width: '100vw',
         height: '100vh',
+        minHeight: '100dvh',
         position: 'fixed',
         top: 0,
         left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 99999999,
         touchAction: 'none',
         overscrollBehavior: 'none',
         overflow: 'hidden',
@@ -231,4 +237,10 @@ export default function PageLoader({ isLoading, onFinished }) {
       )}
     </div>
   );
+
+  if (typeof document !== 'undefined' && document.body) {
+    return ReactDOM.createPortal(loaderContent, document.body);
+  }
+
+  return loaderContent;
 }
