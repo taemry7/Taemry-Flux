@@ -281,7 +281,13 @@ export const AuthProvider = ({ children }) => {
       registeredUsers = rawRegistered ? JSON.parse(rawRegistered) : [];
     } catch {}
 
-    if (registeredUsers.includes(cleanEmail)) {
+    let registeredAccounts = {};
+    try {
+      const rawAcc = localStorage.getItem('taemry_registered_accounts');
+      registeredAccounts = rawAcc ? JSON.parse(rawAcc) : {};
+    } catch {}
+
+    if (registeredUsers.includes(cleanEmail) || registeredAccounts[cleanEmail]) {
       const msg = 'Account already exists! An account with this email address already exists. Please sign in instead.';
       setAuthError(msg);
       throw new Error(msg);
@@ -318,7 +324,14 @@ export const AuthProvider = ({ children }) => {
         }
 
         registeredUsers.push(cleanEmail);
+        registeredAccounts[cleanEmail] = {
+          uid: userCredential.user.uid,
+          email: cleanEmail,
+          displayName: displayName || cleanEmail.split('@')[0],
+          password,
+        };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
+        localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
         saveUserSession(userCredential.user);
         setCurrentUser(userCredential.user);
         return userCredential.user;
@@ -334,7 +347,14 @@ export const AuthProvider = ({ children }) => {
           isAdmin: isUserAdmin,
         };
         registeredUsers.push(cleanEmail);
+        registeredAccounts[cleanEmail] = {
+          uid: mockUser.uid,
+          email: cleanEmail,
+          displayName: mockUser.displayName,
+          password,
+        };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
+        localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
         saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
@@ -349,26 +369,10 @@ export const AuthProvider = ({ children }) => {
         friendlyError = 'Firebase Error: Email/Password sign-in is disabled in your Firebase Console. Please enable Email/Password provider in Firebase Authentication -> Sign-in method.';
       } else if (err.code === 'auth/unauthorized-domain') {
         friendlyError = 'Firebase Error: This domain is not in your Firebase Authorized Domains list. Please add your app domain in Firebase Authentication -> Settings -> Authorized Domains.';
+      } else if (err.code === 'auth/weak-password') {
+        friendlyError = 'Password is too weak. Please use at least 6 characters.';
       }
 
-      // If Firebase key is invalid or demo, fallback gracefully
-      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid')) {
-        const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Date.now()),
-          email: cleanEmail,
-          displayName: displayName || (isUserAdmin ? 'Mistr Taemry (Admin)' : cleanEmail.split('@')[0]),
-          photoURL: null,
-          isDemo: true,
-          admin: isUserAdmin,
-          isAdmin: isUserAdmin,
-        };
-        registeredUsers.push(cleanEmail);
-        localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
-        saveUserSession(mockUser);
-        setCurrentUser(mockUser);
-        setIsAdmin(isUserAdmin);
-        return mockUser;
-      }
       setAuthError(friendlyError);
       throw new Error(friendlyError);
     }
@@ -379,79 +383,49 @@ export const AuthProvider = ({ children }) => {
     setAuthError('');
     const cleanEmail = (email || '').trim().toLowerCase();
     const isUserAdmin = checkIsAdminEmail(cleanEmail);
+
     try {
       if (isFirebaseConfigured) {
-        try {
-          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
-          saveUserSession(userCredential.user);
-          setCurrentUser(userCredential.user);
-          return userCredential.user;
-        } catch (firebaseErr) {
-          // If this is the administrator account and user does not exist yet or credential issue occurs
-          if (
-            isUserAdmin &&
-            (firebaseErr.code === 'auth/user-not-found' ||
-             firebaseErr.code === 'auth/invalid-credential' ||
-             firebaseErr.code === 'auth/invalid-login-credentials' ||
-             firebaseErr.code === 'auth/wrong-password')
-          ) {
-            try {
-              const created = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-              if (db && created.user) {
-                try {
-                  const adminRef = doc(db, 'users', created.user.uid);
-                  const adminSnap = await getDoc(adminRef);
-                  if (!adminSnap.exists()) {
-                    await setDoc(adminRef, {
-                      uid: created.user.uid,
-                      email: created.user.email,
-                      name: 'Mistr Taimoor (Admin)',
-                      admin: true,
-                      isAdmin: true,
-                      role: 'admin',
-                      walletBalance: 0,
-                      currentPackage: 'None',
-                      isEligible: false,
-                      lifetimeAds: 0,
-                      dailyAdCount: 0,
-                      teamAdsCount: 0,
-                      referralCount: 0,
-                      totalEarned: 0,
-                      createdAt: new Date().toISOString(),
-                    });
-                  }
-                } catch (dberr) {
-                  console.warn('Could not write admin firestore doc:', dberr);
-                }
-              }
-              saveUserSession(created.user);
-              setCurrentUser(created.user);
-              return created.user;
-            } catch (createErr) {
-              console.warn('Auto-create in Firebase failed, activating authorized admin session:', createErr.message);
-              const mockUser = {
-                uid: 'admin_taemry',
-                email: cleanEmail,
-                displayName: 'Mistr Taimoor (Admin)',
-                photoURL: null,
-                isDemo: true,
-                admin: true,
-                isAdmin: true,
-              };
-              saveUserSession(mockUser);
-              setCurrentUser(mockUser);
-              setIsAdmin(true);
-              return mockUser;
-            }
-          }
-          throw firebaseErr;
-        }
+        // Authenticate strictly against Firebase Auth - NEVER auto-create users on login
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        saveUserSession(userCredential.user);
+        setCurrentUser(userCredential.user);
+        return userCredential.user;
       } else {
-        // Development / Demo Mode Fallback
+        // Development / Offline Mode: Verify the user account was actually registered
+        let registeredUsers = [];
+        try {
+          const rawRegistered = localStorage.getItem('taemry_registered_emails');
+          registeredUsers = rawRegistered ? JSON.parse(rawRegistered) : [];
+        } catch {}
+
+        let registeredAccounts = {};
+        try {
+          const rawAcc = localStorage.getItem('taemry_registered_accounts');
+          registeredAccounts = rawAcc ? JSON.parse(rawAcc) : {};
+        } catch {}
+
+        const userRecord = registeredAccounts[cleanEmail];
+        const isEmailRegistered = registeredUsers.includes(cleanEmail) || Boolean(userRecord);
+
+        if (!isEmailRegistered) {
+          const notFoundError = new Error('No account found with this email. Please sign up to create your account first.');
+          notFoundError.code = 'auth/user-not-found';
+          setAuthError(notFoundError.message);
+          throw notFoundError;
+        }
+
+        if (userRecord && userRecord.password && userRecord.password !== password) {
+          const pwError = new Error('Incorrect password. Please verify your password and try again.');
+          pwError.code = 'auth/wrong-password';
+          setAuthError(pwError.message);
+          throw pwError;
+        }
+
         const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
+          uid: userRecord?.uid || (isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9))),
           email: cleanEmail,
-          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0],
+          displayName: userRecord?.displayName || (isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0]),
           photoURL: null,
           isDemo: true,
           admin: isUserAdmin,
@@ -464,23 +438,24 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Firebase login error:', err);
-      if (err.code === 'auth/api-key-not-valid' || err.message?.includes('API key not valid') || isUserAdmin) {
-        const mockUser = {
-          uid: isUserAdmin ? 'admin_taemry' : ('user-' + Math.random().toString(36).substring(2, 9)),
-          email: cleanEmail,
-          displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0],
-          photoURL: null,
-          isDemo: true,
-          admin: isUserAdmin,
-          isAdmin: isUserAdmin,
-        };
-        saveUserSession(mockUser);
-        setCurrentUser(mockUser);
-        setIsAdmin(isUserAdmin);
-        return mockUser;
+      let friendlyError = err.message || 'Failed to sign in';
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/invalid-login-credentials' ||
+        err.message?.includes('user-not-found') ||
+        err.message?.includes('No account found')
+      ) {
+        friendlyError = 'No account found with this email. Please sign up to create your account first.';
+      } else if (err.code === 'auth/wrong-password' || err.message?.includes('wrong-password')) {
+        friendlyError = 'Incorrect password. Please verify your password and try again.';
+      } else if (err.code === 'auth/too-many-requests') {
+        friendlyError = 'Too many failed sign in attempts. Please try again later or reset your password.';
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyError = 'Please enter a valid email address.';
       }
-      setAuthError(err.message || 'Failed to sign in');
-      throw err;
+      setAuthError(friendlyError);
+      throw new Error(friendlyError);
     }
   };
 
@@ -661,18 +636,58 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 6. Reset Password
+  // 6. Reset Password via Firebase Email Authentication
   const resetPassword = async (email) => {
     setAuthError('');
+    const cleanEmail = (email || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      const err = new Error('Email address is required.');
+      setAuthError(err.message);
+      throw err;
+    }
+
     try {
       if (isFirebaseConfigured) {
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, cleanEmail);
+        return true;
+      } else {
+        // Fallback / Offline validation
+        let registeredUsers = [];
+        try {
+          const rawRegistered = localStorage.getItem('taemry_registered_emails');
+          registeredUsers = rawRegistered ? JSON.parse(rawRegistered) : [];
+        } catch {}
+
+        let registeredAccounts = {};
+        try {
+          const rawAcc = localStorage.getItem('taemry_registered_accounts');
+          registeredAccounts = rawAcc ? JSON.parse(rawAcc) : {};
+        } catch {}
+
+        const isRegistered = registeredUsers.includes(cleanEmail) || Boolean(registeredAccounts[cleanEmail]);
+        if (!isRegistered) {
+          const notFoundErr = new Error('No account found with this email address. Please check your email or sign up.');
+          notFoundErr.code = 'auth/user-not-found';
+          throw notFoundErr;
+        }
+        return true;
       }
-      return true;
     } catch (err) {
       console.error('Password reset error:', err);
-      setAuthError(err.message || 'Failed to send reset email');
-      throw err;
+      let friendlyError = err.message || 'Failed to send password reset email';
+      if (
+        err.code === 'auth/user-not-found' ||
+        err.code === 'auth/invalid-credential' ||
+        err.message?.includes('user-not-found')
+      ) {
+        friendlyError = 'No account found with this email address. Please verify your email or sign up.';
+      } else if (err.code === 'auth/invalid-email') {
+        friendlyError = 'Please enter a valid email address.';
+      } else if (err.code === 'auth/too-many-requests') {
+        friendlyError = 'Too many reset requests. Please wait a few moments before trying again.';
+      }
+      setAuthError(friendlyError);
+      throw new Error(friendlyError);
     }
   };
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2 } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { firebaseConfig } from '../firebase/firebase.config';
@@ -19,6 +19,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [resetSent, setResetSent] = useState(false);
   const [showForgotModal, setShowForgotModal] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
 
   const { login, signup, loginWithGoogle, resetPassword, demoLogin, isFirebaseConfigured } = useAuth();
 
@@ -50,9 +52,20 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       console.error('Auth error:', err);
       // Friendly message
       const msg = err.message || '';
-      if (msg.includes('user-not-found') || msg.includes('wrong-password') || msg.includes('invalid-credential')) {
-        setError('Invalid email or password. Please check your credentials.');
-      } else if (msg.includes('email-already-in-use')) {
+      if (
+        msg.includes('user-not-found') ||
+        msg.includes('No account found') ||
+        msg.includes('create your account first')
+      ) {
+        setError('No account found with this email. Please sign up to create your account first.');
+      } else if (
+        msg.includes('wrong-password') ||
+        msg.includes('Incorrect password')
+      ) {
+        setError('Incorrect password. Please verify your password and try again.');
+      } else if (msg.includes('invalid-credential')) {
+        setError('No account found or invalid credentials. If you have not created an account yet, please click "Sign up" below.');
+      } else if (msg.includes('email-already-in-use') || msg.includes('already exists')) {
         setError('An account with this email already exists. Try signing in.');
       } else if (msg.includes('invalid-email')) {
         setError('Please enter a valid email address.');
@@ -81,18 +94,36 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
   // Handle Forgot Password
   const handleForgotPassword = async (e) => {
-    e.preventDefault();
-    if (!forgotEmail) return;
-    setError('');
+    if (e) e.preventDefault();
+    const cleanEmail = (forgotEmail || '').trim().toLowerCase();
+    if (!cleanEmail) {
+      setForgotError('Please enter your email address.');
+      return;
+    }
+
+    setForgotError('');
+    setIsSendingReset(true);
     try {
-      await resetPassword(forgotEmail);
+      await resetPassword(cleanEmail);
       setResetSent(true);
-      setTimeout(() => {
-        setShowForgotModal(false);
-        setResetSent(false);
-      }, 3000);
     } catch (err) {
-      setError('Unable to send password reset email. Check email address.');
+      console.error('Password reset error:', err);
+      const msg = err.message || '';
+      if (
+        msg.includes('user-not-found') ||
+        msg.includes('No account found') ||
+        msg.includes('invalid-credential')
+      ) {
+        setForgotError('No account found with this email. Please check your email or sign up.');
+      } else if (msg.includes('invalid-email')) {
+        setForgotError('Please enter a valid email address.');
+      } else if (msg.includes('too-many-requests')) {
+        setForgotError('Too many attempts. Please wait a moment before trying again.');
+      } else {
+        setForgotError(msg || 'Unable to send password reset email. Please try again.');
+      }
+    } finally {
+      setIsSendingReset(false);
     }
   };
 
@@ -151,6 +182,18 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 className="self-start mt-1 px-3 py-1.5 bg-[#d97706] hover:bg-[#b45309] text-white rounded-lg font-bold text-xs transition cursor-pointer"
               >
                 👉 Switch to Sign In with this Email
+              </button>
+            )}
+            {(error.toLowerCase().includes('no account') || error.toLowerCase().includes('sign up to create') || error.toLowerCase().includes('sign up below')) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(true);
+                  setError('');
+                }}
+                className="self-start mt-1 px-3 py-1.5 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-lg font-bold text-xs transition cursor-pointer"
+              >
+                👉 Click here to Sign Up (Create Account)
               </button>
             )}
           </div>
@@ -234,9 +277,15 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </label>
               {!isSignUp && (
                 <button
+                  id="btn-forgot-password-trigger"
                   type="button"
-                  onClick={() => setShowForgotModal(true)}
-                  className="text-xs font-semibold text-[#0c5963] hover:text-[#083a41] transition-colors"
+                  onClick={() => {
+                    setForgotEmail(email || '');
+                    setForgotError('');
+                    setResetSent(false);
+                    setShowForgotModal(true);
+                  }}
+                  className="text-xs font-semibold text-[#0c5963] hover:text-[#083a41] transition-colors cursor-pointer"
                 >
                   Forgot password?
                 </button>
@@ -337,41 +386,143 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
       {/* Forgot Password Modal */}
       {showForgotModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full border border-[#ded8cb] shadow-xl animate-in fade-in zoom-in-95 duration-150">
-            <h3 className="text-lg font-bold text-[#09353e] mb-1">Reset Password</h3>
-            <p className="text-xs text-[#5a7075] mb-4">
-              Enter your email address and we will send you a password reset link.
-            </p>
+        <div
+          id="modal-forgot-password-backdrop"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-in fade-in duration-200"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowForgotModal(false);
+            }
+          }}
+        >
+          <div
+            id="modal-forgot-password"
+            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#ded8cb] shadow-2xl animate-in fade-in zoom-in-95 duration-200 relative"
+          >
+            {/* Top Close Button */}
+            <button
+              id="btn-close-forgot-modal"
+              type="button"
+              onClick={() => setShowForgotModal(false)}
+              className="absolute right-4 top-4 p-1.5 text-[#788e93] hover:text-[#09353e] hover:bg-[#f3eee5] rounded-full transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header with Key Icon */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center shrink-0 border border-[#bce3db]">
+                <KeyRound className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#09353e]">Recover Password</h3>
+                <p className="text-xs text-[#61777b]">
+                  Secure recovery via Firebase Authentication
+                </p>
+              </div>
+            </div>
 
             {resetSent ? (
-              <div className="p-3 bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl text-xs text-[#166534] flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-[#16a34a]" />
-                <span>Reset link sent! Please check your inbox.</span>
+              <div className="space-y-4">
+                <div className="p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl text-[#166534] space-y-2">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 text-[#16a34a] shrink-0" />
+                    <span className="font-bold text-sm">Reset Link Sent!</span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-[#14532d]">
+                    We have dispatched a secure password reset link to <strong className="font-semibold">{forgotEmail}</strong>. Please check your inbox and click the link to set a new password.
+                  </p>
+                  <p className="text-[11px] text-[#15803d]">
+                    Tip: If you don't see it in a moment, be sure to check your spam/junk folder.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-center gap-2 pt-2">
+                  <button
+                    id="btn-back-to-signin"
+                    type="button"
+                    onClick={() => {
+                      setShowForgotModal(false);
+                      setResetSent(false);
+                      setIsSignUp(false);
+                    }}
+                    className="w-full sm:w-auto flex-1 py-2.5 px-4 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer text-center"
+                  >
+                    Back to Sign In
+                  </button>
+                  <button
+                    id="btn-resend-reset-email"
+                    type="button"
+                    disabled={isSendingReset}
+                    onClick={() => handleForgotPassword()}
+                    className="w-full sm:w-auto py-2.5 px-4 bg-[#f3eee5] hover:bg-[#e8e2d5] text-[#0c5963] rounded-xl text-xs font-semibold transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {isSendingReset ? 'Resending...' : 'Resend Link'}
+                  </button>
+                </div>
               </div>
             ) : (
-              <form onSubmit={handleForgotPassword} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  placeholder="name@example.com"
-                  className="w-full px-3.5 py-2.5 text-sm bg-[#faf8f5] border border-[#d8d1c3] rounded-xl focus:outline-none focus:border-[#0c5963]"
-                />
-                <div className="flex items-center justify-end gap-2 pt-2">
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <p className="text-xs text-[#526a70] leading-relaxed">
+                  Enter the email address associated with your TAEMRY account. We will send you an official single-use password reset link.
+                </p>
+
+                {forgotError && (
+                  <div className="p-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl text-xs text-[#991b1b] flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
+                    <span className="leading-snug">{forgotError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="input-forgot-email" className="block text-xs font-semibold text-[#324f55] mb-1.5">
+                    Account Email Address
+                  </label>
+                  <div className="relative">
+                    <input
+                      id="input-forgot-email"
+                      type="email"
+                      required
+                      autoFocus
+                      value={forgotEmail}
+                      onChange={(e) => {
+                        setForgotEmail(e.target.value);
+                        if (forgotError) setForgotError('');
+                      }}
+                      placeholder="e.g. name@example.com"
+                      className="w-full pl-9 pr-3.5 py-2.5 text-sm bg-[#faf8f5] border border-[#d8d1c3] rounded-xl focus:bg-white focus:outline-none focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 text-[#09353e] placeholder-[#9caea7] transition-all"
+                    />
+                    <Mail className="w-4 h-4 text-[#788e93] absolute left-3 top-1/2 -translate-y-1/2" />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
                   <button
+                    id="btn-cancel-forgot"
                     type="button"
                     onClick={() => setShowForgotModal(false)}
-                    className="px-3.5 py-2 text-xs font-semibold text-[#5a7075] hover:bg-[#f1ede4] rounded-lg"
+                    className="px-4 py-2.5 text-xs font-semibold text-[#5a7075] hover:bg-[#f1ede4] hover:text-[#09353e] rounded-xl transition cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
+                    id="btn-send-reset-link"
                     type="submit"
-                    className="px-4 py-2 text-xs font-semibold bg-[#0c5963] text-white rounded-lg hover:bg-[#09424a]"
+                    disabled={isSendingReset || !forgotEmail}
+                    className="flex items-center gap-2 px-5 py-2.5 text-xs font-bold bg-[#0c5963] hover:bg-[#09424a] text-white rounded-xl shadow-xs transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Send Reset Link
+                    {isSendingReset ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Sending Link...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Send Reset Link</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
                   </button>
                 </div>
               </form>
