@@ -74,7 +74,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [forgotError, setForgotError] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
 
-  const { login, signup, loginWithGoogle, resetPassword, demoLogin, isFirebaseConfigured } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -447,27 +447,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </button>
             </p>
           )}
-        </div>
-
-        {/* Firebase Live Status & Fast Access (Hidden per request) */}
-        <div className="hidden mt-6 pt-5 border-t border-[#eee9df]">
-          <div className="flex items-center justify-between">
-            <span className="hidden text-[11px] font-semibold text-[#0f766e] items-center gap-1.5 bg-[#e6f4f1] px-2 py-0.5 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#10b981] animate-pulse" />
-              Firebase Connected ({firebaseConfig.projectId || 'taemry-flux'})
-            </span>
-            <button
-              type="button"
-              onClick={() => {
-                demoLogin('mistrtaimoor@gmail.com');
-                onNavigate('dashboard');
-              }}
-              className="hidden text-[11px] font-bold text-[#0c5963] hover:text-[#07363c] bg-[#f1ede4] hover:bg-[#e4ded2] px-2.5 py-1 rounded-lg transition-colors"
-              title="Quick demo preview login"
-            >
-              Quick Preview Login
-            </button>
-          </div>
         </div>
       </div>
 

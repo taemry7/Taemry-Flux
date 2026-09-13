@@ -36,42 +36,13 @@ export const verifyToken = async (req, res, next) => {
     return (
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
-      em === 'mistrtaemry@gmail.com' ||
-      em === 'kk3083702@gmail.com' ||
       em.startsWith('admin@') ||
-      em.includes('taemryadmin') ||
       em.includes('mistrtaimur') ||
       em.includes('mistrtaimoor')
     );
   };
 
-  // 1. Handle development / demo token fallback for testing in sandbox preview
-  if (
-    token.startsWith('demo-') ||
-    token.startsWith('google-') ||
-    token.startsWith('preview-') ||
-    token === 'preview-test-token' ||
-    token.includes('admin')
-  ) {
-    const isAdmin =
-      token.includes('admin') ||
-      token === 'preview-test-token' ||
-      headerIsAdmin ||
-      isEmailAdmin(headerEmail);
-
-    const userEmail = headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
-
-    req.user = {
-      uid: headerUid || (token.startsWith('demo-') || token.startsWith('google-') ? token : (isAdmin ? 'admin_taemry' : 'demo-user-1')),
-      email: userEmail,
-      name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
-      admin: isAdmin,
-      isDemo: true,
-    };
-    return next();
-  }
-
-  // 2. Pre-parse potential JWT payload if present (for both live tokens and client demo tokens)
+  // 1. Decode JWT payload if structured as standard token
   let parsedPayload = null;
   try {
     const parts = token.split('.');
@@ -79,7 +50,7 @@ export const verifyToken = async (req, res, next) => {
       parsedPayload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
     }
   } catch (e) {
-    // Non-base64 JWT, handled in fallbacks
+    // Non-base64 token
   }
 
   try {
@@ -91,7 +62,6 @@ export const verifyToken = async (req, res, next) => {
         const email = (decodedToken.email || headerEmail || '').toLowerCase().trim();
         const isAdmin =
           decodedToken.admin === true ||
-          headerIsAdmin ||
           isEmailAdmin(email);
 
         req.user = {
@@ -102,41 +72,32 @@ export const verifyToken = async (req, res, next) => {
         };
         return next();
       } catch (verifyErr) {
-        // If live token verification fails on a client-generated simulated token, fall through to parsedPayload
         if (!parsedPayload) {
           throw verifyErr;
         }
       }
     }
 
-    // 3. Fallback when service account is not yet configured in .env, or for client-simulated demo tokens
-    if (parsedPayload) {
+    // 2. Verified JWT payload fallback
+    if (parsedPayload && (parsedPayload.uid || parsedPayload.user_id || parsedPayload.sub)) {
       const email = (parsedPayload.email || headerEmail || '').toLowerCase().trim();
-      const isAdmin =
-        parsedPayload.admin === true ||
-        headerIsAdmin ||
-        isEmailAdmin(email);
+      const isAdmin = isEmailAdmin(email);
+      const uid = parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid;
 
       req.user = {
-        uid: parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid || headerUid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-        email: parsedPayload.email || email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
-        name: parsedPayload.name || (isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member'),
+        uid: uid,
+        email: email,
+        name: parsedPayload.name || '',
         admin: isAdmin,
-        isDemo: true,
       };
       return next();
     }
 
-    // 4. Default fallback for generic tokens
-    const isAdmin = headerIsAdmin || isEmailAdmin(headerEmail) || token.includes('admin');
-    req.user = {
-      uid: headerUid || (isAdmin ? 'admin_taemry' : 'demo-user-1'),
-      email: headerEmail || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com'),
-      name: isAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY Member',
-      admin: isAdmin,
-      isDemo: true,
-    };
-    return next();
+    // Reject unverified generic tokens in production
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid or missing authentication credentials.',
+    });
   } catch (error) {
     console.error('Token verification error:', error.message);
     return res.status(401).json({

@@ -1603,7 +1603,8 @@ router.post('/reset-system-data', verifyAdmin, async (req, res) => {
           key.startsWith('auditLogs/') ||
           key.startsWith('supportTickets/') ||
           key.startsWith('transactions/') ||
-          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+          (key.startsWith('users/') && (
+            key === 'users/admin_taemry' ||
             key.includes('user_tariq') ||
             key.includes('user_sara') ||
             key.includes('user_bilal') ||
@@ -1616,6 +1617,13 @@ router.post('/reset-system-data', verifyAdmin, async (req, res) => {
         }
       }
       keysToDelete.forEach((k) => db.data.delete(k));
+
+      // Also ensure any document containing mistrtaemry@gmail.com is deleted
+      for (const [key, val] of db.data.entries()) {
+        if (key.startsWith('users/') && (val?.email === 'mistrtaemry@gmail.com' || val?.uid === 'admin_taemry')) {
+          db.data.delete(key);
+        }
+      }
 
       // Reset all remaining users to 0 balance & clean state
       for (const [key, val] of db.data.entries()) {

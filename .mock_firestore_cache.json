@@ -132,27 +132,6 @@
     }
   ],
   [
-    "users/admin_taemry",
-    {
-      "uid": "admin_taemry",
-      "email": "mistrtaemry@gmail.com",
-      "name": "Mistr Taemry (Admin)",
-      "currentPackage": "None",
-      "walletBalance": 0,
-      "referralCount": 0,
-      "isEligible": false,
-      "isBlocked": false,
-      "dailyAdCount": 0,
-      "lifetimeAds": 0,
-      "teamAdsCount": 0,
-      "totalEarned": 0,
-      "role": "admin",
-      "admin": true,
-      "isAdmin": true,
-      "createdAt": "2026-08-01T10:00:00.000Z"
-    }
-  ],
-  [
     "users/RNva69V1XoMwaxGgVaKtJ4jXfYY2",
     {
       "walletBalance": 0,

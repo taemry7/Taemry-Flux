@@ -38,7 +38,8 @@ function purgePreSeededData() {
           key.startsWith('auditLogs/') ||
           key.startsWith('supportTickets/') ||
           key.startsWith('transactions/') ||
-          (key.startsWith('users/') && key !== 'users/admin_taemry' && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (
+          (key.startsWith('users/') && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (
+            key === 'users/admin_taemry' ||
             key.includes('user_tariq') ||
             key.includes('user_sara') ||
             key.includes('user_bilal') ||
@@ -53,20 +54,11 @@ function purgePreSeededData() {
       }
       keysToDelete.forEach((k) => db.data.delete(k));
 
-      // Reset admin_taemry to 0 balance & clean state
-      const adminDoc = db.data.get('users/admin_taemry');
-      if (adminDoc) {
-        db.data.set('users/admin_taemry', {
-          ...adminDoc,
-          walletBalance: 0,
-          currentPackage: 'None',
-          lifetimeAds: 0,
-          dailyAdCount: 0,
-          teamAdsCount: 0,
-          referralCount: 0,
-          totalEarned: 0,
-          isEligible: false,
-        });
+      // Also ensure any document containing mistrtaemry@gmail.com is deleted
+      for (const [key, val] of db.data.entries()) {
+        if (key.startsWith('users/') && (val?.email === 'mistrtaemry@gmail.com' || val?.uid === 'admin_taemry')) {
+          db.data.delete(key);
+        }
       }
 
       if (typeof db._persist === 'function') {

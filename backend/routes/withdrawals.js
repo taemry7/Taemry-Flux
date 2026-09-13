@@ -90,6 +90,32 @@ router.post('/request', verifyToken, async (req, res) => {
       await userRef.set(userData, { merge: true });
     }
 
+    // Security Check 1: Suspended Account Check
+    if (userData.isBlocked === true) {
+      return res.status(403).json({
+        error: 'Account Suspended',
+        message: 'Your account is suspended. Withdrawals are disabled. Please contact support.',
+      });
+    }
+
+    // Security Check 2: Anti-Bot / Anti-Race Condition - Single Pending Withdrawal Rule
+    try {
+      const activePendingSnap = await db.collection('withdrawals')
+        .where('userId', '==', uid)
+        .where('status', '==', 'pending')
+        .limit(1)
+        .get();
+
+      if (!activePendingSnap.empty) {
+        return res.status(400).json({
+          error: 'Pending Withdrawal Exists',
+          message: 'You already have a pending withdrawal request under review. Please wait for it to be processed before submitting another.',
+        });
+      }
+    } catch (pendErr) {
+      console.warn('Pending withdrawal check warning:', pendErr.message);
+    }
+
     // 2. Validate Amount ($1 to $1,000)
     if (isNaN(parsedAmount) || parsedAmount < 1.00 || parsedAmount > 1000.00) {
       return res.status(400).json({

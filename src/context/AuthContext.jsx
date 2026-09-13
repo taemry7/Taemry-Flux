@@ -874,20 +874,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Quick Demo Login for instant testing
-  const demoLogin = (email = 'mistrtaimoor@gmail.com') => {
-    const isUserAdmin = checkIsAdminEmail(email);
-    const mockUser = {
-      uid: isUserAdmin ? 'admin_taemry' : ('demo-flux-' + Date.now()),
-      email: email,
-      displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : 'TAEMRY User',
-      isDemo: true,
-      admin: isUserAdmin,
-      isAdmin: isUserAdmin,
-    };
-    saveUserSession(mockUser);
-    setCurrentUser(mockUser);
-    setIsAdmin(isUserAdmin);
+  // Production Mode: demoLogin disabled
+  const demoLogin = () => {
+    console.warn('Demo login is disabled in production mode.');
   };
 
   // Listen to Firebase auth state changes

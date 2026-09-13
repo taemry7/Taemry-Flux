@@ -98,6 +98,68 @@ router.post('/request', verifyToken, upload.single('screenshot'), async (req, re
     // Extract fields from body
     let { method, amountUSD, screenshotURL = '', transactionId = '' } = req.body;
 
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.exists ? userDoc.data() : null;
+
+    // Security Check 1: Account Block / Suspension
+    if (userData?.isBlocked === true) {
+      return res.status(403).json({
+        error: 'Account Suspended',
+        message: 'Your account is suspended. Deposits are currently disabled. Please contact support.',
+      });
+    }
+
+    // Security Check 2: Anti-Bot Rapid Submission Cooldown (30 seconds)
+    if (userData?.lastDepositRequestTime) {
+      const elapsedMs = Date.now() - new Date(userData.lastDepositRequestTime).getTime();
+      if (elapsedMs < 30 * 1000) {
+        const remainingSec = Math.ceil((30 * 1000 - elapsedMs) / 1000);
+        return res.status(429).json({
+          error: 'Rate Limited',
+          message: `Please wait ${remainingSec} seconds before submitting another deposit request.`,
+        });
+      }
+    }
+
+    // Security Check 3: Anti-Spam Maximum Pending Deposits Cap (Max 3 pending requests)
+    try {
+      const pendingSnap = await db.collection('deposits')
+        .where('userId', '==', uid)
+        .where('status', '==', 'pending')
+        .limit(4)
+        .get();
+
+      if (pendingSnap.size >= 3) {
+        return res.status(429).json({
+          error: 'Pending Requests Limit',
+          message: 'You already have 3 pending deposit requests under review. Please wait for admin approval before submitting another.',
+        });
+      }
+    } catch (queryErr) {
+      console.warn('Pending deposits count check warning:', queryErr.message);
+    }
+
+    // Security Check 4: Anti-Fraud Duplicate Transaction ID Check
+    const cleanTrxId = typeof transactionId === 'string' ? transactionId.trim() : '';
+    if (cleanTrxId && cleanTrxId.length >= 6) {
+      try {
+        const existingTxSnap = await db.collection('deposits')
+          .where('transactionId', '==', cleanTrxId)
+          .limit(1)
+          .get();
+
+        if (!existingTxSnap.empty) {
+          return res.status(400).json({
+            error: 'Duplicate Transaction ID',
+            message: 'This Transaction ID has already been submitted or processed. Duplicate payment submissions are strictly prohibited.',
+          });
+        }
+      } catch (txErr) {
+        console.warn('Duplicate TrxID check warning:', txErr.message);
+      }
+    }
+
     const parsedAmount = parseFloat(amountUSD);
 
     // 1. Validation - Amount limit check
@@ -181,10 +243,12 @@ router.post('/request', verifyToken, upload.single('screenshot'), async (req, re
         setTimeout(() => reject(new Error('Firestore write timeout')), 3500)
       );
       docRef = await Promise.race([addPromise, addTimeout]);
+      userRef.set({ lastDepositRequestTime: createdAt }, { merge: true }).catch(() => {});
     } catch (writeErr) {
       console.warn('Direct Firestore write failed or timed out, saving resiliently:', writeErr.message);
       const fallbackId = 'tx_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
       docRef = { id: fallbackId };
+      userRef.set({ lastDepositRequestTime: createdAt }, { merge: true }).catch(() => {});
     }
 
     return res.status(201).json({

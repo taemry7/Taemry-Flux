@@ -181,7 +181,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                 <button
                   id="btn-nav-admin"
                   onClick={() => onNavigate('admin')}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border transition-all cursor-pointer ${
+                  className={`hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border transition-all active:scale-95 cursor-pointer ${
                     currentPage === 'admin'
                       ? 'bg-[#0f172a] text-[#38bdf8] border-[#38bdf8] shadow-sm'
                       : 'bg-[#1e293b] text-[#7dd3fc] border-[#334155] hover:bg-[#0f172a]'

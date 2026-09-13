@@ -21,8 +21,7 @@ export const verifyAdmin = (req, res, next) => {
       email === 'mistrtaimoor@gmail.com' ||
       email.startsWith('admin@') ||
       email.includes('mistrtaimur') ||
-      email.includes('mistrtaimoor') ||
-      req.headers['x-user-admin'] === 'true';
+      email.includes('mistrtaimoor');
 
     if (isAuthorizedAdminEmail) {
       if (req.user) {

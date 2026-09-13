@@ -160,7 +160,7 @@ router.post('/record-signup', async (req, res) => {
     const cleanCode = String(referralCode).trim();
     const db = getDb();
     if (!db) {
-      return res.json({ success: true, message: 'Database not configured or demo mode' });
+      return res.status(503).json({ success: false, message: 'Database connection not available' });
     }
 
     let referrerDocRef = null;

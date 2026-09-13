@@ -19,7 +19,6 @@ service cloud.firestore {
           'admin_taemry@taemryflux.com',
           'mistrtaimur7@gmail.com',
           'mistrtaimoor@gmail.com',
-          'mistrtaemry@gmail.com',
           'kk3083702@gmail.com'
         ]
       );
@@ -28,7 +27,14 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isOwner(userId) || isAdmin();
-      allow update: if isOwner(userId) || isAdmin() || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralCount']));
+      allow update: if isAdmin() || (
+        isOwner(userId) && 
+        !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+          'walletBalance', 'role', 'admin', 'isAdmin', 'currentPackage', 
+          'isEligible', 'totalEarned', 'lifetimeAds', 'dailyAdCount', 
+          'teamAdsCount', 'isBlocked'
+        ])
+      ) || (isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralCount']));
       allow delete: if isAdmin();
 
       match /transactions/{txId} {
@@ -43,13 +49,13 @@ service cloud.firestore {
 
     match /deposits/{depositId} {
       allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
       allow update, delete: if isAdmin();
     }
 
     match /withdrawals/{withdrawalId} {
       allow read: if isAuthenticated() && (isAdmin() || resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid && request.resource.data.status == 'pending';
       allow update, delete: if isAdmin();
     }
 

@@ -85,14 +85,15 @@ apiClient.interceptors.request.use(
               Boolean(savedUser.admin || savedUser.isAdmin) ||
               userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
-              userEmail === 'mistrtaemry@gmail.com' ||
-              userEmail === 'kk3083702@gmail.com' ||
               userEmail.startsWith('admin@') ||
-              userEmail.includes('taemryadmin') ||
               userEmail.includes('mistrtaimur') ||
               userEmail.includes('mistrtaimoor');
 
-            const finalUid = userUid || (isAdmin ? 'admin_taemry' : 'demo-user-1');
+            if (!userUid) {
+              return config;
+            }
+
+            const finalUid = userUid;
 
             // Construct standard JWT-like structure (alg: none) so backend can reliably decode payload
             const header = btoa(JSON.stringify({ alg: 'none', typ: 'JWT' }));
@@ -116,13 +117,6 @@ apiClient.interceptors.request.use(
             token = null;
           }
         }
-      }
-
-      // 3. Fallback token for testing (when no session is stored, e.g. direct admin URL or preview test)
-      if (!token) {
-        token = 'preview-admin-test-token';
-        config.headers['x-user-email'] = 'mistrtaimoor@gmail.com';
-        config.headers['x-user-admin'] = 'true';
       }
 
       if (token) {
