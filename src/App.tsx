@@ -304,6 +304,7 @@ function AppContent() {
         {/* Top Navigation Bar */}
         <Navbar
           currentPage={currentPage}
+          authMode={currentPage === 'login' ? (activeTab === 'signup' ? 'signup' : 'signin') : null}
           onNavigate={navigateTo}
           onOpenDrawer={() => setIsDrawerOpen(true)}
         />

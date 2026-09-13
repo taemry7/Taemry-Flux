@@ -269,7 +269,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // 1. Sign Up with Email and Password
-  const signup = async (email, password, displayName = '') => {
+  const signup = async (email, password, displayName = '', referredBy = '') => {
     setAuthError('');
     const cleanEmail = (email || '').trim().toLowerCase();
     const isUserAdmin = checkIsAdminEmail(cleanEmail);
@@ -303,7 +303,7 @@ export const AuthProvider = ({ children }) => {
         // Save user profile to Cloud Firestore users collection
         if (db && userCredential.user) {
           try {
-            await setDoc(doc(db, 'users', userCredential.user.uid), {
+            const userProfileData = {
               uid: userCredential.user.uid,
               email: cleanEmail,
               name: displayName || cleanEmail.split('@')[0],
@@ -317,7 +317,11 @@ export const AuthProvider = ({ children }) => {
               isEligible: false,
               isBlocked: false,
               createdAt: new Date().toISOString(),
-            }, { merge: true });
+            };
+            if (referredBy && String(referredBy).trim()) {
+              userProfileData.referredBy = String(referredBy).trim();
+            }
+            await setDoc(doc(db, 'users', userCredential.user.uid), userProfileData, { merge: true });
           } catch (firestoreErr) {
             console.warn('Could not write user to Firestore:', firestoreErr.message);
           }

@@ -314,3 +314,14 @@ aside {
   }
 }
 
+/* Prevent any swipe down/up, pull-to-refresh, or bounce on loading/offline splash */
+#page-loader-overlay {
+  overscroll-behavior: none !important;
+  overscroll-behavior-y: none !important;
+  overscroll-behavior-x: none !important;
+  touch-action: none !important;
+  -webkit-touch-callout: none !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+

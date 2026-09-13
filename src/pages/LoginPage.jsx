@@ -8,11 +8,47 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
 
   React.useEffect(() => {
-    setIsSignUp(initialMode === 'signup');
+    const signupMode = initialMode === 'signup';
+    setIsSignUp(signupMode);
+    try {
+      window.dispatchEvent(new CustomEvent('taemry_set_auth_mode', { detail: signupMode ? 'signup' : 'signin' }));
+    } catch {}
   }, [initialMode]);
+
+  // Listen for external auth mode switch events
+  React.useEffect(() => {
+    const handleAuthModeEvent = (e) => {
+      if (e?.detail === 'signup') {
+        setIsSignUp(true);
+        setError('');
+      } else if (e?.detail === 'signin') {
+        setIsSignUp(false);
+        setError('');
+      }
+    };
+    window.addEventListener('taemry_set_auth_mode', handleAuthModeEvent);
+    return () => window.removeEventListener('taemry_set_auth_mode', handleAuthModeEvent);
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [referredBy, setReferredBy] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return '';
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref') || params.get('referral');
+      if (ref) return ref.trim();
+      const hash = window.location.hash || '';
+      if (hash.includes('ref=')) {
+        const match = hash.match(/ref=([a-zA-Z0-9_-]+)/);
+        if (match && match[1]) return match[1].trim();
+      }
+      return localStorage.getItem('taemry_referral_sponsor') || '';
+    } catch {
+      return '';
+    }
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -43,7 +79,12 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     try {
       if (isSignUp) {
         sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
-        await signup(email, password, displayName);
+        if (referredBy && referredBy.trim()) {
+          try {
+            localStorage.setItem('taemry_referral_sponsor', referredBy.trim());
+          } catch {}
+        }
+        await signup(email, password, displayName, referredBy);
       } else {
         await login(email, password);
       }
@@ -242,14 +283,14 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           {isSignUp && (
             <div>
               <label className="block text-xs font-semibold text-[#324f55] mb-1.5">
-                Full Name
+                Referred by
               </label>
               <input
-                id="input-name"
+                id="input-referred-by"
                 type="text"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="e.g. Taimur Khan"
+                value={referredBy}
+                onChange={(e) => setReferredBy(e.target.value)}
+                placeholder="Enter referral code"
                 className="w-full px-4 py-3 text-sm bg-[#faf8f5] border border-[#dcd6c9] rounded-xl focus:bg-white focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] placeholder-[#9caea7]"
               />
             </div>
@@ -322,7 +363,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
               <>
-                <span>{isSignUp ? 'Create account' : 'Continue'}</span>
+                <span>{isSignUp ? 'Sign Up' : 'Continue'}</span>
                 <ArrowRight className="w-4 h-4" />
               </>
             )}
@@ -336,9 +377,14 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               Already have an account?{' '}
               <button
                 id="toggle-signin"
+                type="button"
                 onClick={() => {
                   setIsSignUp(false);
                   setError('');
+                  window.location.hash = '#/login/signin';
+                  try {
+                    window.dispatchEvent(new CustomEvent('taemry_set_auth_mode', { detail: 'signin' }));
+                  } catch {}
                 }}
                 className="font-bold text-[#0c5963] hover:underline"
               >
@@ -350,9 +396,14 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               Don't have an account?{' '}
               <button
                 id="toggle-signup"
+                type="button"
                 onClick={() => {
                   setIsSignUp(true);
                   setError('');
+                  window.location.hash = '#/login/signup';
+                  try {
+                    window.dispatchEvent(new CustomEvent('taemry_set_auth_mode', { detail: 'signup' }));
+                  } catch {}
                 }}
                 className="font-bold text-[#0c5963] hover:underline"
               >
@@ -418,7 +469,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               <div>
                 <h3 className="text-lg font-bold text-[#09353e]">Recover Password</h3>
                 <p className="text-xs text-[#61777b]">
-                  Secure recovery via Firebase Authentication
+                  Secure recovery via Authentication
                 </p>
               </div>
             </div>

@@ -19,7 +19,7 @@ import { apiGet } from '../api/client';
 
 export default function HomePage({ onNavigate }) {
   const { currentUser, userStats, fetchUserStats } = useAuth();
-  const [selectedViewMode, setSelectedViewMode] = useState('all'); // 'core' or 'all'
+  const [selectedViewMode, setSelectedViewMode] = useState('core'); // 'core' (Starter 3) first
   const [openFaq, setOpenFaq] = useState(null);
 
   const homeFaqs = [
@@ -59,7 +59,7 @@ export default function HomePage({ onNavigate }) {
       accentColor: 'bg-[#d97706]/10 text-[#b45309] border-[#d97706]/30',
       badge: 'STARTER',
       circleColor: 'bg-[#b45309]',
-      motivationText: '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
+      motivationText: '✨ Empower your financial freedom with guaranteed 20% daily returns upon activation.',
     },
     {
       id: 'silver',
@@ -134,14 +134,14 @@ export default function HomePage({ onNavigate }) {
     {
       id: 'apex',
       name: 'Apex',
-      tierLabel: 'Apex Tier',
+      tierLabel: 'Elite Master Tier',
       tagline: 'Unbounded reward scale with peak return rate',
       entryPrice: '$1,000.00',
       minWallet: '$100.00',
       rewardRate: '20%',
       dailyLimit: '20% Daily Yield',
       accentColor: 'bg-[#ea580c]/10 text-[#ea580c] border-[#ea580c]/30',
-      badge: 'APEX MASTER',
+      badge: 'ELITE MASTER',
       circleColor: 'bg-[#ea580c]',
       motivationText: '🏆 Reach pinnacle financial freedom with maximum daily capital yields and apex VIP benefits.',
     },
@@ -241,10 +241,12 @@ export default function HomePage({ onNavigate }) {
     return 0;
   })();
 
-  const displayBalance = resolvedWalletBalance.toFixed(2);
+  const displayBalance = currentUser
+    ? resolvedWalletBalance.toFixed(2)
+    : '125.00';
   const displayProgress = currentUser
     ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 200) * 100))
-    : 0;
+    : 37;
   const hasBoughtPackage = Boolean(
     currentUser &&
     userStats?.currentPackage &&
@@ -275,7 +277,7 @@ export default function HomePage({ onNavigate }) {
             <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0ede6] dark:border-[#17323b]">
               <div>
                 <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">
-                  Live Available Balance
+                  Available Balance
                 </span>
                 <span className="text-2xl font-black text-[#0c5963] dark:text-[#38bdf8]">
                   ${Number(userStats?.walletBalance || 0).toFixed(2)} <span className="text-xs font-semibold text-[#546e73] dark:text-[#94a3b8]">USD</span>
@@ -346,7 +348,7 @@ export default function HomePage({ onNavigate }) {
             </div>
 
             <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
-              Live Available Balance
+              Available Balance
             </p>
             <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5 flex items-baseline">
               <span>${displayBalance.split('.')[0]}</span>
@@ -470,23 +472,25 @@ export default function HomePage({ onNavigate }) {
             </div>
 
             {/* Filter Toggle */}
-            <div className="flex items-center bg-[#eae4d8] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold">
+            <div className="flex items-center bg-[#eae4d8] dark:bg-[#122b33] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold border border-[#dcd6c8] dark:border-[#1a3b45]">
               <button
+                type="button"
                 onClick={() => setSelectedViewMode('core')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-bold ${
                   selectedViewMode === 'core'
                     ? 'bg-[#0c5963] text-white shadow-xs'
-                    : 'text-[#50686d] hover:text-[#0c5963]'
+                    : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
                 }`}
               >
                 Starter 3
               </button>
               <button
+                type="button"
                 onClick={() => setSelectedViewMode('all')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
+                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-bold ${
                   selectedViewMode === 'all'
                     ? 'bg-[#0c5963] text-white shadow-xs'
-                    : 'text-[#50686d] hover:text-[#0c5963]'
+                    : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
                 }`}
               >
                 All {packageList.length} Packages

@@ -39,7 +39,7 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 ## STRICT INVARIANT: Codebase Stabilization & Modification Lock (PERMANENT)
 - The core platform architecture, business calculations, reward equations, package motivations, theme toggle, and UI styling decisions are permanently finalized.
 - **Button Auth Navigation Invariant**:
-  - Navbar "Open your wallet" (`#btn-nav-getstarted`) -> Sign In page (`login`, `signin`).
+  - Navbar button (`#btn-nav-getstarted`) -> "Sign Up" leading to Sign Up page (`login`, `signup`) per user explicit directive.
   - Navbar "Sign Up" (`#btn-nav-signup`) -> Hidden.
   - Hero "Start with TAEMRY" (`#btn-hero-start`) -> Sign Up page (`login`, `signup`).
 - Assistants must NOT make speculative, unsolicited, or automated modifications to working features.

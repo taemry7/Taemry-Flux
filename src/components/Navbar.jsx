@@ -3,8 +3,41 @@ import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, 
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
+export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode: externalAuthMode }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
+  const [currentAuthMode, setCurrentAuthMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash || '';
+      if (hash.includes('signup')) return 'signup';
+      if (hash.includes('signin')) return 'signin';
+    }
+    return externalAuthMode || 'signin';
+  });
+
+  useEffect(() => {
+    if (externalAuthMode) {
+      setCurrentAuthMode(externalAuthMode);
+    }
+  }, [externalAuthMode]);
+
+  useEffect(() => {
+    const handleAuthModeEvent = (e) => {
+      if (e?.detail) {
+        setCurrentAuthMode(e.detail);
+      }
+    };
+    const handleHash = () => {
+      const hash = window.location.hash || '';
+      if (hash.includes('signup')) setCurrentAuthMode('signup');
+      else if (hash.includes('signin')) setCurrentAuthMode('signin');
+    };
+    window.addEventListener('taemry_set_auth_mode', handleAuthModeEvent);
+    window.addEventListener('hashchange', handleHash);
+    return () => {
+      window.removeEventListener('taemry_set_auth_mode', handleAuthModeEvent);
+      window.removeEventListener('hashchange', handleHash);
+    };
+  }, []);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const notificationRef = useRef(null);
@@ -338,10 +371,27 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage }) {
 
               <button
                 id="btn-nav-getstarted"
-                onClick={() => onNavigate('login', 'signin')}
+                onClick={() => {
+                  const isSignInPage = currentPage === 'login' && currentAuthMode === 'signin';
+                  if (isSignInPage) {
+                    onNavigate('login', 'signup');
+                    setCurrentAuthMode('signup');
+                    try {
+                      window.dispatchEvent(new CustomEvent('taemry_set_auth_mode', { detail: 'signup' }));
+                    } catch {}
+                  } else {
+                    onNavigate('login', 'signin');
+                    setCurrentAuthMode('signin');
+                    try {
+                      window.dispatchEvent(new CustomEvent('taemry_set_auth_mode', { detail: 'signin' }));
+                    } catch {}
+                  }
+                }}
                 className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#0c5963] hover:bg-[#08424b] active:scale-[0.98] text-white text-sm font-semibold rounded-full shadow-sm shadow-[#0c5963]/20 transition-all cursor-pointer whitespace-nowrap"
               >
-                <span className="text-white font-semibold leading-none">Open your wallet</span>
+                <span className="text-white font-semibold leading-none">
+                  {currentPage === 'login' && currentAuthMode === 'signin' ? 'Sign Up' : 'Open your wallet'}
+                </span>
               </button>
             </div>
           )}

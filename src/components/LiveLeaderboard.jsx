@@ -15,7 +15,7 @@ const INITIAL_LEADERBOARD_USERS = [
     username: '@tariq_elite',
     country: 'Pakistan 🇵🇰',
     city: 'Lahore',
-    tier: 'Apex',
+    tier: 'Elite Master',
     tierColor: 'bg-[#ea580c]/15 text-[#ea580c] border-[#ea580c]/30',
     avatarBg: 'bg-[#ea580c]',
     totalEarned: 2480.50,
@@ -58,7 +58,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 5800,
     referrals: 41,
     dailyEarned: 100.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -76,7 +76,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 4200,
     referrals: 29,
     dailyEarned: 20.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -112,7 +112,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 3410,
     referrals: 19,
     dailyEarned: 10.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -148,7 +148,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 2680,
     referrals: 14,
     dailyEarned: 5.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -184,7 +184,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 2210,
     referrals: 9,
     dailyEarned: 5.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -220,7 +220,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1980,
     referrals: 7,
     dailyEarned: 5.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -274,7 +274,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1420,
     referrals: 5,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -310,7 +310,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1260,
     referrals: 4,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -364,7 +364,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1040,
     referrals: 3,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -382,7 +382,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 960,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -436,7 +436,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 760,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -472,7 +472,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 620,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -490,7 +490,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 490,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -526,7 +526,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 410,
     referrals: 1,
     dailyEarned: 0.20,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -544,7 +544,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 380,
     referrals: 1,
     dailyEarned: 0.20,
-    status: 'Active Now',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -648,7 +648,7 @@ const GENERATED_31_TO_100 = ADDITIONAL_MEMBERS.map((m, idx) => {
     adsWatched: ads,
     referrals: idx % 4 === 0 ? 1 : 0,
     dailyEarned: 0.20,
-    status: idx % 3 === 0 ? 'Watching Ads' : idx % 2 === 0 ? 'Active Now' : 'Claimed recently',
+    status: idx % 3 === 0 ? 'Watching Ads' : idx % 2 === 0 ? 'Active' : 'Claimed recently',
     statusTime: idx % 3 === 0 ? 'Live' : `${(idx % 12) + 2}m ago`,
     isOnline: idx % 2 === 0,
   };
@@ -781,8 +781,8 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
           </div>
         </div>
 
-        {/* Search Input Bar (Category tabs and filter pills removed per request) */}
-        <div className="bg-white dark:bg-[#0a1e25] rounded-3xl p-3 sm:p-4 border border-[#e4dfd4] dark:border-[#173740] shadow-xs mb-6 flex items-center justify-between gap-4">
+        {/* Search Input Bar (Hidden per request) */}
+        <div className="hidden bg-white dark:bg-[#0a1e25] rounded-3xl p-3 sm:p-4 border border-[#e4dfd4] dark:border-[#173740] shadow-xs mb-6 items-center justify-between gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71868a] dark:text-[#647b80]" />
             <input
@@ -861,7 +861,7 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                     <p className="text-xs text-[#647b80] dark:text-[#94a3b8]">{sortedAndFiltered[0].country} • {sortedAndFiltered[0].city}</p>
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      {sortedAndFiltered[0].status}
+                      {sortedAndFiltered[0].status === 'Active Now' ? 'Active' : sortedAndFiltered[0].status}
                     </span>
                   </div>
                 </div>
@@ -981,8 +981,6 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                                 {isTopThree && <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 shrink-0" />}
                               </div>
                               <div className="text-[11px] text-[#71868a] dark:text-[#94a3b8] flex items-center gap-1.5">
-                                <span>{user.username}</span>
-                                <span>•</span>
                                 <span>{user.country}</span>
                               </div>
                             </div>
@@ -1017,7 +1015,7 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                         <td className="py-3.5 px-4 sm:px-6 text-center">
                           <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {user.status}
+                            {user.status === 'Active Now' ? 'Active' : user.status}
                           </span>
                         </td>
                       </tr>

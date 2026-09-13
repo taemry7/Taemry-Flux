@@ -43,6 +43,40 @@ export default function PageLoader({ isLoading, onFinished }) {
     };
   }, []);
 
+  // Prevent any swipe down/up, pull-to-refresh, or bounce on loading/offline splash
+  useEffect(() => {
+    if (!isLoading) return;
+
+    const preventTouch = (e) => {
+      // Prevent swipe down/up and scrolling
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('touchmove', preventTouch, { passive: false });
+    window.addEventListener('wheel', preventTouch, { passive: false });
+
+    const originalOverflow = document.documentElement.style.overflow;
+    const originalBodyOverflow = document.body.style.overflow;
+    const originalOverscroll = document.body.style.overscrollBehavior;
+    const originalTouchAction = document.body.style.touchAction;
+
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+    document.body.style.overscrollBehavior = 'none';
+    document.body.style.touchAction = 'none';
+
+    return () => {
+      window.removeEventListener('touchmove', preventTouch);
+      window.removeEventListener('wheel', preventTouch);
+      document.documentElement.style.overflow = originalOverflow;
+      document.body.style.overflow = originalBodyOverflow;
+      document.body.style.overscrollBehavior = originalOverscroll;
+      document.body.style.touchAction = originalTouchAction;
+    };
+  }, [isLoading]);
+
   // 1% to 100% progress line animation
   useEffect(() => {
     if (!isLoading) {
@@ -114,6 +148,12 @@ export default function PageLoader({ isLoading, onFinished }) {
         position: 'fixed',
         top: 0,
         left: 0,
+        touchAction: 'none',
+        overscrollBehavior: 'none',
+        overflow: 'hidden',
+      }}
+      onTouchMove={(e) => {
+        if (e.cancelable) e.preventDefault();
       }}
     >
       {/* Exact Dual Rotating Spinner requested with guaranteed styles */}

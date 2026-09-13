@@ -22,6 +22,14 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
       if (currentUser?.displayName && currentUser.displayName !== 'Member') {
         setFullName(currentUser.displayName);
       }
+
+      const preventTouch = (e) => {
+        if (e.cancelable) e.preventDefault();
+      };
+      window.addEventListener('touchmove', preventTouch, { passive: false });
+      return () => {
+        window.removeEventListener('touchmove', preventTouch);
+      };
     }
   }, [isOpen, currentUser]);
 
