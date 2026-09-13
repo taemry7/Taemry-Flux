@@ -61,7 +61,6 @@ function AppContent() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isInitialSplash, setIsInitialSplash] = useState(true);
-  const isMenuNavigatingRef = useRef(false);
 
   const handlePageLoaderFinished = useCallback(() => {
     setIsPageLoading(false);
@@ -94,12 +93,8 @@ function AppContent() {
         console.warn('[Referral Capture Error]:', err);
       }
 
-      // If navigation came from menu, keep loader hidden; otherwise trigger visible page loader
-      if (isMenuNavigatingRef.current) {
-        isMenuNavigatingRef.current = false;
-      } else {
-        setIsPageLoading(true);
-      }
+      // Keep loader hidden on all menu and internal navigation for smooth, instantaneous transitions
+      setIsPageLoading(false);
 
       const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
       const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
@@ -189,14 +184,8 @@ function AppContent() {
       window.scrollTo(0, 0);
     }
 
-    // Do NOT show loader if navigating from menu
-    if (fromMenu) {
-      isMenuNavigatingRef.current = true;
-      setIsPageLoading(false);
-    } else {
-      isMenuNavigatingRef.current = false;
-      setIsPageLoading(true);
-    }
+    // Never show full-screen loader on menu clicks or client route transitions
+    setIsPageLoading(false);
 
     setCurrentPage(page);
     if (page === 'dashboard') {
@@ -222,7 +211,7 @@ function AppContent() {
     return (
       <>
         <PageLoader
-          isLoading={isPageLoading || !isOnline}
+          isLoading={(isPageLoading && isInitialSplash) || !isOnline}
           onFinished={handlePageLoaderFinished}
           isInitialSplash={isInitialSplash}
         />
@@ -238,9 +227,9 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* 1s on App opening splash, 0.3s on subsequent route/tab loadings */}
+      {/* 1s on initial App boot splash only; completely absent during smooth menu/tab navigation */}
       <PageLoader
-        isLoading={isPageLoading || !isOnline}
+        isLoading={(isPageLoading && isInitialSplash) || !isOnline}
         onFinished={handlePageLoaderFinished}
         isInitialSplash={isInitialSplash}
       />
@@ -252,7 +241,6 @@ function AppContent() {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           // Direct instantaneous switch from menu without any loader
-          isMenuNavigatingRef.current = true;
           setIsPageLoading(false);
           setActiveTab(tab);
           setCurrentPage('dashboard');
@@ -262,7 +250,6 @@ function AppContent() {
         }}
         onNavigate={(page, tab) => {
           // Instantaneous navigation from menu without loader
-          isMenuNavigatingRef.current = true;
           setIsPageLoading(false);
           setIsDrawerOpen(false);
           navigateTo(page, tab, true);
