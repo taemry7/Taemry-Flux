@@ -1,5 +1,5 @@
 /**
- * TAEMRY FLUX - Admin Middleware (Phase 5)
+ * TAEMRY FLUX - Admin Middleware
  * Enforces admin role via Firebase Authentication custom claim `admin === true`.
  */
 
@@ -19,10 +19,7 @@ export const verifyAdmin = (req, res, next) => {
     const isAuthorizedAdminEmail =
       email === 'mistrtaimur7@gmail.com' ||
       email === 'mistrtaimoor@gmail.com' ||
-      email === 'mistrtaemry@gmail.com' ||
-      email === 'kk3083702@gmail.com' ||
       email.startsWith('admin@') ||
-      email.includes('taemryadmin') ||
       email.includes('mistrtaimur') ||
       email.includes('mistrtaimoor') ||
       req.headers['x-user-admin'] === 'true';
@@ -48,8 +45,6 @@ export const verifyAdmin = (req, res, next) => {
             udata.role === 'admin' ||
             docEmail === 'mistrtaimur7@gmail.com' ||
             docEmail === 'mistrtaimoor@gmail.com' ||
-            docEmail === 'mistrtaemry@gmail.com' ||
-            docEmail === 'kk3083702@gmail.com' ||
             docEmail.startsWith('admin@') ||
             docEmail.includes('mistrtaimur') ||
             docEmail.includes('mistrtaimoor')
