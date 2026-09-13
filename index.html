@@ -25,6 +25,18 @@
             document.documentElement.classList.add('dark');
             document.body && document.body.classList.add('dark');
           }
+          // Immediate referral code capture from URL (?ref=CODE or #/?ref=CODE) into localStorage
+          var searchParams = new URLSearchParams(window.location.search);
+          var ref = searchParams.get('ref') || searchParams.get('referral');
+          if (!ref && window.location.hash) {
+            var hashMatch = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+            if (hashMatch && hashMatch[1]) {
+              ref = hashMatch[1];
+            }
+          }
+          if (ref) {
+            localStorage.setItem('referralCode', decodeURIComponent(ref).trim());
+          }
         } catch (e) {}
       })();
     </script>

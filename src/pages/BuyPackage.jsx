@@ -27,6 +27,37 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '' });
 
+  // Lock swipe and background scrolling when confirmation modal is open
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    document.body.classList.add('modal-open');
+    const originalOverflow = document.body.style.overflow;
+    const originalTouchAction = document.body.style.touchAction;
+    const originalOverscroll = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.touchAction = 'none';
+    document.body.style.overscrollBehavior = 'none';
+
+    const preventSwipeMove = (e) => {
+      // Prevent touchmove events from triggering swipe menu or background scroll
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    };
+
+    window.addEventListener('touchmove', preventSwipeMove, { passive: false });
+
+    return () => {
+      document.body.classList.remove('modal-open');
+      document.body.style.overflow = originalOverflow;
+      document.body.style.touchAction = originalTouchAction;
+      document.body.style.overscrollBehavior = originalOverscroll;
+      window.removeEventListener('touchmove', preventSwipeMove);
+    };
+  }, [isModalOpen]);
+
   // Default fallback catalog if network is slow or offline
   const fallbackPackages = [
     {
@@ -412,8 +443,16 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
 
       {/* Confirmation Modal */}
       {isModalOpen && selectedPkg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#ded8cb] shadow-2xl animate-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 overscroll-contain select-none"
+          style={{ touchAction: 'none' }}
+          onTouchMove={(e) => e.stopPropagation()}
+        >
+          <div
+            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#ded8cb] shadow-2xl animate-in zoom-in-95 duration-200"
+            style={{ touchAction: 'auto' }}
+            onTouchMove={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between mb-4">
               <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center">
                 <Sparkles className="w-5 h-5" />

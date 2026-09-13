@@ -202,13 +202,20 @@ export default function AdminLeaderboard({ onNavigate }) {
 
   // Filtered dataset
   const filteredList = leaderboard.filter((item) => {
-    const matchesSearch =
-      !searchQuery.trim() ||
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      String(item.rank) === searchQuery.replace('#', '').trim();
+    let matchesSearch = true;
+    if (searchQuery.trim()) {
+      const cleanQ = searchQuery.trim().toLowerCase().replace(/^@/, '');
+      const name = (item.name || '').toLowerCase();
+      const username = (item.username || '').toLowerCase().replace(/^@/, '');
+      const rankStr = String(item.rank || '');
+
+      const nameWords = name.split(/\s+/);
+      const nameMatch = name.startsWith(cleanQ) || nameWords.some((w) => w.startsWith(cleanQ));
+      const usernameMatch = username.startsWith(cleanQ);
+      const rankMatch = rankStr === cleanQ.replace('#', '').trim();
+
+      matchesSearch = nameMatch || usernameMatch || rankMatch;
+    }
 
     const matchesTier = tierFilter === 'ALL' || item.tier.toLowerCase() === tierFilter.toLowerCase();
     return matchesSearch && matchesTier;

@@ -720,21 +720,40 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
     // Guarantee ranked order 1 to 100
     list = list.map((item, idx) => ({ ...item, currentRank: idx + 1 }));
 
-    // Filter by search query
+    // Filter by search query - STRICT matching on name or username only
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (item) =>
-          item.name.toLowerCase().includes(q) ||
-          item.username.toLowerCase().includes(q) ||
-          item.country.toLowerCase().includes(q) ||
-          item.city.toLowerCase().includes(q) ||
-          item.tier.toLowerCase().includes(q)
-      );
+      const cleanQ = searchQuery.trim().toLowerCase().replace(/^@/, '');
+
+      list = list.filter((item) => {
+        const name = (item.name || '').toLowerCase();
+        const username = (item.username || '').toLowerCase().replace(/^@/, '');
+
+        // 1. Full name starts with the search query (e.g., "tar" matches "Tariq Khan")
+        if (name.startsWith(cleanQ)) return true;
+
+        // 2. Any individual word in the name starts with the search query (e.g., "khan" matches "Tariq Khan")
+        const words = name.split(/\s+/);
+        if (words.some((w) => w.startsWith(cleanQ))) return true;
+
+        // 3. Username starts with the search query (e.g., "@tariq" matches "tariq")
+        if (username.startsWith(cleanQ)) return true;
+
+        return false;
+      });
+
+      // Sort so that users whose first name starts with the query come first, then rank order
+      list.sort((a, b) => {
+        const aName = (a.name || '').toLowerCase();
+        const bName = (b.name || '').toLowerCase();
+        const aStarts = aName.startsWith(cleanQ) ? 0 : 1;
+        const bStarts = bName.startsWith(cleanQ) ? 0 : 1;
+        if (aStarts !== bStarts) return aStarts - bStarts;
+        return a.currentRank - b.currentRank;
+      });
     }
 
     return list;
-  }, [searchQuery]);
+  }, [searchQuery, leaderboardData]);
 
   // If on HomePage:
   // First 3 are position holders in the podium cards on top.
@@ -781,19 +800,30 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
           </div>
         </div>
 
-        {/* Search Input Bar (Hidden per request) */}
-        <div className="hidden bg-white dark:bg-[#0a1e25] rounded-3xl p-3 sm:p-4 border border-[#e4dfd4] dark:border-[#173740] shadow-xs mb-6 items-center justify-between gap-4">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71868a] dark:text-[#647b80]" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search member, username, city, or tier..."
-              className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-[#faf8f5] dark:bg-[#07171d] border border-[#e0dad0] dark:border-[#163842] text-[#09353e] dark:text-white placeholder-[#71868a] focus:outline-none focus:ring-2 focus:ring-[#0c5963]"
-            />
+        {/* Search Input Bar (Shown only when logged in / in dashboard, hidden on home page) */}
+        {!isHomePage && (
+          <div className="bg-white dark:bg-[#0a1e25] rounded-3xl p-3 sm:p-4 border border-[#e4dfd4] dark:border-[#173740] shadow-xs mb-6 flex items-center justify-between gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#71868a] dark:text-[#647b80]" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search member, username, city, or tier..."
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl bg-[#faf8f5] dark:bg-[#07171d] border border-[#e0dad0] dark:border-[#163842] text-[#09353e] dark:text-white placeholder-[#71868a] focus:outline-none focus:ring-2 focus:ring-[#0c5963]"
+              />
+            </div>
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-[#71868a] hover:text-[#0c5963] dark:hover:text-white font-medium cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
           </div>
-        </div>
+        )}
 
         {/* Top 3 Position Holders (Podium Cards) */}
         {sortedAndFiltered.length >= 3 && !searchQuery && (

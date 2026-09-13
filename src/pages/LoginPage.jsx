@@ -84,15 +84,22 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [referredBy, setReferredBy] = useState(() => {
     try {
       if (typeof window === 'undefined') return '';
+      // 1. Check URL parameters (?ref=CODE or ?referral=CODE)
       const params = new URLSearchParams(window.location.search);
-      const ref = params.get('ref') || params.get('referral');
-      if (ref) return ref.trim();
-      const hash = window.location.hash || '';
-      if (hash.includes('ref=')) {
-        const match = hash.match(/ref=([a-zA-Z0-9_-]+)/);
-        if (match && match[1]) return match[1].trim();
+      let ref = params.get('ref') || params.get('referral');
+      if (!ref && window.location.hash) {
+        const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+        if (match && match[1]) ref = match[1];
       }
-      return localStorage.getItem('taemry_referral_sponsor') || '';
+      if (ref && ref.trim()) {
+        const cleanRef = decodeURIComponent(ref).trim();
+        localStorage.setItem('referralCode', cleanRef);
+        return cleanRef;
+      }
+      // 2. Check localStorage key 'referralCode'
+      const stored = localStorage.getItem('referralCode') || localStorage.getItem('taemry_referral_sponsor');
+      if (stored && stored.trim()) return stored.trim();
+      return '';
     } catch {
       return '';
     }
@@ -127,12 +134,13 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     try {
       if (isSignUp) {
         sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
-        if (referredBy && referredBy.trim()) {
+        const codeToUse = (referredBy && referredBy.trim()) || localStorage.getItem('referralCode') || null;
+        if (codeToUse) {
           try {
-            localStorage.setItem('taemry_referral_sponsor', referredBy.trim());
+            localStorage.setItem('referralCode', codeToUse);
           } catch {}
         }
-        await signup(email, password, displayName, referredBy);
+        await signup(email, password, displayName, codeToUse);
       } else {
         await login(email, password);
       }
@@ -346,7 +354,17 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 id="input-referred-by"
                 type="text"
                 value={referredBy}
-                onChange={(e) => setReferredBy(e.target.value)}
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setReferredBy(val);
+                  try {
+                    if (val && val.trim()) {
+                      localStorage.setItem('referralCode', val.trim());
+                    } else {
+                      localStorage.removeItem('referralCode');
+                    }
+                  } catch {}
+                }}
                 placeholder="Enter referral code"
                 className="w-full px-4 py-3 text-sm bg-[#faf8f5] border border-[#dcd6c9] rounded-xl focus:bg-white focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] placeholder-[#9caea7]"
               />

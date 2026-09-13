@@ -144,7 +144,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
                 {currentUser?.displayName || 'TAEMRY Member'}
               </h4>
               <p className="text-xs text-white/80 truncate mt-0.5 font-medium">
-                {hasActivePackage ? `${userStats.currentPackage} Plan` : 'Urban Citizen'}
+                {hasActivePackage ? `${userStats.currentPackage} Plan` : 'Standard Account'}
               </p>
             </div>
           </button>

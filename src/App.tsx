@@ -60,10 +60,12 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isInitialSplash, setIsInitialSplash] = useState(true);
   const isMenuNavigatingRef = useRef(false);
 
   const handlePageLoaderFinished = useCallback(() => {
     setIsPageLoading(false);
+    setIsInitialSplash(false);
   }, []);
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
@@ -73,6 +75,10 @@ function AppContent() {
       touchStartX = e.changedTouches[0].screenX;
     };
     const handleTouchEnd = (e: TouchEvent) => {
+      // Swipe is locked whenever modal is open or body has modal-open / overflow hidden
+      if (document.body.classList.contains('modal-open') || document.body.style.overflow === 'hidden') {
+        return;
+      }
       const diff = e.changedTouches[0].screenX - touchStartX;
       if (diff > 65 && !isDrawerOpen && currentUser) {
         setIsDrawerOpen(true);
@@ -92,6 +98,28 @@ function AppContent() {
 
   useEffect(() => {
     const handleLocationChange = () => {
+      // Capture referral code from URL if present (?ref=CODE or #/?ref=CODE)
+      try {
+        if (typeof window !== 'undefined') {
+          let refCode: string | null = null;
+          if (window.location.search) {
+            const searchParams = new URLSearchParams(window.location.search);
+            refCode = searchParams.get('ref') || searchParams.get('referral');
+          }
+          if (!refCode && window.location.hash) {
+            const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+            if (match && match[1]) {
+              refCode = match[1];
+            }
+          }
+          if (refCode && refCode.trim()) {
+            localStorage.setItem('referralCode', decodeURIComponent(refCode).trim());
+          }
+        }
+      } catch (err) {
+        console.warn('[Referral Capture Error]:', err);
+      }
+
       // If navigation came from menu, keep loader hidden; otherwise trigger visible page loader
       if (isMenuNavigatingRef.current) {
         isMenuNavigatingRef.current = false;
@@ -222,6 +250,7 @@ function AppContent() {
         <PageLoader
           isLoading={isPageLoading || !isOnline}
           onFinished={handlePageLoaderFinished}
+          isInitialSplash={isInitialSplash}
         />
         <AdminLayout onNavigate={navigateTo} />
       </>
@@ -235,10 +264,11 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* Network-Aware 200ms Page Loader (Offline persistent, 200ms on fast/normal network, hidden on menu) */}
+      {/* 1s on App opening splash, 0.3s on subsequent route/tab loadings */}
       <PageLoader
         isLoading={isPageLoading || !isOnline}
         onFinished={handlePageLoaderFinished}
+        isInitialSplash={isInitialSplash}
       />
 
       {/* Smart Slide Menu (Rendered underneath/alongside the main screen) */}

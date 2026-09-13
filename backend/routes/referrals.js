@@ -69,12 +69,26 @@ router.get('/info', verifyToken, async (req, res) => {
       await userRef.set({ referralCode }, { merge: true });
     }
 
-    // Query direct downlines (users whose referredBy == uid)
+    // Query direct downlines (users whose referredBy == uid or referredBy == referralCode)
     let directReferrals = [];
     try {
       const downlinesSnapshot = await db.collection('users').where('referredBy', '==', uid).get();
-      if (downlinesSnapshot && !downlinesSnapshot.empty) {
-        directReferrals = downlinesSnapshot.docs.map((doc) => {
+      let downlineDocs = downlinesSnapshot && !downlinesSnapshot.empty ? [...downlinesSnapshot.docs] : [];
+
+      if (referralCode && referralCode !== uid) {
+        const codeSnapshot = await db.collection('users').where('referredBy', '==', referralCode).get();
+        if (codeSnapshot && !codeSnapshot.empty) {
+          const existingIds = new Set(downlineDocs.map(d => d.id));
+          codeSnapshot.docs.forEach(d => {
+            if (!existingIds.has(d.id)) {
+              downlineDocs.push(d);
+            }
+          });
+        }
+      }
+
+      if (downlineDocs.length > 0) {
+        directReferrals = downlineDocs.map((doc) => {
           const d = doc.data();
           return {
             id: doc.id,
@@ -158,6 +172,75 @@ router.get('/tree', verifyToken, async (req, res) => {
     return res.status(500).json({
       error: 'Internal Server Error',
       message: 'Failed to fetch referral tree.',
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/referrals/record-signup
+ * Records a referral signup and increments the referrer's referralCount in Firestore.
+ */
+router.post('/record-signup', async (req, res) => {
+  try {
+    const { referralCode, newUserId } = req.body;
+    if (!referralCode) {
+      return res.status(400).json({ success: false, message: 'referralCode is required' });
+    }
+
+    const cleanCode = String(referralCode).trim();
+    const db = getDb();
+    if (!db) {
+      return res.json({ success: true, message: 'Database not configured or demo mode' });
+    }
+
+    let referrerDocRef = null;
+    let docSnap = null;
+
+    // 1. Check direct doc ID match (e.g. if code is UID)
+    const directDoc = await db.collection('users').doc(cleanCode).get();
+    if (directDoc.exists) {
+      referrerDocRef = directDoc.ref;
+      docSnap = directDoc;
+    } else {
+      // 2. Check referralCode field match
+      const snap = await db.collection('users').where('referralCode', '==', cleanCode).limit(1).get();
+      if (!snap.empty) {
+        referrerDocRef = snap.docs[0].ref;
+        docSnap = snap.docs[0];
+      } else {
+        // 3. Check uppercase referralCode field match
+        const snapUpper = await db.collection('users').where('referralCode', '==', cleanCode.toUpperCase()).limit(1).get();
+        if (!snapUpper.empty) {
+          referrerDocRef = snapUpper.docs[0].ref;
+          docSnap = snapUpper.docs[0];
+        }
+      }
+    }
+
+    if (referrerDocRef && docSnap && docSnap.exists) {
+      const currentCount = Number(docSnap.data()?.referralCount || 0);
+      const newCount = currentCount + 1;
+      await referrerDocRef.set({
+        referralCount: newCount,
+      }, { merge: true });
+
+      return res.json({
+        success: true,
+        referrerId: referrerDocRef.id,
+        newReferralCount: newCount,
+      });
+    }
+
+    return res.json({
+      success: false,
+      message: 'Referrer profile not found in database.',
+    });
+  } catch (error) {
+    console.error('Error in POST /api/referrals/record-signup:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to record referral signup.',
       details: error.message,
     });
   }

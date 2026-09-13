@@ -23,9 +23,74 @@ import {
   setPersistence,
   browserLocalPersistence
 } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
 import apiClient from '../api/client.js';
+
+// Helper to increment referrer's referralCount in Firestore and via API
+export const incrementReferrerCount = async (referralCode, newUserId = null) => {
+  if (!referralCode) return;
+  const cleanCode = String(referralCode).trim();
+  if (!cleanCode) return;
+
+  // 1. Direct Firestore increment (client-side)
+  if (db) {
+    try {
+      // A: Try lookup by user document ID directly
+      let referrerRef = doc(db, 'users', cleanCode);
+      let referrerSnap = await getDoc(referrerRef);
+
+      // B: Try lookup by referralCode field (e.g. FLUX-ABC123)
+      if (!referrerSnap.exists()) {
+        const q = query(collection(db, 'users'), where('referralCode', '==', cleanCode));
+        const qSnap = await getDocs(q);
+        if (!qSnap.empty) {
+          referrerRef = qSnap.docs[0].ref;
+          referrerSnap = qSnap.docs[0];
+        } else {
+          // Try uppercase match
+          const qUpper = query(collection(db, 'users'), where('referralCode', '==', cleanCode.toUpperCase()));
+          const qUpperSnap = await getDocs(qUpper);
+          if (!qUpperSnap.empty) {
+            referrerRef = qUpperSnap.docs[0].ref;
+            referrerSnap = qUpperSnap.docs[0];
+          }
+        }
+      }
+
+      if (referrerSnap.exists()) {
+        await updateDoc(referrerRef, {
+          referralCount: increment(1),
+        });
+        console.log('[Referral] Incremented referralCount for referrer:', referrerRef.id);
+      }
+    } catch (fsErr) {
+      console.warn('[Referral] Client Firestore update notice:', fsErr.message);
+    }
+  }
+
+  // 2. Also call backend endpoint with admin privileges to ensure update succeeds
+  try {
+    await apiClient.post('/referrals/record-signup', {
+      referralCode: cleanCode,
+      newUserId: newUserId || null,
+    });
+  } catch (apiErr) {
+    // Non-blocking notice
+  }
+
+  // 3. Fallback for demo / local storage test mode
+  try {
+    const rawDemo = localStorage.getItem(`taemry_cached_user_stats_${cleanCode}`) ||
+                    localStorage.getItem('taemry_cached_user_stats');
+    if (rawDemo) {
+      const parsed = JSON.parse(rawDemo);
+      parsed.referralCount = (Number(parsed.referralCount) || 0) + 1;
+      localStorage.setItem(`taemry_cached_user_stats_${cleanCode}`, JSON.stringify(parsed));
+      localStorage.setItem('taemry_cached_user_stats', JSON.stringify(parsed));
+    }
+  } catch {}
+};
 
 // Create Auth Context
 const AuthContext = createContext(null);
@@ -269,10 +334,24 @@ export const AuthProvider = ({ children }) => {
   };
 
   // 1. Sign Up with Email and Password
-  const signup = async (email, password, displayName = '', referredBy = '') => {
+  const signup = async (email, password, displayName = '', referredByParam = '') => {
     setAuthError('');
     const cleanEmail = (email || '').trim().toLowerCase();
     const isUserAdmin = checkIsAdminEmail(cleanEmail);
+
+    // Read referral code from localStorage (key: referralCode) or parameter
+    let referralCodeFromStorage = null;
+    try {
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('referralCode');
+        if (stored && stored.trim()) {
+          referralCodeFromStorage = stored.trim();
+        }
+      }
+    } catch {}
+
+    const rawRefCode = referralCodeFromStorage || (referredByParam && String(referredByParam).trim()) || null;
+    const finalReferredBy = rawRefCode && String(rawRefCode).trim() ? String(rawRefCode).trim() : null;
 
     // Track simulated registry to prevent creating duplicate accounts
     let registeredUsers = [];
@@ -316,16 +395,25 @@ export const AuthProvider = ({ children }) => {
               totalEarned: 0,
               isEligible: false,
               isBlocked: false,
+              referredBy: finalReferredBy || null, // Exactly "Agar URL mein ref nahi hai, toh referredBy: null rakho."
               createdAt: new Date().toISOString(),
             };
-            if (referredBy && String(referredBy).trim()) {
-              userProfileData.referredBy = String(referredBy).trim();
-            }
             await setDoc(doc(db, 'users', userCredential.user.uid), userProfileData, { merge: true });
+
+            // Phir us referrer ke document mein referralCount ko +1 karo
+            if (finalReferredBy) {
+              await incrementReferrerCount(finalReferredBy, userCredential.user.uid);
+            }
           } catch (firestoreErr) {
             console.warn('Could not write user to Firestore:', firestoreErr.message);
           }
         }
+
+        // Ensure karo ke signup ke baad localStorage.removeItem('referralCode') bhi ho jaye
+        try {
+          localStorage.removeItem('referralCode');
+          localStorage.removeItem('taemry_referral_sponsor');
+        } catch {}
 
         registeredUsers.push(cleanEmail);
         registeredAccounts[cleanEmail] = {
@@ -333,6 +421,7 @@ export const AuthProvider = ({ children }) => {
           email: cleanEmail,
           displayName: displayName || cleanEmail.split('@')[0],
           password,
+          referredBy: finalReferredBy || null,
         };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
         localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
@@ -349,6 +438,7 @@ export const AuthProvider = ({ children }) => {
           isDemo: true,
           admin: isUserAdmin,
           isAdmin: isUserAdmin,
+          referredBy: finalReferredBy || null,
         };
         registeredUsers.push(cleanEmail);
         registeredAccounts[cleanEmail] = {
@@ -356,9 +446,22 @@ export const AuthProvider = ({ children }) => {
           email: cleanEmail,
           displayName: mockUser.displayName,
           password,
+          referredBy: finalReferredBy || null,
         };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
         localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
+
+        // Phir us referrer ke document mein referralCount ko +1 karo
+        if (finalReferredBy) {
+          await incrementReferrerCount(finalReferredBy, mockUser.uid);
+        }
+
+        // Ensure karo ke signup ke baad localStorage.removeItem('referralCode') bhi ho jaye
+        try {
+          localStorage.removeItem('referralCode');
+          localStorage.removeItem('taemry_referral_sponsor');
+        } catch {}
+
         saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(isUserAdmin);
@@ -474,6 +577,19 @@ export const AuthProvider = ({ children }) => {
             const userDocRef = doc(db, 'users', result.user.uid);
             const userDocSnap = await getDoc(userDocRef);
             if (!userDocSnap.exists()) {
+              // Read referral code from localStorage (key: referralCode)
+              let referralCodeFromStorage = null;
+              try {
+                if (typeof window !== 'undefined') {
+                  const stored = localStorage.getItem('referralCode');
+                  if (stored && stored.trim()) {
+                    referralCodeFromStorage = stored.trim();
+                  }
+                }
+              } catch {}
+
+              const finalReferredBy = referralCodeFromStorage || null;
+
               await setDoc(userDocRef, {
                 uid: result.user.uid,
                 email: result.user.email,
@@ -487,8 +603,20 @@ export const AuthProvider = ({ children }) => {
                 totalEarned: 0,
                 isEligible: false,
                 isBlocked: false,
+                referredBy: finalReferredBy || null, // Exactly "Agar URL mein ref nahi hai, toh referredBy: null rakho."
                 createdAt: new Date().toISOString(),
               });
+
+              // Phir us referrer ke document mein referralCount ko +1 karo
+              if (finalReferredBy) {
+                await incrementReferrerCount(finalReferredBy, result.user.uid);
+              }
+
+              // Ensure karo ke signup ke baad localStorage.removeItem('referralCode') bhi ho jaye
+              try {
+                localStorage.removeItem('referralCode');
+                localStorage.removeItem('taemry_referral_sponsor');
+              } catch {}
             } else {
               // Existing user profile: NEVER overwrite walletBalance or currentPackage
               await setDoc(userDocRef, {
@@ -496,6 +624,11 @@ export const AuthProvider = ({ children }) => {
                 name: result.user.displayName || result.user.email.split('@')[0],
                 lastLoginAt: new Date().toISOString(),
               }, { merge: true });
+
+              try {
+                localStorage.removeItem('referralCode');
+                localStorage.removeItem('taemry_referral_sponsor');
+              } catch {}
             }
           } catch (firestoreErr) {
             console.warn('Could not write Google user to Firestore:', firestoreErr.message);
@@ -506,6 +639,18 @@ export const AuthProvider = ({ children }) => {
         return result.user;
       } else {
         // Development / Demo Mode Fallback
+        let referralCodeFromStorage = null;
+        try {
+          if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('referralCode');
+            if (stored && stored.trim()) {
+              referralCodeFromStorage = stored.trim();
+            }
+          }
+        } catch {}
+
+        const finalReferredBy = referralCodeFromStorage || null;
+
         const mockUser = {
           uid: 'admin_taemry',
           email: 'mistrtaimoor@gmail.com',
@@ -514,7 +659,18 @@ export const AuthProvider = ({ children }) => {
           isDemo: true,
           admin: true,
           isAdmin: true,
+          referredBy: finalReferredBy || null,
         };
+
+        if (finalReferredBy) {
+          await incrementReferrerCount(finalReferredBy, mockUser.uid);
+        }
+
+        try {
+          localStorage.removeItem('referralCode');
+          localStorage.removeItem('taemry_referral_sponsor');
+        } catch {}
+
         saveUserSession(mockUser);
         setCurrentUser(mockUser);
         setIsAdmin(true);
@@ -522,6 +678,18 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Google Sign In error:', err);
+      let referralCodeFromStorage = null;
+      try {
+        if (typeof window !== 'undefined') {
+          const stored = localStorage.getItem('referralCode');
+          if (stored && stored.trim()) {
+            referralCodeFromStorage = stored.trim();
+          }
+        }
+      } catch {}
+
+      const finalReferredBy = referralCodeFromStorage || null;
+
       const mockUser = {
         uid: 'admin_taemry',
         email: 'mistrtaimoor@gmail.com',
@@ -530,7 +698,18 @@ export const AuthProvider = ({ children }) => {
         isDemo: true,
         admin: true,
         isAdmin: true,
+        referredBy: finalReferredBy || null,
       };
+
+      if (finalReferredBy) {
+        await incrementReferrerCount(finalReferredBy, mockUser.uid);
+      }
+
+      try {
+        localStorage.removeItem('referralCode');
+        localStorage.removeItem('taemry_referral_sponsor');
+      } catch {}
+
       saveUserSession(mockUser);
       setCurrentUser(mockUser);
       setIsAdmin(true);

@@ -19,7 +19,7 @@ import ReactDOM from 'react-dom';
  * - Offline-aware: pauses & stays on screen if network is disconnected
  * - Guaranteed 100% full-screen coverage via React Portal directly into document.body
  */
-export default function PageLoader({ isLoading, onFinished }) {
+export default function PageLoader({ isLoading, onFinished, isInitialSplash = false }) {
   const [isOnline, setIsOnline] = useState(() => {
     return typeof navigator !== 'undefined' ? navigator.onLine : true;
   });
@@ -92,8 +92,8 @@ export default function PageLoader({ isLoading, onFinished }) {
 
     let animationFrameId;
     let startTime = null;
-    // 600ms duration ensures user can clearly see 1% to 100% progress smoothly
-    const duration = 600;
+    // App opening splash: 1000ms (1 sec). Subsequent route/tab loadings: 300ms (0.3 sec)
+    const duration = isInitialSplash ? 1000 : 300;
 
     const step = (timestamp) => {
       if (!isOnline) {
@@ -118,9 +118,9 @@ export default function PageLoader({ isLoading, onFinished }) {
             if (onFinishedRef.current) {
               onFinishedRef.current();
             }
-          }, 120);
+          }, 100);
           return () => clearTimeout(finishTimer);
-        }, 80);
+        }, isInitialSplash ? 80 : 40);
 
         return () => clearTimeout(holdTimer);
       }
@@ -133,7 +133,7 @@ export default function PageLoader({ isLoading, onFinished }) {
         cancelAnimationFrame(animationFrameId);
       }
     };
-  }, [isLoading, isOnline]);
+  }, [isLoading, isOnline, isInitialSplash]);
 
   if (!isLoading) return null;
 
