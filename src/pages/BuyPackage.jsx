@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useToast } from '../context/ToastContext';
+import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
 
 export default function BuyPackage({ walletBalance = 0, currentPackage = 'None', onPackageBought, onSelectTab }) {
   const toast = useToast();
@@ -26,37 +27,6 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPurchasing, setIsPurchasing] = useState(false);
   const [notification, setNotification] = useState({ type: '', message: '' });
-
-  // Lock swipe and background scrolling when confirmation modal is open
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    document.body.classList.add('modal-open');
-    const originalOverflow = document.body.style.overflow;
-    const originalTouchAction = document.body.style.touchAction;
-    const originalOverscroll = document.body.style.overscrollBehavior;
-
-    document.body.style.overflow = 'hidden';
-    document.body.style.touchAction = 'none';
-    document.body.style.overscrollBehavior = 'none';
-
-    const preventSwipeMove = (e) => {
-      // Prevent touchmove events from triggering swipe menu or background scroll
-      if (e.cancelable) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('touchmove', preventSwipeMove, { passive: false });
-
-    return () => {
-      document.body.classList.remove('modal-open');
-      document.body.style.overflow = originalOverflow;
-      document.body.style.touchAction = originalTouchAction;
-      document.body.style.overscrollBehavior = originalOverscroll;
-      window.removeEventListener('touchmove', preventSwipeMove);
-    };
-  }, [isModalOpen]);
 
   // Default fallback catalog if network is slow or offline
   const fallbackPackages = [
@@ -441,95 +411,16 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         })}
       </div>
 
-      {/* Confirmation Modal */}
-      {isModalOpen && selectedPkg && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs animate-in fade-in duration-150 overscroll-contain select-none"
-          style={{ touchAction: 'none' }}
-          onTouchMove={(e) => e.stopPropagation()}
-        >
-          <div
-            className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full border border-[#ded8cb] shadow-2xl animate-in zoom-in-95 duration-200"
-            style={{ touchAction: 'auto' }}
-            onTouchMove={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center">
-                <Sparkles className="w-5 h-5" />
-              </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 rounded-lg text-[#7c9095] hover:bg-[#f1ede4] transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <h3 className="text-xl font-bold text-[#09353e] mb-1">
-              Confirm Package Purchase
-            </h3>
-            <p className="text-xs text-[#5b7277] mb-5 leading-relaxed">
-              You are about to buy <strong className="text-[#09353e]">PACKAGE ({selectedPkg.tierName || 'Tier'})</strong> for <strong className="text-[#0c5963]">${Number(selectedPkg.price).toFixed(2)}</strong>. Confirm?
-            </p>
-
-            <div className="bg-[#faf8f5] rounded-2xl p-4 border border-[#e8e2d5] space-y-2.5 mb-6 text-xs">
-              <div className="flex justify-between text-[#5f757a]">
-                <span>Current Balance:</span>
-                <span className="font-semibold text-[#09353e]">${walletBalance.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-[#5f757a]">
-                <span>Package Price:</span>
-                <span className="font-semibold text-[#991b1b]">-${Number(selectedPkg.price).toFixed(2)}</span>
-              </div>
-              <div className="pt-2 border-t border-[#ebe4d8] flex justify-between font-bold text-xs">
-                <span className="text-[#09353e]">Balance after purchase:</span>
-                <span className={`${walletBalance >= selectedPkg.price ? 'text-[#0c5963]' : 'text-[#b91c1c]'}`}>
-                  ${(walletBalance - selectedPkg.price).toFixed(2)}
-                </span>
-              </div>
-            </div>
-
-            {walletBalance < selectedPkg.price && (
-              <div className="mb-5 p-3.5 bg-[#fef2f2] border border-[#fecaca] rounded-xl flex items-start gap-2.5 text-xs text-[#991b1b]">
-                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                <span>
-                  Your wallet does not have enough balance for this tier. Please fund your wallet first.
-                </span>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                disabled={isPurchasing}
-                className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-[#556c71] bg-[#f5f1e8] hover:bg-[#eae3d5] transition-colors"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={handleConfirmPurchase}
-                disabled={isPurchasing || walletBalance < selectedPkg.price}
-                className="flex-1 py-3 px-4 rounded-xl text-xs font-bold text-white bg-[#0c5963] hover:bg-[#09424a] disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer"
-              >
-                {isPurchasing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Processing...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Confirm & Buy</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Purchase Confirmation Modal */}
+      <PurchaseConfirmationModal
+        isOpen={isModalOpen && Boolean(selectedPkg)}
+        onClose={() => setIsModalOpen(false)}
+        packageData={selectedPkg}
+        walletBalance={walletBalance}
+        onConfirm={handleConfirmPurchase}
+        isPurchasing={isPurchasing}
+        onSelectTab={onSelectTab}
+      />
     </div>
   );
 }

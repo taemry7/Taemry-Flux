@@ -32,12 +32,15 @@ async function startServer() {
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
           key.startsWith('auditLogs/') ||
-          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+          key.startsWith('supportTickets/') ||
+          key.startsWith('transactions/') ||
+          (key.startsWith('users/') && key !== 'users/admin_taemry' && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (
             key.includes('user_tariq') ||
             key.includes('user_sara') ||
             key.includes('user_bilal') ||
             key.includes('user_hamza') ||
             key.includes('demo-user-1') ||
+            key.includes('demo-') ||
             key.includes('transactions/')
           ))
         ) {
@@ -51,6 +54,22 @@ async function startServer() {
       if (adminDoc) {
         db.data.set('users/admin_taemry', {
           ...adminDoc,
+          walletBalance: 0,
+          currentPackage: 'None',
+          lifetimeAds: 0,
+          dailyAdCount: 0,
+          teamAdsCount: 0,
+          referralCount: 0,
+          totalEarned: 0,
+          isEligible: false,
+        });
+      }
+
+      // Reset any real user to 0 balance & clean state if newly created
+      const realUserDoc = db.data.get('users/RNva69V1XoMwaxGgVaKtJ4jXfYY2');
+      if (realUserDoc && (realUserDoc.currentPackage === 'None' || !realUserDoc.currentPackage)) {
+        db.data.set('users/RNva69V1XoMwaxGgVaKtJ4jXfYY2', {
+          ...realUserDoc,
           walletBalance: 0,
           currentPackage: 'None',
           lifetimeAds: 0,

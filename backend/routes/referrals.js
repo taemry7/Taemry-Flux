@@ -10,37 +10,6 @@ import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Sample direct referrals for demonstration if user has no downlines yet
-const SAMPLE_DOWNLINES = [
-  {
-    id: 'ref-user-01',
-    name: 'Alex Vance',
-    email: 'alex.v@taemryflux.com',
-    package: 'Gold',
-    lifetimeAds: 2450,
-    joinedDate: '2026-08-14T10:20:00.000Z',
-    status: 'Active',
-  },
-  {
-    id: 'ref-user-02',
-    name: 'Sarah Chen',
-    email: 'sarah.c@taemryflux.com',
-    package: 'Silver',
-    lifetimeAds: 1680,
-    joinedDate: '2026-08-22T14:45:00.000Z',
-    status: 'Active',
-  },
-  {
-    id: 'ref-user-03',
-    name: 'Marcus Brody',
-    email: 'marcus.b@taemryflux.com',
-    package: 'Platinum',
-    lifetimeAds: 3870,
-    joinedDate: '2026-09-01T09:15:00.000Z',
-    status: 'Active',
-  },
-];
-
 /**
  * Generate a consistent, readable referral code from user ID
  */

@@ -337,12 +337,9 @@ aside {
   -webkit-user-select: none !important;
 }
 
-/* Sign In & Sign Up Page Container - Up to top & No Swipe Down/Up */
+/* Sign In & Sign Up Page Container */
 #loginPageContainer {
-  overscroll-behavior: none !important;
-  overscroll-behavior-y: none !important;
-  overscroll-behavior-x: none !important;
-  touch-action: pan-y;
+  touch-action: auto;
   -webkit-overflow-scrolling: touch;
 }
 

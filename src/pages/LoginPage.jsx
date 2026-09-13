@@ -30,52 +30,13 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     return () => window.removeEventListener('taemry_set_auth_mode', handleAuthModeEvent);
   }, []);
 
-  // Prevent swipe down / swipe up rubber-banding and ensure page starts at top
+  // Ensure page starts at top without locking swipe or scroll
   React.useEffect(() => {
     try {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     } catch {
       window.scrollTo(0, 0);
     }
-
-    let touchStartY = 0;
-    const handleTouchStart = (e) => {
-      if (e.touches && e.touches[0]) {
-        touchStartY = e.touches[0].clientY;
-      }
-    };
-
-    const handleTouchMove = (e) => {
-      if (!e.touches || !e.touches[0]) return;
-      const touchY = e.touches[0].clientY;
-      const diffY = touchY - touchStartY;
-      const target = e.target;
-      const isInteractive = target && (
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'BUTTON' ||
-        target.closest('button') ||
-        target.closest('input')
-      );
-
-      // Prevent pull-down swipe when at top
-      if (window.scrollY <= 0 && diffY > 0 && e.cancelable && !isInteractive) {
-        e.preventDefault();
-      }
-      // Prevent pull-up swipe when at bottom
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      if (window.scrollY >= Math.max(0, maxScroll - 2) && diffY < 0 && e.cancelable && !isInteractive) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-    };
   }, []);
 
   const [email, setEmail] = useState('');

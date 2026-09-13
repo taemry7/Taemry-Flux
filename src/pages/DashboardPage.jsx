@@ -32,6 +32,7 @@ import {
   User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import apiClient from '../api/client';
 import BuyPackage from './BuyPackage';
 import WatchAds from './WatchAds';
@@ -42,6 +43,20 @@ import WithdrawPage from './WithdrawPage';
 import TransactionHistory from './TransactionHistory';
 import AccountSettings from './AccountSettings';
 import LiveLeaderboard from '../components/LiveLeaderboard';
+import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
+
+const STARTER_PACKAGE = {
+  id: 'bronze',
+  name: 'PACKAGE',
+  tierName: 'Bronze',
+  price: 1.00,
+  rewardRate: '20%',
+  dailyLimit: 200,
+  badge: 'STARTER',
+  color: '#b45309',
+  description: 'The starter tier ($1.00) generating guaranteed 20% daily returns.',
+  motivationText: '✨ Start your journey to consistent daily cashflow with guaranteed 20% returns upon activation.',
+};
 
 function IneligibleGate({ featureName, onSelectTab }) {
   return (
@@ -90,7 +105,10 @@ export default function DashboardPage({
   onSelectTab = (_tab) => {},
   onNavigate = (_page, _tab) => {}
 }) {
+  const toast = useToast();
   const { currentUser, userStats, updateLocalStats, fetchUserStats } = useAuth();
+  const [selectedPackageForModal, setSelectedPackageForModal] = useState(null);
+  const [isPurchasingPackage, setIsPurchasingPackage] = useState(false);
 
   const validTabs = [
     'overview',
@@ -230,6 +248,39 @@ export default function DashboardPage({
     }));
     // Re-fetch backend stats to ensure complete synchronization
     setRefreshKey((k) => k + 1);
+  };
+
+  // Confirm and execute purchase triggered directly from Dashboard
+  const handleConfirmDashboardPurchase = async () => {
+    if (!selectedPackageForModal) return;
+
+    if (stats.walletBalance < selectedPackageForModal.price) {
+      toast.error(`Insufficient wallet balance ($${Number(stats.walletBalance).toFixed(2)}). You need $${Number(selectedPackageForModal.price).toFixed(2)} to buy this tier.`);
+      return;
+    }
+
+    setIsPurchasingPackage(true);
+    try {
+      const response = await apiClient.post('/packages/buy', {
+        packageId: selectedPackageForModal.id,
+      });
+      const data = response.data;
+      setSelectedPackageForModal(null);
+      handlePackageBought({
+        walletBalance: data.walletBalance,
+        currentPackage: data.currentPackage || selectedPackageForModal.name,
+      });
+      toast.success(`Package bought successfully! You are now on the ${selectedPackageForModal.tierName || selectedPackageForModal.name} tier.`);
+    } catch (err) {
+      console.error('Purchase failed:', err);
+      const errMsg =
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        'Purchase could not be processed.';
+      toast.error(errMsg);
+    } finally {
+      setIsPurchasingPackage(false);
+    }
   };
 
   // Check if user has an active package (new users without package do not see Watch Ads or Withdrawal)
@@ -560,13 +611,30 @@ export default function DashboardPage({
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleTabChange('buy-package')}
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#0c5963] hover:bg-[#094750] text-white text-xs font-bold rounded-xl transition-colors self-start sm:self-auto cursor-pointer shrink-0 shadow-xs"
-                >
-                  <span>{hasActivePackage ? 'Browse & Upgrade Packages' : 'Buy Package to Activate'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
+                <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto shrink-0">
+                  {!hasActivePackage && (
+                    <button
+                      id="btn-overview-quick-buy-starter"
+                      type="button"
+                      onClick={() => setSelectedPackageForModal(STARTER_PACKAGE)}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0c5963] hover:bg-[#094750] text-white text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-xs"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-[#fde047]" />
+                      <span>Quick Buy Starter ($1.00)</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleTabChange('buy-package')}
+                    className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl transition-colors cursor-pointer shadow-xs ${
+                      !hasActivePackage
+                        ? 'bg-white dark:bg-[#122e37] text-[#09353e] dark:text-white border border-[#d8d1c3] dark:border-[#1e4854] hover:bg-[#f8f5ee]'
+                        : 'bg-[#0c5963] hover:bg-[#094750] text-white'
+                    }`}
+                  >
+                    <span>{hasActivePackage ? 'Browse & Upgrade Packages' : 'Browse All Packages'}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -687,6 +755,17 @@ export default function DashboardPage({
             <AccountSettings onSelectTab={handleTabChange} />
           )}
         </section>
+
+      {/* Prominent Dashboard-Level Purchase Confirmation Modal */}
+      <PurchaseConfirmationModal
+        isOpen={Boolean(selectedPackageForModal)}
+        onClose={() => setSelectedPackageForModal(null)}
+        packageData={selectedPackageForModal}
+        walletBalance={stats.walletBalance}
+        onConfirm={handleConfirmDashboardPurchase}
+        isPurchasing={isPurchasingPackage}
+        onSelectTab={handleTabChange}
+      />
     </div>
   );
 }

@@ -36,12 +36,15 @@ function purgePreSeededData() {
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
           key.startsWith('auditLogs/') ||
-          (key.startsWith('users/') && key !== 'users/admin_taemry' && (
+          key.startsWith('supportTickets/') ||
+          key.startsWith('transactions/') ||
+          (key.startsWith('users/') && key !== 'users/admin_taemry' && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (
             key.includes('user_tariq') ||
             key.includes('user_sara') ||
             key.includes('user_bilal') ||
             key.includes('user_hamza') ||
             key.includes('demo-user-1') ||
+            key.includes('demo-') ||
             key.includes('transactions/')
           ))
         ) {

@@ -496,22 +496,9 @@ router.put('/deposits/:depositId/approve', verifyAdmin, async (req, res) => {
       }
     }
 
-    // 2. If still not found (e.g., created in client or previous session before dev restart), create fallback record
+    // 2. If not found, return 404
     if (!depositDoc.exists) {
-      const defaultDeposit = {
-        id: depositId,
-        depositId,
-        userId: 'demo-user-1',
-        userEmail: 'member@taemryflux.com',
-        amountUSD: 10,
-        amountPKR: 3000,
-        method: 'jazzcash',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      await db.collection('deposits').doc(depositId).set(defaultDeposit);
-      depositRef = db.collection('deposits').doc(depositId);
-      depositDoc = await depositRef.get();
+      return res.status(404).json({ success: false, message: 'Deposit record not found.' });
     }
 
     const deposit = depositDoc.data();
@@ -607,22 +594,9 @@ router.put('/deposits/:depositId/reject', verifyAdmin, async (req, res) => {
       }
     }
 
-    // 2. If still not found, synthesize a record so rejection succeeds cleanly
+    // 2. If not found, return 404
     if (!depositDoc.exists) {
-      const defaultDeposit = {
-        id: depositId,
-        depositId,
-        userId: 'demo-user-1',
-        userEmail: 'member@taemryflux.com',
-        amountUSD: 10,
-        amountPKR: 3000,
-        method: 'jazzcash',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      await db.collection('deposits').doc(depositId).set(defaultDeposit);
-      depositRef = db.collection('deposits').doc(depositId);
-      depositDoc = await depositRef.get();
+      return res.status(404).json({ success: false, message: 'Deposit record not found.' });
     }
 
     const deposit = depositDoc.data();
@@ -724,24 +698,9 @@ router.put('/withdrawals/:withdrawalId/mark-paid', verifyAdmin, async (req, res)
       }
     }
 
-    // 2. Synthesize fallback if from prior session
+    // 2. If not found, return 404
     if (!doc.exists) {
-      const fallbackWd = {
-        id: withdrawalId,
-        withdrawalId,
-        userId: 'demo-user-1',
-        userEmail: 'member@taemryflux.com',
-        amountUSD: 20,
-        amountPKR: 6000,
-        method: 'easypaisa',
-        accountName: 'TAEMRY Member',
-        accountNumber: '03451122334',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      await db.collection('withdrawals').doc(withdrawalId).set(fallbackWd);
-      withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-      doc = await withdrawalRef.get();
+      return res.status(404).json({ success: false, message: 'Withdrawal record not found.' });
     }
 
     const withdrawal = doc.data();
@@ -834,22 +793,7 @@ router.put('/withdrawals/:withdrawalId/reject', verifyAdmin, async (req, res) =>
     }
 
     if (!doc.exists) {
-      const fallbackWd = {
-        id: withdrawalId,
-        withdrawalId,
-        userId: 'demo-user-1',
-        userEmail: 'member@taemryflux.com',
-        amountUSD: 20,
-        amountPKR: 6000,
-        method: 'easypaisa',
-        accountName: 'TAEMRY Member',
-        accountNumber: '03451122334',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-      };
-      await db.collection('withdrawals').doc(withdrawalId).set(fallbackWd);
-      withdrawalRef = db.collection('withdrawals').doc(withdrawalId);
-      doc = await withdrawalRef.get();
+      return res.status(404).json({ success: false, message: 'Withdrawal record not found.' });
     }
 
     const withdrawal = doc.data();
@@ -1657,6 +1601,8 @@ router.post('/reset-system-data', verifyAdmin, async (req, res) => {
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
           key.startsWith('auditLogs/') ||
+          key.startsWith('supportTickets/') ||
+          key.startsWith('transactions/') ||
           (key.startsWith('users/') && key !== 'users/admin_taemry' && (
             key.includes('user_tariq') ||
             key.includes('user_sara') ||

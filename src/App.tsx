@@ -69,32 +69,6 @@ function AppContent() {
   }, []);
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
-  useEffect(() => {
-    let touchStartX = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.changedTouches[0].screenX;
-    };
-    const handleTouchEnd = (e: TouchEvent) => {
-      // Swipe is locked whenever modal is open or body has modal-open / overflow hidden
-      if (document.body.classList.contains('modal-open') || document.body.style.overflow === 'hidden') {
-        return;
-      }
-      const diff = e.changedTouches[0].screenX - touchStartX;
-      if (diff > 65 && !isDrawerOpen && currentUser) {
-        setIsDrawerOpen(true);
-      } else if (diff < -55 && isDrawerOpen) {
-        setIsDrawerOpen(false);
-      }
-    };
-
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-    return () => {
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [isDrawerOpen, currentUser]);
 
   useEffect(() => {
     const handleLocationChange = () => {

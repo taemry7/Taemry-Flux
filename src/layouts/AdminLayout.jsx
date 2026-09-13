@@ -224,8 +224,9 @@ export default function AdminLayout({ onNavigate }) {
               <ShieldCheck className="w-5 h-5" />
             </span>
             <div>
-              <span className="text-sm font-black tracking-wider text-white uppercase block">
-                TAEMRY FLUX
+              <span className="text-sm font-black tracking-wider uppercase block">
+                <span className="text-white">TAEMRY</span>{' '}
+                <span className="text-[#38bdf8]">FLUX</span>
               </span>
               <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">
                 ADMIN {adminFirstName}
@@ -246,13 +247,6 @@ export default function AdminLayout({ onNavigate }) {
 
           {/* Admin Profile Info Card (Clickable to open profile info) */}
           <div className="flex items-center gap-2 pl-2 border-l border-slate-800 text-xs">
-            <div
-              onClick={() => setShowProfileModal(true)}
-              className="w-8 h-8 rounded-full bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-sky-400 flex items-center justify-center font-black cursor-pointer hover:ring-2 hover:ring-sky-400 hover:border-sky-400 hover:shadow-lg hover:shadow-sky-500/30 transition-all active:scale-95 group"
-              title="Click to view Admin Profile Information"
-            >
-              {currentUser?.email?.substring(0, 2).toUpperCase() || 'MI'}
-            </div>
             <div
               onClick={() => setShowProfileModal(true)}
               className="hidden lg:block text-left cursor-pointer hover:opacity-90 transition-opacity"
