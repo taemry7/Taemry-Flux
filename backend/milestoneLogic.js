@@ -6,26 +6,31 @@
 
 export const TEAM_REWARDS = [
   { id: 'tr-5', referrals: 5, bonus: 1.00, label: '5 Referrals', extraInfo: 'Invite 5 members from your link' },
-  { id: 'tr-15', referrals: 15, bonus: 5.00, label: '15 Referrals', extraInfo: '10 more members (+10) = 15 total' },
-  { id: 'tr-40', referrals: 40, bonus: 10.00, label: '40 Referrals', extraInfo: '25 more members (+25) = 40 total' },
-  { id: 'tr-90', referrals: 90, bonus: 25.00, label: '90 Referrals', extraInfo: '50 more members (+50) = 90 total' },
-  { id: 'tr-190', referrals: 190, bonus: 50.00, label: '190 Referrals', extraInfo: '100 more members (+100) = 190 total' },
-  { id: 'tr-250', referrals: 250, bonus: 100.00, label: '250 Referrals', extraInfo: 'Reach 250 total direct downlines' },
-  { id: 'tr-500', referrals: 500, bonus: 250.00, label: '500 Referrals', extraInfo: 'Reach 500 total direct downlines' },
-  { id: 'tr-1000', referrals: 1000, bonus: 600.00, label: '1,000 Referrals', extraInfo: '$500 + $100 Mega Bonus ($600 Total)' },
+  { id: 'tr-15', referrals: 15, bonus: 3.00, label: '15 Referrals', extraInfo: '15 more members = 20 total' },
+  { id: 'tr-25', referrals: 25, bonus: 5.00, label: '25 Referrals', extraInfo: '25 more members = 45 total' },
+  { id: 'tr-50', referrals: 50, bonus: 10.00, label: '50 Referrals', extraInfo: '50 more members = 95 total' },
+  { id: 'tr-100', referrals: 100, bonus: 20.00, label: '100 Referrals', extraInfo: '100 more members = 195 total' },
+  { id: 'tr-250', referrals: 250, bonus: 40.00, label: '250 Referrals', extraInfo: '250 more members = 445 total' },
+  { id: 'tr-500', referrals: 500, bonus: 100.00, label: '500 Referrals', extraInfo: '500 more members = 945 total' },
+  { id: 'tr-1000', referrals: 1000, bonus: 250.00, label: '1,000 Referrals', extraInfo: '1000 more members = 1945 total' },
+   { id: 'tr-1500', referrals: 1500, bonus: 500.00, label: '1,500 Referrals', extraInfo: 'Reach 3445 total direct downlines' },
+  { id: 'tr-2500', referrals: 2500, bonus: 750.00, label: '2,500 Referrals', extraInfo: 'Reach 5945 total direct downlines' },
 ];
 
 // Deprecated empty personal milestones preserved for legacy imports if any
 export const PERSONAL_MILESTONES = [];
 
 export const TEAM_MILESTONES = [
-  { ads: 2500, bonus: 10.00, label: '2,500 Team Ads' },
-  { ads: 5000, bonus: 25.00, label: '5,000 Team Ads' },
-  { ads: 10000, bonus: 60.00, label: '10,000 Team Ads' },
-  { ads: 20000, bonus: 140.00, label: '20,000 Team Ads' },
-  { ads: 40000, bonus: 300.00, label: '40,000 Team Ads' },
-  { ads: 80000, bonus: 650.00, label: '80,000 Team Ads' },
-  { ads: 160000, bonus: 1400.00, label: '160,000 Team Ads' },
+  { ads: 2500, bonus: 5.00, label: '2,500 Team Ads' },
+  { ads: 5000, bonus: 10.00, label: '5,000 Team Ads' },
+  { ads: 10000, bonus: 20.00, label: '10,000 Team Ads' },
+  { ads: 20000, bonus: 40.00, label: '20,000 Team Ads' },
+  { ads: 40000, bonus: 80.00, label: '40,000 Team Ads' },
+  { ads: 80000, bonus: 160.00, label: '80,000 Team Ads' },
+  { ads: 160000, bonus: 320.00, label: '160,000 Team Ads' },
+  { ads: 320000, bonus: 640.00, label: '320,000 Team Ads' },
+  { ads: 640000, bonus: 1280.00, label: '640,000 Team Ads' },
+  { ads: 1280000, bonus: 2560.00, label: '1,280,000 Team Ads' },
 ];
 
 /**

@@ -18,14 +18,16 @@ export const DEFAULT_WHITEPAPER = {
   executiveSummary: 'TAEMRY FLUX is a decentralized, reward-based advertising and referral growth ecosystem. Members activate advertising allocation contracts from their wallet balances, unlock consecutive daily ad streams delivering up to 20% daily returns, and participate in a 5-tier direct downline commission structure alongside direct referral Team Rewards.',
   packagesNote: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.',
   teamRewards: [
-    { referrals: 5, bonus: 1.00, label: '5 Referrals', note: 'Invite 5 members from your direct link' },
-    { referrals: 15, bonus: 5.00, label: '15 Referrals', note: '10 more members (+10) = 15 total' },
-    { referrals: 40, bonus: 10.00, label: '40 Referrals', note: '25 more members (+25) = 40 total' },
-    { referrals: 90, bonus: 25.00, label: '90 Referrals', note: '50 more members (+50) = 90 total' },
-    { referrals: 190, bonus: 50.00, label: '190 Referrals', note: '100 more members (+100) = 190 total' },
-    { referrals: 250, bonus: 100.00, label: '250 Referrals', note: 'Reach 250 total direct downlines' },
-    { referrals: 500, bonus: 250.00, label: '500 Referrals', note: 'Reach 500 total direct downlines' },
-    { referrals: 1000, bonus: 600.00, label: '1,000 Referrals', note: '$500 Base + $100 Special Mega Bonus ($600 Total)' },
+    { id: 'tr-5', referrals: 5, bonus: 1.00, label: '5 Referrals', extraInfo: 'Invite 5 members from your link' },
+  { id: 'tr-15', referrals: 15, bonus: 3.00, label: '15 Referrals', extraInfo: '15 more members = 20 total' },
+  { id: 'tr-25', referrals: 25, bonus: 5.00, label: '25 Referrals', extraInfo: '25 more members = 45 total' },
+  { id: 'tr-50', referrals: 50, bonus: 10.00, label: '50 Referrals', extraInfo: '50 more members = 95 total' },
+  { id: 'tr-100', referrals: 100, bonus: 20.00, label: '100 Referrals', extraInfo: '100 more members = 195 total' },
+  { id: 'tr-250', referrals: 250, bonus: 40.00, label: '250 Referrals', extraInfo: '250 more members = 445 total' },
+  { id: 'tr-500', referrals: 500, bonus: 100.00, label: '500 Referrals', extraInfo: '500 more members = 945 total' },
+  { id: 'tr-1000', referrals: 1000, bonus: 250.00, label: '1,000 Referrals', extraInfo: '1000 more members = 1945 total' },
+   { id: 'tr-1500', referrals: 1500, bonus: 500.00, label: '1,500 Referrals', extraInfo: 'Reach 3445 total direct downlines' },
+  { id: 'tr-2500', referrals: 2500, bonus: 750.00, label: '2,500 Referrals', extraInfo: 'Reach 5945 total direct downlines' },
   ],
   packages: [
     { name: 'Bronze', price: '$1.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'STARTER' },
@@ -34,7 +36,7 @@ export const DEFAULT_WHITEPAPER = {
     { name: 'Premium', price: '$50.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'PRO' },
     { name: 'Elite', price: '$100.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'HIGH CAPACITY' },
     { name: 'Master', price: '$500.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ENTERPRISE' },
-    { name: 'Apex', price: '$1,000.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ELITE MASTER' },
+    { name: 'Apex', price: '$1,000.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'GRAND MASTER' },
   ],
   faqs: [
     {
@@ -90,7 +92,7 @@ export const DEFAULT_WHITEPAPER = {
     email: 'support@taemryflux.com',
     whatsapp: '+92 300 0000000',
     telegram: '@TaemryFluxOfficial',
-    hours: '24/7 Available (Response within 2-4 hours)',
+    hours: '24/7 Available (Response within 2-5 hours)',
   }
 };
 
