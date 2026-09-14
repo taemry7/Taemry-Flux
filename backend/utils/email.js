@@ -4,15 +4,10 @@
  * scheduled DAU & financial performance reports, and support ticket user notifications.
  */
 
-import nodemailer from 'nodemailer';
-import dotenv from 'dotenv';
-
-dotenv.config();
-
-// Lazily create and cache the transporter
 let transporter = null;
+let nodemailerLib = null;
 
-const getTransporter = () => {
+const getTransporter = async () => {
   if (transporter) return transporter;
 
   const host = process.env.SMTP_HOST;
@@ -21,28 +16,37 @@ const getTransporter = () => {
   const pass = process.env.SMTP_PASS;
 
   if (host && user && pass) {
-    transporter = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: {
-        user,
-        pass,
-      },
-    });
-    console.log('[EmailService] SMTP transporter initialized successfully for:', user);
-  } else {
-    // Non-blocking mock fallback when SMTP credentials are not yet configured in environment
-    transporter = {
-      sendMail: async (mailOptions) => {
-        console.log('[EmailService (Preview/Mock Mode)] Would send email:');
-        console.log(`  To: ${mailOptions.to}`);
-        console.log(`  Subject: ${mailOptions.subject}`);
-        console.log(`  Preview: ${(mailOptions.text || mailOptions.html || '').substring(0, 120)}...`);
-        return { messageId: `mock-${Date.now()}` };
-      },
-    };
+    try {
+      if (!nodemailerLib) {
+        const mod = await import('nodemailer');
+        nodemailerLib = mod.default || mod;
+      }
+      transporter = nodemailerLib.createTransport({
+        host,
+        port,
+        secure: port === 465,
+        auth: {
+          user,
+          pass,
+        },
+      });
+      console.log('[EmailService] SMTP transporter initialized successfully for:', user);
+      return transporter;
+    } catch (err) {
+      console.warn('[EmailService] Failed to initialize SMTP transporter:', err.message);
+    }
   }
+
+  // Non-blocking mock fallback when SMTP credentials are not yet configured in environment
+  transporter = {
+    sendMail: async (mailOptions) => {
+      console.log('[EmailService (Preview/Mock Mode)] Would send email:');
+      console.log(`  To: ${mailOptions.to}`);
+      console.log(`  Subject: ${mailOptions.subject}`);
+      console.log(`  Preview: ${(mailOptions.text || mailOptions.html || '').substring(0, 120)}...`);
+      return { messageId: `mock-${Date.now()}` };
+    },
+  };
 
   return transporter;
 };
@@ -55,7 +59,7 @@ const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.c
  */
 export async function sendAdminErrorAlert({ error, route, method, user, stack, reqBody }) {
   try {
-    const client = getTransporter();
+    const client = await getTransporter();
     const timestamp = new Date().toUTCString();
 
     const subject = `[CRITICAL ALERT] TAEMRY FLUX Error on ${method || 'GET'} ${route || 'unknown'}`;
@@ -106,7 +110,7 @@ export async function sendAdminErrorAlert({ error, route, method, user, stack, r
  */
 export async function sendDailyReportEmail(stats) {
   try {
-    const client = getTransporter();
+    const client = await getTransporter();
     const dateStr = stats.date || new Date().toISOString().split('T')[0];
     const subject = `[DAILY HEALTH REPORT] TAEMRY FLUX Metrics - ${dateStr}`;
 
@@ -175,7 +179,7 @@ export async function sendDailyReportEmail(stats) {
 export async function sendTicketStatusUpdateEmail({ userEmail, ticketId, subject, status, reply }) {
   try {
     if (!userEmail) return null;
-    const client = getTransporter();
+    const client = await getTransporter();
 
     const emailSubject = `[Ticket ${ticketId}] Status Update: ${status.toUpperCase()} - TAEMRY FLUX Support`;
     const html = `

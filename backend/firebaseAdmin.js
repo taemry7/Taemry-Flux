@@ -4,6 +4,8 @@
  */
 
 import * as firebaseAdminModule from 'firebase-admin';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getAuth } from 'firebase-admin/auth';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
@@ -14,6 +16,47 @@ const admin = firebaseAdminModule.default || firebaseAdminModule;
 
 let dbInstance = null;
 let isConfigured = false;
+
+// Helper to obtain cert credential in both legacy and modern firebase-admin (v14+)
+const getCertCredential = (creds) => {
+  if (typeof admin.cert === 'function') {
+    return admin.cert(creds);
+  }
+  if (typeof firebaseAdminModule.cert === 'function') {
+    return firebaseAdminModule.cert(creds);
+  }
+  return null;
+};
+
+const getExistingApps = () => {
+  if (typeof admin.getApps === 'function') {
+    return admin.getApps();
+  }
+  if (typeof firebaseAdminModule.getApps === 'function') {
+    return firebaseAdminModule.getApps();
+  }
+  return admin.apps || [];
+};
+
+// Ensure backwards-compatible admin.firestore() and admin.auth() bindings
+const ensureAdminMethods = (app) => {
+  const existingApps = getExistingApps();
+  const currentApp = app || (existingApps.length > 0 ? existingApps[0] : null);
+  if (currentApp) {
+    if (!admin.firestore || typeof admin.firestore !== 'function') {
+      admin.firestore = () => getFirestore(currentApp);
+    }
+    if (!admin.auth || typeof admin.auth !== 'function') {
+      admin.auth = () => getAuth(currentApp);
+    }
+    admin.credential = {
+      cert: (c) => {
+        const fn = admin.cert || firebaseAdminModule.cert;
+        return fn ? fn(c) : null;
+      },
+    };
+  }
+};
 
 // Look for service account key file in common locations
 const findServiceAccountFile = () => {
@@ -48,35 +91,46 @@ const getFormattedPrivateKey = () => {
  * Initialize Firebase Admin SDK (lazy initialization pattern)
  */
 export const initFirebaseAdmin = () => {
-  if (admin && admin.apps && admin.apps.length > 0) {
-    return admin.app();
+  const existingApps = getExistingApps();
+  if (existingApps && existingApps.length > 0) {
+    const currentApp = existingApps[0];
+    ensureAdminMethods(currentApp);
+    return currentApp;
   }
 
   // 1. Try loading from serviceAccountKey.json file if present
   const fileCredentials = findServiceAccountFile();
-  if (fileCredentials && admin && admin.credential) {
-    try {
-      admin.initializeApp({
-        credential: admin.credential.cert(fileCredentials),
-      });
-      isConfigured = true;
-      console.log('Firebase Admin SDK initialized successfully from serviceAccountKey.json.');
-      return admin.app();
-    } catch (error) {
-      console.warn('Firebase Admin file credential error:', error.message);
+  if (fileCredentials) {
+    const cred = getCertCredential(fileCredentials);
+    if (cred) {
+      try {
+        const app = admin.initializeApp({
+          credential: cred,
+        });
+        isConfigured = true;
+        ensureAdminMethods(app);
+        console.log('Firebase Admin SDK initialized successfully from serviceAccountKey.json.');
+        return app;
+      } catch (error) {
+        console.warn('Firebase Admin file credential error:', error.message);
+      }
     }
   }
 
   // 2. Try raw JSON string in environment variable
-  if (process.env.FIREBASE_SERVICE_ACCOUNT && admin && admin.credential) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
     try {
       const parsed = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      admin.initializeApp({
-        credential: admin.credential.cert(parsed),
-      });
-      isConfigured = true;
-      console.log('Firebase Admin SDK initialized successfully from FIREBASE_SERVICE_ACCOUNT env.');
-      return admin.app();
+      const cred = getCertCredential(parsed);
+      if (cred) {
+        const app = admin.initializeApp({
+          credential: cred,
+        });
+        isConfigured = true;
+        ensureAdminMethods(app);
+        console.log('Firebase Admin SDK initialized successfully from FIREBASE_SERVICE_ACCOUNT env.');
+        return app;
+      }
     } catch (error) {
       console.warn('Firebase Admin JSON string credential error:', error.message);
     }
@@ -87,25 +141,29 @@ export const initFirebaseAdmin = () => {
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || 'firebase-adminsdk-fbsvc@taemry-flux.iam.gserviceaccount.com';
   const privateKey = getFormattedPrivateKey();
 
-  if (projectId && clientEmail && privateKey && !privateKey.includes('your_private_key') && admin && admin.credential) {
-    try {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId,
-          clientEmail,
-          privateKey,
-        }),
-      });
-      isConfigured = true;
-      console.log('Firebase Admin SDK initialized successfully with service account.');
-      return admin.app();
-    } catch (error) {
-      console.warn('Firebase Admin credential initialization warning:', error.message);
-      return null;
+  if (projectId && clientEmail && privateKey && !privateKey.includes('your_private_key')) {
+    const cred = getCertCredential({
+      projectId,
+      clientEmail,
+      privateKey,
+    });
+    if (cred) {
+      try {
+        const app = admin.initializeApp({
+          credential: cred,
+        });
+        isConfigured = true;
+        ensureAdminMethods(app);
+        console.log('Firebase Admin SDK initialized successfully with service account.');
+        return app;
+      } catch (error) {
+        console.warn('Firebase Admin credential initialization warning:', error.message);
+        return null;
+      }
     }
-  } else {
-    return null;
   }
+
+  return null;
 };
 
 /**
@@ -339,9 +397,10 @@ export const getDb = () => {
 
   initFirebaseAdmin();
 
-  if (admin && admin.apps && admin.apps.length > 0 && isConfigured) {
+  const existingApps = getExistingApps();
+  if (existingApps && existingApps.length > 0 && isConfigured) {
     try {
-      dbInstance = admin.firestore();
+      dbInstance = getFirestore(existingApps[0]);
       return dbInstance;
     } catch (e) {
       console.warn('Firestore initialization fallback:', e.message);

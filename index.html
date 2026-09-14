@@ -26,6 +26,20 @@
     <script>
       (function() {
         try {
+          // Filter benign [vite] HMR websocket connection warning in container preview
+          var origError = console.error;
+          console.error = function() {
+            if (arguments.length > 0 && typeof arguments[0] === 'string' && arguments[0].indexOf('[vite]') !== -1) {
+              return;
+            }
+            origError.apply(console, arguments);
+          };
+          window.addEventListener('unhandledrejection', function(e) {
+            if (e && e.reason && typeof e.reason === 'string' && e.reason.indexOf('[vite]') !== -1) {
+              e.preventDefault();
+            }
+          });
+
           var saved = localStorage.getItem('taemry_theme');
           if (saved === 'dark') {
             document.documentElement.classList.add('dark');
