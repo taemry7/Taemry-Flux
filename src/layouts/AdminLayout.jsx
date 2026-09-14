@@ -114,7 +114,7 @@ export default function AdminLayout({ onNavigate }) {
         <div className="max-w-md space-y-2">
           <h1 className="text-2xl font-black text-white tracking-tight">Admin Sign-In Required</h1>
           <p className="text-xs text-slate-400 leading-relaxed">
-            The control surface at <code className="text-amber-400 font-mono">/admin</code> requires signing in with an authorized administrative account (<code className="text-emerald-400 font-mono">mistrtaimur7@gmail.com</code>).
+            The control surface at <code className="text-amber-400 font-mono">/admin</code> requires signing in with an authorized administrative account.
           </p>
         </div>
         <div className="flex flex-wrap items-center justify-center gap-3">
@@ -123,7 +123,7 @@ export default function AdminLayout({ onNavigate }) {
             className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs transition-all cursor-pointer flex items-center gap-2 shadow-lg shadow-amber-500/20"
           >
             <LogIn className="w-4 h-4" />
-            <span>Sign In to Admin Portal</span>
+            <span>Sign In to Admin Control Panel</span>
           </button>
           <button
             onClick={() => onNavigate('home')}
