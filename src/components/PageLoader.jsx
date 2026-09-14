@@ -92,8 +92,8 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
 
     let animationFrameId;
     let startTime = null;
-    // App opening splash: 1000ms (1 sec). Subsequent route/tab loadings: 300ms (0.3 sec)
-    const duration = isInitialSplash ? 1000 : 300;
+    // App opening splash: 5000ms (5 sec) as requested by user. Subsequent route/tab loadings: 300ms (0.3 sec)
+    const duration = isInitialSplash ? 5000 : 300;
 
     const step = (timestamp) => {
       if (!isOnline) {

@@ -13,6 +13,7 @@ import DashboardPage from './pages/DashboardPage';
 import WhitepaperPage from './pages/WhitepaperPage';
 import SupportPage from './pages/SupportPage';
 import AdminLayout from './layouts/AdminLayout';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -211,7 +212,7 @@ function AppContent() {
     return (
       <>
         <PageLoader
-          isLoading={(isPageLoading && isInitialSplash) || !isOnline}
+          isLoading={isInitialSplash || !isOnline}
           onFinished={handlePageLoaderFinished}
           isInitialSplash={isInitialSplash}
         />
@@ -227,9 +228,9 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* 1s on initial App boot splash only; completely absent during smooth menu/tab navigation */}
+      {/* 5s on initial App boot splash; completely absent during smooth menu/tab navigation */}
       <PageLoader
-        isLoading={(isPageLoading && isInitialSplash) || !isOnline}
+        isLoading={isInitialSplash || !isOnline}
         onFinished={handlePageLoaderFinished}
         isInitialSplash={isInitialSplash}
       />
@@ -340,6 +341,9 @@ function AppContent() {
         {/* Global Footer with 2026 Copyright */}
         <Footer onNavigate={navigateTo} currentPage={currentPage} />
       </div>
+
+      {/* PWA Android Home Screen Install Banner & Modal */}
+      <PWAInstallPrompt currentPage={currentPage} />
     </div>
   );
 }

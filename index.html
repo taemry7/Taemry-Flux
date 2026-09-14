@@ -4,16 +4,22 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0c5963" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TAEMRY FLUX" />
+    <meta name="application-name" content="TAEMRY FLUX" />
     <title>TAEMRY FLUX</title>
     <meta name="description" content="Reward-based advertising platform featuring daily views, packages, wallet tracking, and secure Firebase authentication." />
     <meta property="og:title" content="TAEMRY FLUX" />
     <meta property="og:description" content="Reward-based advertising platform featuring daily views, packages, wallet tracking, and secure Firebase authentication." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="manifest" href="/manifest.json" />
     <link rel="icon" type="image/svg+xml" href="/taemry-logo.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/pwa-192x192.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Space+Grotesk:wght@500;600;700&amp;display=swap" rel="stylesheet">
@@ -36,6 +42,15 @@
           }
           if (ref) {
             localStorage.setItem('referralCode', decodeURIComponent(ref).trim());
+          }
+
+          // Service Worker registration for PWA installability
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+              navigator.serviceWorker.register('/sw.js').catch(function(err) {
+                console.warn('[PWA SW Registration]:', err);
+              });
+            });
           }
         } catch (e) {}
       })();

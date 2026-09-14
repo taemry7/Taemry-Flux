@@ -14,9 +14,11 @@ import {
   LifeBuoy,
   Gift,
   User,
-  Trophy
+  Trophy,
+  Download
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usePWAInstall } from '../hooks/usePWAInstall';
 
 /**
  * Smart Slide Menu for TAEMRY FLUX
@@ -25,6 +27,7 @@ import { useAuth } from '../context/AuthContext';
  */
 export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab, onNavigate }) {
   const { currentUser, userStats, isAdmin, logout } = useAuth();
+  const { isInstalled, isInstallable, install, isIOS } = usePWAInstall();
 
   const hasActivePackage = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
 
@@ -247,6 +250,31 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               <LifeBuoy className="w-4 h-4 shrink-0 text-[#74898e] dark:text-[#94a3b8]" />
               <span>Help & Support</span>
             </button>
+
+            {/* Install to Home Screen Button */}
+            {!isInstalled && (
+              <button
+                type="button"
+                id="drawer-link-install-app"
+                onClick={async () => {
+                  onClose();
+                  if (isInstallable) {
+                    await install();
+                  } else {
+                    window.dispatchEvent(new CustomEvent('taemry_open_pwa_modal'));
+                  }
+                }}
+                className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-[12px] text-xs font-bold text-[#0c5963] dark:text-teal-300 bg-teal-50 dark:bg-teal-950/40 hover:bg-teal-100 dark:hover:bg-teal-900/50 border border-teal-500/20 transition-all cursor-pointer text-left shadow-xs"
+              >
+                <div className="flex items-center gap-3">
+                  <Download className="w-4 h-4 text-[#0c5963] dark:text-teal-300 animate-bounce" />
+                  <span>Install App</span>
+                </div>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-teal-500/20 text-[#0c5963] dark:text-teal-200">
+                  Android App
+                </span>
+              </button>
+            )}
           </li>
         </ul>
       </div>
