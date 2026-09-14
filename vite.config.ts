@@ -12,6 +12,9 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        workbox: {
+          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        },
         includeAssets: [
           'taemry-logo.svg',
           'apple-touch-icon.png',

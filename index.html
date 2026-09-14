@@ -26,19 +26,81 @@
     <script>
       (function() {
         try {
-          // Filter benign [vite] HMR websocket connection warning in container preview
+          // Intercept vite-hmr websocket in cloud container preview where port 24678 is not exposed
+          if (typeof window !== 'undefined' && window.WebSocket) {
+            var OrigWebSocket = window.WebSocket;
+            var MockWebSocket = function(url, protocols) {
+              if (protocols === 'vite-hmr' || (typeof url === 'string' && (url.indexOf('vite-hmr') !== -1 || url.indexOf('token=') !== -1))) {
+                var target = new EventTarget();
+                target.url = url;
+                target.protocol = 'vite-hmr';
+                target.readyState = 1; // WebSocket.OPEN
+                target.send = function() {};
+                target.close = function() {
+                  target.readyState = 3;
+                };
+                setTimeout(function() {
+                  try {
+                    target.dispatchEvent(new Event('open'));
+                  } catch (err) {}
+                }, 5);
+                return target;
+              }
+              return new OrigWebSocket(url, protocols);
+            };
+            MockWebSocket.prototype = OrigWebSocket.prototype;
+            MockWebSocket.CONNECTING = 0;
+            MockWebSocket.OPEN = 1;
+            MockWebSocket.CLOSING = 2;
+            MockWebSocket.CLOSED = 3;
+            window.WebSocket = MockWebSocket;
+          }
+
+          // Filter benign [vite] HMR connection logs in container preview
+          var filterViteMsg = function(args) {
+            for (var i = 0; i < args.length; i++) {
+              var arg = args[i];
+              if (typeof arg === 'string' && arg.indexOf('[vite]') !== -1) return true;
+              if (arg && typeof arg === 'object') {
+                if (arg.message && typeof arg.message === 'string' && arg.message.indexOf('[vite]') !== -1) return true;
+                if (arg.reason && typeof arg.reason === 'string' && arg.reason.indexOf('[vite]') !== -1) return true;
+                if (arg.stack && typeof arg.stack === 'string' && arg.stack.indexOf('[vite]') !== -1) return true;
+              }
+            }
+            return false;
+          };
+
           var origError = console.error;
           console.error = function() {
-            if (arguments.length > 0 && typeof arguments[0] === 'string' && arguments[0].indexOf('[vite]') !== -1) {
-              return;
-            }
+            if (filterViteMsg(arguments)) return;
             origError.apply(console, arguments);
           };
+          var origWarn = console.warn;
+          console.warn = function() {
+            if (filterViteMsg(arguments)) return;
+            origWarn.apply(console, arguments);
+          };
+          var origInfo = console.info;
+          console.info = function() {
+            if (filterViteMsg(arguments)) return;
+            origInfo.apply(console, arguments);
+          };
+
           window.addEventListener('unhandledrejection', function(e) {
-            if (e && e.reason && typeof e.reason === 'string' && e.reason.indexOf('[vite]') !== -1) {
+            if (filterViteMsg([e, e.reason])) {
               e.preventDefault();
+              if (e.stopPropagation) e.stopPropagation();
+              if (e.stopImmediatePropagation) e.stopImmediatePropagation();
             }
-          });
+          }, true);
+
+          window.addEventListener('error', function(e) {
+            if (filterViteMsg([e, e.message, e.error])) {
+              e.preventDefault();
+              if (e.stopPropagation) e.stopPropagation();
+              if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+            }
+          }, true);
 
           var saved = localStorage.getItem('taemry_theme');
           if (saved === 'dark') {
