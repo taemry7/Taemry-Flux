@@ -176,20 +176,22 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
         <div className="flex items-center gap-3">
           {currentUser ? (
             <div className="flex items-center gap-3">
-              {/* Admin Panel Access Pill */}
+              {/* Admin Button for Admin Only - Positioned right with daylight mode toggle */}
               {isAdmin && (
                 <button
+                  type="button"
                   id="btn-nav-admin"
                   onClick={() => onNavigate('admin')}
-                  className={`hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border transition-all active:scale-95 cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold tracking-wide transition-all active:scale-95 cursor-pointer shadow-xs ${
                     currentPage === 'admin'
-                      ? 'bg-[#0f172a] text-[#38bdf8] border-[#38bdf8] shadow-sm'
-                      : 'bg-[#1e293b] text-[#7dd3fc] border-[#334155] hover:bg-[#0f172a]'
+                      ? 'bg-[#0c5963] text-white ring-2 ring-[#0c5963]/30 dark:bg-[#38bdf8] dark:text-[#07151a]'
+                      : 'bg-[#0c5963]/10 hover:bg-[#0c5963] text-[#0c5963] hover:text-white dark:bg-sky-500/15 dark:hover:bg-sky-500 dark:text-sky-300 dark:hover:text-[#07151a] border border-[#0c5963]/30 dark:border-sky-400/30'
                   }`}
                   title="Open Admin Control Center"
+                  aria-label="Open Admin Control Center"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#38bdf8]" />
-                  <span>Admin Panel</span>
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Admin</span>
                 </button>
               )}
 
