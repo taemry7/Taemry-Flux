@@ -517,11 +517,14 @@ router.put('/deposits/:depositId/approve', verifyAdmin, async (req, res) => {
       if (userDoc.exists) {
         const currentBalance = Number(userDoc.data().walletBalance || 0);
         newBalance = +(currentBalance + amountUSD).toFixed(2);
-        await userRef.update({
-          walletBalance: newBalance,
-          updatedAt: new Date().toISOString(),
-        });
+      } else {
+        newBalance = +amountUSD.toFixed(2);
       }
+      await userRef.set({
+        walletBalance: newBalance,
+        email: deposit.userEmail || '',
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
 
       // Add transaction entry
       await db.collection(`users/${userId}/transactions`).add({

@@ -198,18 +198,26 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
 
     try {
       setSubmitting(true);
-      const formData = new FormData();
-      formData.append('method', selectedMethod);
-      formData.append('amountUSD', parsedAmount.toString());
-      if (transactionId) formData.append('transactionId', transactionId);
-      if (screenshotFile) formData.append('screenshot', screenshotFile);
+      let res;
+      if (screenshotFile) {
+        const formData = new FormData();
+        formData.append('method', selectedMethod);
+        formData.append('amountUSD', parsedAmount.toString());
+        if (transactionId) formData.append('transactionId', transactionId);
+        formData.append('screenshot', screenshotFile);
 
-      const res = await apiClient.post('/deposits/request', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        timeout: 60000,
-      });
+        res = await apiClient.post('/deposits/request', formData, {
+          timeout: 60000,
+        });
+      } else {
+        res = await apiClient.post('/deposits/request', {
+          method: selectedMethod,
+          amountUSD: parsedAmount,
+          transactionId: transactionId || '',
+        }, {
+          timeout: 30000,
+        });
+      }
 
       if (res.data?.success) {
         toast.success('Deposit request submitted! Wait for admin approval.');

@@ -73,7 +73,7 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
     {
       id: 1,
       title: 'Daily Ads Rhythm Active',
-      desc: '200 daily ads allocation unlocked for active contract packages.',
+      desc: 'Daily ads allocation unlocked for active contract packages.',
       time: 'Live',
       isNew: true
     },

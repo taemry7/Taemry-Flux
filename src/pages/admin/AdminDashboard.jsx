@@ -29,9 +29,16 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
 
   if (!stats) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-3">
+      <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4">
         <RefreshCw className="w-8 h-8 animate-spin text-sky-400" />
         <p className="text-sm font-medium">Loading platform analytics...</p>
+        <button
+          onClick={onRefresh}
+          className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border border-slate-700 mt-2"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+          <span>Retry Now</span>
+        </button>
       </div>
     );
   }
@@ -50,8 +57,11 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
     charts = { growth: [], financials: [] }
   } = stats;
 
-  const maxGrowth = Math.max(...charts.growth.map((d) => d.users), 5);
-  const maxFinancial = Math.max(...charts.financials.map((d) => Math.max(d.revenue, d.payouts)), 100);
+  const growthCharts = Array.isArray(charts?.growth) ? charts.growth : [];
+  const financialCharts = Array.isArray(charts?.financials) ? charts.financials : [];
+
+  const maxGrowth = Math.max(...growthCharts.map((d) => Number(d.users) || 0), 5);
+  const maxFinancial = Math.max(...financialCharts.map((d) => Math.max(Number(d.revenue) || 0, Number(d.payouts) || 0)), 100);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
@@ -242,12 +252,12 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
 
           <div className="relative z-10 pt-4">
             <div className="h-44 flex items-end justify-between gap-2 sm:gap-3 px-2">
-              {charts.growth.map((item, idx) => {
-                const heightPercent = Math.max(14, Math.round((item.users / maxGrowth) * 100));
+              {growthCharts.map((item, idx) => {
+                const heightPercent = Math.max(14, Math.round(((item.users || 0) / maxGrowth) * 100));
                 return (
                   <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group/bar">
                     <span className="text-[11px] font-black text-sky-300 opacity-0 group-hover/bar:opacity-100 transition-all duration-200 -translate-y-1 group-hover/bar:translate-y-0 drop-shadow-md">
-                      +{item.users}
+                      +{item.users || 0}
                     </span>
                     <div className="w-full max-w-[34px] bg-slate-950/80 rounded-t-xl overflow-hidden flex items-end h-full p-0.5 border border-slate-800/80 shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]">
                       <div
@@ -256,7 +266,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
                       />
                     </div>
                     <span className="text-[10px] text-slate-400 font-bold truncate w-full text-center">
-                      {item.label.split(',')[0]}
+                      {(item.label || '').split(',')[0]}
                     </span>
                   </div>
                 );
@@ -269,13 +279,13 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-[10px] text-slate-400 font-medium block">7-Day Total</span>
               <span className="text-xs font-black text-white">
-                {charts.growth.reduce((acc, curr) => acc + curr.users, 0)} Members
+                {growthCharts.reduce((acc, curr) => acc + (curr.users || 0), 0)} Members
               </span>
             </div>
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-[10px] text-slate-400 font-medium block">Daily Average</span>
               <span className="text-xs font-black text-sky-400">
-                {(charts.growth.reduce((acc, curr) => acc + curr.users, 0) / (charts.growth.length || 1)).toFixed(1)}/day
+                {(growthCharts.reduce((acc, curr) => acc + (curr.users || 0), 0) / (growthCharts.length || 1)).toFixed(1)}/day
               </span>
             </div>
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
@@ -321,35 +331,41 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
 
           <div className="relative z-10 pt-4">
             <div className="h-44 flex items-end justify-between gap-2 sm:gap-3 px-2">
-              {charts.financials.map((item, idx) => {
-                const revHeight = Math.max(10, Math.round((item.revenue / maxFinancial) * 100));
-                const payHeight = Math.max(10, Math.round((item.payouts / maxFinancial) * 100));
-                return (
-                  <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group/bar">
-                    <div className="w-full flex items-end justify-center gap-1 h-full">
-                      {/* Deposit 3D Pillar */}
-                      <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
-                        <div
-                          className="w-full bg-gradient-to-t from-emerald-600 via-emerald-400 to-emerald-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(52,211,153,0.4)] group-hover/bar:brightness-125"
-                          style={{ height: `${revHeight}%` }}
-                          title={`Approved Deposit: $${item.revenue}`}
-                        />
+              {financialCharts.length === 0 ? (
+                <div className="w-full h-full flex items-center justify-center text-xs text-slate-500">
+                  No financial activity recorded yet
+                </div>
+              ) : (
+                financialCharts.map((item, idx) => {
+                  const revHeight = Math.max(10, Math.round(((item.revenue || 0) / maxFinancial) * 100));
+                  const payHeight = Math.max(10, Math.round(((item.payouts || 0) / maxFinancial) * 100));
+                  return (
+                    <div key={idx} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group/bar">
+                      <div className="w-full flex items-end justify-center gap-1 h-full">
+                        {/* Deposit 3D Pillar */}
+                        <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
+                          <div
+                            className="w-full bg-gradient-to-t from-emerald-600 via-emerald-400 to-emerald-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(52,211,153,0.4)] group-hover/bar:brightness-125"
+                            style={{ height: `${revHeight}%` }}
+                            title={`Approved Deposit: $${item.revenue || 0}`}
+                          />
+                        </div>
+                        {/* Payout 3D Pillar */}
+                        <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
+                          <div
+                            className="w-full bg-gradient-to-t from-sky-600 via-sky-400 to-sky-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(56,189,248,0.4)] group-hover/bar:brightness-125"
+                            style={{ height: `${payHeight}%` }}
+                            title={`Settled Payout: $${item.payouts || 0}`}
+                          />
+                        </div>
                       </div>
-                      {/* Payout 3D Pillar */}
-                      <div className="w-1/2 max-w-[14px] bg-slate-950/80 rounded-t overflow-hidden flex items-end h-full p-0.5 border border-slate-800 shadow-[inset_0_1px_2px_rgba(0,0,0,0.6)]">
-                        <div
-                          className="w-full bg-gradient-to-t from-sky-600 via-sky-400 to-sky-300 rounded-t transition-all duration-500 shadow-[0_-3px_10px_rgba(56,189,248,0.4)] group-hover/bar:brightness-125"
-                          style={{ height: `${payHeight}%` }}
-                          title={`Settled Payout: $${item.payouts}`}
-                        />
-                      </div>
+                      <span className="text-[10px] text-slate-400 font-bold truncate w-full text-center">
+                        {(item.label || '').split(',')[0]}
+                      </span>
                     </div>
-                    <span className="text-[10px] text-slate-400 font-bold truncate w-full text-center">
-                      {item.label.split(',')[0]}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           </div>
 
@@ -358,23 +374,23 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-[10px] text-slate-400 font-medium block">7-Day Inflow</span>
               <span className="text-xs font-black text-emerald-400">
-                +${charts.financials.reduce((acc, curr) => acc + curr.revenue, 0).toFixed(2)}
+                +${financialCharts.reduce((acc, curr) => acc + (curr.revenue || 0), 0).toFixed(2)}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-[10px] text-slate-400 font-medium block">7-Day Outflow</span>
               <span className="text-xs font-black text-sky-400">
-                -${charts.financials.reduce((acc, curr) => acc + curr.payouts, 0).toFixed(2)}
+                -${financialCharts.reduce((acc, curr) => acc + (curr.payouts || 0), 0).toFixed(2)}
               </span>
             </div>
             <div className="p-2 rounded-xl bg-slate-950/60 border border-slate-800/60">
               <span className="text-[10px] text-slate-400 font-medium block">Net Liquidity</span>
               <span className={`text-xs font-black ${
-                charts.financials.reduce((acc, curr) => acc + (curr.revenue - curr.payouts), 0) >= 0
+                financialCharts.reduce((acc, curr) => acc + ((curr.revenue || 0) - (curr.payouts || 0)), 0) >= 0
                   ? 'text-emerald-400'
                   : 'text-rose-400'
               }`}>
-                ${charts.financials.reduce((acc, curr) => acc + (curr.revenue - curr.payouts), 0).toFixed(2)}
+                ${financialCharts.reduce((acc, curr) => acc + ((curr.revenue || 0) - (curr.payouts || 0)), 0).toFixed(2)}
               </span>
             </div>
           </div>

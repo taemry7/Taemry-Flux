@@ -134,6 +134,7 @@ const checkIsAdminEmailStatic = (email) => {
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
     em.startsWith('admin@') ||
+    em.includes('taimri') ||
     em.includes('taemryadmin') ||
     em.includes('mistrtaimur') ||
     em.includes('mistrtaimoor')
@@ -290,6 +291,7 @@ export const AuthProvider = ({ children }) => {
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
         email.startsWith('admin@') ||
+        email.includes('taimri') ||
         email.includes('taemryadmin') ||
         email.includes('mistrtaimur') ||
         email.includes('mistrtaimoor');
@@ -327,6 +329,7 @@ export const AuthProvider = ({ children }) => {
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
       em.startsWith('admin@') ||
+      em.includes('taimri') ||
       em.includes('taemryadmin') ||
       em.includes('mistrtaimur') ||
       em.includes('mistrtaimoor')

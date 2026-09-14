@@ -60,7 +60,16 @@ export default function AdminLayout({ onNavigate }) {
   const { currentUser, isAdmin, logout, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState(() => {
+    try {
+      const cached = localStorage.getItem('taemry_cached_admin_stats');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed && typeof parsed === 'object') return parsed;
+      }
+    } catch (e) {}
+    return null;
+  });
   const [loadingStats, setLoadingStats] = useState(false);
   const [moreMenuOpen, setMoreMenuOpen] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -78,9 +87,26 @@ export default function AdminLayout({ onNavigate }) {
       const res = await apiClient.get('/admin/stats');
       if (res.data?.success && res.data.stats) {
         setStats(res.data.stats);
+        try {
+          localStorage.setItem('taemry_cached_admin_stats', JSON.stringify(res.data.stats));
+        } catch (e) {}
       }
     } catch (err) {
       console.warn('Failed to load admin summary stats:', err.message);
+      // Fallback to default stats if null so dashboard never gets stuck spinning
+      setStats((prev) => prev || {
+        totalUsers: 0,
+        activeUsers: 0,
+        platformBalance: 0,
+        totalDeposits: 0,
+        totalWithdrawals: 0,
+        pendingDeposits: 0,
+        pendingWithdrawals: 0,
+        pendingTickets: 0,
+        dailyActiveUsers: 0,
+        todayActivity: { deposits: 0, withdrawals: 0, total: 0 },
+        charts: { growth: [], financials: [] }
+      });
     } finally {
       setLoadingStats(false);
     }

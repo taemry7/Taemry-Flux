@@ -81,7 +81,11 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
   const referralCount = Number(userStats?.referralCount) || 0;
   const walletBalance = Number(userStats?.walletBalance) || 0;
-  const isEligible = referralCount >= 1;
+  const requiredReferrals = typeof settings.referralRequired === 'number'
+    ? settings.referralRequired
+    : (settings.referralRequired === true ? 1 : 0);
+  const isUserAdmin = userStats?.role === 'admin' || userStats?.isAdmin;
+  const isEligible = requiredReferrals === 0 || referralCount >= requiredReferrals || isUserAdmin;
 
   const referralCode = userStats?.referralCode || userStats?.uid?.substring(0, 8) || 'REF1234';
   const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
@@ -106,7 +110,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
     if (!isEligible) {
       setNotification({
         type: 'error',
-        message: 'You need at least 1 active referral to withdraw. Share your referral link!',
+        message: `You need at least ${requiredReferrals} active referral(s) to withdraw. Share your referral link!`,
       });
       return;
     }
@@ -231,10 +235,10 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
             </div>
             <div className="space-y-1">
               <h3 className="text-base font-extrabold text-[#7f1d1d]">
-                ⚠️ You need at least 1 active referral to withdraw. Share your referral link!
+                ⚠️ You need at least {requiredReferrals} active referral{requiredReferrals > 1 ? 's' : ''} to withdraw. Share your referral link!
               </h3>
               <p className="text-xs text-[#991b1b] leading-relaxed max-w-2xl">
-                To maintain network security and encourage collaborative growth, withdrawals require having at least 1 active member enrolled through your referral link. You currently have <strong>{referralCount} referrals</strong>.
+                To maintain network security and encourage collaborative growth, withdrawals require having at least {requiredReferrals} active member{requiredReferrals > 1 ? 's' : ''} enrolled through your referral link. You currently have <strong>{referralCount} referrals</strong>.
               </p>
             </div>
           </div>

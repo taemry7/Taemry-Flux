@@ -657,44 +657,146 @@ const GENERATED_31_TO_100 = ADDITIONAL_MEMBERS.map((m, idx) => {
 // Full 100 Leaderboard dataset from Rank #1 to Rank #100
 export const FULL_TOP_100_USERS = [...INITIAL_LEADERBOARD_USERS, ...GENERATED_31_TO_100];
 
+const ADMIN_CUSTOM_KEY = 'taemry_admin_leaderboard_custom';
+const LIVE_PROGRESS_KEY = 'taemry_leaderboard_live_progress_v2';
+
+// Reference epoch: baseline starting point of network progression (August 1, 2026)
+const LAUNCH_EPOCH = new Date('2026-08-01T00:00:00Z').getTime();
+
+/**
+ * Computes up-to-date live statistics based on real-world date & time.
+ * Even for a brand-new visitor opening the site for the first time,
+ * users are shown actively progressive, live figures rather than starting at zero/day-one baseline.
+ */
+export function generateLiveLeaderboardState(baseUsers, now = Date.now()) {
+  const elapsedMs = Math.max(0, now - LAUNCH_EPOCH);
+  const elapsedDays = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+  const timeOfDayFraction = (now % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60 * 24);
+
+  const updated = baseUsers.map((user, index) => {
+    const rank = index + 1;
+    const baseProfit = Number(user.totalEarned) || 100;
+    const baseAds = Number(user.adsWatched) || 500;
+    const dailyTarget = Number(user.dailyEarned) || (rank <= 3 ? 100 : rank <= 10 ? 20 : 5);
+    const rewardPerAd = +(dailyTarget / 200).toFixed(3);
+
+    const rankPaceFactor = Math.max(0.45, 1 - (rank * 0.0055));
+    const userSeed = (rank * 17) % 25;
+
+    // Today's progress so far based on current hour/minute
+    const todayAdsWatched = Math.min(
+      200,
+      Math.max(12, Math.floor((timeOfDayFraction * 185 * rankPaceFactor) + userSeed))
+    );
+    const todayEarned = +(todayAdsWatched * rewardPerAd).toFixed(2);
+
+    // Historical accumulation over elapsed days (~58% average daily completion rate)
+    const historicalEarned = elapsedDays * dailyTarget * 0.58 * rankPaceFactor;
+    const historicalAds = elapsedDays * Math.floor(200 * 0.58 * rankPaceFactor);
+
+    const totalEarned = +(baseProfit + historicalEarned + todayEarned).toFixed(2);
+    const adsWatched = Math.floor(baseAds + historicalAds + todayAdsWatched);
+
+    return {
+      ...user,
+      totalEarned,
+      adsWatched,
+      dailyEarned: todayEarned > 0 ? todayEarned : +(dailyTarget * 0.4).toFixed(2),
+      status: (rank <= 3 || index % 3 === 0) ? 'Watching Ads' : 'Active',
+      statusTime: 'Live',
+      isOnline: true,
+    };
+  });
+
+  // Sort by highest profit descending & re-assign ranks
+  updated.sort((a, b) => b.totalEarned - a.totalEarned);
+  return updated.map((u, i) => ({ ...u, rank: i + 1, currentRank: i + 1 }));
+}
+
+/**
+ * Fast-forwards activity when resuming from a closed or backgrounded tab
+ */
+function fastForwardElapsedActivity(users, elapsedSeconds) {
+  if (!Array.isArray(users) || users.length === 0 || elapsedSeconds <= 0) return users;
+
+  const totalEvents = Math.min(120, Math.floor(elapsedSeconds / 3.2));
+  if (totalEvents <= 0) return users;
+
+  const copy = users.map((u) => ({ ...u }));
+  for (let i = 0; i < totalEvents; i++) {
+    const pickIndex = Math.random() < 0.75
+      ? Math.floor(Math.random() * Math.min(30, copy.length))
+      : Math.floor(Math.random() * copy.length);
+
+    const target = copy[pickIndex];
+    if (target) {
+      const reward = Math.max(0.05, Math.min(2.00, +(target.dailyEarned > 0 ? (target.dailyEarned / 200) : 0.25).toFixed(2)));
+      target.adsWatched = (Number(target.adsWatched) || 0) + 1;
+      target.totalEarned = +(Number(target.totalEarned || 0) + reward).toFixed(2);
+      target.dailyEarned = +(Number(target.dailyEarned || 0) + reward).toFixed(2);
+    }
+  }
+
+  copy.sort((a, b) => b.totalEarned - a.totalEarned);
+  return copy.map((u, i) => ({ ...u, rank: i + 1, currentRank: i + 1 }));
+}
+
+function getInitialLeaderboard() {
+  let baseUsers = FULL_TOP_100_USERS;
+  try {
+    const custom = localStorage.getItem(ADMIN_CUSTOM_KEY);
+    if (custom) {
+      const parsed = JSON.parse(custom);
+      if (Array.isArray(parsed) && parsed.length > 0) baseUsers = parsed;
+    }
+  } catch {}
+
+  try {
+    const liveStored = localStorage.getItem(LIVE_PROGRESS_KEY);
+    if (liveStored) {
+      const parsed = JSON.parse(liveStored);
+      if (parsed?.users && Array.isArray(parsed.users) && parsed.users.length > 0) {
+        const lastTime = Number(parsed.timestamp) || Date.now();
+        const elapsedSec = Math.max(0, Math.floor((Date.now() - lastTime) / 1000));
+        return fastForwardElapsedActivity(parsed.users, elapsedSec);
+      }
+    }
+  } catch {}
+
+  // For new users: start immediately with live elapsed stats, not starting baseline
+  return generateLiveLeaderboardState(baseUsers, Date.now());
+}
+
 const LIVE_NOTIFICATIONS = [
-  '⚡ Member Tariq Khan earned $2.50 from daily views (Apex Contract)',
-  '🌟 Bilal Malik climbed to Rank #2 with 6,920 lifetime ads!',
-  '💰 Sara Ahmed received Level 1 matching commission ($1.25)',
-  '🚀 Farhan Siddiqui earned $100.00 daily yield in Dubai 🇦🇪',
+  '⚡ Tariq Khan earned daily views yield from Apex Contract',
+  '🌟 Bilal Malik climbed rankings with active lifetime ads rhythm',
+  '💰 Sara Ahmed received Level 1 matching commission',
+  '🚀 Farhan Siddiqui earned daily yield in Dubai 🇦🇪',
   '💎 New member activated Gold Tier in Islamabad, PK',
   '⚡ Zainab Ali completed daily ads rhythm with 100% verification',
-  '🔥 Rashid Mehmood initiated fast JazzCash wallet withdrawal',
+  '🔥 Rashid Mehmood verified ad stream reward in Riyadh 🇸🇦',
 ];
 
 export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [tickerIndex, setTickerIndex] = useState(0);
+  const [recentlyUpdated, setRecentlyUpdated] = useState(null); // { id, amount }
+  const [dynamicTicker, setDynamicTicker] = useState(null);
 
-  const [leaderboardData, setLeaderboardData] = useState(() => {
-    try {
-      const stored = localStorage.getItem('taemry_admin_leaderboard_custom');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      }
-    } catch {}
-    return FULL_TOP_100_USERS;
-  });
+  const [leaderboardData, setLeaderboardData] = useState(() => getInitialLeaderboard());
 
+  // Listen for admin custom updates
   useEffect(() => {
     const handleUpdate = () => {
+      let baseUsers = FULL_TOP_100_USERS;
       try {
-        const stored = localStorage.getItem('taemry_admin_leaderboard_custom');
+        const stored = localStorage.getItem(ADMIN_CUSTOM_KEY);
         if (stored) {
           const parsed = JSON.parse(stored);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setLeaderboardData(parsed);
-            return;
-          }
+          if (Array.isArray(parsed) && parsed.length > 0) baseUsers = parsed;
         }
       } catch {}
-      setLeaderboardData(FULL_TOP_100_USERS);
+      setLeaderboardData(generateLiveLeaderboardState(baseUsers, Date.now()));
     };
 
     window.addEventListener('leaderboard-updated', handleUpdate);
@@ -705,11 +807,65 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
     };
   }, []);
 
+  // Real-time live earnings heartbeat: users advance live while viewing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLeaderboardData((prevList) => {
+        if (!Array.isArray(prevList) || prevList.length === 0) return prevList;
+
+        const copy = prevList.map((u) => ({ ...u }));
+        // Weight selection towards top 30 active members
+        const idx = Math.random() < 0.75
+          ? Math.floor(Math.random() * Math.min(30, copy.length))
+          : Math.floor(Math.random() * copy.length);
+
+        const member = copy[idx];
+        if (!member) return prevList;
+
+        const perAdReward = Math.max(
+          0.05,
+          Math.min(2.00, +(member.dailyEarned > 0 ? (member.dailyEarned / 200) : 0.25).toFixed(2))
+        );
+
+        member.adsWatched = (Number(member.adsWatched) || 0) + 1;
+        member.totalEarned = +(Number(member.totalEarned || 0) + perAdReward).toFixed(2);
+        member.dailyEarned = +(Number(member.dailyEarned || 0) + perAdReward).toFixed(2);
+        member.status = 'Watching Ads';
+        member.statusTime = 'Live';
+        member.isOnline = true;
+
+        // Set visual indicator for updated member
+        setRecentlyUpdated({ id: member.id, amount: perAdReward });
+        setTimeout(() => setRecentlyUpdated(null), 1800);
+
+        // Update ticker message for this event
+        setDynamicTicker(`⚡ ${member.name} completed ad view (+$${perAdReward.toFixed(2)} earned) • ${member.city}`);
+
+        // Re-sort if ranking shifts
+        copy.sort((a, b) => b.totalEarned - a.totalEarned);
+        const ranked = copy.map((u, i) => ({ ...u, rank: i + 1, currentRank: i + 1 }));
+
+        // Persist to local live cache
+        try {
+          localStorage.setItem(
+            LIVE_PROGRESS_KEY,
+            JSON.stringify({ timestamp: Date.now(), users: ranked })
+          );
+        } catch {}
+
+        return ranked;
+      });
+    }, 3200);
+
+    return () => clearInterval(interval);
+  }, []);
+
   // Cycle live notifications ticker
   useEffect(() => {
     const interval = setInterval(() => {
       setTickerIndex((prev) => (prev + 1) % LIVE_NOTIFICATIONS.length);
-    }, 4500);
+      setDynamicTicker(null);
+    }, 4800);
     return () => clearInterval(interval);
   }, []);
 
@@ -795,7 +951,7 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0 animate-ping" />
             <div className="text-xs text-[#0c5963] dark:text-[#5eead4] font-semibold truncate flex items-center gap-1.5">
               <Activity className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-              <span className="truncate">{LIVE_NOTIFICATIONS[tickerIndex]}</span>
+              <span className="truncate">{dynamicTicker || LIVE_NOTIFICATIONS[tickerIndex]}</span>
             </div>
           </div>
         </div>
@@ -829,7 +985,11 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
         {sortedAndFiltered.length >= 3 && !searchQuery && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {/* Rank 2 Podium */}
-            <div className="bg-white dark:bg-[#0a1e25] rounded-3xl p-5 border border-[#e0dad0] dark:border-[#173740] flex flex-col justify-between order-2 md:order-1 shadow-xs hover:border-[#94a3b8] transition-all">
+            <div className={`bg-white dark:bg-[#0a1e25] rounded-3xl p-5 border border-[#e0dad0] dark:border-[#173740] flex flex-col justify-between order-2 md:order-1 shadow-xs hover:border-[#94a3b8] transition-all duration-300 ${
+              recentlyUpdated?.id === sortedAndFiltered[1].id
+                ? 'ring-2 ring-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                : ''
+            }`}>
               <div className="flex items-center justify-between mb-3">
                 <span className="w-7 h-7 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-extrabold text-xs flex items-center justify-center">
                   #2
@@ -857,15 +1017,26 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">Total Profit</span>
-                  <span className="font-extrabold text-[#09353e] dark:text-emerald-400 text-base">
-                    ${sortedAndFiltered[1].totalEarned.toFixed(2)}
-                  </span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="font-extrabold text-[#09353e] dark:text-emerald-400 text-base">
+                      ${sortedAndFiltered[1].totalEarned.toFixed(2)}
+                    </span>
+                    {recentlyUpdated?.id === sortedAndFiltered[1].id && (
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-md animate-pulse">
+                        +${recentlyUpdated.amount.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Rank 1 Crown Champion Podium */}
-            <div className="bg-linear-to-b from-[#fef3c7]/30 to-white dark:from-[#0a1e25] dark:to-[#08171c] rounded-3xl p-6 border-2 border-amber-400/60 dark:border-amber-500/50 flex flex-col justify-between order-1 md:order-2 shadow-md relative overflow-hidden">
+            <div className={`bg-linear-to-b from-[#fef3c7]/30 to-white dark:from-[#0a1e25] dark:to-[#08171c] rounded-3xl p-6 border-2 border-amber-400/60 dark:border-amber-500/50 flex flex-col justify-between order-1 md:order-2 shadow-md relative overflow-hidden transition-all duration-300 ${
+              recentlyUpdated?.id === sortedAndFiltered[0].id
+                ? 'ring-2 ring-emerald-500/60 shadow-lg shadow-emerald-500/15'
+                : ''
+            }`}>
               <div className="absolute top-2 right-2 opacity-10 pointer-events-none">
                 <Crown className="w-24 h-24 text-amber-500" />
               </div>
@@ -903,15 +1074,26 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">Total Profit</span>
-                  <span className="text-xl font-black text-emerald-700 dark:text-emerald-300">
-                    ${sortedAndFiltered[0].totalEarned.toFixed(2)}
-                  </span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="text-xl font-black text-emerald-700 dark:text-emerald-300">
+                      ${sortedAndFiltered[0].totalEarned.toFixed(2)}
+                    </span>
+                    {recentlyUpdated?.id === sortedAndFiltered[0].id && (
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-md animate-pulse">
+                        +${recentlyUpdated.amount.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Rank 3 Podium */}
-            <div className="bg-white dark:bg-[#0a1e25] rounded-3xl p-5 border border-[#e0dad0] dark:border-[#173740] flex flex-col justify-between order-3 shadow-xs hover:border-amber-600/40 transition-all">
+            <div className={`bg-white dark:bg-[#0a1e25] rounded-3xl p-5 border border-[#e0dad0] dark:border-[#173740] flex flex-col justify-between order-3 shadow-xs hover:border-amber-600/40 transition-all duration-300 ${
+              recentlyUpdated?.id === sortedAndFiltered[2].id
+                ? 'ring-2 ring-emerald-500/60 shadow-lg shadow-emerald-500/10'
+                : ''
+            }`}>
               <div className="flex items-center justify-between mb-3">
                 <span className="w-7 h-7 rounded-xl bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-200 font-extrabold text-xs flex items-center justify-center">
                   #3
@@ -939,9 +1121,16 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">Total Profit</span>
-                  <span className="font-extrabold text-[#09353e] dark:text-emerald-400 text-base">
-                    ${sortedAndFiltered[2].totalEarned.toFixed(2)}
-                  </span>
+                  <div className="flex items-center justify-end gap-1.5">
+                    <span className="font-extrabold text-[#09353e] dark:text-emerald-400 text-base">
+                      ${sortedAndFiltered[2].totalEarned.toFixed(2)}
+                    </span>
+                    {recentlyUpdated?.id === sortedAndFiltered[2].id && (
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-md animate-pulse">
+                        +${recentlyUpdated.amount.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -976,7 +1165,11 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
                     return (
                       <tr 
                         key={user.id}
-                        className="hover:bg-[#faf8f4] dark:hover:bg-[#0c2630] transition-colors group"
+                        className={`hover:bg-[#faf8f4] dark:hover:bg-[#0c2630] transition-all duration-300 group ${
+                          recentlyUpdated?.id === user.id
+                            ? 'bg-emerald-50/80 dark:bg-emerald-950/40 ring-1 ring-inset ring-emerald-500/40'
+                            : ''
+                        }`}
                       >
                         {/* Rank */}
                         <td className="py-3.5 px-4 sm:px-6 font-bold">
@@ -1036,9 +1229,16 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
 
                         {/* Total Profit */}
                         <td className="py-3.5 px-4 sm:px-6 text-right">
-                          <span className="font-black text-[#09353e] dark:text-emerald-400 text-sm">
-                            ${user.totalEarned.toFixed(2)}
-                          </span>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <span className="font-black text-[#09353e] dark:text-emerald-400 text-sm">
+                              ${user.totalEarned.toFixed(2)}
+                            </span>
+                            {recentlyUpdated?.id === user.id && (
+                              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded-md animate-pulse">
+                                +${recentlyUpdated.amount.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         {/* Status */}

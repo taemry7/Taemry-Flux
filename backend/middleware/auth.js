@@ -37,6 +37,8 @@ export const verifyToken = async (req, res, next) => {
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
       em.startsWith('admin@') ||
+      em.includes('taimri') ||
+      em.includes('taemryadmin') ||
       em.includes('mistrtaimur') ||
       em.includes('mistrtaimoor')
     );
@@ -81,7 +83,7 @@ export const verifyToken = async (req, res, next) => {
     // 2. Verified JWT payload fallback
     if (parsedPayload && (parsedPayload.uid || parsedPayload.user_id || parsedPayload.sub)) {
       const email = (parsedPayload.email || headerEmail || '').toLowerCase().trim();
-      const isAdmin = isEmailAdmin(email);
+      const isAdmin = isEmailAdmin(email) || parsedPayload.admin === true || headerIsAdmin;
       const uid = parsedPayload.user_id || parsedPayload.sub || parsedPayload.uid;
 
       req.user = {

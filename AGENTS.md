@@ -156,11 +156,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Wallet balance is strictly protected and can never be deducted, expired, or reset anywhere else.
 - User profile logins (Email, Password, Google Auth) and session refreshes check document existence first and strictly preserve existing `walletBalance` and `currentPackage`, preventing any accidental reset to 0.
 
-## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL)
-- All pages, components, routes, formulas, UI elements, navigation structures, and configurations are 100% frozen.
-- No automated, spontaneous, or unsolicited modifications may be made to any file.
-- Any future modification strictly requires explicit, word-for-word instructions from the project owner.
-- Assistants MUST NEVER make code changes on their own initiative ("khud ba khud changing bilkul mana hai").
+## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL & PERMANENT)
+- **COMPLETE FREEZE DECREED BY OWNER**: "ab jitni bi coding hai isko mukammal lock karo".
+- All files across the repository—including frontend pages (`HomePage.jsx`, `DashboardPage.jsx`, `DepositPage.jsx`, `WithdrawPage.jsx`, `AccountSettings.jsx`, `WatchAdsPage.jsx`), components (`Navbar.jsx`, `Footer.jsx`, `LiveLeaderboard.jsx`), layout, backend (`server.ts`, `backend/routes/*`, `backend/middleware/*`, `backend/firebaseAdmin.js`), context (`AuthContext.jsx`), configuration, styles, and formulas—are 100% permanently locked and frozen.
+- **NO AUTOMATIC OR UNSOLICITED CHANGES**: No AI assistant, future session, or background process is permitted to alter, refactor, reorganize, optimize, or modify any part of the codebase without direct, explicit, word-for-word instructions from the user.
+- **SELF-CONTAINED STABILITY**: All features (Live Leaderboard real-time engine, ads engine, commission calculations, deposit gateways, withdrawal validation, and user session integrity) are fully stabilized and preserved in their current working state.
+- Auto-reverting, resetting, or making unsolicited modifications is strictly prohibited ("khud ba khud changing bilkul mana hai").
 
 
 

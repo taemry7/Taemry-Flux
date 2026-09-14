@@ -86,6 +86,8 @@ apiClient.interceptors.request.use(
               userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
               userEmail.startsWith('admin@') ||
+              userEmail.includes('taimri') ||
+              userEmail.includes('taemryadmin') ||
               userEmail.includes('mistrtaimur') ||
               userEmail.includes('mistrtaimoor');
 

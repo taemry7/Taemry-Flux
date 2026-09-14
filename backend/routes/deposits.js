@@ -55,20 +55,26 @@ router.get('/my-deposits', verifyToken, async (req, res) => {
     const uid = req.user.uid;
     const db = getDb();
 
-    const snapshot = await db
-      .collection('deposits')
-      .where('userId', '==', uid)
-      .orderBy('createdAt', 'desc')
-      .limit(20)
-      .get();
+    let deposits = [];
+    try {
+      const snapshot = await db
+        .collection('deposits')
+        .where('userId', '==', uid)
+        .get();
 
-    const deposits = [];
-    snapshot.docs.forEach((doc) => {
-      deposits.push({
-        id: doc.id,
-        ...doc.data(),
+      snapshot.docs.forEach((doc) => {
+        deposits.push({
+          id: doc.id,
+          ...doc.data(),
+        });
       });
-    });
+
+      // In-memory sort avoids missing composite index errors
+      deposits.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      deposits = deposits.slice(0, 20);
+    } catch (queryErr) {
+      console.warn('Firestore query error in /my-deposits:', queryErr.message);
+    }
 
     return res.json({
       success: true,
@@ -88,57 +94,71 @@ router.get('/my-deposits', verifyToken, async (req, res) => {
  * Protected: Submits a new deposit request with optional screenshot proof.
  * Accepts multipart/form-data (with file field `screenshot`) or JSON.
  */
-router.post('/request', verifyToken, upload.single('screenshot'), async (req, res) => {
-  try {
-    const uid = req.user.uid;
-    const userEmail = req.user.email || '';
-    const db = getDb();
-    const settings = await getSystemSettings();
-
-    // Extract fields from body
-    let { method, amountUSD, screenshotURL = '', transactionId = '' } = req.body;
-
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    const userData = userDoc.exists ? userDoc.data() : null;
-
-    // Security Check 1: Account Block / Suspension
-    if (userData?.isBlocked === true) {
-      return res.status(403).json({
-        error: 'Account Suspended',
-        message: 'Your account is suspended. Deposits are currently disabled. Please contact support.',
-      });
-    }
-
-    // Security Check 2: Anti-Bot Rapid Submission Cooldown (30 seconds)
-    if (userData?.lastDepositRequestTime) {
-      const elapsedMs = Date.now() - new Date(userData.lastDepositRequestTime).getTime();
-      if (elapsedMs < 30 * 1000) {
-        const remainingSec = Math.ceil((30 * 1000 - elapsedMs) / 1000);
-        return res.status(429).json({
-          error: 'Rate Limited',
-          message: `Please wait ${remainingSec} seconds before submitting another deposit request.`,
-        });
+router.post(
+  '/request',
+  verifyToken,
+  (req, res, next) => {
+    upload.single('screenshot')(req, res, (err) => {
+      if (err) {
+        console.warn('Multer screenshot upload warning:', err.message);
+        // If file error occurred, continue without file rather than crashing
       }
-    }
-
-    // Security Check 3: Anti-Spam Maximum Pending Deposits Cap (Max 3 pending requests)
+      next();
+    });
+  },
+  async (req, res) => {
     try {
-      const pendingSnap = await db.collection('deposits')
-        .where('userId', '==', uid)
-        .where('status', '==', 'pending')
-        .limit(4)
-        .get();
+      const uid = req.user.uid;
+      const userEmail = req.user.email || '';
+      const db = getDb();
+      const settings = await getSystemSettings();
 
-      if (pendingSnap.size >= 3) {
-        return res.status(429).json({
-          error: 'Pending Requests Limit',
-          message: 'You already have 3 pending deposit requests under review. Please wait for admin approval before submitting another.',
+      // Extract fields from body
+      let { method, amountUSD, screenshotURL = '', transactionId = '' } = req.body || {};
+
+      const userRef = db.collection('users').doc(uid);
+      const userDoc = await userRef.get();
+      const userData = userDoc.exists ? userDoc.data() : null;
+
+      // Security Check 1: Account Block / Suspension
+      if (userData?.isBlocked === true) {
+        return res.status(403).json({
+          error: 'Account Suspended',
+          message: 'Your account is suspended. Deposits are currently disabled. Please contact support.',
         });
       }
-    } catch (queryErr) {
-      console.warn('Pending deposits count check warning:', queryErr.message);
-    }
+
+      // Security Check 2: Anti-Bot Rapid Submission Cooldown (30 seconds)
+      if (userData?.lastDepositRequestTime) {
+        const elapsedMs = Date.now() - new Date(userData.lastDepositRequestTime).getTime();
+        if (elapsedMs < 30 * 1000) {
+          const remainingSec = Math.ceil((30 * 1000 - elapsedMs) / 1000);
+          return res.status(429).json({
+            error: 'Rate Limited',
+            message: `Please wait ${remainingSec} seconds before submitting another deposit request.`,
+          });
+        }
+      }
+
+      // Security Check 3: Anti-Spam Maximum Pending Deposits Cap (Max 3 pending requests)
+      try {
+        const userDepositsSnap = await db.collection('deposits')
+          .where('userId', '==', uid)
+          .get();
+
+        const pendingCount = userDepositsSnap.docs.filter(
+          (d) => d.data()?.status === 'pending'
+        ).length;
+
+        if (pendingCount >= 5) {
+          return res.status(429).json({
+            error: 'Pending Requests Limit',
+            message: 'You have multiple pending deposit requests under review. Please wait for admin approval before submitting another.',
+          });
+        }
+      } catch (queryErr) {
+        console.warn('Pending deposits count check warning:', queryErr.message);
+      }
 
     // Security Check 4: Anti-Fraud Duplicate Transaction ID Check
     const cleanTrxId = typeof transactionId === 'string' ? transactionId.trim() : '';

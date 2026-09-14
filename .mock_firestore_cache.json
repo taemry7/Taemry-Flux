@@ -147,5 +147,32 @@
       "name": "Taimur robert",
       "createdAt": "2026-09-12T20:11:05.048Z"
     }
+  ],
+  [
+    "deposits/tx_1789361245650_166",
+    {
+      "userId": "user_test_123",
+      "userEmail": "user@test.com",
+      "method": "jazzcash",
+      "amountUSD": 10,
+      "amountPKR": 3000,
+      "exchangeRate": 300,
+      "screenshotURL": null,
+      "transactionId": "TRX12345678",
+      "status": "pending",
+      "accountName": "TAEMRY OFFICIAL",
+      "accountNumber": "03009876543",
+      "createdAt": "2026-09-14T04:47:25.650Z",
+      "updatedAt": "2026-09-14T04:47:25.650Z",
+      "id": "tx_1789361245650_166",
+      "depositId": "tx_1789361245650_166",
+      "timestamp": "2026-09-14T04:47:25.650Z"
+    }
+  ],
+  [
+    "users/user_test_123",
+    {
+      "lastDepositRequestTime": "2026-09-14T04:47:25.650Z"
+    }
   ]
 ]

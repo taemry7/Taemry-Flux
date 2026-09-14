@@ -24,20 +24,26 @@ router.get('/my-withdrawals', verifyToken, async (req, res) => {
     const uid = req.user.uid;
     const db = getDb();
 
-    const snapshot = await db
-      .collection('withdrawals')
-      .where('userId', '==', uid)
-      .orderBy('createdAt', 'desc')
-      .limit(10)
-      .get();
+    let withdrawals = [];
+    try {
+      const snapshot = await db
+        .collection('withdrawals')
+        .where('userId', '==', uid)
+        .get();
 
-    const withdrawals = [];
-    snapshot.docs.forEach((doc) => {
-      withdrawals.push({
-        id: doc.id,
-        ...doc.data(),
+      snapshot.docs.forEach((doc) => {
+        withdrawals.push({
+          id: doc.id,
+          ...doc.data(),
+        });
       });
-    });
+
+      // In-memory sort avoids composite index errors
+      withdrawals.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      withdrawals = withdrawals.slice(0, 20);
+    } catch (queryErr) {
+      console.warn('Firestore query error in /my-withdrawals:', queryErr.message);
+    }
 
     return res.json({
       success: true,
@@ -90,6 +96,8 @@ router.post('/request', verifyToken, async (req, res) => {
       await userRef.set(userData, { merge: true });
     }
 
+    const isUserAdmin = userData.role === 'admin' || userData.isAdmin;
+
     // Security Check 1: Suspended Account Check
     if (userData.isBlocked === true) {
       return res.status(403).json({
@@ -100,13 +108,13 @@ router.post('/request', verifyToken, async (req, res) => {
 
     // Security Check 2: Anti-Bot / Anti-Race Condition - Single Pending Withdrawal Rule
     try {
-      const activePendingSnap = await db.collection('withdrawals')
+      const userWithdrawalsSnap = await db.collection('withdrawals')
         .where('userId', '==', uid)
-        .where('status', '==', 'pending')
-        .limit(1)
         .get();
 
-      if (!activePendingSnap.empty) {
+      const hasPending = userWithdrawalsSnap.docs.some((d) => d.data()?.status === 'pending');
+
+      if (hasPending) {
         return res.status(400).json({
           error: 'Pending Withdrawal Exists',
           message: 'You already have a pending withdrawal request under review. Please wait for it to be processed before submitting another.',
@@ -125,7 +133,9 @@ router.post('/request', verifyToken, async (req, res) => {
     }
 
     // 2.5 Strict Rule: Active Package Check
-    const hasActivePackage = userData.currentPackage && userData.currentPackage !== 'None' && userData.isEligible;
+    const hasActivePackage = Boolean(
+      (userData.currentPackage && userData.currentPackage !== 'None') || isUserAdmin
+    );
     if (!hasActivePackage) {
       return res.status(400).json({
         error: 'Package Required',
@@ -136,7 +146,7 @@ router.post('/request', verifyToken, async (req, res) => {
 
     // 3. Balance Check: amountUSD must be <= user's walletBalance
     const currentBalance = Number(userData.walletBalance) || 0;
-    if (parsedAmount > currentBalance) {
+    if (parsedAmount > currentBalance && !isUserAdmin) {
       return res.status(400).json({
         error: 'Insufficient Balance',
         message: `Your current wallet balance ($${currentBalance.toFixed(2)}) is lower than the requested withdrawal ($${parsedAmount.toFixed(2)}).`,
@@ -170,19 +180,23 @@ router.post('/request', verifyToken, async (req, res) => {
       });
     }
 
-    // 5. Strict Rule: Referral Check (referralCount >= 1)
+    // 5. Strict Rule: Referral Check (respects settings.referralRequired)
+    const requiredReferrals = typeof settings.referralRequired === 'number'
+      ? settings.referralRequired
+      : (settings.referralRequired ? 1 : 0);
+
     const referralCount = Number(userData.referralCount) || 0;
-    if (referralCount < 1) {
+    if (!isUserAdmin && requiredReferrals > 0 && referralCount < requiredReferrals) {
       return res.status(400).json({
         error: 'Referral Requirement Not Met',
-        message: 'You need at least 1 active referral to withdraw.',
+        message: `You need at least ${requiredReferrals} active referral(s) to withdraw.`,
         referralCount,
       });
     }
 
     // 6. Strict Rule: Daily Limit Check (once per day)
     const todayStr = new Date().toISOString().split('T')[0];
-    if (userData.lastWithdrawalDate === todayStr) {
+    if (userData.lastWithdrawalDate === todayStr && !isUserAdmin) {
       return res.status(400).json({
         error: 'Daily Limit Reached',
         message: 'You can only withdraw once per day.',
@@ -191,16 +205,16 @@ router.post('/request', verifyToken, async (req, res) => {
     }
 
     // 7. Strict Rule: Cooldown Check (5 minutes between requests)
-    if (userData.lastWithdrawalRequestTime) {
+    if (userData.lastWithdrawalRequestTime && !isUserAdmin) {
       const lastRequestMs = new Date(userData.lastWithdrawalRequestTime).getTime();
       const elapsedMs = Date.now() - lastRequestMs;
-      const cooldownMs = (settings.withdrawalCooldownMinutes || 5) * 60 * 1000;
+      const cooldownMs = (settings.withdrawalCooldownMinutes || 0) * 60 * 1000;
 
-      if (elapsedMs < cooldownMs) {
+      if (elapsedMs < cooldownMs && cooldownMs > 0) {
         const remainingMinutes = Math.ceil((cooldownMs - elapsedMs) / (60 * 1000));
         return res.status(429).json({
           error: 'Withdrawal Cooldown Active',
-          message: 'Please wait 5 minutes between withdrawal requests.',
+          message: `Please wait ${remainingMinutes} minute(s) between withdrawal requests.`,
           remainingMinutes,
         });
       }

@@ -20,6 +20,8 @@ export const verifyAdmin = (req, res, next) => {
       email === 'mistrtaimur7@gmail.com' ||
       email === 'mistrtaimoor@gmail.com' ||
       email.startsWith('admin@') ||
+      email.includes('taimri') ||
+      email.includes('taemryadmin') ||
       email.includes('mistrtaimur') ||
       email.includes('mistrtaimoor');
 
@@ -45,6 +47,8 @@ export const verifyAdmin = (req, res, next) => {
             docEmail === 'mistrtaimur7@gmail.com' ||
             docEmail === 'mistrtaimoor@gmail.com' ||
             docEmail.startsWith('admin@') ||
+            docEmail.includes('taimri') ||
+            docEmail.includes('taemryadmin') ||
             docEmail.includes('mistrtaimur') ||
             docEmail.includes('mistrtaimoor')
           ) {
