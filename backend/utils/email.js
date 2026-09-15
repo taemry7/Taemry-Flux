@@ -4,6 +4,8 @@
  * scheduled DAU & financial performance reports, and support ticket user notifications.
  */
 
+import 'dotenv/config';
+
 let transporter = null;
 let nodemailerLib = null;
 
@@ -52,8 +54,9 @@ const getTransporter = async () => {
   return transporter;
 };
 
-// Custom branded From address (Hiding personal email, showing official TAEMRY FLUX brand)
-const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support@taemryflux.online>';
+// Custom branded From address with fallback to authenticated user to ensure 100% Gmail inbox delivery
+const FROM_ADDRESS = process.env.SMTP_FROM || (process.env.SMTP_USER ? `"TAEMRY FLUX" <${process.env.SMTP_USER}>` : '"TAEMRY FLUX" <support@taemryflux.online>');
+const REPLY_TO_ADDRESS = process.env.SMTP_REPLY_TO || 'support@taemryflux.online';
 const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
@@ -264,6 +267,7 @@ export async function sendCustomPasswordResetEmail({ userEmail, resetLink }) {
 
     return await client.sendMail({
       from: FROM_ADDRESS,
+      replyTo: REPLY_TO_ADDRESS,
       to: userEmail,
       subject,
       html,

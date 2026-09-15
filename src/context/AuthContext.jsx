@@ -833,6 +833,17 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
+      // 1. Send 100% custom branded TAEMRY FLUX HTML reset email via Backend SMTP
+      try {
+        const response = await apiClient.post('/auth/forgot-password', { email: cleanEmail });
+        if (response.data?.success) {
+          return true;
+        }
+      } catch (backendErr) {
+        console.warn('Backend custom reset email fallback to client Firebase:', backendErr?.message);
+      }
+
+      // 2. Fallback to Firebase client if backend is temporarily unreachable
       if (isFirebaseConfigured) {
         await sendPasswordResetEmail(auth, cleanEmail);
         return true;

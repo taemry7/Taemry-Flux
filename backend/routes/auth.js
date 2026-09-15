@@ -25,28 +25,8 @@ router.post('/forgot-password', async (req, res) => {
       });
     }
 
-    let resetLink = null;
-
-    // 1. Generate secure password reset link via Firebase Admin SDK if configured
-    try {
-      initFirebaseAdmin();
-      const existingApps = admin.apps || [];
-      if (existingApps.length > 0 && admin.auth) {
-        const actionCodeSettings = {
-          url: 'https://taemryflux.online/#/login',
-          handleCodeInApp: false,
-        };
-        resetLink = await admin.auth().generatePasswordResetLink(cleanEmail, actionCodeSettings);
-        console.log('[AuthRoute] Generated secure Firebase reset link for:', cleanEmail);
-      }
-    } catch (adminErr) {
-      console.warn('[AuthRoute] Firebase Admin link generation note:', adminErr.message);
-    }
-
-    // Fallback direct link if Admin SDK is in preview/mock mode
-    if (!resetLink) {
-      resetLink = `https://taemryflux.online/#/login?mode=reset&email=${encodeURIComponent(cleanEmail)}`;
-    }
+    // Direct clean TAEMRY FLUX password reset link (Official single-use Firebase link removed per user directive)
+    const resetLink = `https://taemryflux.online/#/login?mode=reset&email=${encodeURIComponent(cleanEmail)}`;
 
     // 2. Dispatch custom branded email via Nodemailer SMTP
     const emailResult = await sendCustomPasswordResetEmail({
