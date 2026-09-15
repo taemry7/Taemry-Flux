@@ -18,6 +18,9 @@ import {
   signOut,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithCredential,
+  signInWithCustomToken,
+  GoogleAuthProvider,
   sendPasswordResetEmail,
   updateProfile,
   setPersistence,
@@ -26,6 +29,7 @@ import {
 import { doc, setDoc, getDoc, updateDoc, increment, collection, query, where, getDocs } from 'firebase/firestore';
 import { auth, db, googleProvider, isFirebaseConfigured } from '../firebase/firebase.config.js';
 import apiClient from '../api/client.js';
+import { requestDirectGoogleToken, fetchGoogleUserInfo } from '../utils/googleAuth.js';
 
 // Helper to increment referrer's referralCount in Firestore and via API
 export const incrementReferrerCount = async (referralCode, newUserId = null) => {
@@ -587,154 +591,168 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 3. Sign In with Google
+  // 3. Direct Google Sign In (Google Identity Services without Firebase popup/redirect URLs)
   const loginWithGoogle = async () => {
     setAuthError('');
+    let referralCodeFromStorage = null;
     try {
-      if (isFirebaseConfigured) {
-        const result = await signInWithPopup(auth, googleProvider);
-        if (db && result.user) {
-          try {
-            const userDocRef = doc(db, 'users', result.user.uid);
-            const userDocSnap = await getDoc(userDocRef);
-            if (!userDocSnap.exists()) {
-              // Read referral code from localStorage (key: referralCode)
-              let referralCodeFromStorage = null;
-              try {
-                if (typeof window !== 'undefined') {
-                  const stored = localStorage.getItem('referralCode');
-                  if (stored && stored.trim()) {
-                    referralCodeFromStorage = stored.trim();
-                  }
-                }
-              } catch {}
-
-              const finalReferredBy = referralCodeFromStorage || null;
-
-              await setDoc(userDocRef, {
-                uid: result.user.uid,
-                email: result.user.email,
-                name: result.user.displayName || result.user.email.split('@')[0],
-                currentPackage: 'None',
-                walletBalance: 0,
-                referralCount: 0,
-                lifetimeAds: 0,
-                dailyAdCount: 0,
-                teamAdsCount: 0,
-                totalEarned: 0,
-                isEligible: false,
-                isBlocked: false,
-                referredBy: finalReferredBy || null, // Exactly "Agar URL mein ref nahi hai, toh referredBy: null rakho."
-                createdAt: new Date().toISOString(),
-              });
-
-              // Phir us referrer ke document mein referralCount ko +1 karo
-              if (finalReferredBy) {
-                await incrementReferrerCount(finalReferredBy, result.user.uid);
-              }
-
-              // Ensure karo ke signup ke baad localStorage.removeItem('referralCode') bhi ho jaye
-              try {
-                localStorage.removeItem('referralCode');
-                localStorage.removeItem('taemry_referral_sponsor');
-              } catch {}
-            } else {
-              // Existing user profile: NEVER overwrite walletBalance or currentPackage
-              await setDoc(userDocRef, {
-                email: result.user.email,
-                name: result.user.displayName || result.user.email.split('@')[0],
-                lastLoginAt: new Date().toISOString(),
-              }, { merge: true });
-
-              try {
-                localStorage.removeItem('referralCode');
-                localStorage.removeItem('taemry_referral_sponsor');
-              } catch {}
-            }
-          } catch (firestoreErr) {
-            console.warn('Could not write Google user to Firestore:', firestoreErr.message);
-          }
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('referralCode');
+        if (stored && stored.trim()) {
+          referralCodeFromStorage = stored.trim();
         }
-        saveUserSession(result.user);
-        setCurrentUser(result.user);
-        return result.user;
-      } else {
-        // Development / Demo Mode Fallback
-        let referralCodeFromStorage = null;
-        try {
-          if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('referralCode');
-            if (stored && stored.trim()) {
-              referralCodeFromStorage = stored.trim();
-            }
-          }
-        } catch {}
-
-        const finalReferredBy = referralCodeFromStorage || null;
-
-        const mockUser = {
-          uid: 'admin_taemry',
-          email: 'mistrtaimoor@gmail.com',
-          displayName: 'Mistr Taimoor (Admin)',
-          photoURL: null,
-          isDemo: true,
-          admin: true,
-          isAdmin: true,
-          referredBy: finalReferredBy || null,
-        };
-
-        if (finalReferredBy) {
-          await incrementReferrerCount(finalReferredBy, mockUser.uid);
-        }
-
-        try {
-          localStorage.removeItem('referralCode');
-          localStorage.removeItem('taemry_referral_sponsor');
-        } catch {}
-
-        saveUserSession(mockUser);
-        setCurrentUser(mockUser);
-        setIsAdmin(true);
-        return mockUser;
       }
-    } catch (err) {
-      console.error('Google Sign In error:', err);
-      let referralCodeFromStorage = null;
+    } catch {}
+
+    const finalReferredBy = referralCodeFromStorage || null;
+
+    try {
+      // 1. Direct Google OAuth Token acquisition via Google Identity Services
+      let accessToken = null;
+      let googleUserInfo = null;
+
       try {
-        if (typeof window !== 'undefined') {
-          const stored = localStorage.getItem('referralCode');
-          if (stored && stored.trim()) {
-            referralCodeFromStorage = stored.trim();
+        const tokenRes = await requestDirectGoogleToken();
+        accessToken = tokenRes.accessToken;
+        if (accessToken) {
+          googleUserInfo = await fetchGoogleUserInfo(accessToken);
+        }
+      } catch (gsiErr) {
+        console.warn('[Direct Google GSI notice]:', gsiErr.message);
+        // If user cancelled, don't open secondary popup
+        if (gsiErr.message && (gsiErr.message.includes('cancelled') || gsiErr.message.includes('closed'))) {
+          throw gsiErr;
+        }
+        // If GSI script was blocked, fallback to standard provider if configured
+        if (isFirebaseConfigured && auth && googleProvider) {
+          const popupResult = await signInWithPopup(auth, googleProvider);
+          if (popupResult && popupResult.user) {
+            googleUserInfo = {
+              email: popupResult.user.email,
+              name: popupResult.user.displayName,
+              picture: popupResult.user.photoURL,
+              sub: popupResult.user.uid,
+            };
+          }
+        } else {
+          throw gsiErr;
+        }
+      }
+
+      if (!googleUserInfo || !googleUserInfo.email) {
+        throw new Error('Google Sign-In did not provide verified user credentials.');
+      }
+
+      // 2. Authenticate directly with TAEMRY FLUX Backend
+      let backendUser = null;
+      try {
+        const authResponse = await apiClient.post('/auth/google', {
+          accessToken,
+          directUserInfo: googleUserInfo,
+          referralCode: finalReferredBy,
+        });
+
+        if (authResponse.data && authResponse.data.user) {
+          backendUser = authResponse.data.user;
+
+          // If Firebase Custom Token is provided, sign in to Firebase Auth in background (No Popups!)
+          if (authResponse.data.customToken && isFirebaseConfigured && auth) {
+            try {
+              await signInWithCustomToken(auth, authResponse.data.customToken);
+            } catch (tokenErr) {
+              console.warn('[Firebase Auth] Custom Token background sign-in notice:', tokenErr?.message);
+              if (accessToken) {
+                try {
+                  const cred = GoogleAuthProvider.credential(null, accessToken);
+                  await signInWithCredential(auth, cred);
+                } catch (credErr) {
+                  console.warn('[Firebase Auth] Credential background sign-in notice:', credErr?.message);
+                }
+              }
+            }
           }
         }
-      } catch {}
+      } catch (apiErr) {
+        console.warn('[TAEMRY FLUX Backend Google Auth notice]:', apiErr?.message);
+      }
 
-      const finalReferredBy = referralCodeFromStorage || null;
+      // 3. Fallback/Local profile preparation if backend unavailable
+      const cleanEmail = googleUserInfo.email.toLowerCase().trim();
+      const userIsAdmin = checkIsAdminEmailStatic(cleanEmail);
 
-      const mockUser = {
-        uid: 'admin_taemry',
-        email: 'mistrtaimoor@gmail.com',
-        displayName: 'Mistr Taimoor (Admin)',
-        photoURL: null,
-        isDemo: true,
-        admin: true,
-        isAdmin: true,
-        referredBy: finalReferredBy || null,
+      const resolvedUser = backendUser || {
+        uid: googleUserInfo.sub ? `google_${googleUserInfo.sub}` : `user_${Date.now()}`,
+        email: cleanEmail,
+        displayName: googleUserInfo.name || cleanEmail.split('@')[0],
+        photoURL: googleUserInfo.picture || null,
+        currentPackage: 'None',
+        walletBalance: 0,
+        referralCount: 0,
+        lifetimeAds: 0,
+        dailyAdCount: 0,
+        teamAdsCount: 0,
+        totalEarned: 0,
+        isEligible: false,
+        isBlocked: false,
+        referredBy: finalReferredBy,
+        isAdmin: userIsAdmin,
       };
 
-      if (finalReferredBy) {
-        await incrementReferrerCount(finalReferredBy, mockUser.uid);
+      // 4. Update Firestore directly if available
+      if (db && resolvedUser.uid) {
+        try {
+          const userDocRef = doc(db, 'users', resolvedUser.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (!userDocSnap.exists()) {
+            await setDoc(userDocRef, {
+              uid: resolvedUser.uid,
+              email: cleanEmail,
+              name: resolvedUser.displayName,
+              currentPackage: 'None',
+              walletBalance: 0,
+              referralCount: 0,
+              lifetimeAds: 0,
+              dailyAdCount: 0,
+              teamAdsCount: 0,
+              totalEarned: 0,
+              isEligible: false,
+              isBlocked: false,
+              referredBy: finalReferredBy,
+              createdAt: new Date().toISOString(),
+              lastLoginAt: new Date().toISOString(),
+            });
+
+            if (finalReferredBy) {
+              await incrementReferrerCount(finalReferredBy, resolvedUser.uid);
+            }
+          } else {
+            // NEVER overwrite walletBalance or currentPackage on login
+            await setDoc(userDocRef, {
+              email: cleanEmail,
+              name: resolvedUser.displayName,
+              lastLoginAt: new Date().toISOString(),
+            }, { merge: true });
+          }
+        } catch (dbErr) {
+          console.warn('[Firestore Google Sync notice]:', dbErr.message);
+        }
       }
 
+      // 5. Clean up referral code from storage
       try {
         localStorage.removeItem('referralCode');
         localStorage.removeItem('taemry_referral_sponsor');
       } catch {}
 
-      saveUserSession(mockUser);
-      setCurrentUser(mockUser);
-      setIsAdmin(true);
-      return mockUser;
+      saveUserSession(resolvedUser);
+      setCurrentUser(resolvedUser);
+      setIsAdmin(userIsAdmin);
+      return resolvedUser;
+    } catch (err) {
+      console.error('Direct Google Sign In error:', err);
+      const friendlyMsg = err.message || 'Google Sign-In failed. Please try again.';
+      setAuthError(friendlyMsg);
+      throw new Error(friendlyMsg);
     }
   };
 
