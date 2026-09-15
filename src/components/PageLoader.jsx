@@ -96,12 +96,6 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
     const duration = isInitialSplash ? 5000 : 300;
 
     const step = (timestamp) => {
-      if (!isOnline) {
-        // Pause progress if network is disconnected
-        animationFrameId = requestAnimationFrame(step);
-        return;
-      }
-
       if (!startTime) startTime = timestamp;
       const elapsed = timestamp - startTime;
       const calculated = Math.min(100, Math.max(1, Math.round((elapsed / duration) * 100)));
@@ -218,23 +212,11 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
         {/* 1% to 100% Live Percentage Indicator */}
         <div className="mt-2.5 flex items-center justify-between w-full text-[11px] font-mono tracking-wider font-semibold text-teal-100">
           <span className="uppercase tracking-widest text-[10px] text-teal-200/90 font-sans font-bold">
-            {isOnline ? 'Loading' : 'Reconnecting'}
+            Loading
           </span>
           <span className="text-white drop-shadow-sm font-bold text-xs">{progress}%</span>
         </div>
       </div>
-
-      {/* Offline state indicator when network is disconnected */}
-      {!isOnline && (
-        <div className="mt-4 flex flex-col items-center gap-1 text-center px-4 animate-pulse">
-          <span className="text-xs font-semibold tracking-wider text-amber-200 uppercase">
-            Waiting for Network
-          </span>
-          <span className="text-[11px] text-teal-100/70">
-            Network disconnected &bull; Reconnecting...
-          </span>
-        </div>
-      )}
     </div>
   );
 

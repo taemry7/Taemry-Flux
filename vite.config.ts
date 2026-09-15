@@ -12,8 +12,10 @@ export default defineConfig(() => {
       tailwindcss(),
       VitePWA({
         registerType: 'autoUpdate',
+        // Strictly online-only operation: no offline precaching or storage
         workbox: {
-          maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+          globPatterns: [],
+          runtimeCaching: [],
         },
         includeAssets: [
           'taemry-logo.svg',

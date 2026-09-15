@@ -131,11 +131,9 @@ const checkIsAdminEmailStatic = (email) => {
   if (!email) return false;
   const em = email.toLowerCase().trim();
   return (
-    em === 'mistrtaemry@gmail.com' ||
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
     em.startsWith('admin@') ||
-    em.includes('taemry') ||
     em.includes('taimri') ||
     em.includes('taemryadmin') ||
     em.includes('mistrtaimur') ||
@@ -290,11 +288,9 @@ export const AuthProvider = ({ children }) => {
 
       const email = (currentUser.email || '').toLowerCase().trim();
       const isKnownAdminEmail =
-        email === 'mistrtaemry@gmail.com' ||
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
         email.startsWith('admin@') ||
-        email.includes('taemry') ||
         email.includes('taimri') ||
         email.includes('taemryadmin') ||
         email.includes('mistrtaimur') ||

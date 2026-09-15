@@ -212,7 +212,7 @@ function AppContent() {
     return (
       <>
         <PageLoader
-          isLoading={isInitialSplash || !isOnline}
+          isLoading={isInitialSplash}
           onFinished={handlePageLoaderFinished}
           isInitialSplash={isInitialSplash}
         />
@@ -230,7 +230,7 @@ function AppContent() {
     >
       {/* 5s on initial App boot splash; completely absent during smooth menu/tab navigation */}
       <PageLoader
-        isLoading={isInitialSplash || !isOnline}
+        isLoading={isInitialSplash}
         onFinished={handlePageLoaderFinished}
         isInitialSplash={isInitialSplash}
       />
@@ -271,11 +271,11 @@ function AppContent() {
         }}
       />
 
-      {/* Offline Connectivity Notification Banner */}
+      {/* Online Requirement Notification Banner */}
       {!isOnline && (
         <div className="fixed top-0 inset-x-0 z-50 bg-[#b45309] text-white text-xs font-bold py-2 px-4 flex items-center justify-center gap-2 shadow-md">
           <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-          <span>No internet connection detected &bull; Using offline cached mode</span>
+          <span>No internet connection detected &bull; Active online connection required</span>
         </div>
       )}
 

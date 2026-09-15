@@ -79,7 +79,7 @@ export function usePWAInstall() {
   }, []);
 
   return {
-    isInstallable: !!deferredPrompt && !isInstalled && !isDismissed,
+    isInstallable: !!deferredPrompt && !isInstalled,
     deferredPrompt,
     isInstalled,
     isIOS,
