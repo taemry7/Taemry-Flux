@@ -5,6 +5,8 @@
  */
 
 import 'dotenv/config';
+import path from 'path';
+import fs from 'fs';
 
 let transporter = null;
 let nodemailerLib = null;
@@ -54,9 +56,8 @@ const getTransporter = async () => {
   return transporter;
 };
 
-// Custom branded From address with fallback to authenticated user to ensure 100% Gmail inbox delivery
-const FROM_ADDRESS = process.env.SMTP_FROM || (process.env.SMTP_USER ? `"TAEMRY FLUX" <${process.env.SMTP_USER}>` : '"TAEMRY FLUX" <support@taemryflux.online>');
-const REPLY_TO_ADDRESS = process.env.SMTP_REPLY_TO || 'support@taemryflux.online';
+// Branded From address (Display Name: "TAEMRY FLUX", Address: support@taemryflux.online)
+const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support@taemryflux.online>';
 const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
@@ -228,7 +229,7 @@ export async function sendTicketStatusUpdateEmail({ userEmail, ticketId, subject
 }
 
 /**
- * 4. Send Branded Password Reset Email (Zero Firebase Mention)
+ * 4. Send Branded Password Reset Email (Zero Attachments, Zero Firebase Mention, App-like Card)
  */
 export async function sendCustomPasswordResetEmail({ userEmail, resetLink }) {
   try {
@@ -237,43 +238,114 @@ export async function sendCustomPasswordResetEmail({ userEmail, resetLink }) {
 
     const subject = 'Reset Your TAEMRY FLUX Password';
     const html = `
-      <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #0a353f; border-radius: 14px; overflow: hidden; border: 1px solid #e2dbcd; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
-        <div style="background: #0c5963; padding: 24px 28px; text-align: center;">
-          <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">TAEMRY FLUX</h1>
-          <p style="margin: 4px 0 0; font-size: 12px; color: #bfe3dc; letter-spacing: 0.3px;">Official Security Notification</p>
-        </div>
-        <div style="padding: 28px 24px; font-size: 14px; line-height: 1.65; color: #1e293b;">
-          <p style="margin-top: 0; font-size: 15px;"><strong>Hello,</strong></p>
-          <p style="color: #334155; margin-bottom: 8px;">We received a request to reset the password for your <strong>TAEMRY FLUX</strong> account.</p>
-          <p style="color: #334155; margin-top: 0;">Click the button below to set a new password:</p>
+      <div style="background-color: #f0f5f4; padding: 40px 14px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; margin: 0;">
+        <div style="max-width: 490px; margin: 0 auto; background: #ffffff; border-radius: 22px; overflow: hidden; border: 1px solid #d4e5e1; box-shadow: 0 12px 32px rgba(12, 89, 99, 0.08);">
           
-          <div style="text-align: center; margin: 26px 0;">
-            <a href="${resetLink}" style="background: #0c5963; color: #ffffff; padding: 13px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 3px 8px rgba(12, 89, 99, 0.25);">
-              Reset Password
-            </a>
+          <!-- App-Like Teal/Emerald Header (Clean Typography, Zero Logo) -->
+          <div style="background: linear-gradient(135deg, #072e38 0%, #0c5963 50%, #0f766e 100%); padding: 32px 24px; text-align: center;">
+            <div style="text-align: center; line-height: 1;">
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 4px; color: #ffffff; text-transform: uppercase;">TAEMRY </span>
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #2dd4bf; background-color: #062b32; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; border: 1px solid rgba(45, 212, 191, 0.35); vertical-align: middle;">FLUX</span>
+            </div>
           </div>
 
-          <p style="font-size: 13px; color: #64748b; margin-bottom: 22px;">
-            Didn't request this? Please ignore this email.
-          </p>
+          <!-- Body Content -->
+          <div style="padding: 32px 28px; color: #1e293b; font-size: 14px; line-height: 1.65;">
+            <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0c5963;">Hello,</p>
+            <p style="color: #334155; margin-bottom: 8px;">
+              We received a request to reset the password for your <strong>TAEMRY FLUX</strong> account.
+            </p>
+            <p style="color: #475569; margin-top: 0; margin-bottom: 26px;">
+              Click the button below to choose a new, secure password:
+            </p>
+            
+            <!-- App-Style Emerald/Teal Action Button -->
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${resetLink}" style="background: linear-gradient(135deg, #0c5963 0%, #0f766e 100%); color: #ffffff; padding: 14px 40px; border-radius: 12px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(12, 89, 99, 0.35); text-align: center;">
+                Reset Password
+              </a>
+            </div>
 
-          <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee8dc; font-size: 13px; color: #475569;">
-            Best regards,<br>
-            <strong style="color: #0c5963;">Team TAEMRY FLUX</strong>
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e8f0ee; font-size: 12px; color: #64748b; line-height: 1.6;">
+              Best regards,<br>
+              <strong style="color: #0c5963; font-size: 13px;">Team TAEMRY FLUX</strong><br>
+              <span style="font-size: 11px; color: #94a3b8;">Please do not reply directly to this email</span>
+            </div>
           </div>
+
         </div>
       </div>
     `;
 
     return await client.sendMail({
       from: FROM_ADDRESS,
-      replyTo: REPLY_TO_ADDRESS,
       to: userEmail,
       subject,
       html,
     });
   } catch (err) {
     console.error('[EmailService] Failed to send password reset email:', err.message);
+    return null;
+  }
+}
+
+/**
+ * 5. Send Branded Verification Email (New User Registration)
+ */
+export async function sendCustomVerificationEmail({ userEmail, userName, verifyLink }) {
+  try {
+    if (!userEmail) return null;
+    const client = await getTransporter();
+
+    const subject = 'Verify Your TAEMRY FLUX Account Email';
+    const html = `
+      <div style="background-color: #f0f5f4; padding: 40px 14px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; margin: 0;">
+        <div style="max-width: 490px; margin: 0 auto; background: #ffffff; border-radius: 22px; overflow: hidden; border: 1px solid #d4e5e1; box-shadow: 0 12px 32px rgba(12, 89, 99, 0.08);">
+          
+          <!-- App-Like Teal/Emerald Header (Clean Typography, Zero Logo) -->
+          <div style="background: linear-gradient(135deg, #072e38 0%, #0c5963 50%, #0f766e 100%); padding: 32px 24px; text-align: center;">
+            <div style="text-align: center; line-height: 1;">
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 4px; color: #ffffff; text-transform: uppercase;">TAEMRY </span>
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #2dd4bf; background-color: #062b32; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; border: 1px solid rgba(45, 212, 191, 0.35); vertical-align: middle;">FLUX</span>
+            </div>
+          </div>
+
+          <!-- Body Content -->
+          <div style="padding: 32px 28px; color: #1e293b; font-size: 14px; line-height: 1.65;">
+            <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0c5963;">Welcome, ${userName || 'Member'}!</p>
+            <p style="color: #334155; margin-bottom: 8px;">
+              Thank you for creating your account on <strong>TAEMRY FLUX</strong>. We're excited to welcome you!
+            </p>
+            <p style="color: #475569; margin-top: 0; margin-bottom: 26px;">
+              Please click the button below to verify your email address and activate your member security privileges:
+            </p>
+            
+            <!-- App-Style Emerald/Teal Action Button -->
+            <div style="text-align: center; margin: 28px 0;">
+              <a href="${verifyLink}" style="background: linear-gradient(135deg, #0c5963 0%, #0f766e 100%); color: #ffffff; padding: 14px 40px; border-radius: 12px; font-weight: 700; font-size: 14px; text-decoration: none; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 4px 14px rgba(12, 89, 99, 0.35); text-align: center;">
+                Verify Email Address
+              </a>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e8f0ee; font-size: 12px; color: #64748b; line-height: 1.6;">
+              Best regards,<br>
+              <strong style="color: #0c5963; font-size: 13px;">Team TAEMRY FLUX</strong><br>
+              <span style="font-size: 11px; color: #94a3b8;">Please do not reply directly to this email</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    return await client.sendMail({
+      from: FROM_ADDRESS,
+      to: userEmail,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send verification email:', err.message);
     return null;
   }
 }

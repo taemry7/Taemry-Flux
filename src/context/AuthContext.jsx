@@ -428,6 +428,15 @@ export const AuthProvider = ({ children }) => {
         };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
         localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
+        // Dispatch custom branded TAEMRY FLUX verification email to new user
+        try {
+          apiClient.post('/auth/send-verification', {
+            email: cleanEmail,
+            name: displayName || cleanEmail.split('@')[0],
+            uid: userCredential.user.uid,
+          }).catch((err) => console.warn('Verification email dispatch notice:', err?.message));
+        } catch {}
+
         saveUserSession(userCredential.user);
         setCurrentUser(userCredential.user);
         return userCredential.user;
@@ -463,6 +472,15 @@ export const AuthProvider = ({ children }) => {
         try {
           localStorage.removeItem('referralCode');
           localStorage.removeItem('taemry_referral_sponsor');
+        } catch {}
+
+        // Dispatch custom branded TAEMRY FLUX verification email to new user
+        try {
+          apiClient.post('/auth/send-verification', {
+            email: cleanEmail,
+            name: mockUser.displayName,
+            uid: mockUser.uid,
+          }).catch((err) => console.warn('Verification email dispatch notice:', err?.message));
         } catch {}
 
         saveUserSession(mockUser);
@@ -888,6 +906,23 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 7. Send Branded Email Verification to User
+  const sendVerificationEmail = async (emailToVerify, name, uid) => {
+    try {
+      const cleanEmail = (emailToVerify || currentUser?.email || '').trim().toLowerCase();
+      if (!cleanEmail) return false;
+      const res = await apiClient.post('/auth/send-verification', {
+        email: cleanEmail,
+        name: name || currentUser?.displayName || cleanEmail.split('@')[0],
+        uid: uid || currentUser?.uid,
+      });
+      return res.data?.success || false;
+    } catch (e) {
+      console.warn('Failed to send verification email:', e?.message);
+      return false;
+    }
+  };
+
   // Production Mode: demoLogin disabled
   const demoLogin = () => {
     console.warn('Demo login is disabled in production mode.');
@@ -941,6 +976,7 @@ export const AuthProvider = ({ children }) => {
     loginWithGoogle,
     logout,
     resetPassword,
+    sendVerificationEmail,
     demoLogin,
     updateUserProfile,
     isFirebaseConfigured,

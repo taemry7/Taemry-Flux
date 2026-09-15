@@ -73,6 +73,29 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotError, setForgotError] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
+  const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+
+  // Check URL parameters for email verification or password reset
+  React.useEffect(() => {
+    try {
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+      const isVerified =
+        search.includes('mode=verified') ||
+        search.includes('mode=verify') ||
+        hash.includes('mode=verified') ||
+        hash.includes('mode=verify');
+
+      if (isVerified) {
+        setVerifiedSuccess(true);
+        setIsSignUp(false);
+        const emailMatch = (search + hash).match(/email=([^&#]+)/i);
+        if (emailMatch && emailMatch[1]) {
+          setEmail(decodeURIComponent(emailMatch[1]));
+        }
+      }
+    } catch {}
+  }, []);
 
   const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
@@ -227,6 +250,29 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               : 'Sign in to your TAEMRY space'}
           </p>
         </div>
+
+        {/* Email Verified Banner */}
+        {verifiedSuccess && (
+          <div
+            id="emailVerifiedSuccessBanner"
+            className="mb-5 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center gap-3 text-emerald-800 dark:text-emerald-200 text-xs"
+          >
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <div className="flex-1">
+              <strong className="block text-emerald-900 dark:text-emerald-100 font-semibold text-sm mb-0.5">
+                Email Verified Successfully!
+              </strong>
+              Your TAEMRY FLUX account email has been verified. You can now sign in to your dashboard.
+            </div>
+            <button
+              type="button"
+              onClick={() => setVerifiedSuccess(false)}
+              className="text-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-300 p-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
 
         {/* Error Alert */}
         {error && (
@@ -498,9 +544,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                   </div>
                   <p className="text-xs leading-relaxed text-[#14532d]">
                     We have dispatched a secure password reset link to <strong className="font-semibold">{forgotEmail}</strong>. Please check your inbox and click the link to set a new password.
-                  </p>
-                  <p className="text-[11px] text-[#15803d]">
-                    Tip: If you don't see it in a moment, be sure to check your spam/junk folder.
                   </p>
                 </div>
 
