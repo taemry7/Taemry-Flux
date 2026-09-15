@@ -13,7 +13,8 @@ const getTransporter = async () => {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  // Clean app password (remove spaces if pasted with spaces)
+  const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
 
   if (host && user && pass) {
     try {
@@ -51,7 +52,8 @@ const getTransporter = async () => {
   return transporter;
 };
 
-const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX Alerts" <no-reply@taemryflux.com>';
+// Custom branded From address (Hiding personal email, showing official TAEMRY FLUX brand)
+const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support@taemryflux.online>';
 const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
@@ -218,6 +220,56 @@ export async function sendTicketStatusUpdateEmail({ userEmail, ticketId, subject
     });
   } catch (err) {
     console.error('[EmailService] Failed to send ticket update email:', err.message);
+    return null;
+  }
+}
+
+/**
+ * 4. Send Branded Password Reset Email (Zero Firebase Mention)
+ */
+export async function sendCustomPasswordResetEmail({ userEmail, resetLink }) {
+  try {
+    if (!userEmail) return null;
+    const client = await getTransporter();
+
+    const subject = 'Reset Your TAEMRY FLUX Password';
+    const html = `
+      <div style="font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; max-width: 520px; margin: 0 auto; background: #ffffff; color: #0a353f; border-radius: 14px; overflow: hidden; border: 1px solid #e2dbcd; box-shadow: 0 4px 16px rgba(0,0,0,0.06);">
+        <div style="background: #0c5963; padding: 24px 28px; text-align: center;">
+          <h1 style="margin: 0; font-size: 22px; font-weight: 700; color: #ffffff; letter-spacing: 0.5px;">TAEMRY FLUX</h1>
+          <p style="margin: 4px 0 0; font-size: 12px; color: #bfe3dc; letter-spacing: 0.3px;">Official Security Notification</p>
+        </div>
+        <div style="padding: 28px 24px; font-size: 14px; line-height: 1.65; color: #1e293b;">
+          <p style="margin-top: 0; font-size: 15px;"><strong>Hello,</strong></p>
+          <p style="color: #334155; margin-bottom: 8px;">We received a request to reset the password for your <strong>TAEMRY FLUX</strong> account.</p>
+          <p style="color: #334155; margin-top: 0;">Click the button below to set a new password:</p>
+          
+          <div style="text-align: center; margin: 26px 0;">
+            <a href="${resetLink}" style="background: #0c5963; color: #ffffff; padding: 13px 32px; border-radius: 8px; font-weight: 600; font-size: 14px; text-decoration: none; display: inline-block; box-shadow: 0 3px 8px rgba(12, 89, 99, 0.25);">
+              Reset Password
+            </a>
+          </div>
+
+          <p style="font-size: 13px; color: #64748b; margin-bottom: 22px;">
+            Didn't request this? Please ignore this email.
+          </p>
+
+          <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #eee8dc; font-size: 13px; color: #475569;">
+            Best regards,<br>
+            <strong style="color: #0c5963;">Team TAEMRY FLUX</strong>
+          </div>
+        </div>
+      </div>
+    `;
+
+    return await client.sendMail({
+      from: FROM_ADDRESS,
+      to: userEmail,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send password reset email:', err.message);
     return null;
   }
 }
