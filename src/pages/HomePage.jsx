@@ -21,7 +21,21 @@ import { apiGet } from '../api/client';
 export default function HomePage({ onNavigate }) {
   const { currentUser, userStats, fetchUserStats } = useAuth();
   const [selectedViewMode, setSelectedViewMode] = useState('core'); // 'core' (Starter 3) first
+  const [filterSplash, setFilterSplash] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
+
+  const handleFilterToggle = (e, mode) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX ? e.clientX - rect.left : rect.width / 2;
+    const y = e.clientY ? e.clientY - rect.top : rect.height / 2;
+    setFilterSplash({
+      id: Date.now() + Math.random(),
+      mode,
+      x,
+      y,
+    });
+    setSelectedViewMode(mode);
+  };
 
   const homeFaqs = [
     {
@@ -522,30 +536,99 @@ export default function HomePage({ onNavigate }) {
               </p>
             </div>
 
-            {/* Filter Toggle */}
-            <div className="flex items-center bg-[#eae4d8] dark:bg-[#122b33] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold border border-[#dcd6c8] dark:border-[#1a3b45]">
-              <button
+            {/* Filter Toggle with Fluid Splash Animation */}
+            <div className="relative flex items-center bg-[#eae4d8] dark:bg-[#122b33] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold border border-[#dcd6c8] dark:border-[#1a3b45]">
+              <motion.button
                 type="button"
-                onClick={() => setSelectedViewMode('core')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-bold ${
+                whileTap={{ scale: 0.94 }}
+                whileHover={{ scale: 1.02 }}
+                onClick={(e) => handleFilterToggle(e, 'core')}
+                className={`relative px-3.5 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer font-bold overflow-hidden select-none ${
                   selectedViewMode === 'core'
-                    ? 'bg-[#0c5963] text-white shadow-xs'
+                    ? 'text-white'
                     : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
                 }`}
               >
-                Starter 3
-              </button>
-              <button
+                {selectedViewMode === 'core' && (
+                  <motion.span
+                    layoutId="activeFilterPill"
+                    className="absolute inset-0 bg-[#0c5963] rounded-lg shadow-xs"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                {/* Fluid Splash Wave & Ring */}
+                {filterSplash && filterSplash.mode === 'core' && (
+                  <>
+                    <span
+                      key={`splash-${filterSplash.id}`}
+                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#38bdf8_0%,rgba(12,89,99,0.5)_50%,transparent_75%)] animate-fluid-splash"
+                      style={{
+                        left: filterSplash.x,
+                        top: filterSplash.y,
+                        width: '140px',
+                        height: '140px',
+                      }}
+                    />
+                    <span
+                      key={`ring-${filterSplash.id}`}
+                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/90 dark:border-teal-300/90 animate-fluid-splash-ring"
+                      style={{
+                        left: filterSplash.x,
+                        top: filterSplash.y,
+                        width: '120px',
+                        height: '120px',
+                      }}
+                    />
+                  </>
+                )}
+                <span className="relative z-10">Starter 3</span>
+              </motion.button>
+
+              <motion.button
                 type="button"
-                onClick={() => setSelectedViewMode('all')}
-                className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer font-bold ${
+                whileTap={{ scale: 0.94 }}
+                whileHover={{ scale: 1.02 }}
+                onClick={(e) => handleFilterToggle(e, 'all')}
+                className={`relative px-3.5 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer font-bold overflow-hidden select-none ${
                   selectedViewMode === 'all'
-                    ? 'bg-[#0c5963] text-white shadow-xs'
+                    ? 'text-white'
                     : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
                 }`}
               >
-                All {packageList.length} Packages
-              </button>
+                {selectedViewMode === 'all' && (
+                  <motion.span
+                    layoutId="activeFilterPill"
+                    className="absolute inset-0 bg-[#0c5963] rounded-lg shadow-xs"
+                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                  />
+                )}
+                {/* Fluid Splash Wave & Ring */}
+                {filterSplash && filterSplash.mode === 'all' && (
+                  <>
+                    <span
+                      key={`splash-${filterSplash.id}`}
+                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#38bdf8_0%,rgba(12,89,99,0.5)_50%,transparent_75%)] animate-fluid-splash"
+                      style={{
+                        left: filterSplash.x,
+                        top: filterSplash.y,
+                        width: '160px',
+                        height: '160px',
+                      }}
+                    />
+                    <span
+                      key={`ring-${filterSplash.id}`}
+                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/90 dark:border-teal-300/90 animate-fluid-splash-ring"
+                      style={{
+                        left: filterSplash.x,
+                        top: filterSplash.y,
+                        width: '140px',
+                        height: '140px',
+                      }}
+                    />
+                  </>
+                )}
+                <span className="relative z-10">All {packageList.length} Packages</span>
+              </motion.button>
             </div>
           </div>
 

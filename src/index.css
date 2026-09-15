@@ -343,3 +343,42 @@ aside {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Fluid Splash Button Animations */
+@keyframes fluid-splash {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.85;
+    filter: blur(0px);
+  }
+  45% {
+    opacity: 0.6;
+    filter: blur(0.5px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.8);
+    opacity: 0;
+    filter: blur(2px);
+  }
+}
+
+@keyframes fluid-splash-ring {
+  0% {
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(2.3);
+    opacity: 0;
+  }
+}
+
+.animate-fluid-splash {
+  animation: fluid-splash 0.65s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-fluid-splash-ring {
+  animation: fluid-splash-ring 0.6s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  will-change: transform, opacity;
+}
+
