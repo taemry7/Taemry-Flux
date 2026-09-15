@@ -334,10 +334,12 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         </button>
         <div className="mt-2 flex items-center gap-2">
           <span className="font-display font-extrabold tracking-[0.25em] text-[#0a3a46] dark:text-[#ecf3f4] text-lg uppercase">
-            TAEMRY
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">T</span>AEMRY
           </span>
-          <span className="text-xs tracking-[0.2em] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c] uppercase bg-[#fff7ed] dark:bg-[#2e1905] px-2 py-0.5 rounded border border-[#fed7aa] dark:border-[#7c2d12]">
-            FLUX
+          <span className="text-xs tracking-[0.2em] font-extrabold uppercase bg-[#fff7ed] dark:bg-[#2e1905] px-2 py-0.5 rounded border border-[#fed7aa] dark:border-[#7c2d12]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FL</span>
+            <span className="text-[#0f766e] dark:text-[#2dd4bf]">U</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">X</span>
           </span>
         </div>
       </div>

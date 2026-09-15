@@ -14,6 +14,7 @@ import {
   Tv,
   Pickaxe,
   Flame,
+  Pause,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
@@ -572,18 +573,15 @@ export default function HomePage({ onNavigate }) {
                   className="flex flex-col justify-between flex-1"
                 >
                   <div>
-                    {/* Header: TAEMRY / 12H MINER with an active pulsing orange status indicator */}
+                    {/* Header: TAEMRY / 12H MINER with paused status indicator */}
                     <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
                       <span className="tracking-widest flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
                         <Pickaxe className="w-3.5 h-3.5 text-amber-500" />
                         TAEMRY / 12H MINER
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className="relative flex h-2.5 w-2.5">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500 shadow-xs"></span>
-                        </span>
-                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 tracking-normal">ACTIVE</span>
+                        <span className="inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-xs"></span>
+                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-normal">PAUSED</span>
                       </div>
                     </div>
 
@@ -619,15 +617,15 @@ export default function HomePage({ onNavigate }) {
                       </div>
                     </div>
 
-                    {/* Progress bar: 12h Mining Hash Session with an animated fiery gradient (amber to orange) */}
+                    {/* Progress bar: 12h Mining Hash Session (Paused) */}
                     <div className="space-y-1.5 mb-5">
                       <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
                         <span className="flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-300">
-                          <Flame className="w-3.5 h-3.5 text-orange-500 animate-pulse" />
+                          <Flame className="w-3.5 h-3.5 text-orange-500" />
                           12h Mining Hash Session
                         </span>
-                        <span className="font-bold text-[#ea580c] dark:text-[#fb923c]">
-                          08h 42m remaining (72%)
+                        <span className="font-bold text-amber-600 dark:text-amber-400">
+                          Session Paused (72%)
                         </span>
                       </div>
                       <div className="w-full bg-[#f6eee3] dark:bg-[#20180d] h-2.5 rounded-full overflow-hidden relative">
@@ -635,12 +633,12 @@ export default function HomePage({ onNavigate }) {
                           className="bg-gradient-to-r from-[#d97706] via-[#ea580c] to-[#f97316] h-full rounded-full transition-all duration-1000 shadow-xs relative overflow-hidden"
                           style={{ width: '72%' }}
                         >
-                          <div className="absolute inset-0 bg-white/25 w-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12" />
+                          <div className="absolute inset-0 bg-white/25 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom Banner: Pickaxe icon in an amber circular container, "Mining Active" title with live green ping dot, "12h tap-to-mine session live" subtitle, and "+16 TFLX/h" base hashrate display */}
+                    {/* Bottom Banner: Pickaxe icon with "Mining Paused" status */}
                     <div className="reward-banner bg-[#fffbf5] dark:bg-[#120d06] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#fed7aa] dark:border-[#43230a] transition-colors mb-5 shadow-xs">
                       <div className="reward-left flex items-center gap-[14px]">
                         <div className="reward-icon-container w-[36px] h-[36px] bg-[#ffedd5] dark:bg-[#2e1905] rounded-full flex justify-center items-center border border-[#fdba74] dark:border-[#7c2d12] shrink-0 shadow-2xs">
@@ -648,14 +646,11 @@ export default function HomePage({ onNavigate }) {
                         </div>
                         <div className="reward-text">
                           <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight flex items-center gap-1.5">
-                            <span>Mining Active</span>
-                            <span className="relative flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
+                            <span>Mining Paused</span>
+                            <span className="inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                           </div>
                           <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
-                            12h tap-to-mine session live
+                            12h tap-to-mine session paused
                           </div>
                         </div>
                       </div>
@@ -670,16 +665,14 @@ export default function HomePage({ onNavigate }) {
                     </div>
                   </div>
 
-                  {/* Go to My Dashboard / Cloud Miner Button */}
-                  <button
-                    id="btn-card-miner-dashboard"
-                    onClick={() => onNavigate('dashboard')}
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] active:scale-[0.98] text-white text-sm font-bold rounded-2xl shadow-sm shadow-orange-500/25 transition-all cursor-pointer mt-1"
+                  {/* Cloud Miner Paused State - Dashboard removed & paused per user directive */}
+                  <div
+                    id="btn-card-miner-paused"
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-[#fef3c7] dark:bg-[#2b1704] border border-[#fde68a] dark:border-[#78350f] text-[#b45309] dark:text-[#fbbf24] text-sm font-bold rounded-2xl transition-all cursor-default select-none mt-1 shadow-2xs"
                   >
-                    <Pickaxe className="w-4 h-4" />
-                    <span>Go to Cloud Miner</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
+                    <Pause className="w-4 h-4 text-[#d97706]" />
+                    <span>Cloud Miner (Paused)</span>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

@@ -165,11 +165,22 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Wallet balance is strictly protected and can never be deducted, expired, or reset anywhere else.
 - User profile logins (Email, Password, Google Auth) and session refreshes check document existence first and strictly preserve existing `walletBalance` and `currentPackage`, preventing any accidental reset to 0.
 
-## STRICT INVARIANT: FLUX Word Branding & Gradient Color (PERMANENT & LOCKED)
-- **FLUX Word Color & Styling**:
-  - All occurrences of the brand word **"FLUX"** (including the header/navbar Logo span, login screen logo text, admin layout header, welcome modal, home page subtitle, footer copyright, and whitepaper) are strictly styled with the vibrant warm gradient:
+## STRICT INVARIANT: Brand Logo Lettering & Gradient Color (PERMANENT & LOCKED)
+- **TAEMRY & FLUX Letter Styling**:
+  - In **"TAEMRY"**, the letter **"T"** is strictly styled with the vibrant warm gradient:
     `text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]`
-  - Preserved across light and dark modes per user directive ("is span me FLUX ko ye color dy #d97706 / #ea580c jitny FLUX words hai osko ye color karo").
+    while the remaining letters "AEMRY" retain standard theme text color.
+  - In **"FLUX"**, the letter **"U"** is strictly styled with the original teal/cyan brand color (`text-[#0f766e] dark:text-[#38bdf8]`), while letters **"FL"** and **"X"** retain the vibrant gradient `text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]`.
+  - Preserved across `Logo.jsx` and login page logo headers per user explicit directive.
+
+## STRICT INVARIANT: Cloud Miner Paused State (PERMANENT & LOCKED)
+- **Dashboard Navigation Removed**: The Cloud Miner card has dashboard navigation removed per user directive ("ye go to cloud miner sy dashboard hata don or isko pause karo").
+- **Paused State**: Header status indicator displays "PAUSED", session timer displays "Session Paused (72%)", bottom banner shows "Mining Paused", and the action button displays "Cloud Miner (Paused)" with a `Pause` icon.
+
+## STRICT INVARIANT: Watch Ads Page & Dashboard Data Complete Freeze (PERMANENT & LOCKED)
+- **Watch Ads & Dashboard Integrity**: Per user explicit mandate ("watch ads pages watch ads ky go to my dashboard isky andar jitny bi data hain isko mukammal lock karo sahi hai"):
+  - The "Watch Ads" hero card button "Go to My Dashboard" navigates directly to `dashboard`.
+  - All data inside `WatchAds.jsx` (200 ads directory, rewards calculations, daily limits, lifetime stats) and `DashboardPage.jsx` (all dashboard tabs, overview, deposits, packages, withdrawals, referrals, team rewards, transactions, profile settings) are 100% frozen and permanently locked against any changes or resets.
 
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL & PERMANENT)
 - **COMPLETE FREEZE DECREED BY OWNER**: "ab jitni bi coding hai isko mukammal lock karo".
