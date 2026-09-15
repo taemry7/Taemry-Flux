@@ -1,11 +1,23 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2, Lock } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { firebaseConfig } from '../firebase/firebase.config';
 
 export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
-  const [isSignUp, setIsSignUp] = useState(initialMode === 'signup');
+  const [isSignUp, setIsSignUp] = useState(() => {
+    if (initialMode === 'signup') return true;
+    try {
+      if (typeof window !== 'undefined') {
+        const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        if (/[?&]ref=/i.test(search) || /[?&]ref=/i.test(hash) || hash.includes('signup')) {
+          return true;
+        }
+      }
+    } catch {}
+    return false;
+  });
 
   React.useEffect(() => {
     const signupMode = initialMode === 'signup';
@@ -65,6 +77,45 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       return '';
     }
   });
+
+  const [isReferralLocked, setIsReferralLocked] = useState(() => {
+    try {
+      if (typeof window === 'undefined') return false;
+      const params = new URLSearchParams(window.location.search);
+      let ref = params.get('ref') || params.get('referral');
+      if (!ref && window.location.hash) {
+        const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+        if (match && match[1]) ref = match[1];
+      }
+      if (ref && ref.trim()) return true;
+      const stored = localStorage.getItem('referralCode') || localStorage.getItem('taemry_referral_sponsor');
+      return Boolean(stored && stored.trim());
+    } catch {
+      return false;
+    }
+  });
+
+  // Sync and freeze referral code when landing via link
+  React.useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      let ref = params.get('ref') || params.get('referral');
+      if (!ref && window.location.hash) {
+        const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+        if (match && match[1]) ref = match[1];
+      }
+      const stored = localStorage.getItem('referralCode') || localStorage.getItem('taemry_referral_sponsor');
+      const activeRef = (ref && ref.trim()) || (stored && stored.trim()) || '';
+      if (activeRef) {
+        const cleanRef = decodeURIComponent(activeRef).trim();
+        setReferredBy(cleanRef);
+        setIsReferralLocked(true);
+        try {
+          localStorage.setItem('referralCode', cleanRef);
+        } catch {}
+      }
+    } catch {}
+  }, []);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -109,6 +160,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       return;
     }
 
+    if (isSignUp && !displayName.trim()) {
+      setError('Please choose a username.');
+      return;
+    }
+
     if (password.length < 6) {
       setError('Password should be at least 6 characters long.');
       return;
@@ -124,10 +180,16 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             localStorage.setItem('referralCode', codeToUse);
           } catch {}
         }
-        await signup(email, password, displayName, codeToUse);
+        await signup(email, password, displayName.trim(), codeToUse);
       } else {
         await login(email, password);
       }
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
       onNavigate('dashboard');
     } catch (err) {
       console.error('Auth error:', err);
@@ -164,6 +226,12 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     setLoading(true);
     try {
       await loginWithGoogle();
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
       onNavigate('dashboard');
     } catch (err) {
       console.error('Google Sign In failed:', err);
@@ -359,26 +427,63 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           {isSignUp && (
             <div>
-              <label className="block text-xs font-semibold text-[#324f55] mb-1.5">
-                Referred by
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] flex items-center gap-1.5">
+                  <span>Referred by</span>
+                  {isReferralLocked && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#2dd4bf] text-[10px] font-bold rounded-full border border-[#b8ded7] dark:border-[#173740]">
+                      <Lock className="w-2.5 h-2.5" /> Frozen Sponsor
+                    </span>
+                  )}
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  id="input-referred-by"
+                  type="text"
+                  readOnly={isReferralLocked}
+                  value={referredBy}
+                  onChange={(e) => {
+                    if (isReferralLocked) return;
+                    const val = e.target.value;
+                    setReferredBy(val);
+                    try {
+                      if (val && val.trim()) {
+                        localStorage.setItem('referralCode', val.trim());
+                      } else {
+                        localStorage.removeItem('referralCode');
+                      }
+                    } catch {}
+                  }}
+                  placeholder="Enter referral code"
+                  className={`w-full px-4 py-3 text-sm rounded-xl transition-all ${
+                    isReferralLocked
+                      ? 'bg-[#f1eee7] dark:bg-[#081a20] border border-[#d2cbbe] dark:border-[#1f4049] text-[#0c5963] dark:text-[#2dd4bf] font-mono font-bold cursor-not-allowed select-none pr-10'
+                      : 'bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none text-[#09353e] dark:text-white placeholder-[#9caea7] dark:placeholder-[#55727a]'
+                  }`}
+                />
+                {isReferralLocked && (
+                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0c5963] dark:text-[#2dd4bf] pointer-events-none">
+                    <Lock className="w-4 h-4" />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isSignUp && (
+            <div>
+              <label className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5">
+                Username
               </label>
               <input
-                id="input-referred-by"
+                id="input-username"
                 type="text"
-                value={referredBy}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  setReferredBy(val);
-                  try {
-                    if (val && val.trim()) {
-                      localStorage.setItem('referralCode', val.trim());
-                    } else {
-                      localStorage.removeItem('referralCode');
-                    }
-                  } catch {}
-                }}
-                placeholder="Enter referral code"
-                className="w-full px-4 py-3 text-sm bg-[#faf8f5] border border-[#dcd6c9] rounded-xl focus:bg-white focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] placeholder-[#9caea7]"
+                required
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                placeholder="Choose your username"
+                className="w-full px-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7] dark:placeholder-[#55727a]"
               />
             </div>
           )}

@@ -60,9 +60,19 @@ export default function Referrals({ onSelectTab }) {
     fetchReferralInfo();
   }, []);
 
+  const getActiveReferralLink = () => {
+    if (referralData.referralLink && referralData.referralLink.includes('signup')) {
+      return referralData.referralLink;
+    }
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const code = referralData.referralCode || userStats?.referralCode || '';
+    return code ? `${origin}/#/login/signup?ref=${code}` : `${origin}/#/login/signup`;
+  };
+
   const handleCopyLink = async () => {
+    const linkToCopy = getActiveReferralLink();
     try {
-      await navigator.clipboard.writeText(referralData.referralLink);
+      await navigator.clipboard.writeText(linkToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch (err) {
@@ -76,7 +86,7 @@ export default function Referrals({ onSelectTab }) {
   const handleShareLink = async () => {
     const shareTitle = 'Join TAEMRY FLUX';
     const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Use my referral code: ${referralData.referralCode || ''}`;
-    const shareUrl = referralData.referralLink || window.location.href;
+    const shareUrl = getActiveReferralLink();
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -99,7 +109,7 @@ export default function Referrals({ onSelectTab }) {
   // Direct WhatsApp Share
   const handleWhatsAppShare = () => {
     const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Use my referral code: ${referralData.referralCode || ''}`;
-    const shareUrl = referralData.referralLink || window.location.href;
+    const shareUrl = getActiveReferralLink();
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText + '\n' + shareUrl)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -107,7 +117,7 @@ export default function Referrals({ onSelectTab }) {
   // Direct Telegram Share
   const handleTelegramShare = () => {
     const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads! Referral Code: ${referralData.referralCode || ''}`;
-    const shareUrl = referralData.referralLink || window.location.href;
+    const shareUrl = getActiveReferralLink();
     const url = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -170,7 +180,7 @@ export default function Referrals({ onSelectTab }) {
             <input
               type="text"
               readOnly
-              value={referralData.referralLink}
+              value={getActiveReferralLink()}
               className="w-full py-3 pl-4 pr-10 bg-[#f7f5f0] border border-[#d8d1c3] rounded-2xl text-xs sm:text-sm font-mono text-[#09353e] font-semibold focus:outline-none select-all"
             />
           </div>

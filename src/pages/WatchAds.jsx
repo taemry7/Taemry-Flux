@@ -143,6 +143,10 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           adNumber,
         });
 
+        try {
+          localStorage.setItem('taemry_last_ad_reward', String(rewardAmount));
+        } catch {}
+
         // Update local stats in AuthContext
         updateLocalStats({
           walletBalance: newBalance,

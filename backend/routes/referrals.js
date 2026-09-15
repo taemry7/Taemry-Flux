@@ -77,7 +77,7 @@ router.get('/info', verifyToken, async (req, res) => {
     // Real downlines only (empty array for fresh account)
     const host = req.get('host') || 'localhost:3000';
     const protocol = req.protocol || 'http';
-    const referralLink = `${protocol}://${host}/#/?ref=${referralCode}`;
+    const referralLink = `${protocol}://${host}/#/login/signup?ref=${referralCode}`;
 
     const totalReferrals = directReferrals.length;
     const teamAdsCount = userData.teamAdsCount !== undefined ? Number(userData.teamAdsCount) : 0;

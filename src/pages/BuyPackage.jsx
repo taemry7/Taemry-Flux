@@ -164,6 +164,36 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
     return () => { isMounted = false; };
   }, []);
 
+  // Auto-focus and open modal if user selected a specific package from Homepage
+  useEffect(() => {
+    if (!loadingPackages && packages.length > 0) {
+      try {
+        const storedPkgId = localStorage.getItem('taemry_selected_package');
+        if (storedPkgId) {
+          localStorage.removeItem('taemry_selected_package');
+          const target = packages.find(
+            (p) =>
+              p.id?.toLowerCase() === storedPkgId.toLowerCase() ||
+              p.name?.toLowerCase() === storedPkgId.toLowerCase() ||
+              p.tierName?.toLowerCase() === storedPkgId.toLowerCase()
+          );
+          if (target) {
+            setSelectedPkg(target);
+            setIsModalOpen(true);
+            setTimeout(() => {
+              const el = document.getElementById(`package-card-${target.id}`);
+              if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              }
+            }, 150);
+          }
+        }
+      } catch (err) {
+        console.warn('Error reading selected package:', err);
+      }
+    }
+  }, [loadingPackages, packages]);
+
   // Open confirmation modal
   const handleInitiateBuy = (pkg) => {
     setSelectedPkg(pkg);
@@ -313,6 +343,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
           return (
             <div
               key={pkg.id}
+              id={`package-card-${pkg.id}`}
               className={`bg-white rounded-3xl p-6 border transition-all flex flex-col justify-between shadow-xs ${
                 isCurrent
                   ? 'border-[#0c5963] ring-2 ring-[#0c5963]/20 bg-[#fbfdfc]'

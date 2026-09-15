@@ -49,16 +49,55 @@ function AppContent() {
     if (typeof window === 'undefined') return 'home';
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
     const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
+
+    // Check if referral link was clicked in query or hash
+    let hasReferral = false;
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('ref') || searchParams.get('referral')) {
+        hasReferral = true;
+      } else if (window.location.hash && /[?&]ref=/i.test(window.location.hash)) {
+        hasReferral = true;
+      }
+    } catch {}
+
     if (rawPath === 'admin' || rawPath.startsWith('admin/') || rawHash === 'admin' || rawHash.startsWith('admin/')) {
       return 'admin';
     }
-    if (rawPath === 'login' || rawHash === 'login') return 'login';
+    if (
+      hasReferral ||
+      rawPath === 'signup' ||
+      rawHash === 'signup' ||
+      rawHash.startsWith('signup') ||
+      rawPath === 'login' ||
+      rawHash === 'login' ||
+      rawHash.startsWith('login')
+    ) {
+      return 'login';
+    }
     if (rawPath === 'support' || rawHash === 'support') return 'support';
     if (rawPath === 'whitepaper' || rawHash === 'whitepaper') return 'whitepaper';
     if (rawPath.startsWith('dashboard') || rawHash.startsWith('dashboard')) return 'dashboard';
     return 'home';
   });
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'daily-views' | 'packages' | 'deposit' | 'withdraw'
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === 'undefined') return 'overview';
+    let hasReferral = false;
+    try {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get('ref') || searchParams.get('referral')) {
+        hasReferral = true;
+      } else if (window.location.hash && /[?&]ref=/i.test(window.location.hash)) {
+        hasReferral = true;
+      }
+    } catch {}
+    const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
+    const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
+    if (hasReferral || rawPath === 'signup' || rawHash === 'signup' || rawHash.startsWith('signup') || rawHash === 'login/signup') {
+      return 'signup';
+    }
+    return 'overview';
+  });
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isInitialSplash, setIsInitialSplash] = useState(true);
@@ -73,6 +112,7 @@ function AppContent() {
   useEffect(() => {
     const handleLocationChange = () => {
       // Capture referral code from URL if present (?ref=CODE or #/?ref=CODE)
+      let hasReferral = false;
       try {
         if (typeof window !== 'undefined') {
           let refCode: string | null = null;
@@ -87,7 +127,9 @@ function AppContent() {
             }
           }
           if (refCode && refCode.trim()) {
-            localStorage.setItem('referralCode', decodeURIComponent(refCode).trim());
+            const cleanCode = decodeURIComponent(refCode).trim();
+            localStorage.setItem('referralCode', cleanCode);
+            hasReferral = true;
           }
         }
       } catch (err) {
@@ -110,9 +152,19 @@ function AppContent() {
         return;
       }
 
+      // Direct referral link opening straight to signup
+      if (hasReferral && (!rawPath || rawPath === 'home' || rawHash === '' || rawHash === 'home' || rawHash.includes('ref='))) {
+        setCurrentPage('login');
+        setActiveTab('signup');
+        return;
+      }
+
       const effectiveRoute = rawHash || rawPath;
 
-      if (effectiveRoute === 'login' || effectiveRoute.startsWith('login/')) {
+      if (effectiveRoute === 'signup' || effectiveRoute.startsWith('signup/')) {
+        setCurrentPage('login');
+        setActiveTab('signup');
+      } else if (effectiveRoute === 'login' || effectiveRoute.startsWith('login/')) {
         setCurrentPage('login');
         const parts = effectiveRoute.split('/');
         if (parts[1]) {
@@ -203,6 +255,12 @@ function AppContent() {
   // If user signs in while on login page, smoothly transition to member dashboard
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          navigateTo('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
       navigateTo('dashboard', 'overview');
     }
   }, [currentUser, currentPage]);

@@ -117,7 +117,12 @@
             }
           }
           if (ref) {
-            localStorage.setItem('referralCode', decodeURIComponent(ref).trim());
+            var cleanRef = decodeURIComponent(ref).trim();
+            localStorage.setItem('referralCode', cleanRef);
+            // If opening via referral link, route directly to sign up page
+            if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/' || window.location.hash === '#/home' || window.location.hash.indexOf('?') !== -1) {
+              window.location.hash = '#/login/signup?ref=' + encodeURIComponent(cleanRef);
+            }
           }
 
           // Service Worker registration for PWA installability

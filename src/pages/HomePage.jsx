@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Zap,
 } from 'lucide-react';
+import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
 import LiveLeaderboard from '../components/LiveLeaderboard';
 import { useAuth } from '../context/AuthContext';
@@ -217,10 +218,16 @@ export default function HomePage({ onNavigate }) {
 
   // Handle Package Selection
   const handleSelectPackage = (pkg) => {
+    try {
+      if (pkg?.id) {
+        localStorage.setItem('taemry_selected_package', pkg.id);
+      }
+    } catch {}
+
     if (currentUser) {
-      onNavigate('dashboard');
+      onNavigate('dashboard', 'buy-package');
     } else {
-      onNavigate('login');
+      onNavigate('login', 'signup');
     }
   };
 
@@ -247,6 +254,53 @@ export default function HomePage({ onNavigate }) {
   const displayProgress = currentUser
     ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 200) * 100))
     : 37;
+
+  // Live last reward resolution for logged-in user
+  const liveLastReward = (() => {
+    if (!currentUser) return '+$2.10';
+
+    try {
+      const storedLast = localStorage.getItem('taemry_last_ad_reward');
+      if (storedLast && Number(storedLast) > 0) {
+        const num = Number(storedLast);
+        return num >= 0.01 ? `+$${num.toFixed(2)}` : `+$${num.toFixed(3)}`;
+      }
+    } catch {}
+
+    if (userStats?.lastReward !== undefined && userStats?.lastReward !== null && Number(userStats.lastReward) > 0) {
+      const num = Number(userStats.lastReward);
+      return num >= 0.01 ? `+$${num.toFixed(2)}` : `+$${num.toFixed(3)}`;
+    }
+
+    const pkgKey = (userStats?.currentPackage || '').toLowerCase();
+    const pkgPrices = {
+      bronze: 1.00,
+      silver: 5.00,
+      gold: 10.00,
+      premium: 50.00,
+      elite: 100.00,
+      master: 500.00,
+      apex: 1000.00,
+    };
+    const price = pkgPrices[pkgKey] || 0;
+    const adReward = price * 0.001; // 0.1% per ad reward
+
+    if ((userStats?.dailyAdCount || 0) > 0 && adReward > 0) {
+      return adReward >= 0.01 ? `+$${adReward.toFixed(2)}` : `+$${adReward.toFixed(3)}`;
+    }
+
+    if (userStats?.totalEarned && Number(userStats.totalEarned) > 0) {
+      const num = Number(userStats.totalEarned);
+      return num >= 0.01 ? `+$${num.toFixed(2)}` : `+$${num.toFixed(3)}`;
+    }
+
+    if (price > 0 && adReward > 0) {
+      return adReward >= 0.01 ? `+$${adReward.toFixed(2)}` : `+$${adReward.toFixed(3)}`;
+    }
+
+    return '+$0.00';
+  })();
+
   const hasBoughtPackage = Boolean(
     currentUser &&
     userStats?.currentPackage &&
@@ -332,19 +386,16 @@ export default function HomePage({ onNavigate }) {
         </div>
 
         {/* Floating Preview Card - UPAR */}
-        <div className="max-w-md mx-auto mt-6 sm:mt-8 px-2">
-          <div className="relative bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-7 shadow-xl shadow-[#0c5963]/5 dark:shadow-black/60 border border-[#e4ded2] dark:border-[#173740] overflow-hidden transition-colors">
-            {/* Top decorative gradient shape */}
-            <div className="absolute -top-16 -right-16 w-44 h-44 bg-[#e6f4f1] dark:bg-[#0c262e]/30 rounded-full blur-2xl pointer-events-none" />
-
+        <div className="max-w-[420px] w-full mx-auto mt-6 sm:mt-8 px-2">
+          <div
+            className="wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-md dark:shadow-black/60 overflow-hidden transition-colors"
+          >
+            {/* Top Header */}
             <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
               <span className="tracking-widest">
                 {currentUser ? `MEMBER / ${currentUser.email?.split('@')[0]}` : 'TAEMRY / PERSONAL WALLET'}
               </span>
-              <span className="hidden">
-                <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
-                LIVE
-              </span>
+              <div className="status-dot w-2.5 h-2.5 bg-[#ffb703] rounded-full shrink-0 shadow-xs" title="Active" />
             </div>
 
             <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
@@ -352,7 +403,7 @@ export default function HomePage({ onNavigate }) {
             </p>
             <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5 flex items-baseline">
               <span>${displayBalance.split('.')[0]}</span>
-              <span className="text-2xl sm:text-3xl text-[#0d5963] dark:text-[#38bdf8]">
+              <span className="balance-cents text-2xl sm:text-3xl font-extrabold text-[#ff9f00]">
                 .{displayBalance.split('.')[1] || '00'}
               </span>
               <span className="text-xs font-bold text-[#546e73] dark:text-[#94a3b8] ml-2 tracking-normal">
@@ -374,32 +425,32 @@ export default function HomePage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Floating Toast / Notification ("OK div wala") */}
-            <div className="bg-[#fcfaf7] dark:bg-[#07151a] border border-[#e5dfd3] dark:border-[#1e3f49] rounded-2xl p-3.5 flex items-center justify-between shadow-xs transition-colors">
-              <div className="flex items-center gap-2.5">
-                <div className="w-6 h-6 rounded-full bg-[#dcfce7] dark:bg-[#064e3b]/70 flex items-center justify-center text-[#16a34a] dark:text-[#34d399] shrink-0">
-                  <CheckCircle2 className="w-4 h-4" />
+            {/* Reward Banner */}
+            <div className="reward-banner bg-[#faf8f5] dark:bg-[#07151a] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#ece6d9] dark:border-[#173740] transition-colors">
+              <div className="reward-left flex items-center gap-[14px]">
+                <div className="reward-icon-container w-[32px] h-[32px] bg-[#fff9e6] dark:bg-[#2e260c] rounded-full flex justify-center items-center border border-[#ffe699] dark:border-[#574312] shrink-0">
+                  <div className="reward-icon w-[16px] h-[16px] border-2 border-[#ffb703] rounded-full relative flex items-center justify-center">
+                    <span className="w-1 h-1.5 border-r-2 border-b-2 border-[#ffb703] rotate-45 -mt-0.5 ml-0.5 inline-block" />
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                    {currentUser
-                      ? (userStats?.currentPackage && userStats?.currentPackage !== 'None'
-                          ? 'Active Package: ' + userStats.currentPackage
-                          : 'Deposit & Buy Package')
-                      : 'Attention to Value'}
-                  </p>
-                  <p className="text-[11px] text-[#6b7f83] dark:text-[#94a3b8]">
-                    {resolvedWalletBalance > 0
-                      ? `Live Balance: $${displayBalance} USD`
-                      : 'Activate Package to start daily ads'}
-                  </p>
+                <div className="reward-text">
+                  <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight">
+                    Reward credited
+                  </div>
+                  <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
+                    {currentUser && (userStats?.dailyAdCount || 0) > 0
+                      ? `${userStats.dailyAdCount} ads credited today`
+                      : 'Keep your rhythm.'}
+                  </div>
                 </div>
               </div>
-              <div className="text-right">
-                <span className="hidden">DAILY AD LIMIT</span>
-                <span className="text-xs font-extrabold text-[#0d5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-2.5 py-1 rounded-md inline-block">
-                  Daily Ads
-                </span>
+              <div className="reward-right text-right">
+                <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
+                  Last Reward
+                </div>
+                <div className="reward-amount text-[16px] font-bold text-[#00796b] dark:text-[#2dd4bf] text-right block leading-tight">
+                  {liveLastReward}
+                </div>
               </div>
             </div>
           </div>
@@ -677,29 +728,47 @@ export default function HomePage({ onNavigate }) {
               return (
                 <div
                   key={idx}
-                  className="bg-white rounded-2xl border border-[#e4dfd4] shadow-xs overflow-hidden transition-all"
+                  className={`bg-white rounded-2xl border shadow-xs overflow-hidden transition-all duration-300 ${
+                    isOpen ? 'border-[#0c5963]/40 ring-2 ring-[#0c5963]/10 shadow-sm' : 'border-[#e4dfd4]'
+                  }`}
                 >
                   <button
+                    type="button"
                     onClick={() => setOpenFaq(isOpen ? null : idx)}
-                    className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 hover:bg-[#faf8f4] transition-colors cursor-pointer"
+                    className="w-full px-5 py-4 text-left flex items-center justify-between gap-4 hover:bg-[#faf8f4] transition-colors cursor-pointer select-none group"
                   >
-                    <span className="text-sm sm:text-base font-bold text-[#09353e]">
+                    <span className="text-sm sm:text-base font-bold text-[#09353e] group-hover:text-[#0c5963] transition-colors">
                       {faq.q}
                     </span>
-                    <div className="w-8 h-8 rounded-xl bg-[#f0eae0] text-[#0c5963] flex items-center justify-center shrink-0">
-                      {isOpen ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </div>
+                    <motion.div
+                      animate={{ rotate: isOpen ? 180 : 0 }}
+                      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                      className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 transition-colors duration-200 ${
+                        isOpen
+                          ? 'bg-[#0c5963] text-white'
+                          : 'bg-[#f0eae0] text-[#0c5963] group-hover:bg-[#e4dcce]'
+                      }`}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </motion.div>
                   </button>
 
-                  {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs sm:text-sm text-[#4d666b] leading-relaxed border-t border-[#f2ede4] bg-[#fcfbfa] whitespace-pre-line">
-                      {faq.a}
-                    </div>
-                  )}
+                  <AnimatePresence initial={false}>
+                    {isOpen && (
+                      <motion.div
+                        key="faq-answer"
+                        initial={{ height: 0, opacity: 0, y: -6 }}
+                        animate={{ height: 'auto', opacity: 1, y: 0 }}
+                        exit={{ height: 0, opacity: 0, y: -6 }}
+                        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-5 pb-5 pt-2 text-xs sm:text-sm text-[#4d666b] leading-relaxed border-t border-[#f2ede4] bg-[#fcfbfa] whitespace-pre-line">
+                          {faq.a}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
