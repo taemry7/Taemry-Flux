@@ -84,7 +84,7 @@ export default function Footer({ onNavigate, currentPage }) {
         {/* Copyright notice - Re-enabled per user directive */}
         {shouldShowNavAndCopyright && (
           <div className="flex w-full pt-6 border-t border-[#eae4d8]/60 dark:border-[#17323b]/60 items-center justify-center text-center text-xs text-[#718286] dark:text-[#627a80]">
-            © 2026 TAEMRY FLUX. All rights reserved.
+            © 2026 TAEMRY <span className="mx-1 font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span>. All rights reserved.
           </div>
         )}
       </div>

@@ -252,7 +252,7 @@ export default function AdminLayout({ onNavigate }) {
             <div>
               <span className="text-sm font-black tracking-wider uppercase block">
                 <span className="text-white">TAEMRY</span>{' '}
-                <span className="text-[#38bdf8]">FLUX</span>
+                <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span>
               </span>
               <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">
                 ADMIN {adminFirstName}
@@ -410,7 +410,7 @@ export default function AdminLayout({ onNavigate }) {
                       onClick={async () => {
                         setMoreMenuOpen(false);
                         await logout();
-                        onNavigate('home');
+                        onNavigate('login');
                       }}
                       className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-rose-400 hover:bg-rose-950/60 hover:text-rose-300 transition-colors cursor-pointer"
                     >

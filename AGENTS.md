@@ -47,6 +47,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Auto-reverting or resetting working code is strictly prohibited.
 - **TOTAL CODEBASE FREEZE**: As instructed by the user ("all coding ko lock karo taky khud ba khud changing na hojay"), the entire codebase across frontend, backend, routes, config, and components is under permanent lock. No file shall be modified or altered without clear, explicit, word-for-word instructions from the user.
 
+## STRICT INVARIANT: App Entry Point, Auth Transitions & Logout Redirection (PERMANENT)
+- **First Page of App**: The default first page of the app is strictly the **Login Page** (`login`).
+- **Post-Login / Sign Up Transition**: Upon successful sign in or sign up, the user is redirected to the **"Put your wallet in motion" page** (`home`).
+- **Logout Redirection**: When any user logs out (from the Sidebar Drawer, Account Settings, Admin Panel, or session expiration), they are immediately redirected to the first page: the **Login Page** (`login` / `#/login`).
+- **Unauthenticated Page Guard**: Unauthenticated visitors attempting to access member pages (`home` or `dashboard`) are redirected directly to the Login page.
+
 ## STRICT INVARIANT: Footer Navigation & Layout Rules (PERMANENT)
 - **Footer Navigation Links & Copyright**:
   - Visible ONLY on First Page (`home`) and Dashboard Page (`dashboard`).
@@ -56,11 +62,14 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - Floating Preview Card is placed above the trust points.
   - Trust points ("Guaranteed Daily Ad Returns", "Secure Session Architecture") are placed below the card.
 
-## STRICT INVARIANT: First Page (HomePage.jsx) PERMANENT LOCK
-- **`src/pages/HomePage.jsx` is COMPLETELY FINALIZED AND PERMANENTLY LOCKED.**
-- **NO CHANGES, MODIFICATIONS, OR REVISIONS** are allowed to the first page (`src/pages/HomePage.jsx`).
-- All text content, headings, floating cards, buttons, daily allocation labels ("ads/day"), motivation texts for packages, and visual layouts are finalized per the user's explicit approval.
-- Every assistant, turn, or task MUST keep `src/pages/HomePage.jsx` strictly unchanged.
+## STRICT INVARIANT: Hero Section Dual-Mode Preview Card (PERMANENT)
+- **Dual-Mode Interactive Switcher**: Directly above the floating preview card, two high-contrast toggle pill buttons allow switching between:
+  - **"Watch Ads"**: Featuring TV/Monitor icon, active emerald ping dot, emerald-teal click splash wave, Live Available Balance, Total Earned Yield, 0/200 ad rhythm progress bar, Reward Credited status, and "Go to My Dashboard" button.
+  - **"Cloud Miner"**: Featuring Pickaxe icon, active amber ping dot, vibrant amber-orange click splash wave, "TAEMRY / 12H MINER" header with pulsing status, "Mined Hash Yield" balance with USD • TFLX badge, 12h fiery gradient progress bar (amber to orange), "Mining Active" bottom banner with green ping dot, "+16 TFLX/h" base hashrate display, and "Go to Cloud Miner" button.
+- Transitions between modes are animated using Motion `AnimatePresence` with smooth scale, opacity, and blur transitions.
+- **Restored Dashboard Menu & Header Drawer Button**:
+  - The menu navigation drawer toggle button (`#btn-nav-drawer`) in the top navbar is restored per user directive ("my dashboard ky andar menu ly aw abi jo remove kya").
+  - Inside `DashboardPage.jsx`, an interactive, horizontal navigation menu bar is provided with all dashboard tabs (Overview, Watch Ads, Deposit, Packages, Withdraw, Referrals, Live Leaderboard, Team Rewards, Transactions, Profile Settings), ensuring effortless tab switching directly inside the dashboard.
 
 ## STRICT INVARIANT: Dashboard Eligibility Gating Rules (PERMANENT)
 - **New User Access Limit**: Users without an active package (`stats.currentPackage === 'None'` or falsy) are only eligible for **Overview**, **Deposit**, **Buy Package**, and **Profile Information**.
@@ -155,6 +164,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   2. Requesting a Withdrawal (`/api/withdrawals/request` upon admin processing)
 - Wallet balance is strictly protected and can never be deducted, expired, or reset anywhere else.
 - User profile logins (Email, Password, Google Auth) and session refreshes check document existence first and strictly preserve existing `walletBalance` and `currentPackage`, preventing any accidental reset to 0.
+
+## STRICT INVARIANT: FLUX Word Branding & Gradient Color (PERMANENT & LOCKED)
+- **FLUX Word Color & Styling**:
+  - All occurrences of the brand word **"FLUX"** (including the header/navbar Logo span, login screen logo text, admin layout header, welcome modal, home page subtitle, footer copyright, and whitepaper) are strictly styled with the vibrant warm gradient:
+    `text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]`
+  - Preserved across light and dark modes per user directive ("is span me FLUX ko ye color dy #d97706 / #ea580c jitny FLUX words hai osko ye color karo").
 
 ## ABSOLUTE CODEBASE LOCK & INTEGRITY SEAL (FINAL & PERMANENT)
 - **COMPLETE FREEZE DECREED BY OWNER**: "ab jitni bi coding hai isko mukammal lock karo".

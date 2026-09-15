@@ -457,7 +457,7 @@ export default function AccountSettings({ onSelectTab }) {
             if (logout) {
               await logout();
             }
-            window.location.hash = '#/home';
+            window.location.hash = '#/login';
             window.location.reload();
           }}
           className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#fee2e2] hover:bg-[#fecaca] dark:bg-red-950/40 dark:hover:bg-red-900/60 text-[#b91c1c] dark:text-red-300 text-xs font-bold rounded-xl border border-red-200 dark:border-red-900/50 shadow-xs transition-all cursor-pointer self-start sm:self-auto shrink-0"

@@ -183,7 +183,7 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
                     </motion.div>
 
                     <h2 className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-white mb-2 leading-tight">
-                      Welcome to <span className="text-[#0c5963] dark:text-[#38bdf8]">TAEMRY FLUX</span>
+                      Welcome to <span className="text-[#0c5963] dark:text-[#38bdf8]">TAEMRY</span> <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span>
                     </h2>
 
                     <p className="text-sm text-[#5a7378] dark:text-[#94a3b8] mb-6 leading-relaxed max-w-sm">

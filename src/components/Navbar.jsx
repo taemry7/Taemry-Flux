@@ -286,15 +286,6 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                 )}
               </div>
 
-              {/* Wallet quick balance pill */}
-              <button
-                onClick={() => onNavigate('dashboard')}
-                className="hidden sm:flex items-center gap-2 bg-[#e6f2f0] dark:bg-[#0d2a32] hover:bg-[#d8ebe7] dark:hover:bg-[#123640] text-[#0d5963] dark:text-[#38bdf8] px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-wide border border-[#b8ded7] dark:border-[#1a4450] transition-all cursor-pointer"
-              >
-                <Wallet className="w-3.5 h-3.5" />
-                <span>${Number(userStats?.walletBalance ?? 0).toFixed(2)}</span>
-              </button>
-
               {/* User Avatar Button (Opens Information & Profile Settings) - Hidden per user directive */}
               <button
                 onClick={() => onNavigate('dashboard', 'settings')}

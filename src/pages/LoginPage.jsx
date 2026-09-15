@@ -148,7 +148,39 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     } catch {}
   }, []);
 
-  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, testLogin, isFirebaseConfigured } = useAuth();
+  const [testLoading, setTestLoading] = useState(false);
+
+  // Quick 1-Click Test Mode Login (requested by user for effortless testing)
+  const handleTestLogin = async (role = 'user') => {
+    setError('');
+    setTestLoading(true);
+    try {
+      if (testLogin) {
+        await testLogin(role);
+      } else {
+        await login(role === 'admin' ? 'mistrtaimur7@gmail.com' : 'testuser@taemry.com', 'test123456');
+      }
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
+      onNavigate('home');
+    } catch (err) {
+      console.error('Test login error:', err);
+      setError(err?.message || 'Test login failed.');
+    } finally {
+      setTestLoading(false);
+    }
+  };
+
+  const handleFillTestCredentials = () => {
+    setEmail('testuser@taemry.com');
+    setPassword('test123456');
+    setError('');
+  };
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -190,7 +222,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           return;
         }
       } catch {}
-      onNavigate('dashboard');
+      onNavigate('home');
     } catch (err) {
       console.error('Auth error:', err);
       // Friendly message
@@ -232,7 +264,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           return;
         }
       } catch {}
-      onNavigate('dashboard');
+      onNavigate('home');
     } catch (err) {
       console.error('Google Sign In failed:', err);
       setError(err.message || 'Could not sign in with Google.');
@@ -304,7 +336,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           <span className="font-display font-extrabold tracking-[0.25em] text-[#0a3a46] dark:text-[#ecf3f4] text-lg uppercase">
             TAEMRY
           </span>
-          <span className="text-xs tracking-[0.2em] font-bold text-[#0f766e] dark:text-[#2dd4bf] uppercase bg-[#e6f4f1] dark:bg-[#0c262e] px-2 py-0.5 rounded">
+          <span className="text-xs tracking-[0.2em] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c] uppercase bg-[#fff7ed] dark:bg-[#2e1905] px-2 py-0.5 rounded border border-[#fed7aa] dark:border-[#7c2d12]">
             FLUX
           </span>
         </div>
@@ -313,7 +345,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       {/* Main Auth Card (Starts cleanly near top, not pushed down) */}
       <div className="w-full max-w-md bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 shadow-lg shadow-[#0c5963]/5 border border-[#e4ded2] dark:border-[#1e3a44]">
         {/* Title */}
-        <div className="text-center mb-5">
+        <div className="text-center mb-4">
           <h2 className="text-2xl font-bold text-[#09353e] dark:text-white">
             {isSignUp ? 'Create your TAEMRY space' : 'Welcome back'}
           </h2>
@@ -322,6 +354,69 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               ? 'Start making progress visible'
               : 'Sign in to your TAEMRY space'}
           </p>
+        </div>
+
+        {/* Test Mode Card (Requested by user: "login me test mode on karo taky asan hojay") */}
+        <div
+          id="test-mode-banner"
+          className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] border border-[#0c5963]/30 dark:border-[#2dd4bf]/30 shadow-xs"
+        >
+          <div className="flex items-center justify-between gap-2 mb-1.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2.5 w-2.5 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              <span className="text-xs font-bold text-[#0c5963] dark:text-[#2dd4bf] uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf]" />
+                Test Mode ON
+              </span>
+            </div>
+            <button
+              type="button"
+              id="btn-fill-test-credentials"
+              onClick={handleFillTestCredentials}
+              className="text-[11px] font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline cursor-pointer"
+            >
+              Fill Credentials
+            </button>
+          </div>
+
+          <p className="text-[11px] text-[#476066] dark:text-[#94a3b8] mb-2.5 leading-relaxed">
+            Instant 1-click test login is active. Click below to sign in directly without entering passwords:
+          </p>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              id="btn-test-login-member"
+              type="button"
+              disabled={testLoading || loading}
+              onClick={() => handleTestLogin('user')}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
+            >
+              {testLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              <span>Instant Test User</span>
+            </button>
+
+            <button
+              id="btn-test-login-admin"
+              type="button"
+              disabled={testLoading || loading}
+              onClick={() => handleTestLogin('admin')}
+              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#09252c] hover:bg-[#06191e] dark:bg-[#12313b] dark:hover:bg-[#173e4a] text-[#2dd4bf] text-xs font-bold rounded-xl border border-[#0c5963]/40 shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
+            >
+              {testLoading ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Shield className="w-3.5 h-3.5" />
+              )}
+              <span>Test Admin</span>
+            </button>
+          </div>
         </div>
 
         {/* Email Verified Banner */}

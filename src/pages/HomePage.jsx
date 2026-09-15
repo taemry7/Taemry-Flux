@@ -11,6 +11,9 @@ import {
   LifeBuoy,
   ShieldCheck,
   Zap,
+  Tv,
+  Pickaxe,
+  Flame,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
@@ -23,6 +26,22 @@ export default function HomePage({ onNavigate }) {
   const [selectedViewMode, setSelectedViewMode] = useState('core'); // 'core' (Starter 3) first
   const [filterSplash, setFilterSplash] = useState(null);
   const [openFaq, setOpenFaq] = useState(null);
+  const [heroCardMode, setHeroCardMode] = useState('ads'); // 'ads' | 'miner'
+  const [cardSplash, setCardSplash] = useState(null);
+
+  const handleHeroModeToggle = (e, mode) => {
+    if (mode === heroCardMode) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX ? e.clientX - rect.left : rect.width / 2;
+    const y = e.clientY ? e.clientY - rect.top : rect.height / 2;
+    setCardSplash({
+      id: Date.now() + Math.random(),
+      mode,
+      x,
+      y,
+    });
+    setHeroCardMode(mode);
+  };
 
   const handleFilterToggle = (e, mode) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -322,45 +341,18 @@ export default function HomePage({ onNavigate }) {
     userStats.isEligible
   );
 
+  const currentPackageName = userStats?.currentPackage && userStats.currentPackage !== 'None'
+    ? userStats.currentPackage
+    : null;
+
+  const activeTierObj = defaultPackages.find(
+    (pkg) => pkg.name.toLowerCase() === (currentPackageName || '').toLowerCase()
+  ) || null;
+
   return (
     <div className="min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a]">
       {/* Hero Section */}
       <section className="pt-8 sm:pt-16 pb-16 sm:pb-24 px-4 sm:px-6 relative overflow-hidden">
-        {/* Logged In User Live Balance Banner */}
-        {currentUser && (
-          <div className="w-full max-w-4xl mx-auto mb-8 p-4 sm:p-5 rounded-3xl bg-white dark:bg-[#0a1b22] border border-[#0c5963]/20 dark:border-[#0c5963]/40 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors">
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center font-bold shadow-xs">
-                <TrendingUp className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-[10px] font-extrabold text-[#697f83] dark:text-[#94a3b8] uppercase tracking-wider block">
-                  Live Member Status
-                </span>
-                <span className="text-sm font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                  {currentUser.displayName || currentUser.email} • Package: <strong className="text-[#0c5963] dark:text-[#38bdf8] uppercase">{userStats?.currentPackage || 'None'}</strong>
-                </span>
-              </div>
-            </div>
-            <div className="flex items-center justify-between sm:justify-end gap-5 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-[#f0ede6] dark:border-[#17323b]">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-[#71868a] dark:text-[#94a3b8] block">
-                  Available Balance
-                </span>
-                <span className="text-2xl font-black text-[#0c5963] dark:text-[#38bdf8]">
-                  ${Number(userStats?.walletBalance || 0).toFixed(2)} <span className="text-xs font-semibold text-[#546e73] dark:text-[#94a3b8]">USD</span>
-                </span>
-              </div>
-              <button
-                onClick={() => onNavigate('dashboard')}
-                className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
-              >
-                Go to Dashboard
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="max-w-4xl mx-auto text-left sm:text-center flex flex-col sm:items-center">
           {/* Main Hero Headline */}
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-[#0a353f] dark:text-[#f1f5f9] leading-[1.15] mb-6">
@@ -370,103 +362,327 @@ export default function HomePage({ onNavigate }) {
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-[#476066] dark:text-[#94a3b8] max-w-2xl leading-relaxed mb-8">
-            TAEMRY FLUX turns consistent attention into a visible earnings habit.
+            TAEMRY <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span> turns consistent attention into a visible earnings habit.
             Fund your wallet, choose your pace, and earn from the work you can see.
           </p>
-
-          {/* CTA Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full sm:w-auto mb-8">
-            <button
-              id="btn-hero-start"
-              onClick={handlePrimaryAction}
-              className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.98] text-white font-semibold rounded-2xl text-base shadow-md shadow-[#0c5963]/25 transition-all cursor-pointer"
-            >
-              <span>{currentUser ? 'Go to My Dashboard' : 'Start with TAEMRY'}</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-
-            <button
-              id="btn-hero-rhythm"
-              onClick={() => {
-                const el = document.getElementById('packages-section');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="inline-flex items-center justify-center gap-1.5 px-6 py-3.5 bg-[#eae4d8]/80 dark:bg-[#122b33] hover:bg-[#eae4d8] dark:hover:bg-[#173740] text-[#133c44] dark:text-[#f1f5f9] font-semibold rounded-2xl text-base transition-all cursor-pointer"
-            >
-              <span>See the packages</span>
-              <ChevronRight className="w-4 h-4 text-[#597176] dark:text-[#94a3b8]" />
-            </button>
-          </div>
         </div>
 
-        {/* Floating Preview Card - UPAR */}
-        <div className="max-w-[420px] w-full mx-auto mt-6 sm:mt-8 px-2">
-          <div
-            className="wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-md dark:shadow-black/60 overflow-hidden transition-colors"
-          >
-            {/* Top Header */}
-            <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
-              <span className="tracking-widest">
-                {currentUser ? `MEMBER / ${currentUser.email?.split('@')[0]}` : 'TAEMRY / PERSONAL WALLET'}
-              </span>
-              <div className="status-dot w-2.5 h-2.5 bg-[#ffb703] rounded-full shrink-0 shadow-xs" title="Active" />
-            </div>
-
-            <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
-              Available Balance
-            </p>
-            <div className="text-4xl sm:text-5xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight mb-5 flex items-baseline">
-              <span>${displayBalance.split('.')[0]}</span>
-              <span className="balance-cents text-2xl sm:text-3xl font-extrabold text-[#ff9f00]">
-                .{displayBalance.split('.')[1] || '00'}
-              </span>
-              <span className="text-xs font-bold text-[#546e73] dark:text-[#94a3b8] ml-2 tracking-normal">
-                USD
-              </span>
-            </div>
-
-            {/* Progress bar */}
-            <div className="space-y-1.5 mb-6">
-              <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
-                <span>Today's ad rhythm</span>
-                <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">{displayProgress}%</span>
-              </div>
-              <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-[#0d5963] to-[#10b981] h-full rounded-full transition-all duration-1000"
-                  style={{ width: `${displayProgress}%` }}
+        {/* Dual Switcher Controls & Hero Floating Preview Card */}
+        <div className="max-w-[460px] w-full mx-auto mt-6 sm:mt-8 px-2 flex flex-col items-center">
+          {/* Dual Switcher Controls (Watch Ads vs Cloud Miner) */}
+          <div className="relative inline-flex p-1 rounded-2xl bg-white/90 dark:bg-[#0a1b22]/90 border border-[#e4ded2] dark:border-[#173740] shadow-sm mb-3.5 backdrop-blur-xs overflow-hidden">
+            {/* Fluid circular splash wave on click */}
+            <AnimatePresence>
+              {cardSplash && (
+                <motion.span
+                  key={cardSplash.id}
+                  initial={{ scale: 0, opacity: 0.85, filter: 'blur(0px)' }}
+                  animate={{ scale: 5, opacity: 0, filter: 'blur(16px)' }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.6, ease: 'easeOut' }}
+                  style={{
+                    left: cardSplash.x,
+                    top: cardSplash.y,
+                  }}
+                  className={`pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full w-28 h-28 ${
+                    cardSplash.mode === 'ads'
+                      ? 'bg-gradient-to-r from-[#0c5963] to-[#10b981]'
+                      : 'bg-gradient-to-r from-[#d97706] to-[#ea580c]'
+                  }`}
                 />
-              </div>
-            </div>
+              )}
+            </AnimatePresence>
 
-            {/* Reward Banner */}
-            <div className="reward-banner bg-[#faf8f5] dark:bg-[#07151a] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#ece6d9] dark:border-[#173740] transition-colors">
-              <div className="reward-left flex items-center gap-[14px]">
-                <div className="reward-icon-container w-[32px] h-[32px] bg-[#fff9e6] dark:bg-[#2e260c] rounded-full flex justify-center items-center border border-[#ffe699] dark:border-[#574312] shrink-0">
-                  <div className="reward-icon w-[16px] h-[16px] border-2 border-[#ffb703] rounded-full relative flex items-center justify-center">
-                    <span className="w-1 h-1.5 border-r-2 border-b-2 border-[#ffb703] rotate-45 -mt-0.5 ml-0.5 inline-block" />
+            {/* Watch Ads Toggle Button */}
+            <button
+              type="button"
+              id="btn-hero-mode-ads"
+              onClick={(e) => handleHeroModeToggle(e, 'ads')}
+              className={`relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
+                heroCardMode === 'ads'
+                  ? 'bg-[#0c5963] text-white shadow-md shadow-[#0c5963]/30 scale-[1.02]'
+                  : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white hover:bg-[#f3eee4]/60 dark:hover:bg-[#12313c]/60'
+              }`}
+            >
+              <Tv className="w-4 h-4 shrink-0" />
+              <span>Watch Ads</span>
+              <span className="relative flex h-2 w-2 ml-0.5">
+                <span className={`absolute inline-flex h-full w-full rounded-full ${heroCardMode === 'ads' ? 'animate-ping bg-emerald-300 opacity-80' : 'bg-emerald-500/40'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${heroCardMode === 'ads' ? 'bg-emerald-400' : 'bg-emerald-600'}`}></span>
+              </span>
+            </button>
+
+            {/* Cloud Miner Toggle Button */}
+            <button
+              type="button"
+              id="btn-hero-mode-miner"
+              onClick={(e) => handleHeroModeToggle(e, 'miner')}
+              className={`relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
+                heroCardMode === 'miner'
+                  ? 'bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white shadow-md shadow-orange-500/30 scale-[1.02]'
+                  : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white hover:bg-[#f3eee4]/60 dark:hover:bg-[#12313c]/60'
+              }`}
+            >
+              <Pickaxe className="w-4 h-4 shrink-0" />
+              <span>Cloud Miner</span>
+              <span className="relative flex h-2 w-2 ml-0.5">
+                <span className={`absolute inline-flex h-full w-full rounded-full ${heroCardMode === 'miner' ? 'animate-ping bg-amber-300 opacity-80' : 'bg-amber-500/40'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${heroCardMode === 'miner' ? 'bg-amber-400' : 'bg-amber-600'}`}></span>
+              </span>
+            </button>
+          </div>
+
+          {/* Unified Floating Preview Card with Dual Mode Transitions */}
+          <div
+            className={`wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border shadow-md dark:shadow-black/60 overflow-hidden transition-all flex flex-col justify-between min-h-[385px] ${
+              heroCardMode === 'ads'
+                ? 'border-[#e4ded2] dark:border-[#173740]'
+                : 'border-[#fed7aa] dark:border-[#7c2d12]/50 shadow-orange-500/5'
+            }`}
+          >
+            {/* Ambient Background Glow Wave */}
+            <AnimatePresence>
+              {cardSplash && (
+                <motion.div
+                  key={`card-glow-${cardSplash.id}`}
+                  initial={{ scale: 0, opacity: 0.35, filter: 'blur(12px)' }}
+                  animate={{ scale: 3.5, opacity: 0, filter: 'blur(28px)' }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.75, ease: 'easeOut' }}
+                  className={`pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full ${
+                    heroCardMode === 'ads'
+                      ? 'bg-gradient-to-br from-[#0c5963]/30 to-[#10b981]/20'
+                      : 'bg-gradient-to-br from-[#d97706]/35 to-[#ea580c]/25'
+                  }`}
+                />
+              )}
+            </AnimatePresence>
+
+            <AnimatePresence mode="wait">
+              {heroCardMode === 'ads' ? (
+                <motion.div
+                  key="hero-mode-ads-card"
+                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="flex flex-col justify-between flex-1"
+                >
+                  <div>
+                    {/* Top Header */}
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
+                      <span className="tracking-widest">
+                        {currentUser ? `MEMBER / ${currentUser.email?.split('@')[0]}` : 'TAEMRY / PERSONAL WALLET'}
+                      </span>
+                      <div className="status-dot w-2.5 h-2.5 bg-[#ffb703] rounded-full shrink-0 shadow-xs" title="Active" />
+                    </div>
+
+                    {/* Balances Grid: Available Balance & Total Earned Yield */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      <div>
+                        <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                          Available Balance
+                        </p>
+                        <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                          <span>${displayBalance.split('.')[0]}</span>
+                          <span className="balance-cents text-lg sm:text-xl font-extrabold text-[#ff9f00]">
+                            .{displayBalance.split('.')[1] || '00'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                          Total Earned Yield
+                        </p>
+                        <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                          <span>${Number(userStats?.totalEarned || 0).toFixed(2).split('.')[0]}</span>
+                          <span className="balance-cents text-lg sm:text-xl font-extrabold text-emerald-500">
+                            .{Number(userStats?.totalEarned || 0).toFixed(2).split('.')[1] || '00'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress bar */}
+                    <div className="space-y-1.5 mb-5">
+                      <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
+                        <span>Today's ad rhythm</span>
+                        <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">
+                          {userStats?.dailyAdCount || 0} / 200 ({displayProgress}%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">
+                        <div
+                          className="bg-gradient-to-r from-[#0d5963] to-[#10b981] h-full rounded-full transition-all duration-1000"
+                          style={{ width: `${displayProgress}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Reward Banner */}
+                    <div className="reward-banner bg-[#faf8f5] dark:bg-[#07151a] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#ece6d9] dark:border-[#173740] transition-colors mb-5">
+                      <div className="reward-left flex items-center gap-[14px]">
+                        <div className="reward-icon-container w-[32px] h-[32px] bg-[#fff9e6] dark:bg-[#2e260c] rounded-full flex justify-center items-center border border-[#ffe699] dark:border-[#574312] shrink-0">
+                          <div className="reward-icon w-[16px] h-[16px] border-2 border-[#ffb703] rounded-full relative flex items-center justify-center">
+                            <span className="w-1 h-1.5 border-r-2 border-b-2 border-[#ffb703] rotate-45 -mt-0.5 ml-0.5 inline-block" />
+                          </div>
+                        </div>
+                        <div className="reward-text">
+                          <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight">
+                            Reward credited
+                          </div>
+                          <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
+                            {currentUser && (userStats?.dailyAdCount || 0) > 0
+                              ? `${userStats.dailyAdCount} ads credited today`
+                              : (userStats?.currentPackage && userStats.currentPackage !== 'None'
+                                  ? `${userStats.currentPackage} • 20% Daily`
+                                  : 'Keep your rhythm.')}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="reward-right text-right">
+                        <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
+                          Last Reward
+                        </div>
+                        <div className="reward-amount text-[16px] font-bold text-[#00796b] dark:text-[#2dd4bf] text-right block leading-tight">
+                          {liveLastReward}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="reward-text">
-                  <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight">
-                    Reward credited
+
+                  {/* Go to My Dashboard Button inside Card */}
+                  <button
+                    id="btn-card-dashboard"
+                    onClick={() => onNavigate('dashboard')}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.98] text-white text-sm font-bold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all cursor-pointer mt-1"
+                  >
+                    <span>Go to My Dashboard</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="hero-mode-miner-card"
+                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  className="flex flex-col justify-between flex-1"
+                >
+                  <div>
+                    {/* Header: TAEMRY / 12H MINER with an active pulsing orange status indicator */}
+                    <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
+                      <span className="tracking-widest flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
+                        <Pickaxe className="w-3.5 h-3.5 text-amber-500" />
+                        TAEMRY / 12H MINER
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span className="relative flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500 shadow-xs"></span>
+                        </span>
+                        <span className="text-[10px] font-bold text-orange-600 dark:text-orange-400 tracking-normal">ACTIVE</span>
+                      </div>
+                    </div>
+
+                    {/* Balance: Mined Hash Yield with orange accented decimal formatting and USD • TFLX currency badge */}
+                    <div className="grid grid-cols-2 gap-3 mb-5">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8]">
+                            Mined Hash Yield
+                          </p>
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                            USD • TFLX
+                          </span>
+                        </div>
+                        <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                          <span>${Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[0]}</span>
+                          <span className="balance-cents text-lg sm:text-xl font-extrabold text-[#ea580c]">
+                            .{Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[1] || '80'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                          Hashrate Power
+                        </p>
+                        <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                          <span>16.0</span>
+                          <span className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 ml-1">
+                            MH/s
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Progress bar: 12h Mining Hash Session with an animated fiery gradient (amber to orange) */}
+                    <div className="space-y-1.5 mb-5">
+                      <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
+                        <span className="flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-300">
+                          <Flame className="w-3.5 h-3.5 text-orange-500 animate-pulse" />
+                          12h Mining Hash Session
+                        </span>
+                        <span className="font-bold text-[#ea580c] dark:text-[#fb923c]">
+                          08h 42m remaining (72%)
+                        </span>
+                      </div>
+                      <div className="w-full bg-[#f6eee3] dark:bg-[#20180d] h-2.5 rounded-full overflow-hidden relative">
+                        <div
+                          className="bg-gradient-to-r from-[#d97706] via-[#ea580c] to-[#f97316] h-full rounded-full transition-all duration-1000 shadow-xs relative overflow-hidden"
+                          style={{ width: '72%' }}
+                        >
+                          <div className="absolute inset-0 bg-white/25 w-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12" />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom Banner: Pickaxe icon in an amber circular container, "Mining Active" title with live green ping dot, "12h tap-to-mine session live" subtitle, and "+16 TFLX/h" base hashrate display */}
+                    <div className="reward-banner bg-[#fffbf5] dark:bg-[#120d06] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#fed7aa] dark:border-[#43230a] transition-colors mb-5 shadow-xs">
+                      <div className="reward-left flex items-center gap-[14px]">
+                        <div className="reward-icon-container w-[36px] h-[36px] bg-[#ffedd5] dark:bg-[#2e1905] rounded-full flex justify-center items-center border border-[#fdba74] dark:border-[#7c2d12] shrink-0 shadow-2xs">
+                          <Pickaxe className="w-4 h-4 text-[#ea580c] dark:text-[#fb923c]" />
+                        </div>
+                        <div className="reward-text">
+                          <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight flex items-center gap-1.5">
+                            <span>Mining Active</span>
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </span>
+                          </div>
+                          <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
+                            12h tap-to-mine session live
+                          </div>
+                        </div>
+                      </div>
+                      <div className="reward-right text-right">
+                        <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
+                          Base Hashrate
+                        </div>
+                        <div className="reward-amount text-[15px] font-extrabold text-[#ea580c] dark:text-[#fb923c] text-right block leading-tight">
+                          +16 TFLX/h
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
-                    {currentUser && (userStats?.dailyAdCount || 0) > 0
-                      ? `${userStats.dailyAdCount} ads credited today`
-                      : 'Keep your rhythm.'}
-                  </div>
-                </div>
-              </div>
-              <div className="reward-right text-right">
-                <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
-                  Last Reward
-                </div>
-                <div className="reward-amount text-[16px] font-bold text-[#00796b] dark:text-[#2dd4bf] text-right block leading-tight">
-                  {liveLastReward}
-                </div>
-              </div>
-            </div>
+
+                  {/* Go to My Dashboard / Cloud Miner Button */}
+                  <button
+                    id="btn-card-miner-dashboard"
+                    onClick={() => onNavigate('dashboard')}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] active:scale-[0.98] text-white text-sm font-bold rounded-2xl shadow-sm shadow-orange-500/25 transition-all cursor-pointer mt-1"
+                  >
+                    <Pickaxe className="w-4 h-4" />
+                    <span>Go to Cloud Miner</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 

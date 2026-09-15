@@ -30,7 +30,7 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
           <span className="font-display font-extrabold tracking-widest text-[#0a3a46] dark:text-white text-base leading-none uppercase transition-colors">
             TAEMRY
           </span>
-          <span className="text-[10px] tracking-[0.25em] font-semibold text-[#0f766e] dark:text-[#38bdf8] uppercase transition-colors">
+          <span className="text-[10px] tracking-[0.25em] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c] uppercase transition-colors">
             FLUX
           </span>
         </div>

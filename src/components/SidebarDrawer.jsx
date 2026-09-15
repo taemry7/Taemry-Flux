@@ -286,7 +286,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
           onClick={async () => {
             await logout();
             onClose();
-            onNavigate('home');
+            onNavigate('login');
           }}
           className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[#dc2626] dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 text-[14.5px] font-semibold transition-all cursor-pointer text-left"
         >
@@ -300,7 +300,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
           onClick={async () => {
             await logout();
             onClose();
-            onNavigate('home');
+            onNavigate('login');
           }}
           className="hidden"
           aria-hidden="true"

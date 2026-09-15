@@ -77,8 +77,23 @@ function AppContent() {
     }
     if (rawPath === 'support' || rawHash === 'support') return 'support';
     if (rawPath === 'whitepaper' || rawHash === 'whitepaper') return 'whitepaper';
-    if (rawPath.startsWith('dashboard') || rawHash.startsWith('dashboard')) return 'dashboard';
-    return 'home';
+
+    // Verify persisted session in storage before allowing member pages (home/dashboard)
+    let hasPersistedSession = false;
+    try {
+      const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+      if (rawUser) {
+        hasPersistedSession = true;
+      }
+    } catch {}
+
+    if (hasPersistedSession) {
+      if (rawPath.startsWith('dashboard') || rawHash.startsWith('dashboard')) return 'dashboard';
+      if (rawPath === 'home' || rawHash === 'home') return 'home';
+    }
+
+    // Default first page is always login
+    return 'login';
   });
   const [activeTab, setActiveTab] = useState(() => {
     if (typeof window === 'undefined') return 'overview';
@@ -201,6 +216,16 @@ function AppContent() {
         setCurrentPage('dashboard');
         setActiveTab('leaderboard');
       } else if (effectiveRoute.startsWith('dashboard')) {
+        let hasPersistedUser = false;
+        try {
+          const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+          if (rawUser) hasPersistedUser = true;
+        } catch {}
+        if (!hasPersistedUser) {
+          setCurrentPage('login');
+          setActiveTab('signin');
+          return;
+        }
         setCurrentPage('dashboard');
         const parts = effectiveRoute.split('/');
         if (parts[1]) {
@@ -208,8 +233,21 @@ function AppContent() {
         } else {
           setActiveTab('overview');
         }
-      } else if (effectiveRoute === '' || effectiveRoute === 'home') {
+      } else if (effectiveRoute === 'home') {
+        let hasPersistedUser = false;
+        try {
+          const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+          if (rawUser) hasPersistedUser = true;
+        } catch {}
+        if (!hasPersistedUser) {
+          setCurrentPage('login');
+          setActiveTab('signin');
+          return;
+        }
         setCurrentPage('home');
+      } else if (effectiveRoute === '') {
+        setCurrentPage('login');
+        setActiveTab('signin');
       }
     };
 
@@ -252,7 +290,10 @@ function AppContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // If user signs in while on login page, smoothly transition to member dashboard
+  // Track previous user reference to instantly detect logout
+  const previousUserRef = useRef(currentUser);
+
+  // If user signs in while on login page, smoothly transition to put your wallet in motion page (home)
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
       try {
@@ -261,7 +302,29 @@ function AppContent() {
           return;
         }
       } catch {}
-      navigateTo('dashboard', 'overview');
+      navigateTo('home');
+    }
+  }, [currentUser, currentPage]);
+
+  // If user logs out (currentUser transitions from authenticated to null), redirect immediately to login
+  useEffect(() => {
+    if (previousUserRef.current && !currentUser) {
+      navigateTo('login', 'signin');
+    }
+    previousUserRef.current = currentUser;
+  }, [currentUser]);
+
+  // Guard member pages if session is absent
+  useEffect(() => {
+    if (!currentUser && (currentPage === 'home' || currentPage === 'dashboard')) {
+      let hasPersistedUser = false;
+      try {
+        const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+        if (rawUser) hasPersistedUser = true;
+      } catch {}
+      if (!hasPersistedUser) {
+        navigateTo('login', 'signin');
+      }
     }
   }, [currentUser, currentPage]);
 

@@ -654,9 +654,9 @@ export default function WhitepaperPage({ onNavigate }) {
 
           {/* Document Footer Signature */}
           <div className="mt-8 pt-6 border-t border-[#ece5d8] dark:border-[#173740] text-center text-xs text-[#718286] dark:text-[#94a3b8]">
-            <p className="font-bold text-[#093e4a] dark:text-white">© 2026 TAEMRY FLUX PROTOCOL. All rights reserved.</p>
+            <p className="font-bold text-[#093e4a] dark:text-white">© 2026 TAEMRY <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span> PROTOCOL. All rights reserved.</p>
             <p className="mt-1">Founder & Executive Director: <strong>Taimur Khan'X</strong></p>
-            <p className="text-[11px] text-[#9ca3af] mt-0.5">Published & Maintained by TAEMRY FLUX Network Administration</p>
+            <p className="text-[11px] text-[#9ca3af] mt-0.5">Published & Maintained by TAEMRY <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span> Network Administration</p>
           </div>
         </div>
       </div>
