@@ -188,20 +188,25 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       await resetPassword(cleanEmail);
       setResetSent(true);
     } catch (err) {
-      console.error('Password reset error:', err);
       const msg = err.message || '';
       if (
+        err.code === 'auth/user-not-found' ||
         msg.includes('user-not-found') ||
         msg.includes('No account found') ||
+        msg.includes('account') ||
+        msg.includes('not found') ||
         msg.includes('invalid-credential')
       ) {
-        setForgotError('No account found with this email. Please check your email or sign up.');
-      } else if (msg.includes('invalid-email')) {
-        setForgotError('Please enter a valid email address.');
-      } else if (msg.includes('too-many-requests')) {
-        setForgotError('Too many attempts. Please wait a moment before trying again.');
+        setForgotError('No account found with this email address. Please check your email or sign up first.');
       } else {
-        setForgotError(msg || 'Unable to send password reset email. Please try again.');
+        console.warn('Password reset notice:', msg);
+        if (msg.includes('invalid-email')) {
+          setForgotError('Please enter a valid email address.');
+        } else if (msg.includes('too-many-requests')) {
+          setForgotError('Too many attempts. Please wait a moment before trying again.');
+        } else {
+          setForgotError(msg || 'Unable to send password reset email. Please try again.');
+        }
       }
     } finally {
       setIsSendingReset(false);
@@ -578,9 +583,26 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 </p>
 
                 {forgotError && (
-                  <div className="p-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl text-xs text-[#991b1b] flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
-                    <span className="leading-snug">{forgotError}</span>
+                  <div className="p-3.5 bg-[#fef2f2] border border-[#fecaca] rounded-xl text-xs text-[#991b1b] space-y-1.5 animate-in fade-in duration-150">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
+                      <span className="leading-snug font-semibold">{forgotError}</span>
+                    </div>
+                    {(forgotError.includes('sign up') || forgotError.includes('Sign Up') || forgotError.includes('account')) && (
+                      <div className="pt-0.5 pl-6">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setShowForgotModal(false);
+                            setIsSignUp(true);
+                            setForgotError('');
+                          }}
+                          className="text-[#0c5963] hover:underline font-bold text-xs inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          Go to Sign Up &rarr;
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
 

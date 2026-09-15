@@ -857,8 +857,32 @@ export const AuthProvider = ({ children }) => {
         if (response.data?.success) {
           return true;
         }
+        if (response.data?.code === 'auth/user-not-found' || response.data?.success === false) {
+          const notFoundErr = new Error(response.data?.message || 'No account found with this email address. Please check your email or sign up first.');
+          notFoundErr.code = response.data?.code || 'auth/user-not-found';
+          setAuthError(notFoundErr.message);
+          throw notFoundErr;
+        }
       } catch (backendErr) {
-        console.warn('Backend custom reset email fallback to client Firebase:', backendErr?.message);
+        if (backendErr.code === 'auth/user-not-found' || backendErr.message?.includes('No account found')) {
+          throw backendErr;
+        }
+        const errStatus = backendErr.response?.status;
+        const errData = backendErr.response?.data;
+        const errMsg = errData?.message || backendErr.message || '';
+        if (
+          errStatus === 404 ||
+          errData?.code === 'auth/user-not-found' ||
+          errMsg.toLowerCase().includes('account') ||
+          errMsg.toLowerCase().includes('not found')
+        ) {
+          const notFoundErr = new Error(errMsg || 'No account found with this email address. Please check your email or sign up first.');
+          notFoundErr.code = 'auth/user-not-found';
+          setAuthError(notFoundErr.message);
+          throw notFoundErr;
+        }
+        console.warn('Backend custom reset email notice:', backendErr?.message);
+        throw backendErr;
       }
 
       // 2. Fallback to Firebase client if backend is temporarily unreachable
@@ -881,21 +905,25 @@ export const AuthProvider = ({ children }) => {
 
         const isRegistered = registeredUsers.includes(cleanEmail) || Boolean(registeredAccounts[cleanEmail]);
         if (!isRegistered) {
-          const notFoundErr = new Error('No account found with this email address. Please check your email or sign up.');
+          const notFoundErr = new Error('No account found with this email address. Please check your email or sign up first.');
           notFoundErr.code = 'auth/user-not-found';
           throw notFoundErr;
         }
         return true;
       }
     } catch (err) {
-      console.error('Password reset error:', err);
+      if (err.code !== 'auth/user-not-found' && !err.message?.includes('No account found')) {
+        console.warn('Password reset notice:', err?.message || err);
+      }
       let friendlyError = err.message || 'Failed to send password reset email';
       if (
         err.code === 'auth/user-not-found' ||
         err.code === 'auth/invalid-credential' ||
-        err.message?.includes('user-not-found')
+        err.message?.includes('user-not-found') ||
+        err.message?.includes('account') ||
+        err.message?.includes('not found')
       ) {
-        friendlyError = 'No account found with this email address. Please verify your email or sign up.';
+        friendlyError = 'No account found with this email address. Please check your email or sign up first.';
       } else if (err.code === 'auth/invalid-email') {
         friendlyError = 'Please enter a valid email address.';
       } else if (err.code === 'auth/too-many-requests') {

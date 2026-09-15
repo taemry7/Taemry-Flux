@@ -158,9 +158,9 @@ apiClient.interceptors.response.use(
       error.message ||
       'Network communication error';
     
-    // Log non-fatal warning for offline/transient network errors, error for HTTP status codes
-    if (!error.response) {
-      console.warn(`[API Network Notice] ${error.config?.method?.toUpperCase()} ${error.config?.url}: ${message} (Using resilient cached state)`);
+    // Log non-fatal warning for client validations (4xx) and offline/transient notices; error for 5xx server failures
+    if (!error.response || (error.response.status >= 400 && error.response.status < 500)) {
+      console.warn(`[API Notice] ${error.config?.method?.toUpperCase()} ${error.config?.url}: ${message}`);
     } else {
       console.error(`[API Error] ${error.config?.method?.toUpperCase()} ${error.config?.url}:`, message);
     }
