@@ -11,9 +11,12 @@ import { verifyToken } from '../middleware/auth.js';
 const router = express.Router();
 
 /**
- * Generate a consistent, readable referral code from user ID
+ * Generate a consistent, readable referral code from user ID or username
  */
-const getReferralCode = (uid, existingCode) => {
+const getReferralCode = (uid, existingCode, username) => {
+  if (username && typeof username === 'string' && username.trim()) {
+    return username.trim().replace(/^@/, '');
+  }
   if (existingCode) return existingCode;
   const cleanId = uid.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
   return `FLUX-${cleanId.substring(0, 6) || 'MEMBER'}`;
@@ -31,28 +34,34 @@ router.get('/info', verifyToken, async (req, res) => {
     const userDoc = await userRef.get();
 
     let userData = userDoc.exists ? userDoc.data() : {};
-    let referralCode = userData.referralCode;
+    
+    // Prioritize user's unique username for referral code & link
+    let cleanUsername = (userData.username || userData.displayName || userData.name || '').trim().replace(/^@/, '');
+    let referralCode = cleanUsername || userData.referralCode || getReferralCode(uid);
 
-    if (!referralCode) {
-      referralCode = getReferralCode(uid);
+    if (!userData.referralCode || (cleanUsername && userData.referralCode !== cleanUsername)) {
       await userRef.set({ referralCode }, { merge: true });
     }
 
-    // Query direct downlines (users whose referredBy == uid or referredBy == referralCode)
+    // Query direct downlines (users whose referredBy == uid, username, or referralCode)
     let directReferrals = [];
     try {
       const downlinesSnapshot = await db.collection('users').where('referredBy', '==', uid).get();
       let downlineDocs = downlinesSnapshot && !downlinesSnapshot.empty ? [...downlinesSnapshot.docs] : [];
 
-      if (referralCode && referralCode !== uid) {
-        const codeSnapshot = await db.collection('users').where('referredBy', '==', referralCode).get();
-        if (codeSnapshot && !codeSnapshot.empty) {
-          const existingIds = new Set(downlineDocs.map(d => d.id));
-          codeSnapshot.docs.forEach(d => {
-            if (!existingIds.has(d.id)) {
-              downlineDocs.push(d);
-            }
-          });
+      // Also check if users registered with username or referralCode
+      const queryCodes = [referralCode, cleanUsername, `@${cleanUsername}`].filter(Boolean);
+      for (const code of queryCodes) {
+        if (code !== uid) {
+          const codeSnapshot = await db.collection('users').where('referredBy', '==', code).get();
+          if (codeSnapshot && !codeSnapshot.empty) {
+            const existingIds = new Set(downlineDocs.map(d => d.id));
+            codeSnapshot.docs.forEach(d => {
+              if (!existingIds.has(d.id)) {
+                downlineDocs.push(d);
+              }
+            });
+          }
         }
       }
 
@@ -61,7 +70,7 @@ router.get('/info', verifyToken, async (req, res) => {
           const d = doc.data();
           return {
             id: doc.id,
-            name: d.name || 'Member',
+            name: d.name || d.username || 'Member',
             email: d.email || 'hidden@taemryflux.com',
             package: d.currentPackage || 'Bronze',
             lifetimeAds: Number(d.lifetimeAds) || 0,
@@ -85,6 +94,7 @@ router.get('/info', verifyToken, async (req, res) => {
     return res.json({
       success: true,
       referralCode,
+      username: cleanUsername || referralCode,
       referralLink,
       referralCount: totalReferrals,
       teamAdsCount,
@@ -165,6 +175,7 @@ router.post('/record-signup', async (req, res) => {
 
     let referrerDocRef = null;
     let docSnap = null;
+    const cleanUsername = cleanCode.replace(/^@/, '');
 
     // 1. Check direct doc ID match (e.g. if code is UID)
     const directDoc = await db.collection('users').doc(cleanCode).get();
@@ -172,17 +183,37 @@ router.post('/record-signup', async (req, res) => {
       referrerDocRef = directDoc.ref;
       docSnap = directDoc;
     } else {
-      // 2. Check referralCode field match
-      const snap = await db.collection('users').where('referralCode', '==', cleanCode).limit(1).get();
-      if (!snap.empty) {
-        referrerDocRef = snap.docs[0].ref;
-        docSnap = snap.docs[0];
+      // 2. Check username match (both without @ and with @)
+      const snapUser = await db.collection('users').where('username', '==', cleanUsername).limit(1).get();
+      if (!snapUser.empty) {
+        referrerDocRef = snapUser.docs[0].ref;
+        docSnap = snapUser.docs[0];
       } else {
-        // 3. Check uppercase referralCode field match
-        const snapUpper = await db.collection('users').where('referralCode', '==', cleanCode.toUpperCase()).limit(1).get();
-        if (!snapUpper.empty) {
-          referrerDocRef = snapUpper.docs[0].ref;
-          docSnap = snapUpper.docs[0];
+        const snapUserAt = await db.collection('users').where('username', '==', `@${cleanUsername}`).limit(1).get();
+        if (!snapUserAt.empty) {
+          referrerDocRef = snapUserAt.docs[0].ref;
+          docSnap = snapUserAt.docs[0];
+        } else {
+          // 3. Check referralCode field match
+          const snap = await db.collection('users').where('referralCode', '==', cleanCode).limit(1).get();
+          if (!snap.empty) {
+            referrerDocRef = snap.docs[0].ref;
+            docSnap = snap.docs[0];
+          } else {
+            // 4. Check uppercase referralCode field match
+            const snapUpper = await db.collection('users').where('referralCode', '==', cleanCode.toUpperCase()).limit(1).get();
+            if (!snapUpper.empty) {
+              referrerDocRef = snapUpper.docs[0].ref;
+              docSnap = snapUpper.docs[0];
+            } else {
+              // 5. Check displayName or name match
+              const snapName = await db.collection('users').where('name', '==', cleanCode).limit(1).get();
+              if (!snapName.empty) {
+                referrerDocRef = snapName.docs[0].ref;
+                docSnap = snapName.docs[0];
+              }
+            }
+          }
         }
       }
     }

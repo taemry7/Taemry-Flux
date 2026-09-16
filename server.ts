@@ -194,6 +194,19 @@ async function startServer() {
     res.send('google-site-verification: googlee39205dcefb8c59c.html');
   });
 
+  // Short vanity referral link redirect:
+  // 1. /ref/:username (e.g. /ref/taemry or /ref/@taemry -> /#/login/signup?ref=taemry)
+  // 2. Direct /@username (e.g. /@taemry -> /#/login/signup?ref=taemry)
+  app.get(['/ref/:username', '/ref', '/@:username'], (req, res) => {
+    const usernameParam = (req.params as any)?.username || (req.query as any)?.u || '';
+    const cleanUser = encodeURIComponent(String(usernameParam).replace(/^@/, '').trim());
+    if (cleanUser) {
+      res.redirect(`/#/login/signup?ref=${cleanUser}`);
+    } else {
+      res.redirect('/#/login/signup');
+    }
+  });
+
   // Vite middleware for development / static serving in production
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');

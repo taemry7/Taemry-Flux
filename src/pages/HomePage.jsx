@@ -52,9 +52,9 @@ export default function HomePage({ onNavigate }) {
       }
     } catch {}
     return {
-      minedTflx: 283.98,
-      isMiningActive: true,
-      sessionStartTime: Date.now() - (1.5 * 60 * 60 * 1000),
+      minedTflx: 0.00,
+      isMiningActive: false,
+      sessionStartTime: 0,
       sessionDurationMs: 12 * 60 * 60 * 1000,
       effectiveHashrate: 16.0,
     };

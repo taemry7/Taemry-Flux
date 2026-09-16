@@ -148,7 +148,9 @@
             document.documentElement.classList.add('dark');
             document.body && document.body.classList.add('dark');
           }
-          // Immediate referral code capture from URL (?ref=CODE or #/?ref=CODE) into localStorage
+          // Immediate referral code capture from URL:
+          // 1. Query parameter: ?ref=CODE or #/?ref=CODE
+          // 2. Direct path: /@username or /ref/@username
           var searchParams = new URLSearchParams(window.location.search);
           var ref = searchParams.get('ref') || searchParams.get('referral');
           if (!ref && window.location.hash) {
@@ -157,11 +159,17 @@
               ref = hashMatch[1];
             }
           }
+          if (!ref && window.location.pathname) {
+            var pathMatch = window.location.pathname.match(/^\/(?:ref\/)?@([a-zA-Z0-9_]+)/i);
+            if (pathMatch && pathMatch[1]) {
+              ref = pathMatch[1];
+            }
+          }
           if (ref) {
-            var cleanRef = decodeURIComponent(ref).trim();
+            var cleanRef = decodeURIComponent(ref).replace(/^@/, '').trim();
             localStorage.setItem('referralCode', cleanRef);
             // If opening via referral link, route directly to sign up page
-            if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/' || window.location.hash === '#/home' || window.location.hash.indexOf('?') !== -1) {
+            if (!window.location.hash || window.location.hash === '#' || window.location.hash === '#/' || window.location.hash === '#/home' || window.location.hash.indexOf('?') !== -1 || window.location.pathname.indexOf('@') !== -1) {
               window.location.hash = '#/login/signup?ref=' + encodeURIComponent(cleanRef);
             }
           }

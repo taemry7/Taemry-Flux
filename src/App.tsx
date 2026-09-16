@@ -51,13 +51,15 @@ function AppContent() {
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
     const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
 
-    // Check if referral link was clicked in query or hash
+    // Check if referral link was clicked in query or hash or @username path
     let hasReferral = false;
     try {
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get('ref') || searchParams.get('referral')) {
         hasReferral = true;
       } else if (window.location.hash && /[?&]ref=/i.test(window.location.hash)) {
+        hasReferral = true;
+      } else if (window.location.pathname && /^\/(?:ref\/)?@([a-zA-Z0-9_]+)/i.test(window.location.pathname)) {
         hasReferral = true;
       }
     } catch {}

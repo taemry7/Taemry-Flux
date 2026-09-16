@@ -43,9 +43,6 @@ export const getPersistentRegisteredEmails = () => {
   } catch (e) {}
   return [
     'mistrtaimoor@gmail.com',
-    'mistrtaimur7@gmail.com',
-    'taemryflux@gmail.com',
-    'admin@taemryflux.com',
   ];
 };
 

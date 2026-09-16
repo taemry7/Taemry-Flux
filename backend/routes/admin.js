@@ -1671,38 +1671,31 @@ router.post('/reset-system-data', verifyAdmin, async (req, res) => {
     const db = getDb();
     if (db && db.data && typeof db.data.delete === 'function') {
       const keysToDelete = [];
-      for (const [key] of db.data.entries()) {
+      for (const [key, val] of db.data.entries()) {
         if (
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
           key.startsWith('auditLogs/') ||
           key.startsWith('supportTickets/') ||
           key.startsWith('transactions/') ||
-          (key.startsWith('users/') && (
-            key === 'users/admin_taemry' ||
-            key.includes('user_tariq') ||
-            key.includes('user_sara') ||
-            key.includes('user_bilal') ||
-            key.includes('user_hamza') ||
-            key.includes('demo-user-1') ||
-            key.includes('transactions/')
-          ))
+          key.startsWith('cloudMiner/') ||
+          (key.startsWith('users/') && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (val?.email !== 'mistrtaimoor@gmail.com'))
         ) {
           keysToDelete.push(key);
         }
       }
       keysToDelete.forEach((k) => db.data.delete(k));
 
-      // Also ensure any document containing mistrtaemry@gmail.com is deleted
+      // Also ensure any non-mistrtaimoor@gmail.com user document is deleted
       for (const [key, val] of db.data.entries()) {
-        if (key.startsWith('users/') && (val?.email === 'mistrtaemry@gmail.com' || val?.uid === 'admin_taemry')) {
+        if (key.startsWith('users/') && val?.email && val.email.toLowerCase() !== 'mistrtaimoor@gmail.com') {
           db.data.delete(key);
         }
       }
 
-      // Reset all remaining users to 0 balance & clean state
+      // Reset mistrtaimoor user to 0 balance & clean state
       for (const [key, val] of db.data.entries()) {
-        if (key.startsWith('users/')) {
+        if (key.startsWith('users/') && (val?.email === 'mistrtaimoor@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')) {
           db.data.set(key, {
             ...val,
             walletBalance: 0,
@@ -1724,7 +1717,7 @@ router.post('/reset-system-data', verifyAdmin, async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'All balances reset to 0, dummy records removed, and all deposit/withdrawal records cleared successfully.',
+      message: 'Complete reset applied: all bots removed, cloud mining reset, and only mistrtaimoor@gmail.com preserved with clean balance.',
     });
   } catch (err) {
     console.error('Error in /api/admin/reset-system-data:', err);

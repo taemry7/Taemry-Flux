@@ -182,7 +182,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     return () => clearInterval(interval);
   }, [waitingForVerification, pendingVerificationEmail, onNavigate]);
 
-  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured, adminTestLogin, userTestLogin } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -539,7 +539,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] flex items-center gap-1.5">
-                  <span>Referred by</span>
+                  <span>Sponsor Username</span>
                   {isReferralLocked && (
                     <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#2dd4bf] text-[10px] font-bold rounded-full border border-[#b8ded7] dark:border-[#173740]">
                       <Lock className="w-2.5 h-2.5" /> Frozen Sponsor
@@ -565,7 +565,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       }
                     } catch {}
                   }}
-                  placeholder="Enter referral code"
+                  placeholder="Enter sponsor username (e.g. taemry)"
                   className={`w-full px-4 py-3 text-sm rounded-xl transition-all ${
                     isReferralLocked
                       ? 'bg-[#f1eee7] dark:bg-[#081a20] border border-[#d2cbbe] dark:border-[#1f4049] text-[#0c5963] dark:text-[#2dd4bf] font-mono font-bold cursor-not-allowed select-none pr-10'
@@ -724,57 +724,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </button>
             </p>
           )}
-        </div>
-
-        {/* Simple Test Mode for User Panel & Admin Panel */}
-        <div className="mt-4 pt-3.5 border-t border-[#ebe4d6] flex flex-wrap items-center justify-center gap-2">
-          <button
-            id="btn-login-user-test-mode"
-            type="button"
-            onClick={async () => {
-              try {
-                if (userTestLogin) {
-                  await userTestLogin();
-                }
-                if (onNavigate) {
-                  onNavigate('dashboard');
-                } else {
-                  window.location.hash = '#/dashboard';
-                }
-              } catch (e) {
-                if (onNavigate) onNavigate('dashboard');
-                else window.location.hash = '#/dashboard';
-              }
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#eef7f6] hover:bg-[#dff0ee] text-[#0c5963] text-xs font-semibold transition cursor-pointer border border-[#cbe4e1] shadow-2xs"
-          >
-            <User className="w-3.5 h-3.5 text-[#0c5963]" />
-            <span>User Panel (Test Mode)</span>
-          </button>
-
-          <button
-            id="btn-login-admin-test-mode"
-            type="button"
-            onClick={async () => {
-              try {
-                if (adminTestLogin) {
-                  await adminTestLogin();
-                }
-                if (onNavigate) {
-                  onNavigate('admin');
-                } else {
-                  window.location.hash = '#/admin';
-                }
-              } catch (e) {
-                if (onNavigate) onNavigate('admin');
-                else window.location.hash = '#/admin';
-              }
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f2ede2] hover:bg-[#e8e1d3] text-[#0c5963] text-xs font-semibold transition cursor-pointer border border-[#d8d1c3] shadow-2xs"
-          >
-            <Shield className="w-3.5 h-3.5 text-[#0c5963]" />
-            <span>Admin Panel (Test Mode)</span>
-          </button>
         </div>
       </div>
 

@@ -18,7 +18,7 @@
       "maxWithdrawal": 1000,
       "withdrawalCooldownMinutes": 5,
       "referralRequired": true,
-      "updatedAt": "2026-09-12T00:00:00.000Z"
+      "updatedAt": "2026-09-16T00:00:00.000Z"
     }
   ],
   [
@@ -144,39 +144,11 @@
       "isEligible": false,
       "uid": "RNva69V1XoMwaxGgVaKtJ4jXfYY2",
       "email": "mistrtaimoor@gmail.com",
-      "name": "Taimur robert",
+      "name": "Taimoor",
+      "displayName": "Taimoor",
       "createdAt": "2026-09-12T20:11:05.048Z",
-      "lastLoginAt": "2026-09-15T17:01:45.969Z",
+      "lastLoginAt": "2026-09-16T21:00:00.000Z",
       "photoURL": null
-    }
-  ],
-  [
-    "users/user_test_123",
-    {
-      "lastDepositRequestTime": "2026-09-14T04:47:25.650Z"
-    }
-  ],
-  [
-    "users/google_99887766",
-    {
-      "uid": "google_99887766",
-      "email": "testgoogle@taemry.com",
-      "name": "Test Google User",
-      "displayName": "Test Google User",
-      "photoURL": null,
-      "currentPackage": "None",
-      "walletBalance": 0,
-      "referralCount": 0,
-      "lifetimeAds": 0,
-      "dailyAdCount": 0,
-      "teamAdsCount": 0,
-      "totalEarned": 0,
-      "isEligible": false,
-      "isBlocked": false,
-      "referredBy": null,
-      "createdAt": "2026-09-15T17:01:40.824Z",
-      "lastLoginAt": "2026-09-15T17:01:43.400Z",
-      "isAdmin": false
     }
   ]
 ]

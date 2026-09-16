@@ -124,6 +124,34 @@ export default function AdminMaintenance() {
     }
   };
 
+  const handleFullSystemReset = async () => {
+    const confirmation = window.prompt(
+      'Type RESET to completely purge all fake bot users, clear deposits/withdrawals, reset cloud mining, and keep only mistrtaimoor@gmail.com:'
+    );
+    if (confirmation !== 'RESET') {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setFeedback(null);
+      const res = await apiPost('/admin/reset-system-data');
+      if (res.success) {
+        setFeedback({
+          type: 'success',
+          text: res.message || 'Complete system reset executed! All fake bots and test records purged. Only mistrtaimoor@gmail.com preserved.',
+        });
+        fetchUsers();
+      } else {
+        setFeedback({ type: 'error', text: res.message || 'System reset failed.' });
+      }
+    } catch (err) {
+      setFeedback({ type: 'error', text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleResetLimit = async (uid) => {
     const targetUid = uid || selectedUid;
     if (!targetUid) {
@@ -316,6 +344,36 @@ export default function AdminMaintenance() {
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>{loading ? 'Testing...' : 'Test Error Alert Email'}</span>
+          </button>
+        </div>
+
+        {/* Card 5: Full Production System & Bot Reset */}
+        <div className="bg-red-950/20 border border-red-900/40 rounded-2xl p-5 flex flex-col justify-between md:col-span-2">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider flex items-center gap-1.5">
+                <ShieldCheck className="w-3.5 h-3.5 text-red-400" />
+                PRODUCTION PURGE & BOT RESET
+              </span>
+              <div className="p-2 bg-red-950/80 text-red-400 rounded-lg border border-red-800/40">
+                <Trash2 className="w-4 h-4" />
+              </div>
+            </div>
+            <h3 className="text-base font-bold text-white mb-1">
+              Reset System & Purge Fake Bot Users
+            </h3>
+            <p className="text-xs text-slate-400 leading-relaxed mb-4">
+              Completely purges all fake bots, test accounts, deposit/withdrawal ledgers, transactions, and cloud mining data. Only the verified owner account (<strong className="text-amber-400">mistrtaimoor@gmail.com</strong>) is preserved with clean balances and zero pre-seed data.
+            </p>
+          </div>
+
+          <button
+            onClick={handleFullSystemReset}
+            disabled={loading}
+            className="w-full py-2.5 px-4 bg-red-600 hover:bg-red-500 text-white font-semibold rounded-xl text-xs transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 shadow-lg shadow-red-950/50"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>{loading ? 'Purging System...' : 'Execute Complete System Reset (Keep mistrtaimoor@gmail.com Only)'}</span>
           </button>
         </div>
       </div>

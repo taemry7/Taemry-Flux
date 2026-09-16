@@ -33,7 +33,13 @@ import {
   Send,
   Clock,
   ExternalLink,
-  Gift
+  Gift,
+  Pickaxe,
+  Flame,
+  Zap,
+  TrendingUp,
+  RotateCcw,
+  Calendar
 } from 'lucide-react';
 import apiClient from '../api/client';
 import Logo from '../components/Logo';
@@ -55,10 +61,10 @@ export default function WhitepaperPage({ onNavigate }) {
   // Default whitepaper content state
   const [data, setData] = useState({
     title: 'TAEMRY FLUX Official Protocol Whitepaper',
-    subtitle: 'Decentralized Reward-Based Advertising & Team Distribution Network',
-    version: '2.0.0',
-    lastUpdated: 'March 2025',
-    executiveSummary: 'TAEMRY FLUX is a decentralized, reward-based advertising and referral growth ecosystem. Members activate advertising allocation contracts from their wallet balances, unlock consecutive daily ad streams delivering up to 20% daily returns, and participate in a 5-tier direct downline commission structure alongside direct referral Team Rewards.',
+    subtitle: 'Decentralized Reward-Based Advertising, Cloud Hash Miner & TFLX Network',
+    version: '2.5.0',
+    lastUpdated: 'March 2026',
+    executiveSummary: 'TAEMRY FLUX is a decentralized ecosystem uniting reward-based verified advertising, continuous 12-hour tap-to-mine Cloud Hash Mining, and TFLX Token network distribution. Members activate advertising allocation contracts to unlock guaranteed daily ad returns up to 20%, participate in 5-tier direct downline commissions and Team Rewards, and power their cloud mining engines with pre-staking yields and guild multipliers.',
     packagesNote: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.',
     teamRewards: [
       { id: 'tr-5', referrals: 5, bonus: 1.00, label: '5 Referrals', extraInfo: 'Invite 5 members from your link' },
@@ -129,6 +135,22 @@ export default function WhitepaperPage({ onNavigate }) {
       {
         q: 'Q12. What are the consequences of using VPNs or multiple accounts?',
         a: 'Strictly prohibited. Operating VPNs, proxy tunnels, headless automation bots, or multi-accounting results in immediate, irreversible suspension and forfeiture of balances.'
+      },
+      {
+        q: 'Q13. What is the TAEMRY FLUX Cloud Miner and how does it work?',
+        a: 'The TAEMRY FLUX Cloud Miner is a decentralized tap-to-mine hashrate engine operating on a 12-hour continuous cycle. Members activate a 12h session by tapping the miner core, generating TFLX tokens at a base speed of 16.0 TFLX/hour without consuming phone battery or device hardware.'
+      },
+      {
+        q: 'Q14. What are the prerequisites to activate Cloud Mining?',
+        a: 'An active advertising package contract (Bronze $1 to Apex $1,000) is required to unlock full Cloud Miner eligibility. Once a package is active, cloud mining and token accumulation run continuously.'
+      },
+      {
+        q: 'Q15. How does Pre-Staking & Guild Boosting increase mining speed?',
+        a: 'Members can lock future TFLX tokens (up to 5 years and 100% allocation) to unlock up to a +250% Pre-Staking hashrate boost. Additionally, active downline members in your 2-Tier Guild add extra hashrate: +4.0 TFLX/h per Tier 1 active miner and +0.8 TFLX/h per Tier 2 active miner.'
+      },
+      {
+        q: 'Q16. What are Day-Offs and the Slashing mechanism in Cloud Mining?',
+        a: 'If a member fails to re-tap the miner within the grace period after their 12-hour session concludes, inactivity slashing reduces unverified tokens. However, earned Day-Off shields automatically protect your streak and mined balance from penalties.'
       }
     ],
     supportContact: {
@@ -276,11 +298,12 @@ export default function WhitepaperPage({ onNavigate }) {
               { label: '1. Welcome', id: 'sec-welcome' },
               { label: '2. Getting Started', id: 'sec-get-started' },
               { label: '3. Packages & 20% Returns', id: 'sec-packages' },
-              { label: '4. Team Rewards Ladder', id: 'sec-team-rewards' },
-              { label: '5. 5-Level Commissions', id: 'sec-commissions' },
-              { label: '6. Withdrawal Policy', id: 'sec-withdrawal-rules' },
-              { label: '7. Payment Channels', id: 'sec-methods' },
-              { label: '8. FAQs & Rules', id: 'sec-faqs' },
+              { label: '4. Cloud Miner & TFLX', id: 'sec-cloud-miner' },
+              { label: '5. Team Rewards Ladder', id: 'sec-team-rewards' },
+              { label: '6. 5-Level Commissions', id: 'sec-commissions' },
+              { label: '7. Withdrawal Policy', id: 'sec-withdrawal-rules' },
+              { label: '8. Payment Channels', id: 'sec-methods' },
+              { label: '9. FAQs & Rules', id: 'sec-faqs' },
             ].map((item) => (
               <button
                 key={item.id}
@@ -409,10 +432,101 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 4: TEAM REWARDS LADDER (REPLACES PERSONAL ADS) */}
+          {/* SECTION 4: CLOUD HASH MINER & TFLX NETWORK */}
+          <section id="sec-cloud-miner" className="scroll-mt-24 space-y-4">
+            <div className="flex items-center gap-2.5">
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white font-bold text-xs shadow-xs">
+                4
+              </span>
+              <h2 className="text-xl font-bold text-[#093e4a] dark:text-white flex items-center gap-2">
+                <span>TAEMRY CLOUD HASH MINER &amp; TFLX NETWORK</span>
+                <span className="text-[11px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-500/15 text-[#d97706] border border-amber-500/30">
+                  Tap-to-Mine
+                </span>
+              </h2>
+            </div>
+
+            <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
+              <p className="leading-relaxed">
+                The <strong>TAEMRY FLUX Cloud Miner</strong> is a decentralized, server-authoritative hashrate engine engineered to distribute native <strong>TFLX Tokens</strong> to active community members. Unlike resource-heavy proof-of-work mining, the cloud miner operates purely on cloud servers without draining mobile battery or hardware resources.
+              </p>
+
+              {/* Core Feature Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-1.5">
+                  <div className="flex items-center gap-2 text-[#d97706] dark:text-[#f59e0b] font-bold text-xs uppercase tracking-wider">
+                    <Clock className="w-4 h-4" />
+                    <span>12-Hour Mining Cycles</span>
+                  </div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Tap-to-Mine Architecture</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
+                    Each mining session runs for 12 continuous hours with an active status countdown. Once a cycle completes, a single tap reactivates cloud hashrate.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-1.5">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
+                    <Zap className="w-4 h-4" />
+                    <span>16.0 TFLX/h Base Rate</span>
+                  </div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Verified Yield Stream</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
+                    Base yield starts at 16.0 TFLX per hour (192 TFLX/day). Active advertising package contracts are required to activate and maintain mining eligibility.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-1.5">
+                  <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400 font-bold text-xs uppercase tracking-wider">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Up to +250% Boost</span>
+                  </div>
+                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">Pre-Staking Multiplier</div>
+                  <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
+                    Commit up to 100% token allocation and 1 to 5 years duration to multiply your daily mining speed by up to an additional +250%.
+                  </p>
+                </div>
+              </div>
+
+              {/* Advanced Mechanics: Guilds, Protection & Check-Ins */}
+              <div className="p-4 rounded-2xl bg-[#fffbeb]/80 dark:bg-[#18130a] border border-[#fde68a] dark:border-[#382613] space-y-3">
+                <h4 className="font-bold text-xs uppercase tracking-wider text-[#92400e] dark:text-[#f59e0b] flex items-center gap-1.5">
+                  <Pickaxe className="w-4 h-4 text-[#d97706]" />
+                  <span>Cloud Miner Specifications &amp; Operational Policies</span>
+                </h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-[#78350f] dark:text-[#fde68a]">
+                  <div className="p-3 rounded-xl bg-white/80 dark:bg-[#0a1b22] border border-[#fde68a]/70 dark:border-[#422d10]">
+                    <strong className="block text-[#92400e] dark:text-[#f59e0b] font-black mb-1">
+                      1. Two-Tier Guild Mining Boost
+                    </strong>
+                    Invite teammates to build a 2-Tier Mining Guild. Each active Tier 1 miner adds <strong>+4.0 TFLX/h</strong>, and each active Tier 2 miner adds <strong>+0.8 TFLX/h</strong> to your live hashrate.
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/80 dark:bg-[#0a1b22] border border-[#fde68a]/70 dark:border-[#422d10]">
+                    <strong className="block text-[#92400e] dark:text-[#f59e0b] font-black mb-1">
+                      2. Slashing &amp; Day-Off Protection
+                    </strong>
+                    Inactivity after a completed 12h session incurs gradual coin slashing. However, daily streak check-ins award <strong>Day-Off Shields</strong> that automatically prevent penalties during offline days.
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/80 dark:bg-[#0a1b22] border border-[#fde68a]/70 dark:border-[#422d10]">
+                    <strong className="block text-[#92400e] dark:text-[#f59e0b] font-black mb-1">
+                      3. 7-Day Consecutive Check-In
+                    </strong>
+                    Maintain consecutive daily check-ins to claim bonus TFLX tokens (Day 1: +2 TFLX up to Day 7: +25 TFLX + extra Day-Off Shield).
+                  </div>
+                  <div className="p-3 rounded-xl bg-white/80 dark:bg-[#0a1b22] border border-[#fde68a]/70 dark:border-[#422d10]">
+                    <strong className="block text-[#92400e] dark:text-[#f59e0b] font-black mb-1">
+                      4. Halving Epochs &amp; Token Scarcity
+                    </strong>
+                    To safeguard token economics, hashrate undergoes scheduled halving epochs as total community milestones are reached, ensuring sustainable long-term value.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* SECTION 5: TEAM REWARDS LADDER */}
           <section id="sec-team-rewards" className="scroll-mt-24 space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">4</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">5</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
                 TEAM REWARDS LADDER (DIRECT REFERRAL CASH BONUSES)
               </h2>
@@ -481,10 +595,10 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 5: 5-LEVEL COMMISSIONS */}
+          {/* SECTION 6: 5-LEVEL COMMISSIONS */}
           <section id="sec-commissions" className="scroll-mt-24 space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">5</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">6</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
                 5-LEVEL DOWNLINE PACKAGE COMMISSIONS
               </h2>
@@ -512,10 +626,10 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 6: WITHDRAWAL RULES */}
+          {/* SECTION 7: WITHDRAWAL RULES */}
           <section id="sec-withdrawal-rules" className="scroll-mt-24 space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">6</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">7</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
                 WITHDRAWAL RULES & COMPLIANCE
               </h2>
@@ -540,10 +654,10 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 7: PAYMENT CHANNELS & EXCHANGE RATE */}
+          {/* SECTION 8: PAYMENT CHANNELS & EXCHANGE RATE */}
           <section id="sec-methods" className="scroll-mt-24 space-y-3">
             <div className="flex items-center gap-2.5">
-              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">7</span>
+              <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">8</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
                 DEPOSIT & WITHDRAWAL PAYMENT CHANNELS
               </h2>
@@ -577,7 +691,7 @@ export default function WhitepaperPage({ onNavigate }) {
             </div>
           </section>
 
-          {/* SECTION 8: FREQUENTLY ASKED QUESTIONS (ADMIN EDITABLE) */}
+          {/* SECTION 9: FREQUENTLY ASKED QUESTIONS (ADMIN EDITABLE) */}
           <section id="sec-faqs" className="scroll-mt-24 pt-8 border-t border-[#ece5d8] dark:border-[#173740]">
             <div className="text-center mb-8">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#0c5963]/10 dark:bg-[#38bdf8]/10 text-[#0c5963] dark:text-[#38bdf8] mb-2">

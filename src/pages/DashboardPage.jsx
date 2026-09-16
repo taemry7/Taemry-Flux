@@ -103,7 +103,7 @@ function IneligibleGate({ featureName, onSelectTab }) {
 export default function DashboardPage({
   activeTab: propActiveTab = 'overview',
   onSelectTab = (_tab) => {},
-  onNavigate = (_page, _tab) => {}
+  onNavigate = (_page, _tab) => {},
 }) {
   const toast = useToast();
   const { currentUser, userStats, updateLocalStats, fetchUserStats } = useAuth();
@@ -324,15 +324,6 @@ export default function DashboardPage({
                   <h1 className="text-2xl sm:text-3xl font-bold text-[#09353e] dark:text-[#f1f5f9]">
                     Welcome Back, {userFirstName}
                   </h1>
-                  {currentUser?.uid === 'user_taemry_test' && (
-                    <span
-                      id="badge-user-test-mode"
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold"
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                      <span>USER TEST MODE</span>
-                    </span>
-                  )}
                 </div>
                 <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] mt-1">
                   Real-time protected balance, verified earnings, and instant fund management.

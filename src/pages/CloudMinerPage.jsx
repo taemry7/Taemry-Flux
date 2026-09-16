@@ -93,7 +93,7 @@ export default function CloudMinerPage({ onNavigate }) {
         }
 
         const existing = Number(parsed.minedTflx);
-        const baseMined = (!isNaN(existing) && existing >= 283.98) ? existing : 283.98;
+        const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 0;
         return {
           ...parsed,
           minedTflx: Number((baseMined + addedCoins).toFixed(2)),
@@ -104,23 +104,23 @@ export default function CloudMinerPage({ onNavigate }) {
       console.error('Failed to parse miner state:', e);
     }
 
-    // Default 12-hour session (started 1.5 hours ago so it starts in active Green state)
+    // Default 12-hour session (clean initial reset state)
     const now = Date.now();
     return {
-      minedTflx: 283.98,
-      isMiningActive: true,
-      sessionStartTime: now - (1.5 * 60 * 60 * 1000), // 1.5h in -> ~10.5h remaining (Green phase)
+      minedTflx: 0.00,
+      isMiningActive: false,
+      sessionStartTime: 0,
       sessionDurationMs: 12 * 60 * 60 * 1000, // 12 hours
       committedYears: 0,
       committedAllocation: 0,
       preStakingBoost: 0,
-      tier1Active: 2,
-      tier1Total: 3,
-      tier2Active: 4,
-      tier2Total: 6,
-      dayOffsCount: 2,
-      streakDays: 4,
-      claimedCheckInDays: [1, 2, 3],
+      tier1Active: 0,
+      tier1Total: 0,
+      tier2Active: 0,
+      tier2Total: 0,
+      dayOffsCount: 0,
+      streakDays: 0,
+      claimedCheckInDays: [],
       slashedCoins: 0,
       lastSyncTime: now,
       lastPingTime: 0,
