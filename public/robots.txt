@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /favicon.ico
+Allow: /taemry-logo.svg
+Allow: /favicon*.png
+Allow: /pwa*.png
+
+Sitemap: https://www.taemryflux.online/sitemap.xml

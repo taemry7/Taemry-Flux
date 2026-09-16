@@ -163,6 +163,28 @@ async function startServer() {
     });
   });
 
+  // Dedicated Crawlers & Favicon Endpoints (Prevents SPA fallback from ever serving HTML to Googlebot)
+  app.get('/favicon.ico', (req, res) => {
+    const icoPath = path.join(process.cwd(), 'public', 'favicon.ico');
+    res.setHeader('Content-Type', 'image/x-icon');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.sendFile(icoPath);
+  });
+
+  app.get('/robots.txt', (req, res) => {
+    const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.sendFile(robotsPath);
+  });
+
+  app.get('/sitemap.xml', (req, res) => {
+    const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.sendFile(sitemapPath);
+  });
+
   // Vite middleware for development / static serving in production
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');

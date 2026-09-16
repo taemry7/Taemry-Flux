@@ -193,6 +193,16 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **SELF-CONTAINED STABILITY**: All features (Live Leaderboard real-time engine, ads engine, commission calculations, deposit gateways, withdrawal validation, and user session integrity) are fully stabilized and preserved in their current working state.
 - Auto-reverting, resetting, or making unsolicited modifications is strictly prohibited ("khud ba khud changing bilkul mana hai").
 
+## STRICT INVARIANT: Search Engine Optimization & Google Search Favicon (PERMANENT)
+- **Official Meta Description**:
+  `"Decentralized advertising & cloud mining platform. Watch daily ads, activate 12-hour cloud miner sessions, earn package yields, and track real-time wallet earnings."`
+  Synchronized across `index.html`, `metadata.json`, and `public/manifest.json`.
+- **Favicon & Crawler Asset Lock**:
+  - `public/favicon.ico` (multi-size 64x64, 48x48, 32x32, 16x16 MS Windows icon resource)
+  - `public/favicon-48x48.png` & `public/favicon-96x96.png` (exact Google Search guidelines multiples of 48px square)
+  - `public/robots.txt` & `public/sitemap.xml` with Googlebot-Favicon crawler permissions
+  - `server.ts` explicit crawler routes ensuring `/favicon.ico` never falls back to SPA HTML.
+
 
 
 

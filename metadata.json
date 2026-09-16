@@ -1,6 +1,6 @@
 {
   "name": "TAEMRY FLUX",
-  "description": "Reward-based advertising platform featuring daily views, packages, wallet tracking, and secure Firebase authentication.",
+  "description": "Decentralized advertising & cloud mining platform. Watch daily ads, activate 12-hour cloud miner sessions, earn package yields, and track real-time wallet earnings.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
