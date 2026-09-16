@@ -33,6 +33,8 @@ export default function HomePage({ onNavigate }) {
   const [openFaq, setOpenFaq] = useState(null);
   const [heroCardMode, setHeroCardMode] = useState('ads'); // 'ads' | 'miner'
   const [cardSplash, setCardSplash] = useState(null);
+  const [packagesCardMode, setPackagesCardMode] = useState('ads'); // 'ads' | 'miner'
+  const [packagesCardSplash, setPackagesCardSplash] = useState(null);
 
   const handleHeroModeToggle = (e, mode) => {
     if (mode === heroCardMode) return;
@@ -46,6 +48,20 @@ export default function HomePage({ onNavigate }) {
       y,
     });
     setHeroCardMode(mode);
+  };
+
+  const handlePackagesCardModeToggle = (e, mode) => {
+    if (mode === packagesCardMode) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX ? e.clientX - rect.left : rect.width / 2;
+    const y = e.clientY ? e.clientY - rect.top : rect.height / 2;
+    setPackagesCardSplash({
+      id: Date.now() + Math.random(),
+      mode,
+      x,
+      y,
+    });
+    setPackagesCardMode(mode);
   };
 
   const handleFilterToggle = (e, mode) => {
@@ -763,193 +779,432 @@ export default function HomePage({ onNavigate }) {
             </p>
           </div>
 
-          {/* Dual Cards Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
-            {/* Card 1: Watch Ads */}
-            <div className="rounded-3xl p-6 sm:p-8 bg-white border border-[#d2ebe5] shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-[#0c5963]/50 transition-all duration-300">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-teal-100/50 via-emerald-50/20 to-transparent rounded-bl-full pointer-events-none" />
-              
-              <div>
-                {/* Header Badge */}
-                <div className="flex items-center justify-between gap-2 mb-5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider border border-emerald-200">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    Daily Active Yield
-                  </span>
-                  <span className="text-xs font-extrabold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full">
-                    20% Guaranteed Daily ROI
-                  </span>
-                </div>
+          {/* Dual Mode Switcher & Unified Engine Card Container */}
+          <div className="max-w-[560px] w-full mx-auto flex flex-col items-center">
+            {/* Dual Switcher Controls (Watch Ads vs Cloud Miner) */}
+            <div className="relative inline-flex p-1 rounded-2xl bg-white/90 dark:bg-[#0a1b22]/90 border border-[#e4ded2] dark:border-[#173740] shadow-sm mb-6 backdrop-blur-xs overflow-hidden">
+              {/* Fluid circular splash wave on click */}
+              <AnimatePresence>
+                {packagesCardSplash && (
+                  <motion.span
+                    key={packagesCardSplash.id}
+                    initial={{ scale: 0, opacity: 0.85, filter: 'blur(0px)' }}
+                    animate={{ scale: 5, opacity: 0, filter: 'blur(16px)' }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    style={{
+                      left: packagesCardSplash.x,
+                      top: packagesCardSplash.y,
+                    }}
+                    className={`pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full w-28 h-28 ${
+                      packagesCardSplash.mode === 'ads'
+                        ? 'bg-gradient-to-r from-[#0c5963] to-[#10b981]'
+                        : 'bg-gradient-to-r from-[#d97706] to-[#ea580c]'
+                    }`}
+                  />
+                )}
+              </AnimatePresence>
 
-                {/* Title & Icon */}
-                <div className="flex items-start gap-3.5 mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0c5963] to-[#08424b] text-white flex items-center justify-center shrink-0 shadow-md">
-                    <Tv className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-[#09353e] group-hover:text-[#0c5963] transition-colors">
-                      Watch & Earn: Guaranteed Daily Cash
-                    </h3>
-                    <p className="text-xs font-semibold text-[#0c5963]">
-                      200 Daily Sponsor Ads • Instant Wallet Synchronization
-                    </p>
-                  </div>
-                </div>
+              {/* Watch Ads Toggle Button */}
+              <button
+                type="button"
+                id="btn-packages-mode-ads"
+                onClick={(e) => handlePackagesCardModeToggle(e, 'ads')}
+                className={`relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
+                  packagesCardMode === 'ads'
+                    ? 'bg-[#0c5963] text-white shadow-md shadow-[#0c5963]/30 scale-[1.02]'
+                    : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white hover:bg-[#f3eee4]/60 dark:hover:bg-[#12313c]/60'
+                }`}
+              >
+                <Tv className="w-4 h-4 shrink-0" />
+                <span>Watch Ads</span>
+                <span className="relative flex h-2 w-2 ml-0.5">
+                  <span className={`absolute inline-flex h-full w-full rounded-full ${packagesCardMode === 'ads' ? 'animate-ping bg-emerald-300 opacity-80' : 'bg-emerald-500/40'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${packagesCardMode === 'ads' ? 'bg-emerald-400' : 'bg-emerald-600'}`}></span>
+                </span>
+              </button>
 
-                <p className="text-xs sm:text-sm text-[#50686d] mb-6 leading-relaxed">
-                  Monetize your daily screen time with verifiable returns. Every activated package tier gives you a quota of 200 sponsor ads per day, delivering an industry-leading 20% daily return credited straight to your available balance.
-                </p>
-
-                {/* Core Benefits */}
-                <div className="space-y-3 pt-4 border-t border-[#f0ebe0]">
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#0c5963]">20% Guaranteed Daily Returns:</strong> Fixed, transparent earnings calculated per ad (0.10% per ad view).
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#0c5963]">Zero-Delay Instant Credit:</strong> No waiting for cycle closures — funds credit to your wallet in real time.
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#0c5963]">5-Level Multi-Tier Matching:</strong> Earn 25% (L1), 20% (L2), 15% (L3), 10% (L4), and 5% (L5) matching bonuses when your network watches ads.
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#0c5963]">Low $1.00 USD Entry:</strong> Start immediately with our starter Bronze tier and withdraw anytime via JazzCash, Easypaisa, or USDT.
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mt-8 pt-5 border-t border-[#f0ebe0] flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (currentUser) {
-                      onNavigate("dashboard", "watch-ads");
-                    } else {
-                      onNavigate("login");
-                    }
-                  }}
-                  className="w-full sm:flex-1 py-3 px-5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <PlaySquare className="w-4 h-4" />
-                  <span>Start Watching Ads</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (currentUser) {
-                      onNavigate("dashboard", "buy-package");
-                    } else {
-                      onNavigate("login");
-                    }
-                  }}
-                  className="w-full sm:w-auto py-3 px-4 bg-[#f4fbf9] hover:bg-[#e6f4f1] text-[#0c5963] border border-[#b8dfd7] text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-[#d97706]" />
-                  <span>View Packages</span>
-                </button>
-              </div>
+              {/* Cloud Miner Toggle Button */}
+              <button
+                type="button"
+                id="btn-packages-mode-miner"
+                onClick={(e) => handlePackagesCardModeToggle(e, 'miner')}
+                className={`relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
+                  packagesCardMode === 'miner'
+                    ? 'bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white shadow-md shadow-amber-500/30 scale-[1.02]'
+                    : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white hover:bg-[#f3eee4]/60 dark:hover:bg-[#12313c]/60'
+                }`}
+              >
+                <Pickaxe className="w-4 h-4 shrink-0" />
+                <span>Cloud Miner</span>
+                <span className="relative flex h-2 w-2 ml-0.5">
+                  <span className={`absolute inline-flex h-full w-full rounded-full ${packagesCardMode === 'miner' ? 'animate-ping bg-amber-300 opacity-80' : 'bg-amber-500/40'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${packagesCardMode === 'miner' ? 'bg-amber-400' : 'bg-amber-600'}`}></span>
+                </span>
+              </button>
             </div>
 
-            {/* Card 2: Cloud Miner */}
-            <div className="rounded-3xl p-6 sm:p-8 bg-white border border-[#fed7aa] shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-[#ea580c]/50 transition-all duration-300">
-              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-100/50 via-orange-50/20 to-transparent rounded-bl-full pointer-events-none" />
+            {/* Dynamic Card Container with Animated Transition */}
+            <div className="w-full">
+              <AnimatePresence mode="wait">
+                {packagesCardMode === 'ads' ? (
+                  <motion.div
+                    key="unified-engine-ads"
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-md dark:shadow-black/60 overflow-hidden transition-all flex flex-col justify-between group hover:border-[#0c5963]/50"
+                  >
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-teal-100/40 dark:from-teal-900/20 via-emerald-50/20 dark:via-transparent to-transparent rounded-bl-full pointer-events-none" />
 
-              <div>
-                {/* Header Badge */}
-                <div className="flex items-center justify-between gap-2 mb-5">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold uppercase tracking-wider border border-amber-300">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                    12-Hour Mining Protocol
-                  </span>
-                  <span className="text-xs font-extrabold text-[#ea580c] bg-[#fff7ed] px-3 py-1 rounded-full border border-[#ffedd5]">
-                    +16 TFLX/h Base Power
-                  </span>
-                </div>
-
-                {/* Title & Icon */}
-                <div className="flex items-start gap-3.5 mb-3">
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d97706] to-[#ea580c] text-white flex items-center justify-center shrink-0 shadow-md">
-                    <Pickaxe className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="text-2xl font-black text-[#09353e] group-hover:text-[#ea580c] transition-colors">
-                      Cloud Miner: Automated Hashrate
-                    </h3>
-                    <p className="text-xs font-semibold text-[#d97706]">
-                      12H Tap Cycle • 100% Cloud-Powered • Zero Device Drain
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-xs sm:text-sm text-[#50686d] mb-6 leading-relaxed">
-                  Participate in next-generation decentralized token minting. Single-tap activation launches an autonomous 12-hour mining cycle on enterprise servers with zero phone battery drain, zero device heating, and streak-protected continuity.
-                </p>
-
-                {/* Core Benefits */}
-                <div className="space-y-3 pt-4 border-t border-[#f0ebe0]">
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
                     <div>
-                      <strong className="font-bold text-[#ea580c]">12-Hour Session Rhythm:</strong> Tap once and let the cloud mine +16 TFLX/h passively in the background.
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#ea580c]">Slashing & Days-Off Shield:</strong> Use rest passes to safeguard your mining streak and prevent inactive penalties.
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#ea580c]">Pre-Staking Boost (Up to +250%):</strong> Multiply your minting yields by pre-staking before halving epochs.
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
-                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="font-bold text-[#ea580c]">2-Tier Guild Network:</strong> Pool computational power with friends for compound referral hashrate bonuses.
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      {/* Top Header matching First Div */}
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
+                        <span className="tracking-widest flex items-center gap-1.5 font-bold text-[#0c5963] dark:text-[#38bdf8]">
+                          <Tv className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
+                          TAEMRY / SPONSOR ADS
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                          </span>
+                          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 tracking-normal">DAILY ACTIVE</span>
+                        </div>
+                      </div>
 
-              {/* Action Buttons */}
-              <div className="mt-8 pt-5 border-t border-[#f0ebe0] flex flex-col sm:flex-row items-center gap-3">
-                <button
-                  type="button"
-                  onClick={() => onNavigate("cloud-miner")}
-                  className="w-full sm:flex-1 py-3 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <Flame className="w-4 h-4" />
-                  <span>Launch Cloud Miner</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const el = document.getElementById("faqs-section");
-                    if (el) el.scrollIntoView({ behavior: "smooth" });
-                  }}
-                  className="w-full sm:w-auto py-3 px-4 bg-[#fffaf5] hover:bg-[#ffedd5] text-[#ea580c] border border-[#fed7aa] text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Cpu className="w-3.5 h-3.5 text-[#ea580c]" />
-                  <span>Mining Info</span>
-                </button>
-              </div>
+                      {/* Title & Subtitle */}
+                      <div className="flex items-start gap-3.5 mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0c5963] to-[#08424b] text-white flex items-center justify-center shrink-0 shadow-md">
+                          <Tv className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black text-[#09353e] dark:text-[#f1f5f9] group-hover:text-[#0c5963] dark:group-hover:text-[#38bdf8] transition-colors">
+                            Watch &amp; Earn: Guaranteed Daily Cash
+                          </h3>
+                          <p className="text-xs font-semibold text-[#0c5963] dark:text-[#38bdf8]">
+                            200 Daily Sponsor Ads • Instant Wallet Synchronization
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-[#50686d] dark:text-[#94a3b8] mb-5 leading-relaxed">
+                        Monetize your daily screen time with verifiable returns. Every activated package tier gives you a quota of 200 sponsor ads per day, delivering an industry-leading 20% daily return credited straight to your available balance.
+                      </p>
+
+                      {/* Balances & Yields Grid matching First Div */}
+                      <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+                          <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                            Daily Ad Quota
+                          </p>
+                          <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                            <span>200</span>
+                            <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] ml-1">Ads/Day</span>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+                          <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                            Guaranteed Return
+                          </p>
+                          <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                            <span>20%</span>
+                            <span className="balance-cents text-xs font-bold text-emerald-500 ml-1">Daily Yield</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress bar matching First Div */}
+                      <div className="space-y-1.5 mb-5">
+                        <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
+                          <span>Today's ad rhythm</span>
+                          <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">
+                            {userStats?.dailyAdCount || 0} / 200 ({displayProgress}%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">
+                          <div
+                            className="bg-gradient-to-r from-[#0d5963] to-[#10b981] h-full rounded-full transition-all duration-1000"
+                            style={{ width: `${displayProgress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Reward Banner matching First Div */}
+                      <div className="reward-banner bg-[#faf8f5] dark:bg-[#07151a] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#ece6d9] dark:border-[#173740] transition-colors mb-5">
+                        <div className="reward-left flex items-center gap-[14px]">
+                          <div className="reward-icon-container w-[32px] h-[32px] bg-[#fff9e6] dark:bg-[#2e260c] rounded-full flex justify-center items-center border border-[#ffe699] dark:border-[#574312] shrink-0">
+                            <div className="reward-icon w-[16px] h-[16px] border-2 border-[#ffb703] rounded-full relative flex items-center justify-center">
+                              <span className="w-1 h-1.5 border-r-2 border-b-2 border-[#ffb703] rotate-45 -mt-0.5 ml-0.5 inline-block" />
+                            </div>
+                          </div>
+                          <div className="reward-text">
+                            <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight">
+                              Reward credited
+                            </div>
+                            <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
+                              {currentUser && (userStats?.dailyAdCount || 0) > 0
+                                ? `${userStats.dailyAdCount} ads credited today`
+                                : (userStats?.currentPackage && userStats.currentPackage !== 'None'
+                                    ? `${userStats.currentPackage} • 20% Daily`
+                                    : 'Keep your rhythm.')}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="reward-right text-right">
+                          <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
+                            Last Reward
+                          </div>
+                          <div className="reward-amount text-[16px] font-bold text-[#00796b] dark:text-[#2dd4bf] text-right block leading-tight">
+                            {liveLastReward}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Core Benefits */}
+                      <div className="space-y-3 pt-4 border-t border-[#f0ebe0] dark:border-[#173740]">
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#0c5963] dark:text-[#38bdf8]">20% Guaranteed Daily Returns:</strong> Fixed, transparent earnings calculated per ad (0.10% per ad view).
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#0c5963] dark:text-[#38bdf8]">Zero-Delay Instant Credit:</strong> No waiting for cycle closures — funds credit to your wallet in real time.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#0c5963] dark:text-[#38bdf8]">5-Level Multi-Tier Matching:</strong> Earn 25% (L1), 20% (L2), 15% (L3), 10% (L4), and 5% (L5) matching bonuses when your network watches ads.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#0c5963] dark:text-[#38bdf8]">Low $1.00 USD Entry:</strong> Start immediately with our starter Bronze tier and withdraw anytime via JazzCash, Easypaisa, or USDT.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons matching First Div */}
+                    <div className="mt-8 pt-5 border-t border-[#f0ebe0] dark:border-[#173740] flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (currentUser) {
+                            onNavigate("dashboard", "watch-ads");
+                          } else {
+                            onNavigate("login");
+                          }
+                        }}
+                        className="w-full sm:flex-1 py-3.5 px-5 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.98] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <PlaySquare className="w-4 h-4" />
+                        <span>Start Watching Ads</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (currentUser) {
+                            onNavigate("dashboard", "buy-package");
+                          } else {
+                            onNavigate("login");
+                          }
+                        }}
+                        className="w-full sm:w-auto py-3.5 px-4 bg-[#f4fbf9] dark:bg-[#0c262e] hover:bg-[#e6f4f1] dark:hover:bg-[#133640] text-[#0c5963] dark:text-[#38bdf8] border border-[#b8dfd7] dark:border-[#173740] text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-[#d97706]" />
+                        <span>View Packages</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="unified-engine-miner"
+                    initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                    transition={{ duration: 0.25, ease: 'easeOut' }}
+                    className="wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-md dark:shadow-black/60 overflow-hidden transition-all flex flex-col justify-between group hover:border-[#ea580c]/50"
+                  >
+                    <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-100/40 dark:from-amber-900/20 via-orange-50/20 dark:via-transparent to-transparent rounded-bl-full pointer-events-none" />
+
+                    <div>
+                      {/* Top Header matching First Div */}
+                      <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
+                        <span className="tracking-widest flex items-center gap-1.5 font-bold text-[#d97706] dark:text-[#f59e0b]">
+                          <Pickaxe className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f59e0b]" />
+                          TAEMRY / 12H MINER
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                          </span>
+                          <span className="text-[10px] font-bold text-[#d97706] dark:text-[#f59e0b] tracking-normal">ACTIVE</span>
+                        </div>
+                      </div>
+
+                      {/* Title & Subtitle */}
+                      <div className="flex items-start gap-3.5 mb-3">
+                        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d97706] to-[#ea580c] text-white flex items-center justify-center shrink-0 shadow-md">
+                          <Pickaxe className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <h3 className="text-2xl font-black text-[#09353e] dark:text-[#f1f5f9] group-hover:text-[#ea580c] dark:group-hover:text-[#fb923c] transition-colors">
+                            Cloud Miner: Automated Hashrate
+                          </h3>
+                          <p className="text-xs font-semibold text-[#d97706] dark:text-[#f59e0b]">
+                            12H Tap Cycle • 100% Cloud-Powered • Zero Device Drain
+                          </p>
+                        </div>
+                      </div>
+
+                      <p className="text-xs sm:text-sm text-[#50686d] dark:text-[#94a3b8] mb-5 leading-relaxed">
+                        Participate in next-generation decentralized token minting. Single-tap activation launches an autonomous 12-hour mining cycle on enterprise servers with zero phone battery drain, zero device heating, and streak-protected continuity.
+                      </p>
+
+                      {/* Balances & Yields Grid matching First Div */}
+                      <div className="grid grid-cols-2 gap-3 mb-5">
+                        <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+                          <div className="flex items-center justify-between mb-1">
+                            <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8]">
+                              Mined Hash Yield
+                            </p>
+                            <span className="text-[9px] font-extrabold px-1 py-0.5 rounded-md bg-[#fffbeb] dark:bg-[#2a1a08] text-[#d97706] dark:text-[#f59e0b] border border-[#fde68a] dark:border-[#45270c]">
+                              USD • TFLX
+                            </span>
+                          </div>
+                          <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                            <span>${Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[0]}</span>
+                            <span className="balance-cents text-sm sm:text-base font-extrabold text-[#d97706] dark:text-[#f59e0b]">
+                              .{Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[1] || '80'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+                          <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8] mb-1">
+                            Hashrate Power
+                          </p>
+                          <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
+                            <span>16.0</span>
+                            <span className="text-xs font-bold text-[#d97706] dark:text-[#f59e0b] ml-1">
+                              MH/s
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Progress bar matching First Div */}
+                      <div className="space-y-1.5 mb-5">
+                        <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
+                          <span className="flex items-center gap-1 font-semibold text-[#b45309] dark:text-[#f59e0b]">
+                            <Flame className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f59e0b]" />
+                            12h Mining Hash Session
+                          </span>
+                          <span className="font-bold text-[#d97706] dark:text-[#f59e0b]">
+                            Mining Active (72%)
+                          </span>
+                        </div>
+                        <div className="w-full bg-[#fef3c7]/60 dark:bg-[#1f190e] h-2.5 rounded-full overflow-hidden relative">
+                          <div
+                            className="bg-gradient-to-r from-[#d97706] to-[#ea580c] h-full rounded-full transition-all duration-1000 shadow-xs relative overflow-hidden"
+                            style={{ width: '72%' }}
+                          >
+                            <div className="absolute inset-0 bg-white/25 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12" />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Bottom Banner matching First Div */}
+                      <div className="reward-banner bg-[#fffbeb]/70 dark:bg-[#1a140b] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#fde68a] dark:border-[#382613] transition-colors mb-5 shadow-xs">
+                        <div className="reward-left flex items-center gap-[14px]">
+                          <div className="reward-icon-container w-[36px] h-[36px] bg-[#fef3c7] dark:bg-[#2e1d08] rounded-full flex justify-center items-center border border-[#fde68a] dark:border-[#52320b] shrink-0 shadow-2xs">
+                            <Pickaxe className="w-4 h-4 text-[#d97706] dark:text-[#f59e0b]" />
+                          </div>
+                          <div className="reward-text">
+                            <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight flex items-center gap-1.5">
+                              <span>Mining Active</span>
+                              <span className="inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            </div>
+                            <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
+                              12h tap-to-mine session active
+                            </div>
+                          </div>
+                        </div>
+                        <div className="reward-right text-right">
+                          <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
+                            Base Hashrate
+                          </div>
+                          <div className="reward-amount text-[15px] font-extrabold text-[#d97706] dark:text-[#f59e0b] text-right block leading-tight">
+                            +16 TFLX/h
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Core Benefits */}
+                      <div className="space-y-3 pt-4 border-t border-[#f0ebe0] dark:border-[#173740]">
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">12-Hour Session Rhythm:</strong> Tap once and let the cloud mine +16 TFLX/h passively in the background.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">Slashing &amp; Days-Off Shield:</strong> Use rest passes to safeguard your mining streak and prevent inactive penalties.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">Pre-Staking Boost (Up to +250%):</strong> Multiply your minting yields by pre-staking before halving epochs.
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
+                          <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                          <div>
+                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">2-Tier Guild Network:</strong> Pool computational power with friends for compound referral hashrate bonuses.
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Action Buttons matching First Div */}
+                    <div className="mt-8 pt-5 border-t border-[#f0ebe0] dark:border-[#173740] flex flex-col sm:flex-row items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => onNavigate("cloud-miner")}
+                        className="w-full sm:flex-1 py-3.5 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] active:scale-[0.98] text-white text-xs sm:text-sm font-bold rounded-2xl shadow-sm shadow-amber-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Flame className="w-4 h-4" />
+                        <span>Launch Cloud Miner</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const el = document.getElementById("faqs-section");
+                          if (el) el.scrollIntoView({ behavior: "smooth" });
+                        }}
+                        className="w-full sm:w-auto py-3.5 px-4 bg-[#fffaf5] dark:bg-[#1a140b] hover:bg-[#ffedd5] dark:hover:bg-[#2e1d08] text-[#ea580c] dark:text-[#fb923c] border border-[#fed7aa] dark:border-[#382613] text-xs font-bold rounded-2xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <Cpu className="w-3.5 h-3.5 text-[#ea580c]" />
+                        <span>Mining Info</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
