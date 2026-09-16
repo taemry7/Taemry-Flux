@@ -148,19 +148,14 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Left Side: Logo & Menu Button */}
         <div className="flex items-center gap-3">
-          {currentUser && onOpenDrawer && (
+          {currentUser && onOpenDrawer && currentPage !== 'home' && (
             <button
               id="btn-nav-drawer"
               onClick={onOpenDrawer}
               className="p-2 -ml-1 text-[#093e4a] dark:text-[#f1f5f9] hover:bg-[#eae3d5] dark:hover:bg-[#112d36] rounded-xl transition-colors focus:outline-none cursor-pointer"
               aria-label="Open Navigation Drawer"
             >
-              <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <circle cx="6.5" cy="6.5" r="2" />
-                <circle cx="13.5" cy="6.5" r="2" />
-                <circle cx="6.5" cy="13.5" r="2" />
-                <circle cx="13.5" cy="13.5" r="2" />
-              </svg>
+              <Menu className="w-5 h-5" />
             </button>
           )}
 

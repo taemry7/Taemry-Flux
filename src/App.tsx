@@ -197,6 +197,9 @@ function AppContent() {
       } else if (effectiveRoute === 'watch-ads') {
         setCurrentPage('dashboard');
         setActiveTab('watch-ads');
+      } else if (effectiveRoute === 'miner' || effectiveRoute === 'cloud-miner') {
+        setCurrentPage('dashboard');
+        setActiveTab('miner');
       } else if (effectiveRoute === 'referrals') {
         setCurrentPage('dashboard');
         setActiveTab('referrals');
@@ -400,20 +403,16 @@ function AppContent() {
         </div>
       )}
 
-      {/* Main Screen (Scales down and slides to the right with 3D perspective shadow) */}
+      {/* Main Screen (Normal clean layout without splash scale/shrink animation) */}
       <div
         id="mainScreen"
-        className={`main-screen relative w-full min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] transition-all duration-400 ease-[cubic-bezier(0.2,0.9,0.3,1.15)] origin-left z-20 ${
-          isDrawerOpen
-            ? 'scale-[0.82] sm:scale-[0.84] translate-x-[76%] sm:translate-x-[320px] rounded-[28px] shadow-[-20px_25px_50px_rgba(0,0,0,0.55)] cursor-pointer overflow-hidden max-h-screen select-none ring-1 ring-black/5 dark:ring-white/10'
-            : 'scale-100 translate-x-0 rounded-none shadow-none'
-        }`}
+        className="main-screen relative w-full min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] z-10"
       >
         {/* Transparent tap-to-close backdrop when menu is open */}
         {isDrawerOpen && (
           <div
             id="menuBackdrop"
-            className="menu-backdrop-overlay absolute inset-0 z-50 bg-black/15 dark:bg-black/35 backdrop-blur-[1px] cursor-pointer"
+            className="menu-backdrop-overlay fixed inset-0 z-40 bg-black/40 backdrop-blur-xs cursor-pointer transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
               setIsDrawerOpen(false);

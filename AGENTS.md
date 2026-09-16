@@ -67,9 +67,13 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - **"Watch Ads"**: Featuring TV/Monitor icon, active emerald ping dot, emerald-teal click splash wave, Live Available Balance, Total Earned Yield, 0/200 ad rhythm progress bar, Reward Credited status, and "Go to My Dashboard" button.
   - **"Cloud Miner"**: Featuring Pickaxe icon, active amber ping dot, vibrant amber-orange click splash wave, "TAEMRY / 12H MINER" header with pulsing status, "Mined Hash Yield" balance with USD • TFLX badge, 12h fiery gradient progress bar (amber to orange), "Mining Active" bottom banner with green ping dot, "+16 TFLX/h" base hashrate display, and "Go to Cloud Miner" button.
 - Transitions between modes are animated using Motion `AnimatePresence` with smooth scale, opacity, and blur transitions.
-- **Restored Dashboard Menu & Header Drawer Button**:
-  - The menu navigation drawer toggle button (`#btn-nav-drawer`) in the top navbar is restored per user directive ("my dashboard ky andar menu ly aw abi jo remove kya").
-  - Inside `DashboardPage.jsx`, an interactive, horizontal navigation menu bar is provided with all dashboard tabs (Overview, Watch Ads, Deposit, Packages, Withdraw, Referrals, Live Leaderboard, Team Rewards, Transactions, Profile Settings), ensuring effortless tab switching directly inside the dashboard.
+- **Separation of Menus & Normal Drawer Navigation (PERMANENT)**:
+  - The menu navigation drawer toggle button (`#btn-nav-drawer`) in the top navbar is completely removed/hidden from the Home page (`currentPage === 'home'`).
+  - **Menu Button Normal Styling & Zero Splash Animation**: Per user explicit directive ("Is div ko khatam kardo ... Or is button menu normal tek hai ye splash animation ko khatm kardo is sy"):
+    - The horizontal menu nav bar div in `DashboardPage.jsx` has been completely removed.
+    - The top navbar menu button (`#btn-nav-drawer`) uses standard, clean `Menu` icon (`<Menu className="w-5 h-5" />`).
+    - The 3D shrinking/scaling splash animation on `mainScreen` when opening the drawer has been removed. The screen stays static and normal, and `SidebarDrawer` slides smoothly over the screen at `z-50` with a clean backdrop overlay at `z-40`.
+  - **Cloud Miner has its own dedicated menu**: Inside `CloudMiner.jsx`, an interactive 1 to 6 navigation menu bar is provided (All Overview, 1. Tap Mining Cycle, 2. Slashing & Days-Off, 3. Pre-Staking Boost, 4. 2-Tier Guild Network, 5. Halving Epochs, 6. KYC & Quiz Verification).
 
 ## STRICT INVARIANT: Dashboard Eligibility Gating Rules (PERMANENT)
 - **New User Access Limit**: Users without an active package (`stats.currentPackage === 'None'` or falsy) are only eligible for **Overview**, **Deposit**, **Buy Package**, and **Profile Information**.

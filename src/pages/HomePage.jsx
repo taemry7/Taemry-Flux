@@ -14,7 +14,6 @@ import {
   Tv,
   Pickaxe,
   Flame,
-  Pause,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
@@ -420,7 +419,7 @@ export default function HomePage({ onNavigate }) {
               onClick={(e) => handleHeroModeToggle(e, 'miner')}
               className={`relative z-10 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer select-none ${
                 heroCardMode === 'miner'
-                  ? 'bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white shadow-md shadow-orange-500/30 scale-[1.02]'
+                  ? 'bg-gradient-to-r from-[#d97706] to-[#ea580c] text-white shadow-md shadow-amber-500/30 scale-[1.02]'
                   : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white hover:bg-[#f3eee4]/60 dark:hover:bg-[#12313c]/60'
               }`}
             >
@@ -435,11 +434,7 @@ export default function HomePage({ onNavigate }) {
 
           {/* Unified Floating Preview Card with Dual Mode Transitions */}
           <div
-            className={`wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border shadow-md dark:shadow-black/60 overflow-hidden transition-all flex flex-col justify-between min-h-[385px] ${
-              heroCardMode === 'ads'
-                ? 'border-[#e4ded2] dark:border-[#173740]'
-                : 'border-[#fed7aa] dark:border-[#7c2d12]/50 shadow-orange-500/5'
-            }`}
+            className="wallet-card relative w-full rounded-[28px] p-6 sm:p-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-md dark:shadow-black/60 overflow-hidden transition-all flex flex-col justify-between min-h-[385px]"
           >
             {/* Ambient Background Glow Wave */}
             <AnimatePresence>
@@ -451,9 +446,9 @@ export default function HomePage({ onNavigate }) {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.75, ease: 'easeOut' }}
                   className={`pointer-events-none absolute -top-10 -right-10 w-48 h-48 rounded-full ${
-                    heroCardMode === 'ads'
-                      ? 'bg-gradient-to-br from-[#0c5963]/30 to-[#10b981]/20'
-                      : 'bg-gradient-to-br from-[#d97706]/35 to-[#ea580c]/25'
+                    cardSplash.mode === 'miner'
+                      ? 'bg-gradient-to-br from-[#d97706]/30 to-[#ea580c]/20'
+                      : 'bg-gradient-to-br from-[#0c5963]/30 to-[#10b981]/20'
                   }`}
                 />
               )}
@@ -573,32 +568,35 @@ export default function HomePage({ onNavigate }) {
                   className="flex flex-col justify-between flex-1"
                 >
                   <div>
-                    {/* Header: TAEMRY / 12H MINER with paused status indicator */}
+                    {/* Header: TAEMRY / 12H MINER with active status indicator */}
                     <div className="flex items-center justify-between text-xs font-semibold text-[#667d81] dark:text-[#94a3b8] tracking-wider uppercase mb-3">
-                      <span className="tracking-widest flex items-center gap-1.5 font-bold text-amber-700 dark:text-amber-400">
-                        <Pickaxe className="w-3.5 h-3.5 text-amber-500" />
+                      <span className="tracking-widest flex items-center gap-1.5 font-bold text-[#d97706] dark:text-[#f59e0b]">
+                        <Pickaxe className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f59e0b]" />
                         TAEMRY / 12H MINER
                       </span>
                       <div className="flex items-center gap-1.5">
-                        <span className="inline-flex rounded-full h-2.5 w-2.5 bg-amber-500 shadow-xs"></span>
-                        <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 tracking-normal">PAUSED</span>
+                        <span className="relative flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                        </span>
+                        <span className="text-[10px] font-bold text-[#d97706] dark:text-[#f59e0b] tracking-normal">ACTIVE</span>
                       </div>
                     </div>
 
-                    {/* Balance: Mined Hash Yield with orange accented decimal formatting and USD • TFLX currency badge */}
+                    {/* Balance: Mined Hash Yield with amber accented decimal formatting and USD • TFLX currency badge */}
                     <div className="grid grid-cols-2 gap-3 mb-5">
                       <div>
                         <div className="flex items-center justify-between mb-1">
                           <p className="text-xs font-semibold text-[#6e8286] dark:text-[#94a3b8]">
                             Mined Hash Yield
                           </p>
-                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/40">
+                          <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-md bg-[#fffbeb] dark:bg-[#2a1a08] text-[#d97706] dark:text-[#f59e0b] border border-[#fde68a] dark:border-[#45270c]">
                             USD • TFLX
                           </span>
                         </div>
                         <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
                           <span>${Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[0]}</span>
-                          <span className="balance-cents text-lg sm:text-xl font-extrabold text-[#ea580c]">
+                          <span className="balance-cents text-lg sm:text-xl font-extrabold text-[#d97706] dark:text-[#f59e0b]">
                             .{Number((Number(userStats?.totalEarned || 0) * 0.6) + 14.8).toFixed(2).split('.')[1] || '80'}
                           </span>
                         </div>
@@ -610,27 +608,27 @@ export default function HomePage({ onNavigate }) {
                         </p>
                         <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
                           <span>16.0</span>
-                          <span className="text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400 ml-1">
+                          <span className="text-sm sm:text-base font-bold text-[#d97706] dark:text-[#f59e0b] ml-1">
                             MH/s
                           </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Progress bar: 12h Mining Hash Session (Paused) */}
+                    {/* Progress bar: 12h Mining Hash Session (Active) */}
                     <div className="space-y-1.5 mb-5">
                       <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
-                        <span className="flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-300">
-                          <Flame className="w-3.5 h-3.5 text-orange-500" />
+                        <span className="flex items-center gap-1 font-semibold text-[#b45309] dark:text-[#f59e0b]">
+                          <Flame className="w-3.5 h-3.5 text-[#d97706] dark:text-[#f59e0b]" />
                           12h Mining Hash Session
                         </span>
-                        <span className="font-bold text-amber-600 dark:text-amber-400">
-                          Session Paused (72%)
+                        <span className="font-bold text-[#d97706] dark:text-[#f59e0b]">
+                          Mining Active (72%)
                         </span>
                       </div>
-                      <div className="w-full bg-[#f6eee3] dark:bg-[#20180d] h-2.5 rounded-full overflow-hidden relative">
+                      <div className="w-full bg-[#fef3c7]/60 dark:bg-[#1f190e] h-2.5 rounded-full overflow-hidden relative">
                         <div
-                          className="bg-gradient-to-r from-[#d97706] via-[#ea580c] to-[#f97316] h-full rounded-full transition-all duration-1000 shadow-xs relative overflow-hidden"
+                          className="bg-gradient-to-r from-[#d97706] to-[#ea580c] h-full rounded-full transition-all duration-1000 shadow-xs relative overflow-hidden"
                           style={{ width: '72%' }}
                         >
                           <div className="absolute inset-0 bg-white/25 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent -skew-x-12" />
@@ -638,19 +636,19 @@ export default function HomePage({ onNavigate }) {
                       </div>
                     </div>
 
-                    {/* Bottom Banner: Pickaxe icon with "Mining Paused" status */}
-                    <div className="reward-banner bg-[#fffbf5] dark:bg-[#120d06] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#fed7aa] dark:border-[#43230a] transition-colors mb-5 shadow-xs">
+                    {/* Bottom Banner: Pickaxe icon with "Mining Active" status */}
+                    <div className="reward-banner bg-[#fffbeb]/70 dark:bg-[#1a140b] rounded-[20px] p-[14px_18px] flex justify-between items-center border border-[#fde68a] dark:border-[#382613] transition-colors mb-5 shadow-xs">
                       <div className="reward-left flex items-center gap-[14px]">
-                        <div className="reward-icon-container w-[36px] h-[36px] bg-[#ffedd5] dark:bg-[#2e1905] rounded-full flex justify-center items-center border border-[#fdba74] dark:border-[#7c2d12] shrink-0 shadow-2xs">
-                          <Pickaxe className="w-4 h-4 text-[#ea580c] dark:text-[#fb923c]" />
+                        <div className="reward-icon-container w-[36px] h-[36px] bg-[#fef3c7] dark:bg-[#2e1d08] rounded-full flex justify-center items-center border border-[#fde68a] dark:border-[#52320b] shrink-0 shadow-2xs">
+                          <Pickaxe className="w-4 h-4 text-[#d97706] dark:text-[#f59e0b]" />
                         </div>
                         <div className="reward-text">
                           <div className="reward-text-title text-[14px] font-bold text-[#0d2137] dark:text-[#f1f5f9] mb-[2px] leading-tight flex items-center gap-1.5">
-                            <span>Mining Paused</span>
-                            <span className="inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            <span>Mining Active</span>
+                            <span className="inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                           </div>
                           <div className="reward-text-subtitle text-[13px] text-[#7a8c94] dark:text-[#94a3b8] leading-tight">
-                            12h tap-to-mine session paused
+                            12h tap-to-mine session active
                           </div>
                         </div>
                       </div>
@@ -658,21 +656,23 @@ export default function HomePage({ onNavigate }) {
                         <div className="reward-label text-[10px] font-bold text-[#9aaab0] dark:text-[#64748b] uppercase tracking-[0.5px] mb-[4px] text-right block">
                           Base Hashrate
                         </div>
-                        <div className="reward-amount text-[15px] font-extrabold text-[#ea580c] dark:text-[#fb923c] text-right block leading-tight">
+                        <div className="reward-amount text-[15px] font-extrabold text-[#d97706] dark:text-[#f59e0b] text-right block leading-tight">
                           +16 TFLX/h
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  {/* Cloud Miner Paused State - Dashboard removed & paused per user directive */}
-                  <div
+                  {/* Cloud Miner Action Button - Styled with vibrant amber-orange gradient */}
+                  <button
                     id="btn-card-miner-paused"
-                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-[#fef3c7] dark:bg-[#2b1704] border border-[#fde68a] dark:border-[#78350f] text-[#b45309] dark:text-[#fbbf24] text-sm font-bold rounded-2xl transition-all cursor-default select-none mt-1 shadow-2xs"
+                    onClick={() => onNavigate('dashboard', 'miner')}
+                    className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] active:scale-[0.98] text-white text-sm font-bold rounded-2xl shadow-sm shadow-amber-500/25 transition-all cursor-pointer mt-1"
                   >
-                    <Pause className="w-4 h-4 text-[#d97706]" />
-                    <span>Cloud Miner (Paused)</span>
-                  </div>
+                    <Pickaxe className="w-4 h-4" />
+                    <span>Go to Cloud Miner</span>
+                    <ArrowRight className="w-4 h-4 ml-0.5" />
+                  </button>
                 </motion.div>
               )}
             </AnimatePresence>

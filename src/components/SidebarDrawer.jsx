@@ -15,7 +15,8 @@ import {
   Gift,
   User,
   Trophy,
-  Download
+  Download,
+  Pickaxe
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -44,6 +45,13 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
       icon: ArrowDownCircle,
       badge: `$${Number(userStats?.walletBalance || 0).toFixed(2)}`,
       badgeColor: 'bg-[#ee5b5b]'
+    },
+    {
+      id: 'miner',
+      label: 'Cloud Miner',
+      icon: Pickaxe,
+      badge: 'LIVE',
+      badgeColor: 'bg-[#0c5963]'
     },
     ...(hasActivePackage
       ? [
@@ -108,8 +116,8 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
     <aside
       id="menuScreen"
       aria-label="Smart Slide Menu"
-      className={`fixed inset-y-0 left-0 w-[285px] sm:w-[320px] max-w-[85vw] z-10 flex flex-col justify-between py-8 px-5 overflow-y-auto select-none transition-all duration-300 bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] border-r border-[#e8e2d5] dark:border-[#15323b] shadow-xl ${
-        isOpen ? 'opacity-100 translate-x-0 pointer-events-auto' : 'opacity-0 -translate-x-6 pointer-events-none'
+      className={`fixed inset-y-0 left-0 w-[285px] sm:w-[320px] max-w-[85vw] z-50 flex flex-col justify-between py-8 px-5 overflow-y-auto select-none transition-transform duration-300 ease-in-out bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] border-r border-[#e8e2d5] dark:border-[#15323b] shadow-2xl ${
+        isOpen ? 'translate-x-0' : '-translate-x-full pointer-events-none'
       }`}
     >
       <div>

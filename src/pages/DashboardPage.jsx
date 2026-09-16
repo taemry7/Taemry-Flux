@@ -29,13 +29,15 @@ import {
   Settings,
   Gift,
   ChevronRight,
-  User
+  User,
+  Pickaxe
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import apiClient from '../api/client';
 import BuyPackage from './BuyPackage';
 import WatchAds from './WatchAds';
+import CloudMiner from './CloudMiner';
 import Referrals from './Referrals';
 import Milestones from './Milestones';
 import DepositPage from './DepositPage';
@@ -113,6 +115,7 @@ export default function DashboardPage({
   const validTabs = [
     'overview',
     'watch-ads',
+    'miner',
     'deposit',
     'buy-package',
     'withdraw',
@@ -308,53 +311,8 @@ export default function DashboardPage({
     return '# 1000+';
   }, [stats.worldRank, stats.lifetimeAds, stats.totalEarned]);
 
-  const dashboardMenuItems = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'watch-ads', label: 'Watch Ads', icon: PlaySquare, badge: hasActivePackage ? `${stats.dailyAdCount ?? 0}/200` : null },
-    { id: 'deposit', label: 'Deposit', icon: ArrowDownCircle },
-    { id: 'buy-package', label: 'Packages', icon: Package, badge: hasActivePackage ? stats.currentPackage : null },
-    { id: 'withdraw', label: 'Withdraw', icon: ArrowUpRight },
-    { id: 'referrals', label: 'Referrals', icon: Users, badge: stats.referralCount ? String(stats.referralCount) : null },
-    { id: 'leaderboard', label: 'Leaderboard', icon: Trophy },
-    { id: 'milestones', label: 'Team Rewards', icon: Gift },
-    { id: 'transactions', label: 'Transactions', icon: History },
-    { id: 'settings', label: 'Profile', icon: Settings },
-  ];
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
-      {/* Dashboard Navigation Menu Bar */}
-      <nav aria-label="Dashboard Menu" className="w-full mb-6 overflow-x-auto scrollbar-none">
-        <div className="flex items-center gap-1.5 p-1.5 bg-white dark:bg-[#0c2027] border border-[#e4ded2] dark:border-[#173740] rounded-2xl shadow-xs w-max min-w-full sm:min-w-0">
-          {dashboardMenuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = currentActiveTab === item.id;
-            return (
-              <button
-                key={item.id}
-                id={`tab-menu-${item.id}`}
-                onClick={() => handleTabChange(item.id)}
-                className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  isActive
-                    ? 'bg-[#0c5963] text-white shadow-xs'
-                    : 'text-[#50696f] dark:text-[#94a3b8] hover:bg-[#f4efe4] dark:hover:bg-[#12313c] hover:text-[#09353e] dark:hover:text-white'
-                }`}
-              >
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-[#6f858a] dark:text-[#64748b]'}`} />
-                <span>{item.label}</span>
-                {item.badge && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-[#f0ebe1] dark:bg-[#1b4350] text-[#0c5963] dark:text-[#38bdf8]'
-                  }`}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
-
       {/* MAIN VIEW CONTENT AREA (Full Width) */}
       <section className="w-full">
         {/* ========================================================================= */}
@@ -711,6 +669,16 @@ export default function DashboardPage({
                 onSelectTab={handleTabChange}
               />
             )
+          )}
+
+          {/* ========================================================================= */}
+          {/* TAB: CLOUD MINER (12H TAP-TO-MINE REACTOR)                                */}
+          {/* ========================================================================= */}
+          {(currentActiveTab === 'miner' || currentActiveTab === 'cloud-miner') && (
+            <CloudMiner
+              onSelectTab={handleTabChange}
+              onNavigate={onNavigate}
+            />
           )}
 
           {/* ========================================================================= */}
