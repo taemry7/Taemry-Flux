@@ -172,12 +172,14 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
             </button>
           )}
 
-          <button
-            onClick={() => onNavigate('home')}
-            className="flex items-center text-left focus:outline-none cursor-pointer"
-          >
-            <Logo size="md" />
-          </button>
+          {currentPage !== 'login' && (
+            <button
+              onClick={() => onNavigate('home')}
+              className="flex items-center text-left focus:outline-none cursor-pointer"
+            >
+              <Logo size="md" />
+            </button>
+          )}
 
           {/* Moved from Cloud Miner Hero Card: ONLY on Cloud Miner Page (Open & No Background per user request) */}
           {currentPage === 'cloud-miner' && (

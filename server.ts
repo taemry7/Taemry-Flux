@@ -185,6 +185,13 @@ async function startServer() {
     res.sendFile(sitemapPath);
   });
 
+  // Google Search Console Site Verification Endpoint
+  app.get('/googlee39205dcefb8c59c.html', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.send('google-site-verification: googlee39205dcefb8c59c.html');
+  });
+
   // Vite middleware for development / static serving in production
   if (process.env.NODE_ENV !== 'production') {
     const { createServer: createViteServer } = await import('vite');
