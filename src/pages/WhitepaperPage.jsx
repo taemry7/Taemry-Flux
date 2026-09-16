@@ -7,6 +7,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import {
   FileText,
   ShieldCheck,
@@ -40,7 +41,16 @@ import Logo from '../components/Logo';
 export default function WhitepaperPage({ onNavigate }) {
   const [copied, setCopied] = useState(false);
   const [openFaq, setOpenFaq] = useState(null);
+  const [faqSplash, setFaqSplash] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const handleToggleFaq = (e, index) => {
+    setFaqSplash({
+      id: Date.now() + Math.random(),
+      index,
+    });
+    setOpenFaq((prev) => (prev === index ? null : index));
+  };
 
   // Default whitepaper content state
   const [data, setData] = useState({
@@ -591,21 +601,55 @@ export default function WhitepaperPage({ onNavigate }) {
                     className="rounded-2xl border border-[#e5ded0] dark:border-[#173e49] bg-[#faf8f5] dark:bg-[#0f2831] overflow-hidden transition-all"
                   >
                     <button
-                      onClick={() => setOpenFaq(isOpen ? null : index)}
-                      className="w-full text-left p-4 flex items-center justify-between gap-4 font-bold text-sm text-[#093e4a] dark:text-white hover:bg-[#f5efe4] dark:hover:bg-[#13303a] transition-colors cursor-pointer"
+                      type="button"
+                      onClick={(e) => handleToggleFaq(e, index)}
+                      className="w-full text-left p-4 flex items-center justify-between gap-4 font-bold text-sm text-[#093e4a] dark:text-white hover:bg-[#f5efe4] dark:hover:bg-[#13303a] transition-colors cursor-pointer select-none group"
                     >
-                      <span>{faq.q}</span>
-                      {isOpen ? (
-                        <ChevronUp className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8] shrink-0" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4 text-[#718286] shrink-0" />
-                      )}
-                    </button>
-                    {isOpen && (
-                      <div className="p-4 pt-0 text-xs sm:text-sm text-[#4b5563] dark:text-[#cbd5e1] leading-relaxed border-t border-[#efe9dd] dark:border-[#173e49] bg-white dark:bg-[#0c2027] whitespace-pre-line">
-                        {faq.a}
+                      <span className="flex-1">{faq.q}</span>
+                      <div className="relative shrink-0 flex items-center justify-center">
+                        <motion.div
+                          animate={{ rotate: isOpen ? 180 : 0, scale: isOpen ? 1.06 : 1 }}
+                          whileTap={{ scale: 0.88 }}
+                          transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+                          className={`relative w-8 h-8 rounded-xl flex items-center justify-center overflow-hidden transition-colors ${
+                            isOpen
+                              ? 'bg-[#0c5963] text-white shadow-xs'
+                              : 'bg-[#ece5d8] dark:bg-[#143742] text-[#0c5963] dark:text-[#38bdf8] group-hover:bg-[#ded5c6] dark:group-hover:bg-[#1b434f]'
+                          }`}
+                        >
+                          {/* Fluid circular splash ripple wave */}
+                          <AnimatePresence>
+                            {faqSplash && faqSplash.index === index && (
+                              <motion.span
+                                key={faqSplash.id}
+                                initial={{ scale: 0, opacity: 0.9, filter: 'blur(0px)' }}
+                                animate={{ scale: 4.5, opacity: 0, filter: 'blur(10px)' }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.6, ease: 'easeOut' }}
+                                className="pointer-events-none absolute inset-0 m-auto rounded-full w-8 h-8 bg-gradient-to-r from-[#0c5963] to-[#10b981]"
+                              />
+                            )}
+                          </AnimatePresence>
+
+                          <ChevronDown className="w-4 h-4 relative z-10 flex-shrink-0" />
+                        </motion.div>
                       </div>
-                    )}
+                    </button>
+                    <AnimatePresence initial={false}>
+                      {isOpen && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                          className="overflow-hidden"
+                        >
+                          <div className="p-4 pt-0 text-xs sm:text-sm text-[#4b5563] dark:text-[#cbd5e1] leading-relaxed border-t border-[#efe9dd] dark:border-[#173e49] bg-white dark:bg-[#0c2027] whitespace-pre-line">
+                            {faq.a}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                 );
               })}

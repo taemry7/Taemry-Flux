@@ -12,7 +12,8 @@ import {
   Sparkles,
   Info,
   Clock,
-  RotateCcw
+  RotateCcw,
+  Menu
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -59,9 +60,11 @@ export default function CloudMinerPage({ onNavigate }) {
           }
         }
 
+        const existing = Number(parsed.minedTflx);
+        const baseMined = (!isNaN(existing) && existing >= 283.98) ? existing : 283.98;
         return {
           ...parsed,
-          minedTflx: Number((Number(parsed.minedTflx || 14.85) + addedCoins).toFixed(4)),
+          minedTflx: Number((baseMined + addedCoins).toFixed(2)),
           lastSyncTime: now,
         };
       }
@@ -72,7 +75,7 @@ export default function CloudMinerPage({ onNavigate }) {
     // Default 12-hour session (started 1.5 hours ago so it starts in active Green state)
     const now = Date.now();
     return {
-      minedTflx: 14.8500,
+      minedTflx: 283.98,
       isMiningActive: true,
       sessionStartTime: now - (1.5 * 60 * 60 * 1000), // 1.5h in -> ~10.5h remaining (Green phase)
       sessionDurationMs: 12 * 60 * 60 * 1000, // 12 hours
@@ -218,74 +221,157 @@ export default function CloudMinerPage({ onNavigate }) {
   };
 
   return (
-    <div className="w-full min-h-screen bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] pt-20 sm:pt-24 pb-16 px-4 sm:px-6 lg:px-8">
+    <div className="w-full min-h-screen bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] pt-4 sm:pt-6 pb-16 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Top Breadcrumb & Navigation */}
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            id="btn-miner-back-home"
-            onClick={() => onNavigate('home')}
-            className="inline-flex items-center gap-2 text-xs font-bold text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Back to Home</span>
-          </button>
+        {/* Top Breadcrumb & Navigation (Hidden per user request) */}
+        <div className="hidden items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              id="btn-miner-back-home"
+              onClick={() => onNavigate('home')}
+              className="inline-flex items-center gap-2 text-xs font-bold text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white transition-colors cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Home</span>
+            </button>
+          </div>
 
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-            <span className="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400">
-              TFLX / ION PROTOCOL ACTIVE
-            </span>
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
           </div>
         </div>
 
         {/* Hero Header Card: Mined Hash Balance & Live Hashrate */}
         <div className="w-full rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-sm relative overflow-hidden">
           {/* Subtle Background Glow Accent */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-br from-[#d97706]/10 to-[#ea580c]/5 rounded-full filter blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#d97706]/15 to-[#ea580c]/10 rounded-full filter blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#d97706]">
+          <div className="relative z-10 space-y-6">
+            {/* Top Bar inside Card */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#ece6d9] dark:border-[#173740]">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#d97706]">
                   <Pickaxe className="w-4 h-4" />
                 </div>
-                <span className="text-xs font-bold tracking-widest text-[#d97706] uppercase">
-                  TAEMRY &bull; CLOUD MINER (12H)
-                </span>
+                <div>
+                  <span className="text-[11px] font-black tracking-widest text-[#d97706] uppercase block">
+                    TAEMRY &bull; CLOUD MINER (12H)
+                  </span>
+                  <h1 className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight">
+                    TFLX Cloud Reactor
+                  </h1>
+                </div>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight">
-                TFLX Cloud Reactor
-              </h1>
-              <p className="text-xs sm:text-sm text-[#6e8286] dark:text-[#94a3b8] mt-1 max-w-md">
-                Continuous cloud node mining without battery or CPU consumption. Base mining yield is <strong>+16 TFLX/h</strong>.
-              </p>
+
+              <div className="flex items-center gap-2 self-start sm:self-center">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>NODE SYNCED (100%)</span>
+                </div>
+                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#faf8f5] dark:bg-[#112d36] border border-[#ece6d9] dark:border-[#1d4450] text-[#0c5963] dark:text-[#38bdf8] text-xs font-extrabold">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                  <span>1 TFLX &asymp; $0.15</span>
+                </div>
+              </div>
             </div>
 
-            {/* Live Stats Box */}
-            <div className="flex flex-wrap items-center gap-4 sm:gap-6 bg-[#faf8f5] dark:bg-[#07151a] p-4 sm:p-5 rounded-2xl border border-[#ece6d9] dark:border-[#173740]">
-              <div>
-                <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
-                  Mined Balance
-                </span>
-                <div className="text-2xl sm:text-3xl font-black text-[#09353e] dark:text-[#f1f5f9] flex items-baseline gap-1 mt-0.5">
-                  <span>{minerData.minedTflx.toFixed(4)}</span>
-                  <span className="text-xs sm:text-sm font-extrabold text-[#d97706]">TFLX</span>
+            {/* Main Showcase: Big Mined Balance (Bara Karo & 2 Decimals) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[#faf8f5] dark:bg-[#07151a] p-6 sm:p-7 rounded-2xl border border-[#ece6d9] dark:border-[#173740]">
+              <div className="space-y-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-black text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider">
+                    Total Mined Reward Balance
+                  </span>
                 </div>
+
+                {/* Giant Typography for Mined Balance (Bara Karo) */}
+                <div className="flex flex-wrap items-baseline gap-2.5">
+                  <span className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#09353e] dark:text-[#f8fafc] tracking-tight tabular-nums">
+                    {minerData.minedTflx.toFixed(2)}
+                  </span>
+                  <span className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">
+                    TFLX
+                  </span>
+                </div>
+
+                {/* Real-time USD Valuation */}
+                <p className="text-xs sm:text-sm font-semibold text-[#6e8286] dark:text-[#94a3b8] flex items-center gap-1.5">
+                  <span>&asymp; ${(minerData.minedTflx * 0.15).toFixed(2)} USD</span>
+                  <span className="text-[10px] text-[#94a3b8] dark:text-[#64748b]">&bull; Target Listing Value</span>
+                </p>
               </div>
 
-              <div className="h-10 w-[1px] bg-[#e4ded2] dark:bg-[#173740] hidden sm:block" />
-
-              <div>
-                <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
-                  Effective Hashrate
-                </span>
-                <div className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 flex items-baseline gap-1 mt-0.5">
-                  <span>+{effectiveHashrate.toFixed(1)}</span>
-                  <span className="text-xs sm:text-sm font-extrabold">TFLX/h</span>
+              {/* Hashrate & 24h Yield Highlights - Consolidated Unified Card (Ikatta) */}
+              <div className="flex divide-x divide-[#ece6d9] dark:divide-[#173740] rounded-2xl bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] shadow-2xs overflow-hidden shrink-0">
+                <div className="p-3.5 sm:p-4">
+                  <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
+                    Effective Speed
+                  </span>
+                  <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
+                    +{effectiveHashrate.toFixed(1)} <span className="text-xs font-bold">TFLX/h</span>
+                  </p>
                 </div>
+
+                <div className="p-3.5 sm:p-4">
+                  <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
+                    24H Projected
+                  </span>
+                  <p className="text-xl sm:text-2xl font-black text-[#0c5963] dark:text-[#38bdf8] mt-0.5 tabular-nums">
+                    +{(effectiveHashrate * 24).toFixed(1)} <span className="text-xs font-bold">TFLX</span>
+                  </p>
+                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block mt-0.5">
+                    &asymp; ${((effectiveHashrate * 24) * 0.15).toFixed(2)} USD
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Extra New Features Grid (Baqi Ismy Or Bi Dal) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
+                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-bold mb-1">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Base Rate</span>
+                </div>
+                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                  +16.0 TFLX/h
+                </p>
+                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">Level 1 Base Protocol</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-1">
+                  <TrendingUp className="w-3.5 h-3.5" />
+                  <span>Pre-Staking Boost</span>
+                </div>
+                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                  +{minerData.preStakingBoost || 0}% Boost
+                </p>
+                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">Lock Allocation Yield</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
+                <div className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 text-xs font-bold mb-1">
+                  <Users className="w-3.5 h-3.5" />
+                  <span>Guild Team</span>
+                </div>
+                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                  {minerData.tier1Active + minerData.tier2Active} Active Miners
+                </p>
+                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">+{teamRate.toFixed(1)} TFLX/h added</span>
+              </div>
+
+              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
+                <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 text-xs font-bold mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Protection</span>
+                </div>
+                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                  {minerData.dayOffsCount} Days-Off
+                </p>
+                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">{minerData.streakDays} Days Streak Active 🔥</span>
               </div>
             </div>
           </div>
@@ -367,42 +453,74 @@ export default function CloudMinerPage({ onNavigate }) {
               onClaimDay={handleClaimCheckIn}
             />
 
-            {/* Operational Rules Info Grid */}
-            <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 pt-8 border-t border-[#ece6d9] dark:border-[#173740]">
-              <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center mb-2">
-                  <Pickaxe className="w-4 h-4" />
+            {/* Operational Rules Info Grid - Consolidated Unified Card (Ikatta) */}
+            <div className="w-full mt-8 pt-6 border-t border-[#ece6d9] dark:border-[#173740]">
+              <div className="w-full rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] p-4 sm:p-5 overflow-hidden">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5 pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
+                    <h3 className="text-xs font-black uppercase tracking-wider text-[#09353e] dark:text-[#f1f5f9]">
+                      12-Hour Mining Lifecycle & Action Phases
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-bold text-[#6e8286] dark:text-[#94a3b8]">
+                    Sequential Cycle Progression
+                  </span>
                 </div>
-                <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                  0 - 6 Hours (Green 3D)
-                </h4>
-                <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
-                  Active cloud mining running at full hashrate. No action required during the first 6 hours.
-                </p>
-              </div>
 
-              <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
-                <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center mb-2">
-                  <Clock className="w-4 h-4" />
-                </div>
-                <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                  6 - 12 Hours (Orange 3D)
-                </h4>
-                <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
-                  Early Check-In window opens! Hold button for 2 seconds to renew session early without breaking streak.
-                </p>
-              </div>
+                {/* Consolidated connected timeline with 3 unified phase segments */}
+                <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#ece6d9] dark:divide-[#173740] rounded-xl bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] overflow-hidden">
+                  {/* Segment 1: Green */}
+                  <div className="p-4 flex flex-col justify-between space-y-2 bg-emerald-500/[0.03]">
+                    <div className="flex items-center justify-between">
+                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                        <Pickaxe className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        0 - 6 Hours (Green 3D)
+                      </h4>
+                      <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
+                        Active cloud mining running at full hashrate. Continuous coin generation with zero battery usage.
+                      </p>
+                    </div>
+                  </div>
 
-              <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
-                <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-600 flex items-center justify-center mb-2">
-                  <Flame className="w-4 h-4" />
+                  {/* Segment 2: Orange */}
+                  <div className="p-4 flex flex-col justify-between space-y-2 bg-amber-500/[0.03]">
+                    <div className="flex items-center justify-between">
+                      <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        6 - 12 Hours (Orange 3D)
+                      </h4>
+                      <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
+                        Early Check-In window unlocks! Hold button for 2s to renew session early without breaking streak.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Segment 3: Red */}
+                  <div className="p-4 flex flex-col justify-between space-y-2 bg-rose-500/[0.03]">
+                    <div className="flex items-center justify-between">
+                      <div className="w-7 h-7 rounded-lg bg-rose-500/15 text-rose-600 flex items-center justify-center">
+                        <Flame className="w-4 h-4" />
+                      </div>
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        &gt; 12 Hours (Warning Red)
+                      </h4>
+                      <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
+                        Session expired and idle. Single tap immediately reignites a fresh 12h cloud mining session.
+                      </p>
+                    </div>
+                  </div>
                 </div>
-                <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                  &gt; 12 Hours (Warning Red)
-                </h4>
-                <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
-                  Session expired and idle. Single tap immediately reignites a fresh 12h cloud mining session.
-                </p>
               </div>
             </div>
           </div>

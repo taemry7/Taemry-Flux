@@ -234,7 +234,9 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
                 onNavigate('cloud-miner');
                 onClose();
               }}
-              className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] text-xs font-bold text-[#d97706] dark:text-[#f59e0b] hover:bg-amber-500/10 transition-all cursor-pointer text-left"
+              className="hidden w-full items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] text-xs font-bold text-[#d97706] dark:text-[#f59e0b] hover:bg-amber-500/10 transition-all cursor-pointer text-left"
+              aria-hidden="true"
+              tabIndex={-1}
             >
               <Pickaxe className="w-4 h-4 shrink-0 text-[#d97706] dark:text-[#f59e0b]" />
               <span>Cloud Miner (12h Reactor)</span>
@@ -295,8 +297,8 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
         </ul>
       </div>
 
-      {/* Menu Footer with Logout */}
-      <div className="pt-4 mt-6 border-t border-[#e9e3d8] dark:border-[#15323b]">
+      {/* Menu Footer with Logout - Hidden per user directive */}
+      <div className="hidden pt-4 mt-6 border-t border-[#e9e3d8] dark:border-[#15323b]">
         <button
           type="button"
           onClick={async () => {
@@ -304,7 +306,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
             onClose();
             onNavigate('login');
           }}
-          className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[#dc2626] dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 text-[14.5px] font-semibold transition-all cursor-pointer text-left"
+          className="hidden w-full items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[#dc2626] dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/30 text-[14.5px] font-semibold transition-all cursor-pointer text-left"
         >
           <LogOut className="w-5 h-5 shrink-0" />
           <span>Logout</span>

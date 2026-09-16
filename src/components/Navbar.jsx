@@ -148,12 +148,24 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         {/* Left Side: Logo & Menu Button */}
         <div className="flex items-center gap-3">
-          {currentUser && onOpenDrawer && currentPage !== 'home' && (
+          {currentUser && onOpenDrawer && currentPage !== 'home' && currentPage !== 'cloud-miner' && (
             <button
               id="btn-nav-drawer"
               onClick={onOpenDrawer}
               className="p-2 -ml-1 text-[#093e4a] dark:text-[#f1f5f9] hover:bg-[#eae3d5] dark:hover:bg-[#112d36] rounded-xl transition-colors focus:outline-none cursor-pointer"
               aria-label="Open Navigation Drawer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+
+          {/* Cloud Miner page: empty menu button on left side of TAEMRY FLUX logo per user request */}
+          {currentPage === 'cloud-miner' && (
+            <button
+              type="button"
+              id="btn-miner-menu-empty"
+              aria-label="Menu"
+              className="p-2 -ml-1 text-[#093e4a] dark:text-[#f1f5f9] hover:bg-[#eae3d5] dark:hover:bg-[#112d36] rounded-xl transition-colors focus:outline-none cursor-pointer"
             >
               <Menu className="w-5 h-5" />
             </button>
@@ -204,8 +216,8 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                 )}
               </button>
 
-              {/* Notification Updates Icon on Right Side */}
-              <div className="relative" ref={notificationRef}>
+              {/* Notification Updates Icon on Right Side - Hidden on Home Page per user directive */}
+              <div className={`${currentPage === 'home' ? 'hidden' : 'relative'}`} ref={notificationRef}>
                 <button
                   type="button"
                   id="btn-nav-notifications"
@@ -280,6 +292,27 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                   </div>
                 )}
               </div>
+
+              {/* Logout Button on the Right of Notifications - Only on Home Page per user directive */}
+              <button
+                type="button"
+                id="btn-nav-logout"
+                onClick={async () => {
+                  try {
+                    await logout();
+                    onNavigate('login');
+                  } catch (err) {
+                    console.error('Logout error:', err);
+                  }
+                }}
+                className={`${
+                  currentPage === 'home' ? 'flex' : 'hidden'
+                } w-9 h-9 rounded-full items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#c2410c] dark:text-[#fb923c] hover:text-white hover:bg-[#c2410c] dark:hover:bg-[#ea580c] hover:border-[#c2410c] dark:hover:border-[#ea580c] transition-all cursor-pointer`}
+                title="Sign Out"
+                aria-label="Sign Out"
+              >
+                <LogOut className="w-4 h-4 ml-0.5" />
+              </button>
 
               {/* User Avatar Button (Opens Information & Profile Settings) - Hidden per user directive */}
               <button

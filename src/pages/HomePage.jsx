@@ -537,7 +537,7 @@ export default function HomePage({ onNavigate }) {
                     <div className="space-y-1.5 mb-5">
                       <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
                         <span>Today's ad rhythm</span>
-                        <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">
+                        <span className="hidden font-bold text-[#0d5963] dark:text-[#38bdf8]">
                           {userStats?.dailyAdCount || 0} / 200 ({displayProgress}%)
                         </span>
                       </div>
@@ -719,6 +719,10 @@ export default function HomePage({ onNavigate }) {
             <span>Guaranteed Daily Ad Returns</span>
           </div>
           <div className="flex items-center gap-2">
+            <Pickaxe className="w-4 h-4 text-[#ea580c] dark:text-[#fb923c]" />
+            <span>Cloud Miner Verified</span>
+          </div>
+          <div className="flex items-center gap-2">
             <Lock className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
             <span>Secure Session Architecture</span>
           </div>
@@ -746,8 +750,8 @@ export default function HomePage({ onNavigate }) {
             </span>
             <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#1e3f49]">•</span>
             <span className="flex items-center gap-1.5 font-medium">
-              <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
-              JazzCash &amp; Easypaisa Live
+              <span className="w-2 h-2 rounded-full bg-[#ea580c]" />
+              12H Cloud Mining Active
             </span>
             <span className="hidden sm:inline text-[#cbd5e1] dark:text-[#1e3f49]">•</span>
             <span className="flex items-center gap-1.5 font-medium">
@@ -757,7 +761,7 @@ export default function HomePage({ onNavigate }) {
           </div>
 
           <p className="text-xs text-[#6e858a] dark:text-[#647b80] mt-3.5 max-w-xl mx-auto leading-relaxed">
-            Experience verified advertising yields with transparent session auditing, automated matching bonuses, and instant wallet balance synchronization.
+            Experience verified advertising yields and automated 12-hour cloud mining hashpower with transparent session auditing, streak protection, and instant wallet balance synchronization.
           </p>
         </div>
       </section>
@@ -1436,7 +1440,7 @@ export default function HomePage({ onNavigate }) {
             onClick={handlePrimaryAction}
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#0f766e] hover:bg-[#115e59] text-white font-semibold rounded-2xl text-base shadow-lg shadow-black/20 active:scale-[0.98] transition-all cursor-pointer"
           >
-            <span>{currentUser ? 'Open My Dashboard' : 'Open your wallet'}</span>
+            <span>{currentUser ? 'Go to Dashboard' : 'Start with TAEMRY'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>

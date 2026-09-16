@@ -605,6 +605,24 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
 
         {/* Step 2: Official Admin Payment Destination Details */}
         <div className="lg:col-span-5 space-y-6">
+          {/* Quick Wallet Summary Card - Shifted up */}
+          <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex items-center justify-between">
+            <div>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589]">
+                Current Wallet Balance
+              </span>
+              <p className="text-2xl font-black text-[#0c5963]">
+                {formatCurrency(userStats?.walletBalance ?? 0)}
+              </p>
+            </div>
+            <button
+              onClick={() => onSelectTab && onSelectTab('withdraw')}
+              className="px-4 py-2 bg-[#faf8f5] hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-colors cursor-pointer"
+            >
+              Withdraw Funds
+            </button>
+          </div>
+
           <div className="bg-[#112d35] text-white rounded-3xl p-6 sm:p-7 shadow-sm relative overflow-hidden">
             {/* Ambient pattern */}
             <div className="absolute -right-8 -bottom-8 w-40 h-40 bg-[#0c5963]/30 rounded-full blur-2xl pointer-events-none" />
@@ -717,24 +735,6 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                 <p>3. Upload receipt proof and submit. Approval completes in ~15 minutes.</p>
               </div>
             </div>
-          </div>
-
-          {/* Quick Wallet Summary Card */}
-          <div className="bg-white rounded-3xl p-5 border border-[#e4ded2] shadow-xs flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#718589]">
-                Current Wallet Balance
-              </span>
-              <p className="text-2xl font-black text-[#0c5963]">
-                {formatCurrency(userStats?.walletBalance ?? 0)}
-              </p>
-            </div>
-            <button
-              onClick={() => onSelectTab && onSelectTab('withdraw')}
-              className="px-4 py-2 bg-[#faf8f5] hover:bg-[#ede7dc] text-[#09353e] text-xs font-bold rounded-xl border border-[#d8d1c3] transition-colors cursor-pointer"
-            >
-              Withdraw Funds
-            </button>
           </div>
         </div>
       </div>

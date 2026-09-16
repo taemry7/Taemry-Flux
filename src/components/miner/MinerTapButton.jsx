@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pickaxe, Flame, AlertTriangle, Zap, CheckCircle2, ShieldCheck, Clock } from 'lucide-react';
+import { Pickaxe, Flame, AlertTriangle, Zap, CheckCircle2, ShieldCheck, Clock, Sparkles, Activity, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 /**
  * 3D Tap-to-Mine Reactor Button with 12h Cycle & Early Check-In
+ * Enhanced with deep tactile 3D extrusion, perspective dome, mechanical turbine bevels, and glowing orbital rings.
  * - 0 to 6 Hours: Green 3D Active Mining
  * - 6 to 12 Hours: Orange/Yellow 3D Early Check-in (Tap & Hold 2s)
  * - > 12 Hours / Expired: Warning Red 3D (Single tap to ignite)
@@ -16,7 +17,6 @@ export default function MinerTapButton({
 }) {
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
-  const holdTimerRef = useRef(null);
   const holdStartRef = useRef(0);
   const animFrameRef = useRef(null);
 
@@ -26,7 +26,7 @@ export default function MinerTapButton({
   const elapsedMs = isMiningActive ? now - sessionStartTime : sessionDurationMs;
   const remainingMs = Math.max(0, sessionDurationMs - elapsedMs);
 
-  // States:
+  // Cycle States:
   // 1. Inactive / Expired (> 12h): Warning Red
   // 2. First 6h: Green 3D (remainingMs > 6h)
   // 3. Second 6h: Orange/Yellow 3D (remainingMs <= 6h && remainingMs > 0)
@@ -46,17 +46,13 @@ export default function MinerTapButton({
   };
 
   // 2-Second Tap and Hold Logic for Early Check-in (Orange phase)
-  const handleHoldStart = (e) => {
+  const handleHoldStart = () => {
     if (isExpired) {
-      // Direct click to ignite
       onStartMining();
       return;
     }
 
-    if (!isSecondHalf) {
-      // In first half, no need to renew yet
-      return;
-    }
+    if (!isSecondHalf) return;
 
     setIsHolding(true);
     holdStartRef.current = Date.now();
@@ -93,13 +89,15 @@ export default function MinerTapButton({
     };
   }, []);
 
+  const progressPercent = Math.min(100, Math.max(0, (elapsedMs / sessionDurationMs) * 100));
+
   return (
-    <div className="w-full flex flex-col items-center select-none">
-      {/* 3D REACTOR BUTTON CONTAINER */}
+    <div className="w-full flex flex-col items-center select-none py-2">
+      {/* 3D REACTOR MECHANICAL PLATFORM */}
       <div className="relative flex items-center justify-center">
-        {/* Outer ambient glow ring */}
+        {/* Outer ambient glow pulse */}
         <div
-          className={`absolute -inset-4 rounded-full filter blur-xl transition-all duration-700 pointer-events-none opacity-60 ${
+          className={`absolute -inset-6 sm:-inset-8 rounded-full filter blur-2xl transition-all duration-700 pointer-events-none opacity-50 ${
             isFirstHalf
               ? 'bg-emerald-500/40'
               : isSecondHalf
@@ -108,128 +106,182 @@ export default function MinerTapButton({
           }`}
         />
 
-        {/* Circular Progress Ring for Hold-to-renew (Orange phase) */}
-        {isSecondHalf && isHolding && (
-          <svg className="absolute w-[240px] h-[240px] -rotate-90 pointer-events-none z-20">
-            <circle
-              cx="120"
-              cy="120"
-              r="108"
-              fill="transparent"
-              stroke="#f59e0b"
-              strokeWidth="8"
-              strokeDasharray={2 * Math.PI * 108}
-              strokeDashoffset={(2 * Math.PI * 108) * (1 - holdProgress / 100)}
-              strokeLinecap="round"
-            />
-          </svg>
-        )}
+        {/* 3D Mechanical Outer Base Ring with Beveled Rim */}
+        <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full p-2.5 bg-gradient-to-b from-[#e4ded2] via-[#cfc7b6] to-[#b8af9c] dark:from-[#1b3d47] dark:via-[#11282f] dark:to-[#091519] shadow-[0_20px_40px_rgba(0,0,0,0.35),inset_0_2px_4px_rgba(255,255,255,0.4),inset_0_-4px_8px_rgba(0,0,0,0.5)] flex items-center justify-center">
+          {/* Inner Groove Track & Hash Ticks */}
+          <div className="absolute inset-2 rounded-full border border-dashed border-black/20 dark:border-white/20 pointer-events-none" />
 
-        {/* Main 3D Tap Button */}
-        <button
-          type="button"
-          id="btn-tap-to-mine"
-          onPointerDown={handleHoldStart}
-          onPointerUp={handleHoldEnd}
-          onPointerLeave={handleHoldEnd}
-          className={`group relative w-52 h-52 sm:w-56 sm:h-56 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-300 outline-none transform active:scale-95 ${
-            isFirstHalf
-              ? 'bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] shadow-[0_15px_30px_rgba(5,150,105,0.4),inset_0_4px_8px_rgba(255,255,255,0.4),inset_0_-8px_12px_rgba(0,0,0,0.3)] border-4 border-[#34d399]'
-              : isSecondHalf
-              ? 'bg-gradient-to-b from-[#f59e0b] via-[#d97706] to-[#b45309] shadow-[0_15px_30px_rgba(217,119,6,0.4),inset_0_4px_8px_rgba(255,255,255,0.4),inset_0_-8px_12px_rgba(0,0,0,0.3)] border-4 border-[#fbbf24]'
-              : 'bg-gradient-to-b from-[#f43f5e] via-[#e11d48] to-[#be123c] shadow-[0_15px_30px_rgba(225,29,72,0.4),inset_0_4px_8px_rgba(255,255,255,0.4),inset_0_-8px_12px_rgba(0,0,0,0.3)] border-4 border-[#fb7185] animate-pulse'
-          }`}
-        >
-          {/* Inner 3D Highlight Dome */}
-          <div className="absolute inset-2.5 rounded-full bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
-
-          {/* Central Animated Icon */}
-          <div className="relative z-10 flex flex-col items-center justify-center text-white">
+          {/* Rotating Laser Beam / Orbital Energy Ring (Active Mining) */}
+          {isMiningActive && (
             <motion.div
-              animate={isMiningActive ? { rotate: [0, 8, -8, 0], scale: [1, 1.06, 1] } : {}}
-              transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-              className="p-3 rounded-2xl bg-black/15 backdrop-blur-xs mb-1.5 shadow-inner"
-            >
-              {isFirstHalf && <Pickaxe className="w-9 h-9 sm:w-11 sm:h-11 drop-shadow-md text-emerald-100" />}
-              {isSecondHalf && <Flame className="w-9 h-9 sm:w-11 sm:h-11 drop-shadow-md text-amber-100" />}
-              {isExpired && <AlertTriangle className="w-9 h-9 sm:w-11 sm:h-11 drop-shadow-md text-rose-100" />}
-            </motion.div>
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
+              className="absolute inset-1 rounded-full border-2 border-transparent border-t-emerald-400 border-r-amber-400 opacity-70 pointer-events-none"
+            />
+          )}
 
-            {/* Status Title */}
-            <span className="text-xs sm:text-sm font-extrabold tracking-wider uppercase drop-shadow-sm">
-              {isFirstHalf && 'MINING ACTIVE'}
-              {isSecondHalf && (isHolding ? `HOLDING (${Math.round(holdProgress)}%)` : 'HOLD 2S TO RENEW')}
-              {isExpired && 'TAP TO MINE'}
-            </span>
+          {/* Circular Progress Ring for Hold-to-renew (Orange phase) */}
+          {isSecondHalf && isHolding && (
+            <svg className="absolute w-[240px] h-[240px] sm:w-[260px] sm:h-[260px] -rotate-90 pointer-events-none z-30">
+              <circle
+                cx="120"
+                cy="120"
+                r="112"
+                fill="transparent"
+                stroke="#f59e0b"
+                strokeWidth="10"
+                strokeDasharray={2 * Math.PI * 112}
+                strokeDashoffset={(2 * Math.PI * 112) * (1 - holdProgress / 100)}
+                strokeLinecap="round"
+                className="transition-all duration-75"
+              />
+            </svg>
+          )}
 
-            {/* Sub-label */}
-            <span className="text-[10px] sm:text-[11px] font-semibold opacity-90 mt-0.5">
-              {isFirstHalf && `+${effectiveHashrate.toFixed(1)} TFLX/h`}
-              {isSecondHalf && `${formatTime(remainingMs)} Left`}
-              {isExpired && '12H Session Ready'}
-            </span>
-          </div>
+          {/* MAIN 3D TACTILE PUSH-BUTTON (Physical 3D Bevel, Extrusion & Depress) */}
+          <button
+            type="button"
+            id="btn-tap-to-mine"
+            onPointerDown={handleHoldStart}
+            onPointerUp={handleHoldEnd}
+            onPointerLeave={handleHoldEnd}
+            className={`group relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-150 outline-none transform active:translate-y-2.5 select-none ${
+              isFirstHalf
+                ? 'bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-4 border-[#34d399] shadow-[0_16px_0px_#064e3b,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#064e3b,0_10px_15px_rgba(0,0,0,0.3)]'
+                : isSecondHalf
+                ? 'bg-gradient-to-b from-[#f59e0b] via-[#d97706] to-[#b45309] border-4 border-[#fde047] shadow-[0_16px_0px_#78350f,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#78350f,0_10px_15px_rgba(0,0,0,0.3)]'
+                : 'bg-gradient-to-b from-[#f43f5e] via-[#e11d48] to-[#9f1239] border-4 border-[#fb7185] shadow-[0_16px_0px_#4c0519,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#4c0519,0_10px_15px_rgba(0,0,0,0.3)] animate-pulse'
+            }`}
+          >
+            {/* Top 3D Curvature Specular Light Arc */}
+            <div className="absolute top-2 w-32 sm:w-36 h-10 sm:h-12 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none blur-2xs" />
 
-          {/* Bottom specular reflection */}
-          <div className="absolute bottom-3 w-28 h-4 rounded-full bg-white/10 blur-xs pointer-events-none" />
-        </button>
+            {/* Inner Holographic 3D Convex Lens */}
+            <div className="absolute inset-3 rounded-full bg-gradient-to-tr from-black/25 via-transparent to-white/20 pointer-events-none" />
+
+            {/* Center Floating 3D Icon & Typography */}
+            <div className="relative z-20 flex flex-col items-center justify-center text-white text-center px-3">
+              {/* Floating 3D Icon */}
+              <motion.div
+                animate={isMiningActive ? { y: [-2, 2, -2], rotate: [0, 4, -4, 0] } : {}}
+                transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
+                className="p-3 sm:p-3.5 rounded-2xl bg-black/25 backdrop-blur-sm mb-1.5 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2),0_6px_12px_rgba(0,0,0,0.3)] border border-white/20"
+              >
+                {isFirstHalf && <Pickaxe className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
+                {isSecondHalf && <Flame className="w-8 h-8 sm:w-10 sm:h-10 text-amber-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
+                {isExpired && <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-rose-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
+              </motion.div>
+
+              {/* Status Action Title */}
+              <span className="text-xs sm:text-sm font-black tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
+                {isFirstHalf && 'MINING ACTIVE (3D)'}
+                {isSecondHalf && (isHolding ? `HOLDING (${Math.round(holdProgress)}%)` : 'HOLD 2S TO RENEW')}
+                {isExpired && 'TAP TO MINE'}
+              </span>
+
+              {/* Dynamic Hashrate / Countdown Subtext */}
+              <span className="text-[10px] sm:text-[11px] font-bold opacity-95 mt-0.5 tracking-tight drop-shadow-sm">
+                {isFirstHalf && `+${effectiveHashrate.toFixed(1)} TFLX/h LIVE`}
+                {isSecondHalf && `${formatTime(remainingMs)} Left in Cycle`}
+                {isExpired && '12H Cloud Node Ready'}
+              </span>
+            </div>
+
+            {/* Bottom 3D Specular Highlight */}
+            <div className="absolute bottom-3 w-28 sm:w-32 h-3 rounded-full bg-white/15 blur-xs pointer-events-none" />
+          </button>
+        </div>
       </div>
 
-      {/* Unified Status & Countdown Session Card (Combined Module) */}
-      <div className="w-full max-w-sm mt-7 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] rounded-2xl p-4 shadow-sm text-center">
-        {/* Integrated Status Badge & Time */}
-        <div className="flex justify-between items-center mb-2 pb-2 border-b border-[#ece6d9] dark:border-[#173740]">
-          <div className="flex items-center gap-1.5">
+      {/* Sleek, Beautiful & Normal Mining Active Console */}
+      <div className="w-full max-w-md mt-6 bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] rounded-2xl p-4 sm:p-5 shadow-sm">
+        {/* Top Status & Clean Countdown */}
+        <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
+          <div className="flex items-center gap-2">
             {isFirstHalf && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
-                </span>
-                Active (Cloud)
-              </span>
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Mining Active</span>
+              </div>
             )}
             {isSecondHalf && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-600 dark:text-amber-400 text-[11px] font-bold animate-pulse">
-                <Clock className="w-3 h-3" />
-                Early Check-In
-              </span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold">
+                <Clock className="w-3.5 h-3.5 text-amber-500" />
+                <span>Early Check-In</span>
+              </div>
             )}
             {isExpired && (
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-500/40 text-rose-600 dark:text-rose-400 text-[11px] font-bold">
-                <AlertTriangle className="w-3 h-3" />
-                Expired
-              </span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Session Expired</span>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <span className="text-[11px] font-semibold text-[#7a8c94] dark:text-[#94a3b8]">Time:</span>
-            <span className="font-mono font-bold text-xs text-[#09353e] dark:text-[#f1f5f9]">
+          {/* Clean Time Countdown */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+            <Clock className="w-3.5 h-3.5 text-[#7a8c94] dark:text-[#94a3b8]" />
+            <span className="font-mono text-xs sm:text-sm font-black tracking-wide text-[#09353e] dark:text-[#38bdf8] tabular-nums">
               {formatTime(remainingMs)}
             </span>
           </div>
         </div>
 
-        {/* Progress bar */}
-        <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              isFirstHalf
-                ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                : isSecondHalf
-                ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                : 'bg-rose-500'
-            }`}
-            style={{ width: `${Math.min(100, Math.max(0, (elapsedMs / sessionDurationMs) * 100))}%` }}
-          />
+        {/* Clean Progress Indicator */}
+        <div className="mt-3.5 space-y-1.5">
+          <div className="flex justify-between text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8]">
+            <span>Cycle Progress</span>
+            <span>{Math.round(progressPercent)}% Elapsed</span>
+          </div>
+          <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500 ${
+                isFirstHalf
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
+                  : isSecondHalf
+                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
+                  : 'bg-rose-500'
+              }`}
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
 
-        {/* Help tooltip note */}
-        <p className="text-[11px] text-[#718589] dark:text-[#94a3b8] mt-2 leading-tight">
-          {isFirstHalf && 'Session runs continuously in cloud. Phone CPU & battery are 100% idle.'}
-          {isSecondHalf && 'After 6 hours, button turns orange. Hold 2 seconds to renew for another 12h without losing streak!'}
-          {isExpired && 'Session expired. Tap the red button to ignite a fresh 12h cloud mining session.'}
+        {/* 3-Column Micro-Stats: Boost + Daily Yield + Session Cycle */}
+        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#ece6d9] dark:border-[#173740] text-center">
+          <div className="p-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase block">
+              Boost
+            </span>
+            <p className="text-xs sm:text-sm font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
+              +{effectiveHashrate.toFixed(1)}/h
+            </p>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase block">
+              Daily Yield
+            </span>
+            <p className="text-xs sm:text-sm font-black text-[#0c5963] dark:text-[#38bdf8] mt-0.5">
+              +{(effectiveHashrate * 24).toFixed(0)} TFLX
+            </p>
+          </div>
+
+          <div className="p-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase block">
+              Session Cycle
+            </span>
+            <p className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5">
+              12 Hours
+            </p>
+          </div>
+        </div>
+
+        {/* Dynamic Context Notice */}
+        <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-3 leading-relaxed text-center font-medium">
+          {isFirstHalf && 'Cloud mining is active with 0% battery and CPU load.'}
+          {isSecondHalf && 'Early Check-In active: Hold button for 2s to renew for another 12 hours.'}
+          {isExpired && 'Session complete. Tap the button above to ignite a fresh 12h run.'}
         </p>
       </div>
     </div>

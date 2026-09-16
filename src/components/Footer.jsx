@@ -47,21 +47,19 @@ export default function Footer({ onNavigate, currentPage }) {
               <button
                 id="btn-footer-howitworks"
                 onClick={() => {
-                  onNavigate('home');
-                  const el = document.getElementById('how-it-works');
-                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  onNavigate('cloud-miner');
                 }}
                 className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
               >
-                How it works
+                Cloud Miner
               </button>
-              {/* Button 4 - Contextual Sign In / My Dashboard */}
+              {/* Button 4 - Contextual Dashboard / Sign In */}
               <button
                 id="btn-footer-auth"
                 onClick={() => onNavigate(currentUser ? 'dashboard' : 'login')}
                 className="hover:text-[#0c5963] dark:hover:text-[#38bdf8] transition-colors cursor-pointer"
               >
-                {currentUser ? 'My Dashboard' : 'Sign In'}
+                {currentUser ? 'Dashboard' : 'Sign In'}
               </button>
               <button
                 id="btn-footer-support"

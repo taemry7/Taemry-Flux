@@ -1,11 +1,13 @@
-import React from 'react';
-import { Flame, CheckCircle2, Gift, Sparkles, Award } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Flame, CheckCircle2, Gift, Sparkles, Award, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 
 export default function MinerSevenDayCheckIn({
   streakDays = 4,
   claimedDays = [1, 2, 3, 4],
   onClaimDay,
 }) {
+  const scrollRef = useRef(null);
+
   // 7-day cycle: Day 1 to Day 7 rewards in TFLX bonus
   const checkInDays = [
     { day: 1, reward: 2.0, label: '+2 TFLX' },
@@ -20,107 +22,162 @@ export default function MinerSevenDayCheckIn({
   // Active day in 7-day cycle (1-indexed)
   const currentCycleDay = ((streakDays - 1) % 7) + 1;
 
+  const scrollSide = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = direction === 'left' ? -180 : 180;
+      scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="w-full mt-6 bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] rounded-3xl p-5 sm:p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#ece6d9] dark:border-[#173740]">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-amber-500/15 text-[#d97706] flex items-center justify-center">
-            <Flame className="w-4 h-4" />
+    <div className="w-full mt-5 bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] rounded-2xl p-3.5 sm:p-4 shadow-2xs">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#ece6d9] dark:border-[#173740]">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-[#d97706] flex items-center justify-center shrink-0">
+            <Flame className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-[#09353e] dark:text-[#f1f5f9] flex items-center gap-2">
-              <span>7-Day Mining Check-In Rewards</span>
-              <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/15 text-[#d97706]">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h3 className="text-xs sm:text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                7-Day Check-In Yield
+              </h3>
+              <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-amber-500/15 text-[#d97706]">
                 Day {currentCycleDay} of 7
               </span>
-            </h3>
-            <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-0.5">
-              Check in consecutively every day to collect free TFLX yields and unlock Day-Off shields.
+            </div>
+            <p className="text-[10px] text-[#6e8286] dark:text-[#94a3b8] hidden sm:block">
+              Consecutive daily check-in rewards and streak shields.
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start sm:self-auto text-xs font-bold text-[#0c5963] dark:text-[#38bdf8]">
-          <Sparkles className="w-3.5 h-3.5" />
-          <span>Streak: {streakDays} Days</span>
+        {/* Right Action & Controls: Streak + Swipe Buttons (Hidden per user request) */}
+        <div className="hidden items-center gap-2 shrink-0">
+          <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 text-[#d97706] text-[10px] font-black">
+            <Sparkles className="w-3 h-3" />
+            <span>{streakDays}D Streak</span>
+          </div>
+
+          {/* Side Swipe Arrow Nav Controls */}
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => scrollSide('left')}
+              className="w-6 h-6 rounded-md bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] text-[#6e8286] hover:text-[#09353e] dark:hover:text-[#f1f5f9] flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+              aria-label="Swipe Left"
+            >
+              <ChevronLeft className="w-3.5 h-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollSide('right')}
+              className="w-6 h-6 rounded-md bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] text-[#6e8286] hover:text-[#09353e] dark:hover:text-[#f1f5f9] flex items-center justify-center cursor-pointer transition-colors shadow-2xs"
+              aria-label="Swipe Right"
+            >
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 7 Days Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2.5 mt-4">
-        {checkInDays.map((item) => {
-          const isPast = item.day < currentCycleDay;
-          const isCurrent = item.day === currentCycleDay;
-          const isUpcoming = item.day > currentCycleDay;
-          const isClaimed = claimedDays.includes(item.day);
+      {/* Side Swipeable Horizontal Carousel Container (Side Swipe & Chota Karo) */}
+      <div className="relative">
+        <div
+          ref={scrollRef}
+          className="flex items-stretch gap-2 overflow-x-auto pb-1.5 pt-0.5 px-0.5 scrollbar-none scroll-smooth snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {checkInDays.map((item) => {
+            const isPast = item.day < currentCycleDay;
+            const isCurrent = item.day === currentCycleDay;
+            const isUpcoming = item.day > currentCycleDay;
+            const isClaimed = claimedDays.includes(item.day);
 
-          return (
-            <div
-              key={item.day}
-              className={`relative rounded-2xl p-3 flex flex-col items-center justify-between text-center transition-all ${
-                isCurrent
-                  ? 'bg-gradient-to-b from-amber-500/20 to-orange-500/10 border-2 border-[#d97706] shadow-sm'
-                  : isPast
-                  ? 'bg-emerald-500/10 border border-emerald-500/30'
-                  : 'bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] opacity-80'
-              }`}
-            >
-              {/* Day Number */}
-              <span className="text-[11px] font-bold text-[#7a8c94] dark:text-[#94a3b8] block">
-                Day {item.day}
-              </span>
-
-              {/* Icon / Status */}
-              <div className="my-2">
-                {isPast ? (
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
-                    <CheckCircle2 className="w-4 h-4" />
-                  </div>
-                ) : isCurrent ? (
-                  <div className="w-8 h-8 rounded-full bg-amber-500/25 text-[#d97706] flex items-center justify-center mx-auto animate-bounce">
-                    <Gift className="w-4 h-4" />
-                  </div>
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-black/5 dark:bg-white/5 text-[#7a8c94] flex items-center justify-center mx-auto">
-                    {item.isSpecial ? <Award className="w-4 h-4 text-purple-400" /> : <Flame className="w-4 h-4" />}
-                  </div>
-                )}
-              </div>
-
-              {/* Reward label */}
-              <span className="text-[11px] font-extrabold text-[#09353e] dark:text-[#f1f5f9] leading-tight">
-                {item.label}
-              </span>
-
-              {/* Action / State */}
-              <div className="mt-2 w-full">
-                {isPast ? (
-                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                    Collected
+            return (
+              <div
+                key={item.day}
+                className={`snap-start shrink-0 min-w-[98px] sm:min-w-[110px] rounded-xl p-2.5 flex flex-col items-center justify-between text-center transition-all duration-200 ${
+                  isCurrent
+                    ? 'bg-gradient-to-b from-amber-500/20 to-orange-500/10 border-2 border-[#d97706] shadow-xs'
+                    : isPast
+                    ? 'bg-emerald-500/10 border border-emerald-500/30'
+                    : 'bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] opacity-85'
+                }`}
+              >
+                {/* Day Header */}
+                <div className="w-full flex items-center justify-between gap-1 mb-1">
+                  <span className="text-[10px] font-black text-[#7a8c94] dark:text-[#94a3b8] uppercase">
+                    Day {item.day}
                   </span>
-                ) : isCurrent ? (
-                  <button
-                    type="button"
-                    onClick={() => onClaimDay(item.day, item.reward)}
-                    disabled={isClaimed}
-                    className={`w-full py-1 px-2 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                      isClaimed
-                        ? 'bg-emerald-500/20 text-emerald-600 cursor-default'
-                        : 'bg-[#d97706] hover:bg-[#b45309] text-white shadow-xs'
-                    }`}
-                  >
-                    {isClaimed ? 'Claimed' : 'Claim'}
-                  </button>
-                ) : (
-                  <span className="text-[10px] text-[#7a8c94] dark:text-[#64748b]">
-                    Locked
-                  </span>
-                )}
+                  {item.isSpecial && (
+                    <span className="text-[8px] font-black px-1 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 uppercase">
+                      Bonus
+                    </span>
+                  )}
+                </div>
+
+                {/* Center Icon */}
+                <div className="my-1.5">
+                  {isPast ? (
+                    <div className="w-7 h-7 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
+                  ) : isCurrent ? (
+                    <div className="w-7 h-7 rounded-full bg-amber-500/25 text-[#d97706] flex items-center justify-center mx-auto animate-bounce">
+                      <Gift className="w-3.5 h-3.5" />
+                    </div>
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-black/5 dark:bg-white/5 text-[#7a8c94] flex items-center justify-center mx-auto">
+                      {item.isSpecial ? (
+                        <Award className="w-3.5 h-3.5 text-purple-400" />
+                      ) : (
+                        <Flame className="w-3.5 h-3.5" />
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reward Label */}
+                <span className="text-[10px] sm:text-[11px] font-extrabold text-[#09353e] dark:text-[#f1f5f9] leading-tight block line-clamp-1">
+                  {item.label}
+                </span>
+
+                {/* Compact Action Button */}
+                <div className="mt-1.5 w-full">
+                  {isPast ? (
+                    <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block py-0.5">
+                      Collected
+                    </span>
+                  ) : isCurrent ? (
+                    <button
+                      type="button"
+                      onClick={() => onClaimDay(item.day, item.reward)}
+                      disabled={isClaimed}
+                      className={`w-full py-0.5 px-1.5 rounded-md text-[9px] font-black transition-all cursor-pointer ${
+                        isClaimed
+                          ? 'bg-emerald-500/20 text-emerald-600 cursor-default'
+                          : 'bg-[#d97706] hover:bg-[#b45309] text-white shadow-2xs'
+                      }`}
+                    >
+                      {isClaimed ? 'Claimed' : 'Claim'}
+                    </button>
+                  ) : (
+                    <span className="text-[9px] text-[#7a8c94] dark:text-[#64748b] block py-0.5">
+                      Locked
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+
+        {/* Swipe hint indicator for mobile (Hidden per user request) */}
+        <div className="hidden items-center justify-center gap-1 text-[9px] text-[#7a8c94] dark:text-[#94a3b8] mt-1.5 font-medium">
+          <span>Swipe horizontally for Days 1–7</span>
+          <ChevronsRight className="w-3 h-3 text-[#d97706]" />
+        </div>
       </div>
     </div>
   );
