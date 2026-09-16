@@ -88,6 +88,7 @@ router.get('/stats', verifyToken, async (req, res) => {
         teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 0,
         referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 0,
         totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 0,
+        username: userDocData.username || (userDocData.name && userDocData.name.startsWith('@') ? userDocData.name : `@${(userDocData.name || userDocData.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_]/g, '')}`),
         isEligible: userDocData.isEligible !== undefined ? Boolean(userDocData.isEligible) : Boolean(userDocData.currentPackage && userDocData.currentPackage !== 'None'),
       };
     }

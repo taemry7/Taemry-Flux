@@ -19,8 +19,8 @@ import {
 import apiClient from '../../api/client';
 
 export default function AdminDeposits() {
-  const [deposits, setDeposits] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('pending'); // 'pending' | 'approved' | 'rejected' | 'all'
+  const [allDeposits, setAllDeposits] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
@@ -36,14 +36,20 @@ export default function AdminDeposits() {
     reason: '',
   });
 
-  const fetchDeposits = async (filter = statusFilter) => {
+  const fetchDeposits = async () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/admin/deposits', {
-        params: { status: filter },
+        params: { status: 'all' },
       });
       if (res.data?.success) {
-        setDeposits(res.data.deposits || []);
+        const list = res.data.deposits || [];
+        setAllDeposits(list);
+        // If there are pending deposits and we are on initial load, auto-focus on pending
+        const hasPending = list.some((d) => d.status === 'pending');
+        if (hasPending) {
+          setStatusFilter('pending');
+        }
       }
     } catch (err) {
       console.error('Failed to fetch deposits:', err);
@@ -57,8 +63,8 @@ export default function AdminDeposits() {
   };
 
   useEffect(() => {
-    fetchDeposits(statusFilter);
-  }, [statusFilter]);
+    fetchDeposits();
+  }, []);
 
   // Open modal for approve or reject
   const openActionModal = (deposit, action) => {
@@ -85,7 +91,7 @@ export default function AdminDeposits() {
             message: `Deposit of $${deposit.amountUSD} successfully approved and credited to ${deposit.userEmail}.`,
           });
           // Update list status
-          setDeposits((prev) =>
+          setAllDeposits((prev) =>
             prev.map((d) =>
               (d.depositId || d.id) === (deposit.depositId || deposit.id)
                 ? { ...d, status: 'approved' }
@@ -102,7 +108,7 @@ export default function AdminDeposits() {
             type: 'success',
             message: `Deposit of $${deposit.amountUSD} was rejected.`,
           });
-          setDeposits((prev) =>
+          setAllDeposits((prev) =>
             prev.map((d) =>
               (d.depositId || d.id) === (deposit.depositId || deposit.id)
                 ? { ...d, status: 'rejected', rejectReason: reason }
@@ -122,7 +128,22 @@ export default function AdminDeposits() {
     }
   };
 
-  const pendingCount = deposits.filter((d) => d.status === 'pending').length;
+  const pendingCount = allDeposits.filter((d) => d.status === 'pending').length;
+  const approvedCount = allDeposits.filter((d) => d.status === 'approved').length;
+  const rejectedCount = allDeposits.filter((d) => d.status === 'rejected').length;
+  const totalCount = allDeposits.length;
+
+  const approvedVolume = allDeposits
+    .filter((d) => d.status === 'approved')
+    .reduce((sum, d) => sum + Number(d.amountUSD || 0), 0);
+
+  const pendingVolume = allDeposits
+    .filter((d) => d.status === 'pending')
+    .reduce((sum, d) => sum + Number(d.amountUSD || 0), 0);
+
+  const displayedDeposits = statusFilter === 'all'
+    ? allDeposits
+    : allDeposits.filter((d) => d.status === statusFilter);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -152,38 +173,47 @@ export default function AdminDeposits() {
         </div>
       )}
 
-      {/* Header and Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header and Quick Stats */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <ArrowDownCircle className="w-5 h-5 text-emerald-400" />
             <span>Deposit Approvals & Screenshot Verification</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Review member bank slips, Easypaisa/JazzCash receipts, and crypto transaction records
+            Total {totalCount} records &bull; Approved ${approvedVolume.toFixed(2)} &bull; Pending ${pendingVolume.toFixed(2)}
           </p>
         </div>
 
-        {/* Tab Filter */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
-          {[
-            { id: 'pending', label: 'Pending' },
-            { id: 'approved', label: 'Approved' },
-            { id: 'rejected', label: 'Rejected' },
-            { id: 'all', label: 'All' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                statusFilter === tab.id
-                  ? 'bg-emerald-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Tab Filter & Refresh Button */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchDeposits}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition-colors cursor-pointer border border-slate-700"
+            title="Refresh Deposits"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-emerald-400 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
+            {[
+              { id: 'all', label: `All (${totalCount})` },
+              { id: 'pending', label: `Pending (${pendingCount})` },
+              { id: 'approved', label: `Approved (${approvedCount})` },
+              { id: 'rejected', label: `Rejected (${rejectedCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  statusFilter === tab.id
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -210,14 +240,14 @@ export default function AdminDeposits() {
                     <span>Loading deposit records...</span>
                   </td>
                 </tr>
-              ) : deposits.length === 0 ? (
+              ) : displayedDeposits.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-500">
                     No deposits matching the "{statusFilter}" filter.
                   </td>
                 </tr>
               ) : (
-                deposits.map((dep) => {
+                displayedDeposits.map((dep) => {
                   const depId = dep.depositId || dep.id;
                   const isPending = dep.status === 'pending';
                   return (

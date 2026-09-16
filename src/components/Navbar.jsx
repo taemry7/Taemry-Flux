@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle, Sparkles } from 'lucide-react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle, Sparkles, ArrowRight } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
-export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode: externalAuthMode }) {
+export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode: externalAuthMode, isDrawerOpen }) {
   const { currentUser, isAdmin, logout, userStats } = useAuth();
   const [currentAuthMode, setCurrentAuthMode] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -144,8 +144,12 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-[#faf8f5]/90 dark:bg-[#07151a]/95 backdrop-blur-md border-b border-[#e9e3d8] dark:border-[#15323b] transition-colors">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <header className={`sticky top-0 z-30 w-full bg-[#faf8f5]/90 dark:bg-[#07151a]/95 backdrop-blur-md border-b border-[#e9e3d8] dark:border-[#15323b] transition-all duration-200 ${
+      isDrawerOpen ? 'blur-[2px] opacity-70 pointer-events-none' : ''
+    }`}>
+      <div className={`max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between transition-all duration-200 ${
+        isDrawerOpen ? 'blur-[1.5px]' : ''
+      }`}>
         {/* Left Side: Logo & Menu Button */}
         <div className="flex items-center gap-3">
           {currentUser && onOpenDrawer && currentPage !== 'home' && currentPage !== 'cloud-miner' && (
@@ -194,20 +198,19 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
         <div className="flex items-center gap-3">
           {currentUser ? (
             <div className="flex items-center gap-3">
-              {/* Admin Panel Access Pill */}
-              {isAdmin && (
+              {/* Admin Control Button - Strictly on Home Page and ONLY for Admin */}
+              {isAdmin && currentPage === 'home' && (
                 <button
+                  type="button"
                   id="btn-nav-admin"
                   onClick={() => onNavigate('admin')}
-                  className={`hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black tracking-wide border transition-all active:scale-95 cursor-pointer ${
-                    currentPage === 'admin'
-                      ? 'bg-[#0f172a] text-[#38bdf8] border-[#38bdf8] shadow-sm'
-                      : 'bg-[#1e293b] text-[#7dd3fc] border-[#334155] hover:bg-[#0f172a]'
-                  }`}
+                  className="group flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold shadow-md shadow-sky-600/30 border border-sky-400/30 transition-all hover:scale-105 active:scale-95 cursor-pointer whitespace-nowrap"
                   title="Open Admin Control Center"
+                  aria-label="Admin Control"
                 >
-                  <ShieldCheck className="w-3.5 h-3.5 text-[#38bdf8]" />
-                  <span>Admin Panel</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-sky-200 shrink-0" />
+                  <span>Admin Control</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-sky-200 shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </button>
               )}
 

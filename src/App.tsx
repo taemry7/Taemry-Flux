@@ -412,7 +412,7 @@ function AppContent() {
         {isDrawerOpen && (
           <div
             id="menuBackdrop"
-            className="menu-backdrop-overlay fixed inset-0 z-40 bg-black/40 backdrop-blur-xs cursor-pointer transition-opacity"
+            className="menu-backdrop-overlay fixed inset-0 z-40 bg-black/40 backdrop-blur-sm cursor-pointer transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
               setIsDrawerOpen(false);
@@ -427,6 +427,7 @@ function AppContent() {
           authMode={currentPage === 'login' ? (activeTab === 'signup' ? 'signup' : 'signin') : null}
           onNavigate={navigateTo}
           onOpenDrawer={() => setIsDrawerOpen(true)}
+          isDrawerOpen={isDrawerOpen}
         />
 
         {/* Main Page Routing */}

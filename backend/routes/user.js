@@ -32,10 +32,14 @@ router.get('/me', verifyToken, async (req, res) => {
       } catch (e) {}
 
       // Initialize default user document if newly registered (Clean zeroed account, or approved deposits)
+      const rawUserVal = req.user.username || req.user.name || req.user.email?.split('@')[0] || 'member';
+      const defaultUsername = rawUserVal.startsWith('@') ? rawUserVal : `@${rawUserVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+
       userData = {
         uid,
         email: req.user.email || 'member@taemryflux.com',
         name: req.user.name || req.user.email?.split('@')[0] || 'TAEMRY Member',
+        username: defaultUsername,
         walletBalance: initialBalance,
         currentPackage: 'None',
         isEligible: false,
@@ -49,6 +53,10 @@ router.get('/me', verifyToken, async (req, res) => {
     } else {
       userData = doc.data();
       // Ensure all required fields exist
+      if (!userData.username) {
+        const rawVal = userData.name || userData.email?.split('@')[0] || 'member';
+        userData.username = rawVal.startsWith('@') ? rawVal : `@${rawVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+      }
       if (userData.walletBalance === undefined) userData.walletBalance = 0;
       if (!userData.currentPackage) userData.currentPackage = 'None';
       if (userData.lifetimeAds === undefined) userData.lifetimeAds = 0;

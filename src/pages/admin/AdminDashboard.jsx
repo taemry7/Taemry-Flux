@@ -20,29 +20,15 @@ import {
   Bell,
   Rocket,
   LifeBuoy,
-  Trophy
+  Trophy,
+  Pickaxe,
+  Zap,
+  Flame
 } from 'lucide-react';
 import GoLiveModal from '../../components/admin/GoLiveModal';
-import AdminDualPreviewCard from '../../components/admin/AdminDualPreviewCard';
 
 export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRefresh, loading }) {
   const [showGoLive, setShowGoLive] = useState(false);
-
-  if (!stats) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-slate-400 space-y-4">
-        <RefreshCw className="w-8 h-8 animate-spin text-sky-400" />
-        <p className="text-sm font-medium">Loading platform analytics...</p>
-        <button
-          onClick={onRefresh}
-          className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-2 border border-slate-700 mt-2"
-        >
-          <RefreshCw className="w-3.5 h-3.5" />
-          <span>Retry Now</span>
-        </button>
-      </div>
-    );
-  }
 
   const {
     totalUsers = 0,
@@ -54,9 +40,10 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
     pendingWithdrawals = 0,
     pendingTickets = 0,
     dailyActiveUsers = 0,
+    cloudMiner = { activeMiners: 0, totalMinedTflx: 0, totalHashrate: 0, totalMinersRecorded: 0 },
     todayActivity = { deposits: 0, withdrawals: 0, total: 0 },
     charts = { growth: [], financials: [] }
-  } = stats;
+  } = stats || {};
 
   const growthCharts = Array.isArray(charts?.growth) ? charts.growth : [];
   const financialCharts = Array.isArray(charts?.financials) ? charts.financials : [];
@@ -65,7 +52,14 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
   const maxFinancial = Math.max(...financialCharts.map((d) => Math.max(Number(d.revenue) || 0, Number(d.payouts) || 0)), 100);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300">
+    <div className="space-y-6 animate-in fade-in duration-300">
+      {/* Loading Progress Strip */}
+      {loading && (
+        <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-sky-500 to-amber-500 animate-pulse w-full" />
+        </div>
+      )}
+
       {/* Modal for Phase 6 Go-Live Checklist */}
       <GoLiveModal isOpen={showGoLive} onClose={() => setShowGoLive(false)} />
 
@@ -109,14 +103,37 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
         </div>
       )}
 
-      {/* Featured Dual Switcher & Interactive Preview Card (Watch Ads & Cloud Miner) */}
-      <div className="w-full flex justify-center py-2">
-        <AdminDualPreviewCard
-          stats={stats}
-          onNavigate={onNavigate}
-          onNavigateTab={onNavigateTab}
-        />
+      {/* Cloud Miner Live Status Quick Overview Card */}
+      <div className="p-5 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-amber-950/30 border border-amber-500/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center">
+            <Pickaxe className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-bold text-white">Cloud Mining Operations</h3>
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+                <span>{cloudMiner.activeMiners || 0} Mining Now</span>
+              </span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Network Hashrate: <strong className="text-amber-400">+{cloudMiner.totalHashrate || 0} TFLX/h</strong> &bull; Total Mined Hash Yield: <strong className="text-white">{cloudMiner.totalMinedTflx || 0} TFLX</strong>
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onNavigateTab('cloud-miner')}
+          className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-md shadow-amber-500/20 whitespace-nowrap self-end md:self-auto"
+        >
+          <Zap className="w-3.5 h-3.5" />
+          <span>Manage Cloud Miners</span>
+          <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+        </button>
       </div>
+
+      {/* Note: Watch Ads and Cloud Miner preview cards hidden per user request */}
 
       {/* Core Platform Metric Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

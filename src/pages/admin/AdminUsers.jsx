@@ -22,9 +22,17 @@ import {
   History,
   RefreshCw,
   UserCheck,
-  UserX
+  UserX,
+  Pickaxe,
+  Zap,
+  Play,
+  Pause,
+  Flame,
+  Clock
 } from 'lucide-react';
 import apiClient from '../../api/client';
+import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
+import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -39,6 +47,7 @@ export default function AdminUsers() {
   // Selected User Modal state
   const [selectedUid, setSelectedUid] = useState(null);
   const [userDetails, setUserDetails] = useState(null);
+  const [userMiner, setUserMiner] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
 
   // Manual Wallet Adjustment state
@@ -46,19 +55,79 @@ export default function AdminUsers() {
   const [adjustAction, setAdjustAction] = useState('add');
   const [adjustReason, setAdjustReason] = useState('');
 
-  // Fetch paginated users
+  // Miner adjustment state in user profile
+  const [minerBonusInput, setMinerBonusInput] = useState('');
+  const [minerHashrateInput, setMinerHashrateInput] = useState('');
+
+  // Fetch paginated users (merging Backend and direct Firestore)
   const fetchUsers = async (page = 1, searchQuery = search) => {
     setLoading(true);
     try {
+      // 1. Fetch from backend
       const res = await apiClient.get('/admin/users', {
         params: { page, limit: 10, search: searchQuery },
-      });
-      if (res.data?.success) {
-        setUsers(res.data.users || []);
-        setTotalUsers(res.data.totalUsers || 0);
-        setTotalPages(res.data.totalPages || 1);
-        setCurrentPage(res.data.currentPage || 1);
+      }).catch(() => null);
+
+      let backendUsers = [];
+      let backendTotal = 0;
+      let backendPages = 1;
+
+      if (res?.data?.success) {
+        backendUsers = res.data.users || [];
+        backendTotal = res.data.totalUsers || 0;
+        backendPages = res.data.totalPages || 1;
       }
+
+      // 2. Fetch from client Firestore if available
+      let firestoreUsers = [];
+      if (isFirebaseConfigured && db) {
+        try {
+          const snap = await getDocs(collection(db, 'users'));
+          snap.forEach((d) => {
+            const data = d.data() || {};
+            firestoreUsers.push({
+              uid: d.id,
+              email: data.email || 'member@taemry.com',
+              name: data.displayName || data.name || 'Member',
+              currentPackage: data.currentPackage || 'None',
+              walletBalance: Number(data.walletBalance || 0),
+              referralCount: Number(data.referralCount || 0),
+              isEligible: Boolean(data.isEligible),
+              isBlocked: Boolean(data.isBlocked),
+              createdAt: data.createdAt || new Date().toISOString(),
+            });
+          });
+        } catch (fsErr) {
+          console.warn('Direct Firestore users read notice:', fsErr.message);
+        }
+      }
+
+      // Merge backend and firestore users
+      const userMap = new Map();
+      backendUsers.forEach((u) => userMap.set(u.uid, u));
+      firestoreUsers.forEach((u) => {
+        if (userMap.has(u.uid)) {
+          userMap.set(u.uid, { ...userMap.get(u.uid), ...u });
+        } else {
+          userMap.set(u.uid, u);
+        }
+      });
+
+      let allMerged = Array.from(userMap.values());
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        allMerged = allMerged.filter(
+          (u) =>
+            (u.email || '').toLowerCase().includes(q) ||
+            (u.name || '').toLowerCase().includes(q) ||
+            (u.uid || '').toLowerCase().includes(q)
+        );
+      }
+
+      setTotalUsers(Math.max(backendTotal, allMerged.length));
+      setTotalPages(Math.max(backendPages, Math.ceil(allMerged.length / 10) || 1));
+      setCurrentPage(page);
+      setUsers(allMerged.slice((page - 1) * 10, page * 10));
     } catch (err) {
       console.error('Failed to fetch admin users:', err);
       setFeedback({ type: 'error', message: err.response?.data?.message || 'Failed to load users.' });
@@ -119,13 +188,64 @@ export default function AdminUsers() {
     setSelectedUid(uid);
     setModalLoading(true);
     setUserDetails(null);
+    setUserMiner(null);
     setAdjustAmount('');
     setAdjustReason('');
+    setMinerBonusInput('');
+    setMinerHashrateInput('');
     try {
-      const res = await apiClient.get(`/admin/users/${uid}`);
-      if (res.data?.success) {
+      // 1. Fetch user profile & ledger
+      const res = await apiClient.get(`/admin/users/${uid}`).catch(() => null);
+      if (res?.data?.success) {
         setUserDetails(res.data);
+      } else if (isFirebaseConfigured && db) {
+        // Fallback to direct Firestore read
+        const userDoc = await getDoc(doc(db, 'users', uid)).catch(() => null);
+        if (userDoc?.exists()) {
+          const uData = userDoc.data();
+          setUserDetails({
+            user: { uid, ...uData },
+            downline: [],
+            transactions: [],
+          });
+        }
       }
+
+      // 2. Fetch user cloud miner profile
+      let minerData = null;
+      const minerRes = await apiClient.get(`/miner/admin/user/${uid}`).catch(() => null);
+      if (minerRes?.data?.success && minerRes.data.data) {
+        minerData = minerRes.data.data;
+      } else if (isFirebaseConfigured && db) {
+        const minerDoc = await getDoc(doc(db, 'cloudMiner', uid)).catch(() => null);
+        if (minerDoc?.exists()) {
+          const mData = minerDoc.data();
+          const startTime = Number(mData.sessionStartTime) || 0;
+          const duration = Number(mData.sessionDurationMs) || (12 * 60 * 60 * 1000);
+          const isSessionLive = Boolean(mData.isMiningActive) && (Date.now() - startTime < duration);
+          minerData = {
+            uid,
+            ...mData,
+            isSessionLive,
+          };
+        }
+      }
+
+      if (!minerData) {
+        minerData = {
+          uid,
+          isMiningActive: false,
+          isSessionLive: false,
+          minedTflx: 0,
+          effectiveHashrate: 16.0,
+          streakDays: 0,
+          sessionStartTime: 0,
+          sessionDurationMs: 12 * 60 * 60 * 1000,
+        };
+      }
+
+      setUserMiner(minerData);
+      setMinerHashrateInput(String(minerData.effectiveHashrate || 16.0));
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -133,6 +253,119 @@ export default function AdminUsers() {
       });
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  // Toggle user's cloud miner state from user profile modal
+  const handleToggleUserMiner = async () => {
+    if (!selectedUid || !userMiner) return;
+    setActionLoading(true);
+    try {
+      const nextActive = !userMiner.isMiningActive;
+      await apiClient.put(`/miner/admin/user/${selectedUid}`, {
+        isMiningActive: nextActive,
+        resetSession: nextActive,
+      });
+
+      if (isFirebaseConfigured && db) {
+        try {
+          await setDoc(doc(db, 'cloudMiner', selectedUid), {
+            isMiningActive: nextActive,
+            ...(nextActive && {
+              sessionStartTime: Date.now(),
+              sessionDurationMs: 12 * 60 * 60 * 1000,
+            }),
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        } catch (e) {}
+      }
+
+      setUserMiner((prev) => ({
+        ...prev,
+        isMiningActive: nextActive,
+        isSessionLive: nextActive,
+        ...(nextActive && {
+          sessionStartTime: Date.now(),
+          sessionDurationMs: 12 * 60 * 60 * 1000,
+        }),
+      }));
+
+      setFeedback({
+        type: 'success',
+        message: `Cloud Miner ${nextActive ? 'activated for 12h' : 'paused'} for this user.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update miner state.' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Credit or adjust Mined TFLX from user profile modal
+  const handleUpdateUserMinerTflx = async (amount) => {
+    if (!selectedUid || !userMiner || isNaN(Number(amount))) return;
+    setActionLoading(true);
+    try {
+      const cur = Number(userMiner.minedTflx) || 0;
+      const newTotal = +(cur + Number(amount)).toFixed(2);
+
+      await apiClient.put(`/miner/admin/user/${selectedUid}`, {
+        minedTflx: newTotal,
+      });
+
+      if (isFirebaseConfigured && db) {
+        try {
+          await setDoc(doc(db, 'cloudMiner', selectedUid), {
+            minedTflx: newTotal,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        } catch (e) {}
+      }
+
+      setUserMiner((prev) => ({ ...prev, minedTflx: newTotal }));
+      setMinerBonusInput('');
+      setFeedback({
+        type: 'success',
+        message: `Updated Mined TFLX balance to ${newTotal} TFLX.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update mined TFLX.' });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Adjust hashrate from user profile modal
+  const handleUpdateUserMinerHashrate = async () => {
+    if (!selectedUid || !userMiner || isNaN(Number(minerHashrateInput)) || Number(minerHashrateInput) <= 0) {
+      alert('Please enter a valid positive hashrate.');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const newRate = Number(minerHashrateInput);
+      await apiClient.put(`/miner/admin/user/${selectedUid}`, {
+        effectiveHashrate: newRate,
+      });
+
+      if (isFirebaseConfigured && db) {
+        try {
+          await setDoc(doc(db, 'cloudMiner', selectedUid), {
+            effectiveHashrate: newRate,
+            updatedAt: new Date().toISOString(),
+          }, { merge: true });
+        } catch (e) {}
+      }
+
+      setUserMiner((prev) => ({ ...prev, effectiveHashrate: newRate }));
+      setFeedback({
+        type: 'success',
+        message: `Updated user hashrate to +${newRate} TFLX/h.`,
+      });
+    } catch (err) {
+      setFeedback({ type: 'error', message: err.message || 'Failed to update hashrate.' });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -530,6 +763,127 @@ export default function AdminUsers() {
                         </button>
                       </div>
                     </form>
+                  </div>
+
+                  {/* Cloud Miner & Hashrate Controls for User */}
+                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-amber-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-amber-300 flex items-center gap-2">
+                        <Pickaxe className="w-4 h-4 text-amber-400" />
+                        <span>Cloud Miner & Hashrate Controls (User Profile)</span>
+                      </h4>
+                      {userMiner?.isSessionLive ? (
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                          <span>Mining Active</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">
+                          <Pause className="w-3 h-3" />
+                          <span>Mining Paused</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Mined TFLX</span>
+                        <p className="text-base font-black text-amber-400 mt-1 font-mono">
+                          {userMiner?.minedTflx || 0} <span className="text-[10px] text-slate-400">TFLX</span>
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Hashrate</span>
+                        <p className="text-base font-black text-white mt-1">
+                          +{userMiner?.effectiveHashrate || 16.0} <span className="text-[10px] text-amber-400">TFLX/h</span>
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Streak</span>
+                        <p className="text-base font-black text-sky-400 mt-1">
+                          Day {userMiner?.streakDays || 0}
+                        </p>
+                      </div>
+                      <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+                        <button
+                          type="button"
+                          onClick={handleToggleUserMiner}
+                          disabled={actionLoading}
+                          className={`w-full py-2 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                            userMiner?.isMiningActive
+                              ? 'bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700'
+                              : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                          }`}
+                        >
+                          {userMiner?.isMiningActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                          <span>{userMiner?.isMiningActive ? 'Pause Miner' : 'Start 12h Session'}</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Quick TFLX & Hashrate adjust controls */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 block">Quick TFLX Yield Credit</label>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateUserMinerTflx(50)}
+                            disabled={actionLoading}
+                            className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold cursor-pointer transition-colors"
+                          >
+                            +50 TFLX
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleUpdateUserMinerTflx(100)}
+                            disabled={actionLoading}
+                            className="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 text-xs font-bold cursor-pointer transition-colors"
+                          >
+                            +100 TFLX
+                          </button>
+                          <div className="flex-1 flex items-center gap-1">
+                            <input
+                              type="number"
+                              placeholder="Custom"
+                              value={minerBonusInput}
+                              onChange={(e) => setMinerBonusInput(e.target.value)}
+                              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white font-mono"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateUserMinerTflx(Number(minerBonusInput))}
+                              disabled={actionLoading || !minerBonusInput}
+                              className="px-2 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold disabled:opacity-40"
+                            >
+                              Add
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+                        <label className="text-[11px] font-bold text-slate-400 block">Adjust Hashrate (TFLX/h)</label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="number"
+                            step="0.5"
+                            value={minerHashrateInput}
+                            onChange={(e) => setMinerHashrateInput(e.target.value)}
+                            placeholder="e.g. 16.0"
+                            className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-mono"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleUpdateUserMinerHashrate}
+                            disabled={actionLoading}
+                            className="px-3 py-1 rounded-lg bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold whitespace-nowrap"
+                          >
+                            Save Rate
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Downline Network (Level 1) */}

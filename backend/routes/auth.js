@@ -33,7 +33,7 @@ const recordVerifiedEmail = (email) => {
 };
 
 // Helper to get persistent registered emails
-const getPersistentRegisteredEmails = () => {
+export const getPersistentRegisteredEmails = () => {
   try {
     if (fs.existsSync(REGISTERED_USERS_FILE)) {
       const content = fs.readFileSync(REGISTERED_USERS_FILE, 'utf-8');

@@ -32,7 +32,9 @@ import {
   User,
   Sparkles,
   FileCode2,
-  Package
+  Package,
+  Pickaxe,
+  Home
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
@@ -53,6 +55,7 @@ import AdminWhitepaper from '../pages/admin/AdminWhitepaper';
 import AdminMilestones from '../pages/admin/AdminMilestones';
 import AdminPackages from '../pages/admin/AdminPackages';
 import AdminLeaderboard from '../pages/admin/AdminLeaderboard';
+import AdminCloudMiner from '../pages/admin/AdminCloudMiner';
 import AdminProfileModal from '../components/admin/AdminProfileModal';
 import LiveLeaderboard from '../components/LiveLeaderboard';
 
@@ -236,6 +239,13 @@ export default function AdminLayout({ onNavigate }) {
     { id: 'milestones', label: 'Milestones & Rewards', icon: Award },
     { id: 'users', label: 'Users Directory', icon: Users },
     {
+      id: 'cloud-miner',
+      label: 'Cloud Miner Engine',
+      icon: Pickaxe,
+      badge: stats?.cloudMiner?.activeMiners ? `${stats.cloudMiner.activeMiners} Active` : null,
+      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    },
+    {
       id: 'deposits',
       label: 'Deposits',
       icon: ArrowDownCircle,
@@ -325,15 +335,15 @@ export default function AdminLayout({ onNavigate }) {
             </div>
           </div>
 
-          {/* Button 2: User Panel Button (Replaces logout button) */}
+          {/* Button 2: Home Page Button (Navigates directly to Home page, not dashboard) */}
           <button
-            onClick={() => onNavigate('dashboard')}
+            onClick={() => onNavigate('home')}
             id="btn-admin-user-panel"
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold transition-all shadow-md shadow-sky-600/30 hover:shadow-sky-500/50 cursor-pointer border border-sky-400/30 hover:-translate-y-0.5 active:translate-y-0"
-            title="Open User Panel"
+            title="Go to Home Page"
           >
-            <ExternalLink className="w-3.5 h-3.5 text-sky-200" />
-            <span>User Panel</span>
+            <Home className="w-3.5 h-3.5 text-sky-200" />
+            <span>Home Page</span>
           </button>
 
           {/* 3-Dots Dropdown Menu (Hidden per user request) */}
@@ -420,16 +430,16 @@ export default function AdminLayout({ onNavigate }) {
                     <span>Admin Profile Information</span>
                   </button>
 
-                  {/* 4. Switch to User Panel */}
+                  {/* 4. Switch to Home Page */}
                   <button
                     onClick={() => {
                       setMoreMenuOpen(false);
-                      onNavigate('dashboard');
+                      onNavigate('home');
                     }}
                     className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-slate-200 hover:bg-sky-600 hover:text-white transition-colors cursor-pointer"
                   >
-                    <ExternalLink className="w-4 h-4 text-teal-400" />
-                    <span>Open User Panel</span>
+                    <Home className="w-4 h-4 text-teal-400" />
+                    <span>Go to Home Page</span>
                   </button>
 
                   {/* 5. Refresh Data */}
@@ -547,6 +557,8 @@ export default function AdminLayout({ onNavigate }) {
           )}
 
           {activeTab === 'users' && <AdminUsers />}
+
+          {activeTab === 'cloud-miner' && <AdminCloudMiner />}
 
           {activeTab === 'deposits' && <AdminDeposits />}
 

@@ -9,7 +9,6 @@ import {
   ArrowUpRight,
   History,
   LogOut,
-  ShieldCheck,
   FileText,
   LifeBuoy,
   Gift,
@@ -27,7 +26,7 @@ import { usePWAInstall } from '../hooks/usePWAInstall';
  * and high-contrast luxury styling matching the mobile native app aesthetic.
  */
 export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab, onNavigate }) {
-  const { currentUser, userStats, isAdmin, logout } = useAuth();
+  const { currentUser, userStats, logout } = useAuth();
   const { isInstalled, isInstallable, install, isIOS } = usePWAInstall();
 
   const hasActivePackage = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
@@ -203,27 +202,6 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               </li>
             );
           })}
-
-          {/* Admin Panel Link (if admin) */}
-          {isAdmin && (
-            <li className="pt-2">
-              <button
-                type="button"
-                id="drawer-link-admin"
-                onClick={() => {
-                  onNavigate('admin');
-                  onClose();
-                }}
-                className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[14px] text-[14.5px] font-bold text-sky-600 dark:text-sky-300 bg-sky-500/10 dark:bg-sky-500/20 hover:bg-sky-500/20 dark:hover:bg-sky-500/30 hover:translate-x-1 border border-sky-400/30 transition-all cursor-pointer"
-              >
-                <ShieldCheck className="w-5 h-5 shrink-0 text-sky-600 dark:text-sky-300" />
-                <span>Admin Panel</span>
-                <span className="hidden">
-                  ROOT
-                </span>
-              </button>
-            </li>
-          )}
 
           {/* Secondary Links: Cloud Miner, Whitepaper & Support */}
           <li className="pt-2 border-t border-[#e9e3d8] dark:border-[#15323b] space-y-1">

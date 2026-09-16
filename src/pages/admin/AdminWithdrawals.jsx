@@ -19,8 +19,8 @@ import {
 import apiClient from '../../api/client';
 
 export default function AdminWithdrawals() {
-  const [withdrawals, setWithdrawals] = useState([]);
-  const [statusFilter, setStatusFilter] = useState('pending'); // 'pending' | 'paid' | 'rejected' | 'all'
+  const [allWithdrawals, setAllWithdrawals] = useState([]);
+  const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'paid' | 'rejected'
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
@@ -34,14 +34,19 @@ export default function AdminWithdrawals() {
     reason: '',
   });
 
-  const fetchWithdrawals = async (filter = statusFilter) => {
+  const fetchWithdrawals = async () => {
     setLoading(true);
     try {
       const res = await apiClient.get('/admin/withdrawals', {
-        params: { status: filter },
+        params: { status: 'all' },
       });
       if (res.data?.success) {
-        setWithdrawals(res.data.withdrawals || []);
+        const list = res.data.withdrawals || [];
+        setAllWithdrawals(list);
+        const hasPending = list.some((w) => w.status === 'pending');
+        if (hasPending) {
+          setStatusFilter('pending');
+        }
       }
     } catch (err) {
       console.error('Failed to fetch withdrawals:', err);
@@ -55,8 +60,8 @@ export default function AdminWithdrawals() {
   };
 
   useEffect(() => {
-    fetchWithdrawals(statusFilter);
-  }, [statusFilter]);
+    fetchWithdrawals();
+  }, []);
 
   const copyToClipboard = (text, id) => {
     navigator.clipboard.writeText(text);
@@ -87,7 +92,7 @@ export default function AdminWithdrawals() {
             type: 'success',
             message: `Withdrawal of $${withdrawal.amountUSD} marked as paid successfully. User debited.`,
           });
-          setWithdrawals((prev) =>
+          setAllWithdrawals((prev) =>
             prev.map((w) =>
               (w.withdrawalId || w.id) === wid ? { ...w, status: 'paid' } : w
             )
@@ -102,7 +107,7 @@ export default function AdminWithdrawals() {
             type: 'success',
             message: `Withdrawal of $${withdrawal.amountUSD} rejected.`,
           });
-          setWithdrawals((prev) =>
+          setAllWithdrawals((prev) =>
             prev.map((w) =>
               (w.withdrawalId || w.id) === wid ? { ...w, status: 'rejected', rejectReason: reason } : w
             )
@@ -119,6 +124,23 @@ export default function AdminWithdrawals() {
       setActionLoading(false);
     }
   };
+
+  const pendingCount = allWithdrawals.filter((w) => w.status === 'pending').length;
+  const paidCount = allWithdrawals.filter((w) => w.status === 'paid').length;
+  const rejectedCount = allWithdrawals.filter((w) => w.status === 'rejected').length;
+  const totalCount = allWithdrawals.length;
+
+  const paidVolume = allWithdrawals
+    .filter((w) => w.status === 'paid')
+    .reduce((sum, w) => sum + Number(w.amountUSD || 0), 0);
+
+  const pendingVolume = allWithdrawals
+    .filter((w) => w.status === 'pending')
+    .reduce((sum, w) => sum + Number(w.amountUSD || 0), 0);
+
+  const displayedWithdrawals = statusFilter === 'all'
+    ? allWithdrawals
+    : allWithdrawals.filter((w) => w.status === statusFilter);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -148,38 +170,47 @@ export default function AdminWithdrawals() {
         </div>
       )}
 
-      {/* Header and Filter Tabs */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* Header and Quick Stats */}
+      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <ArrowUpRight className="w-5 h-5 text-sky-400" />
             <span>Withdrawal Requests & Payout Settlement</span>
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Process member cashouts to Easypaisa, JazzCash, Meezan Bank, and Crypto wallets
+            Total {totalCount} requests &bull; Paid ${paidVolume.toFixed(2)} &bull; Pending ${pendingVolume.toFixed(2)}
           </p>
         </div>
 
-        {/* Tab Filter */}
-        <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
-          {[
-            { id: 'pending', label: 'Pending' },
-            { id: 'paid', label: 'Paid' },
-            { id: 'rejected', label: 'Rejected' },
-            { id: 'all', label: 'All' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setStatusFilter(tab.id)}
-              className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer ${
-                statusFilter === tab.id
-                  ? 'bg-sky-600 text-white shadow-xs'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Tab Filter & Refresh Button */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchWithdrawals}
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition-colors cursor-pointer border border-slate-700"
+            title="Refresh Withdrawals"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-sky-400 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+          <div className="flex items-center p-1 rounded-xl bg-slate-900 border border-slate-800 text-xs font-semibold">
+            {[
+              { id: 'all', label: `All (${totalCount})` },
+              { id: 'pending', label: `Pending (${pendingCount})` },
+              { id: 'paid', label: `Paid (${paidCount})` },
+              { id: 'rejected', label: `Rejected (${rejectedCount})` },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setStatusFilter(tab.id)}
+                className={`px-3 py-1.5 rounded-lg transition-colors cursor-pointer whitespace-nowrap ${
+                  statusFilter === tab.id
+                    ? 'bg-sky-600 text-white shadow-xs'
+                    : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -194,7 +225,7 @@ export default function AdminWithdrawals() {
                 <th className="py-3.5 px-4">Disbursement Method</th>
                 <th className="py-3.5 px-4 text-right">Amount (USD / PKR)</th>
                 <th className="py-3.5 px-4 text-center">Status</th>
-                <th className="py-3.5 px-4">Requested At</th>
+                <th className="py-3.5 px-4">Requested Date</th>
                 <th className="py-3.5 px-4 text-right">Settlement Action</th>
               </tr>
             </thead>
@@ -206,14 +237,14 @@ export default function AdminWithdrawals() {
                     <span>Loading withdrawal requests...</span>
                   </td>
                 </tr>
-              ) : withdrawals.length === 0 ? (
+              ) : displayedWithdrawals.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="py-12 text-center text-slate-500">
                     No withdrawals matching the "{statusFilter}" filter.
                   </td>
                 </tr>
               ) : (
-                withdrawals.map((w) => {
+                displayedWithdrawals.map((w) => {
                   const wid = w.withdrawalId || w.id;
                   const isPending = w.status === 'pending';
                   return (

@@ -17,6 +17,7 @@ import { sendDailyReportEmail, sendAdminErrorAlert } from '../utils/email.js';
 import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
 import { TEAM_REWARDS, TEAM_MILESTONES } from '../milestoneLogic.js';
 import { DEFAULT_PACKAGES, normalizePackages } from './package.js';
+import { getPersistentRegisteredEmails } from './auth.js';
 
 const router = express.Router();
 
@@ -41,16 +42,47 @@ async function recordAuditLog(db, entry) {
 router.get('/stats', verifyAdmin, async (req, res) => {
   try {
     const db = getDb();
+    const todayStr = new Date().toISOString().split('T')[0];
+    const now = Date.now();
 
-    // 1. Fetch Users
-    const usersSnap = await db.collection('users').get();
-    const users = usersSnap.docs.map((d) => d.data());
+    // 1. Parallel collection queries for maximum speed
+    const [usersSnap, ticketsSnap, depositsSnap, withdrawalsSnap, minerSnap] = await Promise.all([
+      db.collection('users').get().catch(() => ({ docs: [] })),
+      db.collection('supportTickets').get().catch(() => ({ docs: [] })),
+      db.collection('deposits').get().catch(() => ({ docs: [] })),
+      db.collection('withdrawals').get().catch(() => ({ docs: [] })),
+      db.collection('cloudMiner').get().catch(() => ({ docs: [] })),
+    ]);
+
+    // 2. Parse Users
+    const users = (usersSnap.docs || []).map((d) => ({ uid: d.id, ...d.data() }));
+
+    // Merge persistent registered accounts so user counts never drop
+    try {
+      const persistentEmails = getPersistentRegisteredEmails();
+      const existingEmails = new Set(users.map((u) => (u.email || '').toLowerCase().trim()));
+      persistentEmails.forEach((email) => {
+        if (email && !existingEmails.has(email)) {
+          users.push({
+            uid: 'user_' + Buffer.from(email).toString('hex').slice(0, 10),
+            email,
+            name: email.split('@')[0],
+            displayName: email.split('@')[0],
+            walletBalance: 0,
+            currentPackage: 'None',
+            isEligible: false,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      });
+    } catch (regErr) {
+      console.warn('Persistent registered emails merge notice:', regErr.message);
+    }
 
     let totalUsers = users.length;
     let platformBalance = 0;
     let activeUsers = 0;
     let dailyActiveUsers = 0;
-    const todayStr = new Date().toISOString().split('T')[0];
 
     users.forEach((u) => {
       platformBalance += Number(u.walletBalance || 0);
@@ -62,31 +94,25 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       }
     });
 
-    // 1.5 Fetch Support Tickets (Phase 7)
+    // 3. Support Tickets
     let pendingTickets = 0;
-    try {
-      const ticketsSnap = await db.collection('supportTickets').get();
-      ticketsSnap.docs.forEach((d) => {
-        const t = d.data();
-        if (t.status === 'open' || t.status === 'in-progress') {
-          pendingTickets++;
-        }
-      });
-    } catch (tErr) {
-      console.warn('Could not read supportTickets in stats:', tErr.message);
-    }
+    (ticketsSnap.docs || []).forEach((d) => {
+      const t = d.data() || {};
+      if (t.status === 'open' || t.status === 'in-progress') {
+        pendingTickets++;
+      }
+    });
 
-    // 2. Fetch Deposits
-    const depositsSnap = await db.collection('deposits').get();
-    const deposits = depositsSnap.docs.map((d) => d.data());
-
+    // 4. Parse Deposits
+    const deposits = (depositsSnap.docs || []).map((d) => ({ id: d.id, depositId: d.id, ...d.data() }));
     let totalDeposits = 0;
     let pendingDeposits = 0;
     let todayDepositsCount = 0;
 
     deposits.forEach((d) => {
+      const amt = Number(d.amountUSD || 0);
       if (d.status === 'approved') {
-        totalDeposits += Number(d.amountUSD || 0);
+        totalDeposits += amt;
       }
       if (d.status === 'pending') {
         pendingDeposits++;
@@ -96,17 +122,16 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       }
     });
 
-    // 3. Fetch Withdrawals
-    const withdrawalsSnap = await db.collection('withdrawals').get();
-    const withdrawals = withdrawalsSnap.docs.map((d) => d.data());
-
+    // 5. Parse Withdrawals
+    const withdrawals = (withdrawalsSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));
     let totalWithdrawals = 0;
     let pendingWithdrawals = 0;
     let todayWithdrawalsCount = 0;
 
     withdrawals.forEach((w) => {
+      const amt = Number(w.amountUSD || 0);
       if (w.status === 'paid' || w.status === 'approved') {
-        totalWithdrawals += Number(w.amountUSD || 0);
+        totalWithdrawals += amt;
       }
       if (w.status === 'pending') {
         pendingWithdrawals++;
@@ -116,7 +141,27 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       }
     });
 
-    // 4. Generate 7-Day Chart Data
+    // 6. Cloud Miner Metrics
+    let activeMiners = 0;
+    let totalMinedTflx = 0;
+    let totalHashrateRunning = 0;
+
+    (minerSnap.docs || []).forEach((d) => {
+      const m = d.data() || {};
+      const startTime = Number(m.sessionStartTime) || 0;
+      const duration = Number(m.sessionDurationMs) || (12 * 60 * 60 * 1000);
+      const isLive = m.isMiningActive && (now - startTime < duration);
+      const hashrate = Number(m.effectiveHashrate) || 16.0;
+      const mined = Number(m.minedTflx) || 0;
+
+      totalMinedTflx += mined;
+      if (isLive) {
+        activeMiners++;
+        totalHashrateRunning += hashrate;
+      }
+    });
+
+    // 7. Generate 7-Day Chart Data
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
@@ -157,6 +202,12 @@ router.get('/stats', verifyAdmin, async (req, res) => {
         pendingWithdrawals,
         pendingTickets,
         dailyActiveUsers,
+        cloudMiner: {
+          activeMiners,
+          totalMinedTflx: +totalMinedTflx.toFixed(2),
+          totalHashrate: +totalHashrateRunning.toFixed(1),
+          totalMinersRecorded: (minerSnap.docs || []).length,
+        },
         todayActivity: {
           deposits: todayDepositsCount,
           withdrawals: todayWithdrawalsCount,
@@ -189,9 +240,9 @@ router.get('/users', verifyAdmin, async (req, res) => {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.max(1, parseInt(req.query.limit, 10) || 20);
 
-    const usersSnap = await db.collection('users').get();
-    let allUsers = usersSnap.docs.map((doc) => {
-      const data = doc.data();
+    const usersSnap = await db.collection('users').get().catch(() => ({ docs: [] }));
+    let allUsers = (usersSnap.docs || []).map((doc) => {
+      const data = doc.data() || {};
       return {
         uid: doc.id,
         email: data.email || 'N/A',
@@ -204,6 +255,27 @@ router.get('/users', verifyAdmin, async (req, res) => {
         createdAt: data.createdAt || new Date().toISOString(),
       };
     });
+
+    // Merge persistent registered accounts so users are never missing
+    try {
+      const persistentEmails = getPersistentRegisteredEmails();
+      const existingEmails = new Set(allUsers.map((u) => (u.email || '').toLowerCase().trim()));
+      persistentEmails.forEach((email) => {
+        if (email && !existingEmails.has(email)) {
+          allUsers.push({
+            uid: 'user_' + Buffer.from(email).toString('hex').slice(0, 10),
+            email,
+            name: email.split('@')[0],
+            currentPackage: 'None',
+            walletBalance: 0,
+            referralCount: 0,
+            isEligible: false,
+            isBlocked: false,
+            createdAt: new Date().toISOString(),
+          });
+        }
+      });
+    } catch (e) {}
 
     // Apply search filter if provided
     if (search) {

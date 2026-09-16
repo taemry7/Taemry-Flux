@@ -12,7 +12,9 @@ import {
   Save,
   Loader2,
   Trash2,
-  LogOut
+  LogOut,
+  AtSign,
+  Lock
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -23,7 +25,9 @@ export default function AccountSettings({ onSelectTab }) {
   const toast = useToast();
 
   // Form State
-  const [displayName, setDisplayName] = useState(currentUser?.displayName || '');
+  const [displayName, setDisplayName] = useState(() => {
+    return currentUser?.displayName || currentUser?.name || userStats?.name || userStats?.username || '';
+  });
   const [phoneNumber, setPhoneNumber] = useState(currentUser?.phoneNumber || '');
   const [country, setCountry] = useState(currentUser?.country || 'Pakistan');
   const [bio, setBio] = useState(currentUser?.bio || '');
@@ -60,13 +64,13 @@ export default function AccountSettings({ onSelectTab }) {
   // Sync initial user data
   useEffect(() => {
     if (currentUser) {
-      setDisplayName(currentUser.displayName || currentUser.name || '');
+      setDisplayName(currentUser.displayName || currentUser.name || userStats?.name || userStats?.username || '');
       setPhoneNumber(currentUser.phoneNumber || '');
       setCountry(currentUser.country || 'Pakistan');
       setBio(currentUser.bio || '');
       setPhotoURL(currentUser.photoURL || '');
     }
-  }, [currentUser]);
+  }, [currentUser, userStats?.name, userStats?.username]);
 
   // Profile Picture File Upload Handler (with FileReader DataURL preview and auto-compression)
   const handleFileUpload = (e) => {
@@ -184,6 +188,22 @@ export default function AccountSettings({ onSelectTab }) {
   const userInitials = (displayName || currentUser?.email || 'TF')
     .substring(0, 2)
     .toUpperCase();
+
+  // Permanent Username calculation (Permanent network identifier established at registration)
+  const permanentUsername = (() => {
+    if (userStats?.username) {
+      const u = String(userStats.username).trim();
+      return u.startsWith('@') ? u : `@${u}`;
+    }
+    if (currentUser?.username) {
+      const u = String(currentUser.username).trim();
+      return u.startsWith('@') ? u : `@${u}`;
+    }
+    const dn = currentUser?.displayName || currentUser?.name || userStats?.name || '';
+    if (dn.startsWith('@')) return dn;
+    const base = dn || currentUser?.email?.split('@')[0] || 'member';
+    return `@${base.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+  })();
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
@@ -338,63 +358,104 @@ export default function AccountSettings({ onSelectTab }) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          {/* Display Name */}
+          {/* Permanent Username (Locked / Non-editable established at account creation) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#09353e] flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5 text-[#0c5963]" />
-              <span>Full Name / Display Name</span>
-            </label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="e.g. Mistr Taimoor"
-              required
-              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] border border-[#d8d1c3] rounded-xl text-[#09353e] focus:outline-none focus:border-[#0c5963]"
-            />
+            <div className="hidden flex items-center justify-between">
+              <label className="hidden text-xs font-bold text-[#09353e] dark:text-[#94a3b8] flex items-center gap-1.5">
+                <AtSign className="hidden w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
+                <span className="hidden">Permanent Username</span>
+              </label>
+              <span className="hidden inline-flex items-center gap-1 text-[10px] font-extrabold text-[#0c5963] dark:text-[#38bdf8] bg-[#0c5963]/10 dark:bg-[#38bdf8]/15 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                <Lock className="w-2.5 h-2.5" />
+                <span>Permanent</span>
+              </span>
+            </div>
+            <div className="relative">
+              <input
+                type="text"
+                id="profile-permanent-username"
+                value={permanentUsername}
+                disabled
+                readOnly
+                className="w-full px-4 py-2.5 text-xs bg-[#f1ede4] dark:bg-[#07191e] border border-[#ded8cb] dark:border-[#15323b] rounded-xl text-[#09353e] dark:text-[#e2e8f0] cursor-not-allowed font-mono font-bold"
+              />
+            </div>
+            <p className="text-[10.5px] text-[#718589] dark:text-[#64748b]">
+              Your permanent network username assigned at registration. Cannot be changed.
+            </p>
           </div>
 
           {/* Email Address (Read-Only) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#09353e] flex items-center gap-1.5">
-              <Mail className="w-3.5 h-3.5 text-[#0c5963]" />
-              <span>Registered Email Address</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-[#09353e] dark:text-[#94a3b8] flex items-center gap-1.5">
+                <Mail className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
+                <span>Registered Email Address</span>
+              </label>
+              <span className="hidden inline-flex items-center gap-1 text-[10px] font-extrabold text-[#0c5963] dark:text-[#38bdf8] bg-[#0c5963]/10 dark:bg-[#38bdf8]/15 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                <Lock className="w-2.5 h-2.5" />
+                <span>Verified</span>
+              </span>
+            </div>
             <input
               type="email"
+              id="profile-registered-email"
               value={currentUser?.email || 'member@taemryflux.com'}
               disabled
-              className="w-full px-4 py-2.5 text-xs bg-[#f1ede4] border border-[#ded8cb] rounded-xl text-[#62777c] cursor-not-allowed font-medium"
+              readOnly
+              className="w-full px-4 py-2.5 text-xs bg-[#f1ede4] dark:bg-[#07191e] border border-[#ded8cb] dark:border-[#15323b] rounded-xl text-[#62777c] dark:text-[#94a3b8] cursor-not-allowed font-medium"
+            />
+            <p className="text-[10.5px] text-[#718589] dark:text-[#64748b]">
+              Linked authentication email associated with this account.
+            </p>
+          </div>
+
+          {/* Display Name / Full Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#09353e] dark:text-[#94a3b8] flex items-center gap-1.5">
+              <User className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
+              <span>Full Name / Display Name</span>
+            </label>
+            <input
+              type="text"
+              id="profile-display-name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              placeholder="e.g. Mistr Taimoor"
+              required
+              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] dark:bg-[#07191e] border border-[#d8d1c3] dark:border-[#15323b] rounded-xl text-[#09353e] dark:text-white focus:outline-none focus:border-[#0c5963]"
             />
           </div>
 
           {/* Phone Number */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#09353e] flex items-center gap-1.5">
-              <Phone className="w-3.5 h-3.5 text-[#0c5963]" />
+            <label className="text-xs font-bold text-[#09353e] dark:text-[#94a3b8] flex items-center gap-1.5">
+              <Phone className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
               <span>Phone / WhatsApp Number</span>
             </label>
             <input
               type="tel"
+              id="profile-phone-number"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="+92 300 1234567"
-              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] border border-[#d8d1c3] rounded-xl text-[#09353e] focus:outline-none focus:border-[#0c5963]"
+              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] dark:bg-[#07191e] border border-[#d8d1c3] dark:border-[#15323b] rounded-xl text-[#09353e] dark:text-white focus:outline-none focus:border-[#0c5963]"
             />
           </div>
 
           {/* Country / Region */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#09353e] flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-[#0c5963]" />
+          <div className="space-y-1.5 sm:col-span-2">
+            <label className="text-xs font-bold text-[#09353e] dark:text-[#94a3b8] flex items-center gap-1.5">
+              <Globe className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
               <span>Country / Location</span>
             </label>
             <input
               type="text"
+              id="profile-country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               placeholder="e.g. Pakistan, UAE, USA"
-              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] border border-[#d8d1c3] rounded-xl text-[#09353e] focus:outline-none focus:border-[#0c5963]"
+              className="w-full px-4 py-2.5 text-xs bg-[#faf8f5] dark:bg-[#07191e] border border-[#d8d1c3] dark:border-[#15323b] rounded-xl text-[#09353e] dark:text-white focus:outline-none focus:border-[#0c5963]"
             />
           </div>
         </div>
@@ -435,37 +496,6 @@ export default function AccountSettings({ onSelectTab }) {
           </button>
         </div>
       </form>
-
-      {/* SESSION & SIGN OUT SECTION (Relocated to Settings per user directive) */}
-      <div className="mt-8 p-6 sm:p-7 rounded-3xl bg-white dark:bg-[#0c2027] border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-5">
-        <div>
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#73888d] dark:text-[#94a3b8]">
-            SECURITY & SESSION
-          </span>
-          <h4 className="text-base font-bold text-[#09353e] dark:text-white mt-1">
-            Active Account Session
-          </h4>
-          <p className="text-xs text-[#526b70] dark:text-[#94a3b8] mt-1 max-w-xl leading-relaxed">
-            Signed in as <strong className="text-[#09353e] dark:text-white">{currentUser?.email || 'Member'}</strong>. You can safely terminate your active session and sign out of this device.
-          </p>
-        </div>
-
-        <button
-          type="button"
-          id="btn-settings-signout"
-          onClick={async () => {
-            if (logout) {
-              await logout();
-            }
-            window.location.hash = '#/login';
-            window.location.reload();
-          }}
-          className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#fee2e2] hover:bg-[#fecaca] dark:bg-red-950/40 dark:hover:bg-red-900/60 text-[#b91c1c] dark:text-red-300 text-xs font-bold rounded-xl border border-red-200 dark:border-red-900/50 shadow-xs transition-all cursor-pointer self-start sm:self-auto shrink-0"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out of Account</span>
-        </button>
-      </div>
     </div>
   );
 }
