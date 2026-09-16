@@ -159,12 +159,13 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
             </button>
           )}
 
-          {/* Cloud Miner page: empty menu button on left side of TAEMRY FLUX logo per user request */}
+          {/* Cloud Miner page: menu button on left side of TAEMRY FLUX logo */}
           {currentPage === 'cloud-miner' && (
             <button
               type="button"
               id="btn-miner-menu-empty"
-              aria-label="Menu"
+              aria-label="Cloud Miner Menu"
+              onClick={() => window.dispatchEvent(new CustomEvent('taemry_toggle_miner_menu'))}
               className="p-2 -ml-1 text-[#093e4a] dark:text-[#f1f5f9] hover:bg-[#eae3d5] dark:hover:bg-[#112d36] rounded-xl transition-colors focus:outline-none cursor-pointer"
             >
               <Menu className="w-5 h-5" />

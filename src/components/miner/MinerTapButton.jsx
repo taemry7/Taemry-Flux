@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Pickaxe, Flame, AlertTriangle, Zap, CheckCircle2, ShieldCheck, Clock, Sparkles, Activity, Cpu } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
+import { Flame, AlertTriangle, Clock, Zap } from 'lucide-react';
+import { motion } from 'motion/react';
 
 /**
- * 3D Tap-to-Mine Reactor Button with 12h Cycle & Early Check-In
- * Enhanced with deep tactile 3D extrusion, perspective dome, mechanical turbine bevels, and glowing orbital rings.
- * - 0 to 6 Hours: Green 3D Active Mining
- * - 6 to 12 Hours: Orange/Yellow 3D Early Check-in (Tap & Hold 2s)
- * - > 12 Hours / Expired: Warning Red 3D (Single tap to ignite)
+ * Clean Fire Reactor Button (No Circle) with:
+ * - 1-second hold with audio chime tune
+ * - Blue Fire Active state
+ * - 6h+ early renewal on 1s hold
+ * - 12h expired warning red with 1s hold to ignite blue fire
  */
 export default function MinerTapButton({
   minerData,
@@ -20,20 +20,48 @@ export default function MinerTapButton({
   const holdStartRef = useRef(0);
   const animFrameRef = useRef(null);
 
-  const { isMiningActive, sessionStartTime, sessionDurationMs, minedTflx } = minerData;
+  const { isMiningActive, sessionStartTime, sessionDurationMs } = minerData;
 
   const now = Date.now();
   const elapsedMs = isMiningActive ? now - sessionStartTime : sessionDurationMs;
   const remainingMs = Math.max(0, sessionDurationMs - elapsedMs);
 
-  // Cycle States:
-  // 1. Inactive / Expired (> 12h): Warning Red
-  // 2. First 6h: Green 3D (remainingMs > 6h)
-  // 3. Second 6h: Orange/Yellow 3D (remainingMs <= 6h && remainingMs > 0)
   const sixHoursMs = 6 * 60 * 60 * 1000;
   const isExpired = !isMiningActive || remainingMs <= 0;
   const isFirstHalf = isMiningActive && remainingMs > sixHoursMs;
   const isSecondHalf = isMiningActive && remainingMs <= sixHoursMs && remainingMs > 0;
+
+  // Audio ignition tune generator using Web Audio API
+  const playIgniteTune = () => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const startTime = ctx.currentTime;
+
+      // Cyber futuristic blue fire chime: 4 rising harmonic sine tones
+      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+      notes.forEach((freq, idx) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime + idx * 0.08);
+
+        gain.gain.setValueAtTime(0, startTime + idx * 0.08);
+        gain.gain.linearRampToValueAtTime(0.2, startTime + idx * 0.08 + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + idx * 0.08 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(startTime + idx * 0.08);
+        osc.stop(startTime + idx * 0.08 + 0.4);
+      });
+    } catch (err) {
+      console.log('Web Audio ignition notice:', err);
+    }
+  };
 
   // Format remaining time to HH:MM:SS
   const formatTime = (ms) => {
@@ -45,27 +73,31 @@ export default function MinerTapButton({
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // 2-Second Tap and Hold Logic for Early Check-in (Orange phase)
+  // Tap & Hold Logic: Hold for exactly 1 second (1000ms)
   const handleHoldStart = () => {
-    if (isExpired) {
-      onStartMining();
-      return;
-    }
-
-    if (!isSecondHalf) return;
+    // If active during first 6 hours, no hold needed
+    if (isFirstHalf) return;
 
     setIsHolding(true);
     holdStartRef.current = Date.now();
 
     const updateProgress = () => {
       const elapsed = Date.now() - holdStartRef.current;
-      const progress = Math.min(100, (elapsed / 2000) * 100);
+      // Exactly 1 second hold (1000ms)
+      const progress = Math.min(100, (elapsed / 1000) * 100);
       setHoldProgress(progress);
 
       if (progress >= 100) {
         setIsHolding(false);
         setHoldProgress(0);
-        onRenewSessionEarly();
+        // Play futuristic sound tune
+        playIgniteTune();
+
+        if (isExpired) {
+          onStartMining();
+        } else if (isSecondHalf) {
+          onRenewSessionEarly();
+        }
       } else {
         animFrameRef.current = requestAnimationFrame(updateProgress);
       }
@@ -93,104 +125,183 @@ export default function MinerTapButton({
 
   return (
     <div className="w-full flex flex-col items-center select-none py-2">
-      {/* 3D REACTOR MECHANICAL PLATFORM */}
-      <div className="relative flex items-center justify-center">
-        {/* Outer ambient glow pulse */}
+      {/* Clean Fire Button Container (Circle completely removed) */}
+      <div className="relative flex items-center justify-center w-full max-w-sm">
+        {/* Glowing Blue Fire Blur Aura (Always Pure Blue Fire) */}
         <div
-          className={`absolute -inset-6 sm:-inset-8 rounded-full filter blur-2xl transition-all duration-700 pointer-events-none opacity-50 ${
-            isFirstHalf
-              ? 'bg-emerald-500/40'
-              : isSecondHalf
-              ? 'bg-amber-500/40'
-              : 'bg-rose-500/40'
+          className={`absolute -inset-3 sm:-inset-4 rounded-3xl filter blur-2xl transition-all duration-700 pointer-events-none ${
+            isHolding
+              ? 'bg-gradient-to-r from-cyan-400/90 via-blue-500/90 to-indigo-600/80 opacity-100 scale-105 animate-pulse'
+              : 'bg-gradient-to-r from-cyan-500/75 via-blue-600/70 to-indigo-600/60 opacity-90'
           }`}
         />
 
-        {/* 3D Mechanical Outer Base Ring with Beveled Rim */}
-        <div className="relative w-64 h-64 sm:w-72 sm:h-72 rounded-full p-2.5 bg-gradient-to-b from-[#e4ded2] via-[#cfc7b6] to-[#b8af9c] dark:from-[#1b3d47] dark:via-[#11282f] dark:to-[#091519] shadow-[0_20px_40px_rgba(0,0,0,0.35),inset_0_2px_4px_rgba(255,255,255,0.4),inset_0_-4px_8px_rgba(0,0,0,0.5)] flex items-center justify-center">
-          {/* Inner Groove Track & Hash Ticks */}
-          <div className="absolute inset-2 rounded-full border border-dashed border-black/20 dark:border-white/20 pointer-events-none" />
+        {/* Rectangular Rounded Fire Button - ONLY BLUE FIRE (SLOWMO) */}
+        <button
+          type="button"
+          id="btn-tap-to-mine"
+          onPointerDown={handleHoldStart}
+          onPointerUp={handleHoldEnd}
+          onPointerLeave={handleHoldEnd}
+          className={`relative w-full py-6 sm:py-7 px-6 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 outline-none select-none overflow-hidden ${
+            isHolding
+              ? 'bg-gradient-to-b from-[#02182b] via-[#0284c7] to-[#0369a1] text-white shadow-2xl ring-4 ring-cyan-300 scale-99 shadow-cyan-500/50'
+              : 'bg-gradient-to-b from-[#02101f] via-[#082f49] to-[#0c4a6e] text-white shadow-2xl shadow-cyan-600/40 ring-2 ring-cyan-400/60 hover:scale-101'
+          }`}
+        >
+          {/* Top Glass Specular Curve */}
+          <div className="absolute top-0 inset-x-4 h-5 bg-gradient-to-b from-white/25 to-transparent rounded-t-2xl pointer-events-none" />
 
-          {/* Rotating Laser Beam / Orbital Energy Ring (Active Mining) */}
-          {isMiningActive && (
+          {/* REAL BLUE FIRE BACKGROUND & SLOWMO RISING EMBERS */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Real Blue Heat Radial Glow at Base - Slowmo Pulse */}
             <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
-              className="absolute inset-1 rounded-full border-2 border-transparent border-t-emerald-400 border-r-amber-400 opacity-70 pointer-events-none"
+              animate={{ opacity: [0.75, 0.95, 0.75], scaleY: [1, 1.08, 1] }}
+              transition={{ repeat: Infinity, duration: isHolding ? 1.2 : 4.0, ease: 'easeInOut' }}
+              className="absolute bottom-0 inset-x-0 h-32 rounded-full blur-xl bg-gradient-to-t from-cyan-400/80 via-blue-500/50 to-transparent"
             />
-          )}
 
-          {/* Circular Progress Ring for Hold-to-renew (Orange phase) */}
-          {isSecondHalf && isHolding && (
-            <svg className="absolute w-[240px] h-[240px] sm:w-[260px] sm:h-[260px] -rotate-90 pointer-events-none z-30">
-              <circle
-                cx="120"
-                cy="120"
-                r="112"
-                fill="transparent"
-                stroke="#f59e0b"
-                strokeWidth="10"
-                strokeDasharray={2 * Math.PI * 112}
-                strokeDashoffset={(2 * Math.PI * 112) * (1 - holdProgress / 100)}
-                strokeLinecap="round"
-                className="transition-all duration-75"
-              />
-            </svg>
-          )}
-
-          {/* MAIN 3D TACTILE PUSH-BUTTON (Physical 3D Bevel, Extrusion & Depress) */}
-          <button
-            type="button"
-            id="btn-tap-to-mine"
-            onPointerDown={handleHoldStart}
-            onPointerUp={handleHoldEnd}
-            onPointerLeave={handleHoldEnd}
-            className={`group relative w-48 h-48 sm:w-56 sm:h-56 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-150 outline-none transform active:translate-y-2.5 select-none ${
-              isFirstHalf
-                ? 'bg-gradient-to-b from-[#10b981] via-[#059669] to-[#047857] border-4 border-[#34d399] shadow-[0_16px_0px_#064e3b,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#064e3b,0_10px_15px_rgba(0,0,0,0.3)]'
-                : isSecondHalf
-                ? 'bg-gradient-to-b from-[#f59e0b] via-[#d97706] to-[#b45309] border-4 border-[#fde047] shadow-[0_16px_0px_#78350f,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#78350f,0_10px_15px_rgba(0,0,0,0.3)]'
-                : 'bg-gradient-to-b from-[#f43f5e] via-[#e11d48] to-[#9f1239] border-4 border-[#fb7185] shadow-[0_16px_0px_#4c0519,0_25px_35px_rgba(0,0,0,0.5),inset_0_4px_8px_rgba(255,255,255,0.6),inset_0_-8px_16px_rgba(0,0,0,0.4)] active:shadow-[0_4px_0px_#4c0519,0_10px_15px_rgba(0,0,0,0.3)] animate-pulse'
-            }`}
-          >
-            {/* Top 3D Curvature Specular Light Arc */}
-            <div className="absolute top-2 w-32 sm:w-36 h-10 sm:h-12 rounded-full bg-gradient-to-b from-white/40 to-transparent pointer-events-none blur-2xs" />
-
-            {/* Inner Holographic 3D Convex Lens */}
-            <div className="absolute inset-3 rounded-full bg-gradient-to-tr from-black/25 via-transparent to-white/20 pointer-events-none" />
-
-            {/* Center Floating 3D Icon & Typography */}
-            <div className="relative z-20 flex flex-col items-center justify-center text-white text-center px-3">
-              {/* Floating 3D Icon */}
+            {/* Rising Blue Sparks / Embers Particle Stream in Slow-Motion (Slowmo) */}
+            {[
+              { left: '18%', duration: 4.8, delay: 0.2, size: 'w-1 h-1' },
+              { left: '30%', duration: 5.4, delay: 1.1, size: 'w-1.5 h-1.5' },
+              { left: '42%', duration: 4.2, delay: 0.5, size: 'w-1 h-1' },
+              { left: '52%', duration: 5.8, delay: 1.6, size: 'w-2 h-2' },
+              { left: '65%', duration: 4.6, delay: 0.8, size: 'w-1 h-1' },
+              { left: '78%', duration: 5.2, delay: 1.9, size: 'w-1.5 h-1.5' },
+              { left: '25%', duration: 6.0, delay: 2.3, size: 'w-1 h-1' },
+              { left: '72%', duration: 5.0, delay: 2.7, size: 'w-1.5 h-1.5' },
+            ].map((spark, idx) => (
               <motion.div
-                animate={isMiningActive ? { y: [-2, 2, -2], rotate: [0, 4, -4, 0] } : {}}
-                transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
-                className="p-3 sm:p-3.5 rounded-2xl bg-black/25 backdrop-blur-sm mb-1.5 shadow-[inset_0_2px_4px_rgba(255,255,255,0.2),0_6px_12px_rgba(0,0,0,0.3)] border border-white/20"
+                key={idx}
+                animate={{
+                  y: [35, -115],
+                  x: [0, (idx % 2 === 0 ? 10 : -10), (idx % 3 === 0 ? -14 : 14)],
+                  opacity: [0, 1, 0.85, 0],
+                  scale: [0.7, 1.25, 0.4],
+                }}
+                transition={{
+                  repeat: Infinity,
+                  duration: isHolding ? spark.duration * 0.4 : spark.duration,
+                  delay: spark.delay,
+                  ease: 'easeInOut',
+                }}
+                className={`absolute bottom-3 rounded-full ${spark.size} bg-cyan-200 shadow-[0_0_10px_#22d3ee]`}
+                style={{ left: spark.left }}
+              />
+            ))}
+
+            {/* Animated SVG Dancing Blue Flame Layer Tongues in Slow-Motion */}
+            <div className="absolute inset-x-0 bottom-0 h-28 flex items-end justify-center opacity-65">
+              <motion.svg
+                viewBox="0 0 100 80"
+                className="w-full h-full"
+                preserveAspectRatio="none"
               >
-                {isFirstHalf && <Pickaxe className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
-                {isSecondHalf && <Flame className="w-8 h-8 sm:w-10 sm:h-10 text-amber-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
-                {isExpired && <AlertTriangle className="w-8 h-8 sm:w-10 sm:h-10 text-rose-200 drop-shadow-[0_4px_6px_rgba(0,0,0,0.4)]" />}
+                <defs>
+                  {/* Pure Blue Fire Gradient */}
+                  <linearGradient id="blueFireOuter" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stopColor="#0284c7" stopOpacity="0.85" />
+                    <stop offset="50%" stopColor="#06b6d4" stopOpacity="0.65" />
+                    <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                  </linearGradient>
+                  <linearGradient id="blueFireInner" x1="0" y1="1" x2="0" y2="0">
+                    <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.95" />
+                    <stop offset="60%" stopColor="#e0f2fe" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+
+                {/* Outer Blue Flame Waves (Slowmo) */}
+                <motion.path
+                  d="M0 80 Q 15 35 25 55 T 50 25 T 75 50 T 100 80 Z"
+                  fill="url(#blueFireOuter)"
+                  animate={{
+                    d: [
+                      'M0 80 Q 15 35 25 55 T 50 25 T 75 50 T 100 80 Z',
+                      'M0 80 Q 20 45 35 35 T 60 15 T 85 40 T 100 80 Z',
+                      'M0 80 Q 10 30 20 60 T 45 30 T 70 45 T 100 80 Z',
+                      'M0 80 Q 15 35 25 55 T 50 25 T 75 50 T 100 80 Z',
+                    ],
+                  }}
+                  transition={{ repeat: Infinity, duration: isHolding ? 1.4 : 4.4, ease: 'easeInOut' }}
+                />
+
+                {/* Inner White-Hot Blue Flame Core (Slowmo) */}
+                <motion.path
+                  d="M15 80 Q 30 50 40 60 T 50 40 T 65 58 T 85 80 Z"
+                  fill="url(#blueFireInner)"
+                  animate={{
+                    d: [
+                      'M15 80 Q 30 50 40 60 T 50 40 T 65 58 T 85 80 Z',
+                      'M15 80 Q 35 55 45 45 T 55 35 T 70 50 T 85 80 Z',
+                      'M15 80 Q 25 45 35 65 T 48 45 T 60 52 T 85 80 Z',
+                      'M15 80 Q 30 50 40 60 T 50 40 T 65 58 T 85 80 Z',
+                    ],
+                  }}
+                  transition={{ repeat: Infinity, duration: isHolding ? 1.0 : 3.4, ease: 'easeInOut' }}
+                />
+              </motion.svg>
+            </div>
+          </div>
+
+          {/* 1s Hold Progress Bar Inside Button */}
+          {isHolding && (
+            <div className="absolute inset-x-0 bottom-0 h-2 bg-black/40 overflow-hidden z-30">
+              <div
+                className="h-full bg-gradient-to-r from-cyan-400 via-sky-300 to-white shadow-[0_0_15px_#38bdf8] transition-all duration-75"
+                style={{ width: `${holdProgress}%` }}
+              />
+            </div>
+          )}
+
+          {/* Center Blue Flame Icon & Slowmo Animation */}
+          <div className="relative z-20 flex flex-col items-center justify-center text-center">
+            {/* Dancing Flame Icon */}
+            <div className="relative mb-2 flex items-center justify-center">
+              {/* Blue Flame Glow Ring */}
+              <div className="absolute inset-0 rounded-full filter blur-md opacity-85 bg-cyan-400" />
+
+              <motion.div
+                animate={
+                  isHolding
+                    ? { scale: [1, 1.15, 1], y: [0, -3, 0], rotate: [-3, 3, -3] }
+                    : { scale: [1, 1.08, 0.98, 1.06, 1], y: [0, -4, 1, -2, 0], rotate: [-2, 2, -1, 1, 0] }
+                }
+                transition={{
+                  repeat: Infinity,
+                  duration: isHolding ? 0.6 : 3.8,
+                  ease: 'easeInOut',
+                }}
+                className="relative p-3.5 rounded-2xl border backdrop-blur-md transition-colors bg-cyan-950/70 border-cyan-400/60 shadow-[0_0_25px_rgba(6,182,212,0.75)]"
+              >
+                <Flame className="w-10 h-10 sm:w-11 sm:h-11 text-cyan-300 fill-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,1)]" />
               </motion.div>
-
-              {/* Status Action Title */}
-              <span className="text-xs sm:text-sm font-black tracking-wider uppercase drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]">
-                {isFirstHalf && 'MINING ACTIVE (3D)'}
-                {isSecondHalf && (isHolding ? `HOLDING (${Math.round(holdProgress)}%)` : 'HOLD 2S TO RENEW')}
-                {isExpired && 'TAP TO MINE'}
-              </span>
-
-              {/* Dynamic Hashrate / Countdown Subtext */}
-              <span className="text-[10px] sm:text-[11px] font-bold opacity-95 mt-0.5 tracking-tight drop-shadow-sm">
-                {isFirstHalf && `+${effectiveHashrate.toFixed(1)} TFLX/h LIVE`}
-                {isSecondHalf && `${formatTime(remainingMs)} Left in Cycle`}
-                {isExpired && '12H Cloud Node Ready'}
-              </span>
             </div>
 
-            {/* Bottom 3D Specular Highlight */}
-            <div className="absolute bottom-3 w-28 sm:w-32 h-3 rounded-full bg-white/15 blur-xs pointer-events-none" />
-          </button>
-        </div>
+            {/* Fire Button State Title (Only Blue Fire) */}
+            <span className="text-sm sm:text-base font-black tracking-wider uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+              {isHolding
+                ? `IGNITING BLUE FIRE (${Math.round(holdProgress)}%)`
+                : isFirstHalf
+                ? 'REAL BLUE FIRE ACTIVE 🔥'
+                : isSecondHalf
+                ? 'HOLD 1S TO RENEW (BLUE FIRE) 🔥'
+                : '12H EXPIRED ⚠️ HOLD 1S (BLUE FIRE)'}
+            </span>
+
+            {/* Subtitle Details & 6h / 12h Logic */}
+            <span className="text-xs font-bold mt-1 text-cyan-100 drop-shadow-sm">
+              {isHolding
+                ? 'Starting 12H Session with Tune...'
+                : isFirstHalf
+                ? `+${effectiveHashrate.toFixed(1)} TFLX/h LIVE • Slow-Mo Blue Fire Surge`
+                : isSecondHalf
+                ? '6 Hours Passed • Hold 1s to renew next 12h session'
+                : '12 Hours Completed • Hold 1s to ignite Blue Fire'}
+            </span>
+          </div>
+        </button>
       </div>
 
       {/* Sleek, Beautiful & Normal Mining Active Console */}
@@ -199,21 +310,21 @@ export default function MinerTapButton({
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
           <div className="flex items-center gap-2">
             {isFirstHalf && (
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Mining Active</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 dark:bg-cyan-500/25 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-black">
+                <Flame className="w-3.5 h-3.5 text-cyan-500 animate-pulse fill-cyan-400" />
+                <span>Blue Fire Active (Slow-Mo) 🔥</span>
               </div>
             )}
             {isSecondHalf && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-bold">
-                <Clock className="w-3.5 h-3.5 text-amber-500" />
-                <span>Early Check-In</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 dark:bg-cyan-500/25 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-bold">
+                <Clock className="w-3.5 h-3.5 text-cyan-500" />
+                <span>6h+ Passed &bull; Blue Fire Renewable</span>
               </div>
             )}
             {isExpired && (
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 dark:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold">
-                <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Session Expired</span>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-sky-500/15 dark:bg-sky-500/25 border border-sky-500/30 text-sky-700 dark:text-sky-300 text-xs font-bold">
+                <Flame className="w-3.5 h-3.5 text-cyan-400" />
+                <span>12h Complete &bull; Hold for Blue Fire</span>
               </div>
             )}
           </div>
@@ -227,7 +338,7 @@ export default function MinerTapButton({
           </div>
         </div>
 
-        {/* Clean Progress Indicator */}
+        {/* Clean Progress Indicator - Pure Blue Fire */}
         <div className="mt-3.5 space-y-1.5">
           <div className="flex justify-between text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8]">
             <span>Cycle Progress</span>
@@ -235,13 +346,7 @@ export default function MinerTapButton({
           </div>
           <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                isFirstHalf
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-400'
-                  : isSecondHalf
-                  ? 'bg-gradient-to-r from-amber-500 to-orange-400'
-                  : 'bg-rose-500'
-              }`}
+              className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-cyan-500 via-sky-400 to-blue-600"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -271,7 +376,7 @@ export default function MinerTapButton({
             <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase block">
               Session Cycle
             </span>
-            <p className="text-xs sm:text-sm font-black text-amber-600 dark:text-amber-400 mt-0.5">
+            <p className="text-xs sm:text-sm font-black text-cyan-600 dark:text-cyan-400 mt-0.5">
               12 Hours
             </p>
           </div>
@@ -279,9 +384,9 @@ export default function MinerTapButton({
 
         {/* Dynamic Context Notice */}
         <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-3 leading-relaxed text-center font-medium">
-          {isFirstHalf && 'Cloud mining is active with 0% battery and CPU load.'}
-          {isSecondHalf && 'Early Check-In active: Hold button for 2s to renew for another 12 hours.'}
-          {isExpired && 'Session complete. Tap the button above to ignite a fresh 12h run.'}
+          {isFirstHalf && 'Blue Fire Cloud mining is active with 0% battery and CPU load.'}
+          {isSecondHalf && '6 hours passed! You can hold button for 1s to renew session for another 12 hours.'}
+          {isExpired && '12 hours completed (Warning Red). Hold button for 1s to ignite blue fire and start mining.'}
         </p>
       </div>
     </div>

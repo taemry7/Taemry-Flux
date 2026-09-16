@@ -13,7 +13,10 @@ import {
   Info,
   Clock,
   RotateCcw,
-  Menu
+  Menu,
+  X,
+  LayoutGrid,
+  CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -29,7 +32,25 @@ export default function CloudMinerPage({ onNavigate }) {
   const { currentUser } = useAuth();
   const { showToast } = useToast();
 
-  const [activeSubTab, setActiveSubTab] = useState('reactor'); // 'reactor' | 'pre-staking' | 'guild' | 'protection'
+  const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' | 'reactor' | 'pre-staking' | 'guild' | 'protection'
+  const [isMinerMenuOpen, setIsMinerMenuOpen] = useState(false);
+
+  // Listen to Navbar menu button toggle
+  useEffect(() => {
+    const handleToggle = () => setIsMinerMenuOpen((prev) => !prev);
+    const handleOpen = () => setIsMinerMenuOpen(true);
+    const handleClose = () => setIsMinerMenuOpen(false);
+
+    window.addEventListener('taemry_toggle_miner_menu', handleToggle);
+    window.addEventListener('taemry_open_miner_menu', handleOpen);
+    window.addEventListener('taemry_close_miner_menu', handleClose);
+
+    return () => {
+      window.removeEventListener('taemry_toggle_miner_menu', handleToggle);
+      window.removeEventListener('taemry_open_miner_menu', handleOpen);
+      window.removeEventListener('taemry_close_miner_menu', handleClose);
+    };
+  }, []);
 
   // Initialize Miner State from LocalStorage or Defaults
   const [minerData, setMinerData] = useState(() => {
@@ -220,8 +241,166 @@ export default function CloudMinerPage({ onNavigate }) {
     showToast(`Day ${day} check-in reward claimed: +${reward} TFLX!`, 'success');
   };
 
+  // Menu Items for Cloud Miner (1 to All)
+  const menuItems = [
+    {
+      id: 'all',
+      title: 'All Overview',
+      subtitle: 'Show all 1 to 4 miner modules',
+      icon: <LayoutGrid className="w-4 h-4" />,
+      iconBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    },
+    {
+      id: 'reactor',
+      title: '1. Tap-to-Mine Cycle (12h)',
+      subtitle: '3D Reactor & 12H lifecycle',
+      icon: <Flame className="w-4 h-4" />,
+      iconBg: 'bg-[#0c5963]/15 text-[#0c5963] dark:text-[#38bdf8]',
+    },
+    {
+      id: 'pre-staking',
+      title: '2. Pre-Staking & Boost (+250%)',
+      subtitle: 'Lock allocation yield multiplier',
+      icon: <Lock className="w-4 h-4" />,
+      iconBg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    },
+    {
+      id: 'guild',
+      title: '3. 2-Tier Guild Network',
+      subtitle: 'Active miner team commissions',
+      icon: <Users className="w-4 h-4" />,
+      iconBg: 'bg-teal-500/15 text-teal-600 dark:text-teal-400',
+    },
+    {
+      id: 'protection',
+      title: '4. Day-Offs & Slashing',
+      subtitle: 'Protection shield & streak restore',
+      icon: <ShieldCheck className="w-4 h-4" />,
+      iconBg: 'bg-purple-500/15 text-purple-600 dark:text-purple-400',
+    },
+  ];
+
   return (
     <div className="w-full min-h-screen bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] pt-4 sm:pt-6 pb-16 px-4 sm:px-6 lg:px-8">
+      {/* Cloud Miner Dedicated Menu Drawer (1 to All) */}
+      {isMinerMenuOpen && (
+        <div
+          id="minerMenuBackdrop"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs cursor-pointer transition-opacity"
+          onClick={() => setIsMinerMenuOpen(false)}
+          aria-label="Close Miner Menu"
+        />
+      )}
+
+      <aside
+        id="cloudMinerMenuDrawer"
+        className={`fixed top-0 left-0 bottom-0 z-50 w-80 max-w-[85vw] bg-white dark:bg-[#091f27] border-r border-[#e4ded2] dark:border-[#173740] shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out ${
+          isMinerMenuOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        {/* Drawer Header */}
+        <div className="flex items-center justify-between p-4 sm:p-5 border-b border-[#ece6d9] dark:border-[#173740]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#d97706]">
+              <Pickaxe className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[#d97706] block">
+                TAEMRY PROTOCOL
+              </span>
+              <h2 className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+                Cloud Miner Menu
+              </h2>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="btn-close-miner-menu"
+            onClick={() => setIsMinerMenuOpen(false)}
+            aria-label="Close"
+            className="p-1.5 rounded-lg text-[#7a8c94] dark:text-[#94a3b8] hover:bg-[#faf8f5] dark:hover:bg-[#112d36] transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Navigation Items (1 to All) */}
+        <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5">
+          <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7a8c94] dark:text-[#94a3b8]">
+            Miner Navigation &bull; 1 to All
+          </div>
+
+          {menuItems.map((item) => {
+            const isActive = activeSubTab === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                id={`btn-miner-menu-${item.id}`}
+                onClick={() => {
+                  setActiveSubTab(item.id);
+                  setIsMinerMenuOpen(false);
+                }}
+                className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-[#0c5963] text-white shadow-sm font-bold'
+                    : 'bg-[#faf8f5]/60 dark:bg-[#07151a]/60 text-[#09353e] dark:text-[#ecf3f4] hover:bg-[#ece6d9] dark:hover:bg-[#112d36]'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                      isActive ? 'bg-white/20 text-white' : item.iconBg
+                    }`}
+                  >
+                    {item.icon}
+                  </div>
+                  <div>
+                    <p
+                      className={`text-xs font-bold leading-tight ${
+                        isActive ? 'text-white' : 'text-[#09353e] dark:text-[#f1f5f9]'
+                      }`}
+                    >
+                      {item.title}
+                    </p>
+                    <span
+                      className={`text-[10px] ${
+                        isActive ? 'text-white/80' : 'text-[#7a8c94] dark:text-[#94a3b8]'
+                      }`}
+                    >
+                      {item.subtitle}
+                    </span>
+                  </div>
+                </div>
+
+                {isActive && <CheckCircle2 className="w-4 h-4 text-emerald-300" />}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Drawer Footer Status */}
+        <div className="p-4 border-t border-[#ece6d9] dark:border-[#173740] bg-[#faf8f5] dark:bg-[#07151a]">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase">
+              Effective Hashrate
+            </span>
+            <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
+              +{effectiveHashrate.toFixed(1)} TFLX/h
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase">
+              Mined Yield
+            </span>
+            <span className="font-black text-[#09353e] dark:text-[#f1f5f9]">
+              {minerData.minedTflx.toFixed(2)} TFLX
+            </span>
+          </div>
+        </div>
+      </aside>
+
       <div className="max-w-4xl mx-auto space-y-6">
 
         {/* Top Breadcrumb & Navigation (Hidden per user request) */}
@@ -277,8 +456,8 @@ export default function CloudMinerPage({ onNavigate }) {
               </div>
             </div>
 
-            {/* Main Showcase: Big Mined Balance (Bara Karo & 2 Decimals) */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[#faf8f5] dark:bg-[#07151a] p-6 sm:p-7 rounded-2xl border border-[#ece6d9] dark:border-[#173740]">
+            {/* Main Showcase: Big Mined Balance (Rectangular Div & Hidden Span per user request) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[#faf8f5] dark:bg-[#07151a] p-6 sm:p-7 rounded-md border border-[#ece6d9] dark:border-[#173740]">
               <div className="space-y-1.5">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-black text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider">
@@ -303,141 +482,25 @@ export default function CloudMinerPage({ onNavigate }) {
                 </p>
               </div>
 
-              {/* Hashrate & 24h Yield Highlights - Consolidated Unified Card (Ikatta) */}
-              <div className="flex divide-x divide-[#ece6d9] dark:divide-[#173740] rounded-2xl bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] shadow-2xs overflow-hidden shrink-0">
-                <div className="p-3.5 sm:p-4">
-                  <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
-                    Effective Speed
-                  </span>
-                  <p className="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
-                    +{effectiveHashrate.toFixed(1)} <span className="text-xs font-bold">TFLX/h</span>
-                  </p>
-                </div>
-
-                <div className="p-3.5 sm:p-4">
-                  <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
-                    24H Projected
-                  </span>
-                  <p className="text-xl sm:text-2xl font-black text-[#0c5963] dark:text-[#38bdf8] mt-0.5 tabular-nums">
-                    +{(effectiveHashrate * 24).toFixed(1)} <span className="text-xs font-bold">TFLX</span>
-                  </p>
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold block mt-0.5">
-                    &asymp; ${((effectiveHashrate * 24) * 0.15).toFixed(2)} USD
-                  </span>
-                </div>
+              {/* Hashrate - Rectangular Card with Hidden Span per user request */}
+              <div className="rounded-md bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] shadow-2xs px-4 py-2.5 shrink-0">
+                {/* Span hidden per user request: "or is span ko hidden kardo OK" */}
+                <span className="hidden text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider">
+                  Effective Speed
+                </span>
+                <p className="text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5 tabular-nums">
+                  +{effectiveHashrate.toFixed(1)} <span className="text-xs font-bold">TFLX/h</span>
+                </p>
               </div>
             </div>
 
-            {/* Extra New Features Grid (Baqi Ismy Or Bi Dal) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
-                <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400 text-xs font-bold mb-1">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>Base Rate</span>
-                </div>
-                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
-                  +16.0 TFLX/h
-                </p>
-                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">Level 1 Base Protocol</span>
-              </div>
+            {/* Extra New Features Grid (Hidden per user request: "is div ko bi hidden kardo ok") */}
 
-              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
-                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-1">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Pre-Staking Boost</span>
-                </div>
-                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
-                  +{minerData.preStakingBoost || 0}% Boost
-                </p>
-                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">Lock Allocation Yield</span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
-                <div className="flex items-center gap-1.5 text-teal-600 dark:text-teal-400 text-xs font-bold mb-1">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>Guild Team</span>
-                </div>
-                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
-                  {minerData.tier1Active + minerData.tier2Active} Active Miners
-                </p>
-                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">+{teamRate.toFixed(1)} TFLX/h added</span>
-              </div>
-
-              <div className="p-3 rounded-xl bg-[#faf8f5]/80 dark:bg-[#07151a]/80 border border-[#ece6d9] dark:border-[#173740]">
-                <div className="flex items-center gap-1.5 text-purple-600 dark:text-purple-400 text-xs font-bold mb-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>Protection</span>
-                </div>
-                <p className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
-                  {minerData.dayOffsCount} Days-Off
-                </p>
-                <span className="text-[10px] text-[#7a8c94] dark:text-[#94a3b8]">{minerData.streakDays} Days Streak Active 🔥</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Sub-Navigation Tabs Bar */}
-        <div className="flex items-center gap-2 p-1.5 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] rounded-2xl overflow-x-auto shadow-2xs">
-          <button
-            type="button"
-            id="tab-miner-reactor"
-            onClick={() => setActiveSubTab('reactor')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-              activeSubTab === 'reactor'
-                ? 'bg-[#0c5963] text-white shadow-sm'
-                : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white'
-            }`}
-          >
-            <Pickaxe className="w-3.5 h-3.5" />
-            <span>1. Tap-to-Mine Cycle (12h)</span>
-          </button>
-
-          <button
-            type="button"
-            id="tab-miner-staking"
-            onClick={() => setActiveSubTab('pre-staking')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-              activeSubTab === 'pre-staking'
-                ? 'bg-[#d97706] text-white shadow-sm'
-                : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white'
-            }`}
-          >
-            <Lock className="w-3.5 h-3.5" />
-            <span>2. Pre-Staking & Boost (+250%)</span>
-          </button>
-
-          <button
-            type="button"
-            id="tab-miner-guild"
-            onClick={() => setActiveSubTab('guild')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-              activeSubTab === 'guild'
-                ? 'bg-teal-600 text-white shadow-sm'
-                : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white'
-            }`}
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>3. 2-Tier Guild Network</span>
-          </button>
-
-          <button
-            type="button"
-            id="tab-miner-protection"
-            onClick={() => setActiveSubTab('protection')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0 ${
-              activeSubTab === 'protection'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-[#546b70] dark:text-[#94a3b8] hover:text-[#09353e] dark:hover:text-white'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            <span>4. Day-Offs & Slashing</span>
-          </button>
-        </div>
-
         {/* TAB 1: 3D TAP-TO-MINE REACTOR (12H CYCLE & EARLY CHECK-IN) */}
-        {activeSubTab === 'reactor' && (
+        {(activeSubTab === 'all' || activeSubTab === 'reactor') && (
           <div className="w-full bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] rounded-3xl p-6 sm:p-10 shadow-xs flex flex-col items-center">
             <MinerTapButton
               minerData={minerData}
@@ -527,7 +590,7 @@ export default function CloudMinerPage({ onNavigate }) {
         )}
 
         {/* TAB 2: PRE-STAKING & STAKING BOOST */}
-        {activeSubTab === 'pre-staking' && (
+        {(activeSubTab === 'all' || activeSubTab === 'pre-staking') && (
           <MinerPreStaking
             minerData={minerData}
             onCommitPreStaking={handleCommitPreStaking}
@@ -535,7 +598,7 @@ export default function CloudMinerPage({ onNavigate }) {
         )}
 
         {/* TAB 3: 2-TIER GUILD NETWORK */}
-        {activeSubTab === 'guild' && (
+        {(activeSubTab === 'all' || activeSubTab === 'guild') && (
           <MinerTeamBoost
             user={currentUser}
             minerData={minerData}
@@ -544,7 +607,7 @@ export default function CloudMinerPage({ onNavigate }) {
         )}
 
         {/* TAB 4: DAY-OFFS & SLASHING */}
-        {activeSubTab === 'protection' && (
+        {(activeSubTab === 'all' || activeSubTab === 'protection') && (
           <MinerDayOffs
             minerData={minerData}
             onResurrectCoins={handleResurrectCoins}
