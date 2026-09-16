@@ -138,7 +138,7 @@ const checkIsAdminEmailStatic = (email) => {
   return (
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
-    em === 'kk3083702@gmail.com' ||
+    em === 'support.taemryflux@gmail.com' ||
     em.startsWith('admin@') ||
     em.includes('taimri') ||
     em.includes('taemryadmin') ||
@@ -296,7 +296,7 @@ export const AuthProvider = ({ children }) => {
       const isKnownAdminEmail =
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
-        email === 'kk3083702@gmail.com' ||
+        email === 'support.taemryflux@gmail.com' ||
         email.startsWith('admin@') ||
         email.includes('taimri') ||
         email.includes('taemryadmin') ||
@@ -335,7 +335,7 @@ export const AuthProvider = ({ children }) => {
     return (
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
-      em === 'kk3083702@gmail.com' ||
+      em === 'support.taemryflux@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taimri') ||
       em.includes('taemryadmin') ||
@@ -538,7 +538,7 @@ export const AuthProvider = ({ children }) => {
           setCurrentUser(userCredential.user);
           return userCredential.user;
         } catch (firebaseErr) {
-          // If the account does not exist in Firebase Auth yet, check if it's an authorized admin/owner (e.g. kk3083702@gmail.com):
+          // If the account does not exist in Firebase Auth yet, check if it's an authorized admin/owner (e.g. support.taemryflux@gmail.com):
           if (
             isUserAdmin &&
             (firebaseErr.code === 'auth/user-not-found' ||

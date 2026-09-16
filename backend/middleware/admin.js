@@ -19,7 +19,7 @@ export const verifyAdmin = (req, res, next) => {
     const isAuthorizedAdminEmail =
       email === 'mistrtaimur7@gmail.com' ||
       email === 'mistrtaimoor@gmail.com' ||
-      email === 'kk3083702@gmail.com' ||
+      email === 'support.taemryflux@gmail.com' ||
       email.startsWith('admin@') ||
       email.includes('taimri') ||
       email.includes('taemryadmin') ||
@@ -47,7 +47,7 @@ export const verifyAdmin = (req, res, next) => {
             udata.role === 'admin' ||
             docEmail === 'mistrtaimur7@gmail.com' ||
             docEmail === 'mistrtaimoor@gmail.com' ||
-            docEmail === 'kk3083702@gmail.com' ||
+            docEmail === 'support.taemryflux@gmail.com' ||
             docEmail.startsWith('admin@') ||
             docEmail.includes('taimri') ||
             docEmail.includes('taemryadmin') ||

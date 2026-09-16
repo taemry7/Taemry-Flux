@@ -35,7 +35,6 @@ const getPersistentRegisteredEmails = () => {
     'mistrtaimur7@gmail.com',
     'taemryflux@gmail.com',
     'admin@taemryflux.com',
-    'kk3083702@gmail.com',
     'support.taemryflux@gmail.com',
   ];
 };
@@ -96,7 +95,6 @@ const checkUserExists = async (cleanEmail) => {
   const isAdminEmail =
     target === 'mistrtaimur7@gmail.com' ||
     target === 'mistrtaimoor@gmail.com' ||
-    target === 'kk3083702@gmail.com' ||
     target === 'support.taemryflux@gmail.com' ||
     target.startsWith('admin@') ||
     target.includes('taimri') ||
@@ -422,7 +420,7 @@ router.post('/google', async (req, res) => {
     const isAdmin =
       cleanEmail === 'mistrtaimur7@gmail.com' ||
       cleanEmail === 'mistrtaimoor@gmail.com' ||
-      cleanEmail === 'kk3083702@gmail.com' ||
+      cleanEmail === 'support.taemryflux@gmail.com' ||
       cleanEmail.startsWith('admin@') ||
       cleanEmail.includes('taimri') ||
       cleanEmail.includes('taemryadmin');
