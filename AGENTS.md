@@ -169,13 +169,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - Wallet balance is strictly protected and can never be deducted, expired, or reset anywhere else.
 - User profile logins (Email, Password, Google Auth) and session refreshes check document existence first and strictly preserve existing `walletBalance` and `currentPackage`, preventing any accidental reset to 0.
 
-## STRICT INVARIANT: Brand Logo Lettering & Gradient Color (PERMANENT & LOCKED)
-- **TAEMRY & FLUX Letter Styling**:
-  - In **"TAEMRY"**, the letter **"T"** is strictly styled with the vibrant warm gradient:
-    `text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]`
-    while the remaining letters "AEMRY" retain standard theme text color.
-  - In **"FLUX"**, the letter **"U"** is strictly styled with the original teal/cyan brand color (`text-[#0f766e] dark:text-[#38bdf8]`), while letters **"FL"** and **"X"** retain the vibrant gradient `text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]`.
-  - Preserved across `Logo.jsx` and login page logo headers per user explicit directive.
+## STRICT INVARIANT: Brand Logo & Typography Restored to Original (PERMANENT & LOCKED)
+- **TAEMRY & FLUX Restored to Original Clean Styling**:
+  - Per user explicit directive ("Is TAEMRY FLUX ko pehli tarah ly aw sab kuch me pehli tarah karo"):
+  - Reverted the split letter coloring on "TAEMRY" and "FLUX".
+  - In **"TAEMRY"**, the text is clean, unified brand lettering (`text-[#0a3a46] dark:text-white`).
+  - In **"FLUX"**, the text is clean, unified original brand lettering (`text-[#0f766e] dark:text-[#38bdf8]`), with zero fragmented letter splits across `Logo.jsx`, navbar, and `LoginPage.jsx`.
 
 ## STRICT INVARIANT: Cloud Miner Paused State (PERMANENT & LOCKED)
 - **Dashboard Navigation Removed**: The Cloud Miner card has dashboard navigation removed per user directive ("ye go to cloud miner sy dashboard hata don or isko pause karo").

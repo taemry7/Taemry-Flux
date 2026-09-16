@@ -22,7 +22,6 @@ import {
   signInWithCustomToken,
   GoogleAuthProvider,
   sendPasswordResetEmail,
-  sendEmailVerification,
   updateProfile,
   setPersistence,
   browserLocalPersistence
@@ -138,7 +137,6 @@ const checkIsAdminEmailStatic = (email) => {
   return (
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
-    em === 'support.taemryflux@gmail.com' ||
     em.startsWith('admin@') ||
     em.includes('taimri') ||
     em.includes('taemryadmin') ||
@@ -296,7 +294,6 @@ export const AuthProvider = ({ children }) => {
       const isKnownAdminEmail =
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
-        email === 'support.taemryflux@gmail.com' ||
         email.startsWith('admin@') ||
         email.includes('taimri') ||
         email.includes('taemryadmin') ||
@@ -335,7 +332,6 @@ export const AuthProvider = ({ children }) => {
     return (
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
-      em === 'support.taemryflux@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taimri') ||
       em.includes('taemryadmin') ||
@@ -436,22 +432,13 @@ export const AuthProvider = ({ children }) => {
         };
         localStorage.setItem('taemry_registered_emails', JSON.stringify(registeredUsers));
         localStorage.setItem('taemry_registered_accounts', JSON.stringify(registeredAccounts));
-        // Dispatch custom branded TAEMRY FLUX 4-digit verification OTP to new user
+        // Dispatch custom branded TAEMRY FLUX verification email to new user
         try {
-          apiClient.post('/auth/send-otp', {
+          apiClient.post('/auth/send-verification', {
             email: cleanEmail,
             name: displayName || cleanEmail.split('@')[0],
             uid: userCredential.user.uid,
-          }).catch((err) => console.warn('OTP dispatch notice:', err?.message));
-        } catch {}
-
-        // Also trigger direct Firebase Auth email verification
-        try {
-          if (userCredential.user) {
-            sendEmailVerification(userCredential.user).catch((e) =>
-              console.warn('Firebase email verification notice:', e?.message)
-            );
-          }
+          }).catch((err) => console.warn('Verification email dispatch notice:', err?.message));
         } catch {}
 
         saveUserSession(userCredential.user);
@@ -491,13 +478,13 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('taemry_referral_sponsor');
         } catch {}
 
-        // Dispatch custom branded TAEMRY FLUX 4-digit verification OTP to new user
+        // Dispatch custom branded TAEMRY FLUX verification email to new user
         try {
-          apiClient.post('/auth/send-otp', {
+          apiClient.post('/auth/send-verification', {
             email: cleanEmail,
             name: mockUser.displayName,
             uid: mockUser.uid,
-          }).catch((err) => console.warn('OTP dispatch notice:', err?.message));
+          }).catch((err) => console.warn('Verification email dispatch notice:', err?.message));
         } catch {}
 
         saveUserSession(mockUser);
@@ -506,7 +493,7 @@ export const AuthProvider = ({ children }) => {
         return mockUser;
       }
     } catch (err) {
-      console.warn('Firebase signup notice:', err?.message || err);
+      console.error('Firebase signup error:', err);
       let friendlyError = err.message || 'Failed to sign up';
       if (err.code === 'auth/email-already-in-use') {
         friendlyError = 'Account already exists! An account with this email address already exists. Please sign in instead.';
@@ -531,76 +518,11 @@ export const AuthProvider = ({ children }) => {
 
     try {
       if (isFirebaseConfigured) {
-        try {
-          // Authenticate strictly against Firebase Auth in live production
-          const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
-          saveUserSession(userCredential.user);
-          setCurrentUser(userCredential.user);
-          return userCredential.user;
-        } catch (firebaseErr) {
-          // If the account does not exist in Firebase Auth yet, check if it's an authorized admin/owner (e.g. support.taemryflux@gmail.com):
-          if (
-            isUserAdmin &&
-            (firebaseErr.code === 'auth/user-not-found' ||
-             firebaseErr.code === 'auth/invalid-credential' ||
-             firebaseErr.code === 'auth/invalid-login-credentials')
-          ) {
-            try {
-              // Auto-initialize the admin user account in Firebase Auth with the entered password
-              const newUserCred = await createUserWithEmailAndPassword(auth, cleanEmail, password);
-              if (newUserCred && newUserCred.user) {
-                await updateProfile(newUserCred.user, { displayName: 'Mistr Taimoor (Admin)' });
-                if (db) {
-                  try {
-                    await setDoc(doc(db, 'users', newUserCred.user.uid), {
-                      uid: newUserCred.user.uid,
-                      email: cleanEmail,
-                      name: 'Mistr Taimoor (Admin)',
-                      admin: true,
-                      isAdmin: true,
-                      role: 'admin',
-                      currentPackage: 'None',
-                      walletBalance: 0,
-                      isEligible: true,
-                      createdAt: new Date().toISOString(),
-                    }, { merge: true });
-                  } catch (e) {}
-                }
-                saveUserSession(newUserCred.user);
-                setCurrentUser(newUserCred.user);
-                setIsAdmin(true);
-                return newUserCred.user;
-              }
-            } catch (createErr) {
-              console.warn('Admin auto-init notice:', createErr?.message || createErr);
-            }
-          }
-
-          // Fallback check: Did user previously register locally in demo / offline fallback?
-          let registeredAccounts = {};
-          try {
-            const rawAcc = localStorage.getItem('taemry_registered_accounts');
-            registeredAccounts = rawAcc ? JSON.parse(rawAcc) : {};
-          } catch {}
-          const userRecord = registeredAccounts[cleanEmail];
-          if (userRecord && userRecord.password && userRecord.password === password) {
-            const fallbackUser = {
-              uid: userRecord.uid || (isUserAdmin ? 'admin_taemry' : ('user-' + Date.now())),
-              email: cleanEmail,
-              displayName: userRecord.displayName || (isUserAdmin ? 'Mistr Taimoor (Admin)' : cleanEmail.split('@')[0]),
-              photoURL: null,
-              isDemo: false,
-              admin: isUserAdmin,
-              isAdmin: isUserAdmin,
-            };
-            saveUserSession(fallbackUser);
-            setCurrentUser(fallbackUser);
-            setIsAdmin(isUserAdmin);
-            return fallbackUser;
-          }
-
-          throw firebaseErr;
-        }
+        // Authenticate strictly against Firebase Auth in live production
+        const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        saveUserSession(userCredential.user);
+        setCurrentUser(userCredential.user);
+        return userCredential.user;
       } else {
         // Development / Offline Mode: Verify the user account was actually registered
         let registeredUsers = [];
@@ -647,18 +569,16 @@ export const AuthProvider = ({ children }) => {
         return mockUser;
       }
     } catch (err) {
-      console.warn('Firebase login notice:', err?.message || err);
+      console.error('Firebase login error:', err);
       let friendlyError = err.message || 'Failed to sign in';
       if (
         err.code === 'auth/user-not-found' ||
-        err.message?.includes('user-not-found')
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/invalid-login-credentials' ||
+        err.message?.includes('user-not-found') ||
+        err.message?.includes('No account found')
       ) {
         friendlyError = 'No account found with this email. Please sign up to create your account first.';
-      } else if (
-        err.code === 'auth/invalid-credential' ||
-        err.code === 'auth/invalid-login-credentials'
-      ) {
-        friendlyError = 'Invalid email or password. If you do not have an account yet, please sign up.';
       } else if (err.code === 'auth/wrong-password' || err.message?.includes('wrong-password')) {
         friendlyError = 'Incorrect password. Please verify your password and try again.';
       } else if (err.code === 'auth/too-many-requests') {
@@ -829,7 +749,7 @@ export const AuthProvider = ({ children }) => {
       setIsAdmin(userIsAdmin);
       return resolvedUser;
     } catch (err) {
-      console.warn('Direct Google Sign In notice:', err?.message || err);
+      console.error('Direct Google Sign In error:', err);
       const friendlyMsg = err.message || 'Google Sign-In failed. Please try again.';
       setAuthError(friendlyMsg);
       throw new Error(friendlyMsg);
@@ -857,7 +777,7 @@ export const AuthProvider = ({ children }) => {
         isEligible: false,
       });
     } catch (err) {
-      console.warn('Firebase logout notice:', err?.message || err);
+      console.error('Firebase logout error:', err);
       saveUserSession(null);
       setCurrentUser(null);
       setIsAdmin(false);
@@ -933,7 +853,7 @@ export const AuthProvider = ({ children }) => {
         return updated;
       }
     } catch (err) {
-      console.warn('Profile update notice:', err?.message || err);
+      console.error('Error updating user profile:', err);
       throw err;
     }
   };
@@ -1049,48 +969,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // 8. Send 4-Digit OTP to User's Email
-  const sendOtp = async (emailToSend, name, uid) => {
-    try {
-      const cleanEmail = (emailToSend || currentUser?.email || '').trim().toLowerCase();
-      if (!cleanEmail) return { success: false };
-      const res = await apiClient.post('/auth/send-otp', {
-        email: cleanEmail,
-        name: name || currentUser?.displayName || cleanEmail.split('@')[0],
-        uid: uid || currentUser?.uid,
-      });
-      return res.data || { success: true };
-    } catch (e) {
-      console.warn('Failed to send OTP email:', e?.message);
-      const errMsg = e.response?.data?.message || e.message || 'Failed to dispatch verification code';
-      throw new Error(errMsg);
-    }
-  };
-
-  // 9. Verify 4-Digit OTP entered by user
-  const verifyOtp = async (emailToVerify, otp, uid) => {
-    try {
-      const cleanEmail = (emailToVerify || currentUser?.email || '').trim().toLowerCase();
-      const res = await apiClient.post('/auth/verify-otp', {
-        email: cleanEmail,
-        otp: String(otp).trim(),
-        uid: uid || currentUser?.uid,
-      });
-      if (res.data?.success) {
-        if (currentUser) {
-          const updatedUser = { ...currentUser, emailVerified: true };
-          saveUserSession(updatedUser);
-          setCurrentUser(updatedUser);
-        }
-        return true;
-      }
-      return false;
-    } catch (e) {
-      const errMsg = e.response?.data?.message || e.message || 'Verification failed';
-      throw new Error(errMsg);
-    }
-  };
-
   // Live production auth only
   const testLogin = async () => {
     throw new Error('Test mode has been disabled. Please use live login with your registered account credentials.');
@@ -1147,8 +1025,6 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     sendVerificationEmail,
-    sendOtp,
-    verifyOtp,
     demoLogin,
     testLogin,
     updateUserProfile,

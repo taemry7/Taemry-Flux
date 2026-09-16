@@ -19,7 +19,7 @@ service cloud.firestore {
           'admin_taemry@taemryflux.com',
           'mistrtaimur7@gmail.com',
           'mistrtaimoor@gmail.com',
-          'support.taemryflux@gmail.com'
+          'kk3083702@gmail.com'
         ]
       );
     }
