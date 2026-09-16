@@ -1,3 +1,13 @@
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+Allow: /favicon.ico
+Allow: /favicon*.png
+Allow: /pwa*.png
+Allow: /taemry-logo.svg
+
 User-agent: *
 Allow: /
 Allow: /favicon.ico

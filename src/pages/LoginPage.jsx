@@ -148,39 +148,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     } catch {}
   }, []);
 
-  const { login, signup, loginWithGoogle, resetPassword, testLogin, isFirebaseConfigured } = useAuth();
-  const [testLoading, setTestLoading] = useState(false);
-
-  // Quick 1-Click Test Mode Login (requested by user for effortless testing)
-  const handleTestLogin = async (role = 'user') => {
-    setError('');
-    setTestLoading(true);
-    try {
-      if (testLogin) {
-        await testLogin(role);
-      } else {
-        await login(role === 'admin' ? 'mistrtaimur7@gmail.com' : 'testuser@taemry.com', 'test123456');
-      }
-      try {
-        if (localStorage.getItem('taemry_selected_package')) {
-          onNavigate('dashboard', 'buy-package');
-          return;
-        }
-      } catch {}
-      onNavigate('home');
-    } catch (err) {
-      console.error('Test login error:', err);
-      setError(err?.message || 'Test login failed.');
-    } finally {
-      setTestLoading(false);
-    }
-  };
-
-  const handleFillTestCredentials = () => {
-    setEmail('testuser@taemry.com');
-    setPassword('test123456');
-    setError('');
-  };
+  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -356,69 +324,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               ? 'Start making progress visible'
               : 'Sign in to your TAEMRY space'}
           </p>
-        </div>
-
-        {/* Test Mode Card (Requested by user: "login me test mode on karo taky asan hojay") */}
-        <div
-          id="test-mode-banner"
-          className="mb-5 p-3.5 sm:p-4 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] border border-[#0c5963]/30 dark:border-[#2dd4bf]/30 shadow-xs"
-        >
-          <div className="flex items-center justify-between gap-2 mb-1.5">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2.5 w-2.5 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-              </span>
-              <span className="text-xs font-bold text-[#0c5963] dark:text-[#2dd4bf] uppercase tracking-wider flex items-center gap-1">
-                <Sparkles className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf]" />
-                Test Mode ON
-              </span>
-            </div>
-            <button
-              type="button"
-              id="btn-fill-test-credentials"
-              onClick={handleFillTestCredentials}
-              className="text-[11px] font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline cursor-pointer"
-            >
-              Fill Credentials
-            </button>
-          </div>
-
-          <p className="text-[11px] text-[#476066] dark:text-[#94a3b8] mb-2.5 leading-relaxed">
-            Instant 1-click test login is active. Click below to sign in directly without entering passwords:
-          </p>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              id="btn-test-login-member"
-              type="button"
-              disabled={testLoading || loading}
-              onClick={() => handleTestLogin('user')}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
-            >
-              {testLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="w-3.5 h-3.5" />
-              )}
-              <span>Instant Test User</span>
-            </button>
-
-            <button
-              id="btn-test-login-admin"
-              type="button"
-              disabled={testLoading || loading}
-              onClick={() => handleTestLogin('admin')}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 px-3 bg-[#09252c] hover:bg-[#06191e] dark:bg-[#12313b] dark:hover:bg-[#173e4a] text-[#2dd4bf] text-xs font-bold rounded-xl border border-[#0c5963]/40 shadow-xs transition-all active:scale-[0.98] cursor-pointer disabled:opacity-60"
-            >
-              {testLoading ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Shield className="w-3.5 h-3.5" />
-              )}
-              <span>Test Admin</span>
-            </button>
-          </div>
         </div>
 
         {/* Email Verified Banner */}

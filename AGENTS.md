@@ -195,7 +195,7 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 
 ## STRICT INVARIANT: Search Engine Optimization & Google Search Favicon (PERMANENT)
 - **Official Meta Description**:
-  `"Decentralized advertising & cloud mining platform. Watch daily ads, activate 12-hour cloud miner sessions, earn package yields, and track real-time wallet earnings."`
+  `"Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network."`
   Synchronized across `index.html`, `metadata.json`, and `public/manifest.json`.
 - **Favicon & Crawler Asset Lock**:
   - `public/favicon.ico` (multi-size 64x64, 48x48, 32x32, 16x16 MS Windows icon resource)

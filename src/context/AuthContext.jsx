@@ -516,36 +516,9 @@ export const AuthProvider = ({ children }) => {
     const cleanEmail = (email || '').trim().toLowerCase();
     const isUserAdmin = checkIsAdminEmail(cleanEmail);
 
-    // Test Mode bypass for quick evaluation & easy testing
-    const isTestAccount = (
-      cleanEmail === 'testuser@taemry.com' ||
-      cleanEmail === 'test@taemry.com' ||
-      cleanEmail === 'demo@taemry.com' ||
-      cleanEmail === 'admin@taemry.com' ||
-      (cleanEmail.startsWith('test') && cleanEmail.includes('@')) ||
-      password === 'test123456' ||
-      password === 'demo123456'
-    );
-
-    if (isTestAccount) {
-      const mockTestUser = {
-        uid: isUserAdmin ? 'admin_taemry_test' : 'test_member_flux',
-        email: cleanEmail,
-        displayName: isUserAdmin ? 'Mistr Taimoor (Admin)' : (cleanEmail.split('@')[0] || 'Test Member'),
-        photoURL: null,
-        isDemo: true,
-        admin: isUserAdmin,
-        isAdmin: isUserAdmin,
-      };
-      saveUserSession(mockTestUser);
-      setCurrentUser(mockTestUser);
-      setIsAdmin(isUserAdmin);
-      return mockTestUser;
-    }
-
     try {
       if (isFirebaseConfigured) {
-        // Authenticate strictly against Firebase Auth - NEVER auto-create users on login
+        // Authenticate strictly against Firebase Auth in live production
         const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
         saveUserSession(userCredential.user);
         setCurrentUser(userCredential.user);
@@ -996,23 +969,9 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Test Mode 1-Click Instant Login (requested by user for easy access)
-  const testLogin = async (role = 'user') => {
-    setAuthError('');
-    const isRoleAdmin = role === 'admin';
-    const mockUser = {
-      uid: isRoleAdmin ? 'admin_taemry_test' : 'test_member_flux',
-      email: isRoleAdmin ? 'mistrtaimur7@gmail.com' : 'testuser@taemry.com',
-      displayName: isRoleAdmin ? 'Mistr Taimoor (Admin)' : 'Test Member',
-      photoURL: null,
-      isDemo: true,
-      admin: isRoleAdmin,
-      isAdmin: isRoleAdmin,
-    };
-    saveUserSession(mockUser);
-    setCurrentUser(mockUser);
-    setIsAdmin(isRoleAdmin);
-    return mockUser;
+  // Live production auth only
+  const testLogin = async () => {
+    throw new Error('Test mode has been disabled. Please use live login with your registered account credentials.');
   };
 
   const demoLogin = testLogin;

@@ -1,6 +1,6 @@
 {
   "name": "TAEMRY FLUX",
-  "description": "Decentralized advertising & cloud mining platform. Watch daily ads, activate 12-hour cloud miner sessions, earn package yields, and track real-time wallet earnings.",
+  "description": "Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
