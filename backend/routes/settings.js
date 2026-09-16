@@ -25,7 +25,7 @@ export const DEFAULT_SETTINGS = {
   minWithdrawal: 1.00,
   maxWithdrawal: 1000.00,
   withdrawalCooldownMinutes: 0,
-  referralRequired: 0,
+  referralRequired: 1,
   // Ads Engine Configuration
   dailyAdLimit: 200,
   adTimerSeconds: 60,

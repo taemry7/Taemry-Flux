@@ -14,6 +14,7 @@ export default function MinerTapButton({
   onStartMining,
   onRenewSessionEarly,
   effectiveHashrate,
+  isPackageActive = true,
 }) {
   const [holdProgress, setHoldProgress] = useState(0);
   const [isHolding, setIsHolding] = useState(false);
@@ -76,6 +77,10 @@ export default function MinerTapButton({
   // Tap & Hold Logic: Hold for exactly 1 second (1000ms) to start/renew session
   // Rule: Do not allow hold until 6 hours have completed during an active session
   const handleHoldStart = () => {
+    if (isPackageActive === false) {
+      onStartMining(); // Triggers "Ineligible to Mine: Package buy karne ke baad ye eligible aur activate hoga."
+      return;
+    }
     if (isFirstHalf) return; // Block hold until 6 hours have elapsed
 
     setIsHolding(true);
@@ -285,7 +290,9 @@ export default function MinerTapButton({
 
             {/* Fire Button State Title (HOLD TO MINE after 6h / MINING ACTIVE before 6h) */}
             <span className="text-base sm:text-lg font-black tracking-widest uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-              {isHolding
+              {!isPackageActive
+                ? 'INELIGIBLE TO MINE'
+                : isHolding
                 ? `HOLDING (${Math.round(holdProgress)}%)`
                 : isFirstHalf
                 ? 'MINING ACTIVE'
@@ -294,7 +301,9 @@ export default function MinerTapButton({
 
             {/* Subtitle Details: Shows unlock countdown before 6h, or instruction when ready */}
             <span className="text-xs font-bold mt-1 text-cyan-200 drop-shadow-sm flex items-center gap-1">
-              {isFirstHalf ? (
+              {!isPackageActive ? (
+                <span>Package buy karne ke baad activate hoga</span>
+              ) : isFirstHalf ? (
                 <>
                   <Clock className="w-3 h-3 text-cyan-300 inline shrink-0" />
                   <span>Hold unlocks in {formatTime(remainingMs - sixHoursMs)}</span>

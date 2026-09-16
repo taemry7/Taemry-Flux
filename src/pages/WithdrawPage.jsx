@@ -81,11 +81,11 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
   const referralCount = Number(userStats?.referralCount) || 0;
   const walletBalance = Number(userStats?.walletBalance) || 0;
-  const requiredReferrals = typeof settings.referralRequired === 'number'
+  const requiredReferrals = (typeof settings.referralRequired === 'number' && settings.referralRequired > 0)
     ? settings.referralRequired
-    : (settings.referralRequired === true ? 1 : 0);
+    : 1;
   const isUserAdmin = userStats?.role === 'admin' || userStats?.isAdmin;
-  const isEligible = requiredReferrals === 0 || referralCount >= requiredReferrals || isUserAdmin;
+  const isEligible = referralCount >= requiredReferrals || isUserAdmin;
 
   const referralCode = userStats?.referralCode || userStats?.uid?.substring(0, 8) || 'REF1234';
   const referralLink = `${window.location.origin}/register?ref=${referralCode}`;

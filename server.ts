@@ -16,6 +16,7 @@ import adminRoutes from './backend/routes/admin.js';
 import supportRoutes from './backend/routes/support.js';
 import whitepaperRoutes from './backend/routes/whitepaper.js';
 import authRoutes from './backend/routes/auth.js';
+import minerRoutes from './backend/routes/miner.js';
 import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
 import { sendAdminErrorAlert } from './backend/utils/email.js';
 
@@ -135,6 +136,7 @@ async function startServer() {
   app.use('/api/support', supportRoutes);
   app.use('/api/whitepaper', whitepaperRoutes);
   app.use('/api/auth', authRoutes);
+  app.use('/api/miner', minerRoutes);
 
   // 404 Handler for undefined API routes
   app.all(['/api', '/api/*'], (req, res) => {

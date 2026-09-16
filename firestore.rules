@@ -89,5 +89,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    match /cloudMiner/{userId} {
+      allow read: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow create, update: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
   }
 }

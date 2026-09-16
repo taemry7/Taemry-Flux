@@ -180,13 +180,13 @@ router.post('/request', verifyToken, async (req, res) => {
       });
     }
 
-    // 5. Strict Rule: Referral Check (respects settings.referralRequired)
-    const requiredReferrals = typeof settings.referralRequired === 'number'
+    // 5. Strict Rule: Referral Check (requires at least 1 referral unless admin)
+    const requiredReferrals = (typeof settings.referralRequired === 'number' && settings.referralRequired > 0)
       ? settings.referralRequired
-      : (settings.referralRequired ? 1 : 0);
+      : 1;
 
     const referralCount = Number(userData.referralCount) || 0;
-    if (!isUserAdmin && requiredReferrals > 0 && referralCount < requiredReferrals) {
+    if (!isUserAdmin && referralCount < requiredReferrals) {
       return res.status(400).json({
         error: 'Referral Requirement Not Met',
         message: `You need at least ${requiredReferrals} active referral(s) to withdraw.`,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2, Lock, FlaskConical, Check, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2, Lock, Check, RefreshCw, User } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { firebaseConfig } from '../firebase/firebase.config';
@@ -182,7 +182,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     return () => clearInterval(interval);
   }, [waitingForVerification, pendingVerificationEmail, onNavigate]);
 
-  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured, adminTestLogin, userTestLogin } = useAuth();
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -361,39 +361,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
       {/* Main Auth Card (Starts cleanly near top, not pushed down) */}
       <div className="w-full max-w-md bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 shadow-lg shadow-[#0c5963]/5 border border-[#e4ded2] dark:border-[#1e3a44]">
-        {/* Test Mode Toggle Banner */}
-        <div className="mb-4 flex items-center justify-between px-3 py-2 bg-[#f4f7f6] dark:bg-[#0c242c] border border-[#d8e3e0] dark:border-[#1c414c] rounded-xl">
-          <div className="flex items-center gap-2">
-            <span className="flex h-2 w-2 relative">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-xs font-bold text-[#0c5963] dark:text-[#2dd4bf] flex items-center gap-1">
-              <FlaskConical className="w-3.5 h-3.5" /> Test Mode ON
-            </span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <button
-              id="btn-test-fill-user"
-              type="button"
-              onClick={() => fillTestCredentials('member')}
-              className="text-[11px] font-semibold px-2 py-1 bg-white dark:bg-[#12313a] text-[#0c5963] dark:text-[#5eead4] border border-[#c3d5d2] dark:border-[#214955] hover:bg-[#e6efec] rounded-lg transition-colors cursor-pointer"
-              title="Quick fill member credentials"
-            >
-              Fill Member
-            </button>
-            <button
-              id="btn-test-fill-admin"
-              type="button"
-              onClick={() => fillTestCredentials('admin')}
-              className="text-[11px] font-semibold px-2 py-1 bg-[#0c5963] text-white hover:bg-[#09424a] rounded-lg transition-colors cursor-pointer"
-              title="Quick fill admin credentials"
-            >
-              Fill Admin
-            </button>
-          </div>
-        </div>
-
         {/* Title */}
         <div className="text-center mb-4">
           <h2 className="text-2xl font-bold text-[#09353e] dark:text-white">
@@ -757,6 +724,57 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </button>
             </p>
           )}
+        </div>
+
+        {/* Simple Test Mode for User Panel & Admin Panel */}
+        <div className="mt-4 pt-3.5 border-t border-[#ebe4d6] flex flex-wrap items-center justify-center gap-2">
+          <button
+            id="btn-login-user-test-mode"
+            type="button"
+            onClick={async () => {
+              try {
+                if (userTestLogin) {
+                  await userTestLogin();
+                }
+                if (onNavigate) {
+                  onNavigate('dashboard');
+                } else {
+                  window.location.hash = '#/dashboard';
+                }
+              } catch (e) {
+                if (onNavigate) onNavigate('dashboard');
+                else window.location.hash = '#/dashboard';
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#eef7f6] hover:bg-[#dff0ee] text-[#0c5963] text-xs font-semibold transition cursor-pointer border border-[#cbe4e1] shadow-2xs"
+          >
+            <User className="w-3.5 h-3.5 text-[#0c5963]" />
+            <span>User Panel (Test Mode)</span>
+          </button>
+
+          <button
+            id="btn-login-admin-test-mode"
+            type="button"
+            onClick={async () => {
+              try {
+                if (adminTestLogin) {
+                  await adminTestLogin();
+                }
+                if (onNavigate) {
+                  onNavigate('admin');
+                } else {
+                  window.location.hash = '#/admin';
+                }
+              } catch (e) {
+                if (onNavigate) onNavigate('admin');
+                else window.location.hash = '#/admin';
+              }
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#f2ede2] hover:bg-[#e8e1d3] text-[#0c5963] text-xs font-semibold transition cursor-pointer border border-[#d8d1c3] shadow-2xs"
+          >
+            <Shield className="w-3.5 h-3.5 text-[#0c5963]" />
+            <span>Admin Panel (Test Mode)</span>
+          </button>
         </div>
       </div>
 

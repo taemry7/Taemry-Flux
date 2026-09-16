@@ -73,9 +73,41 @@
         "dailyAdsLimit": { "type": "number" },
         "updatedAt": { "type": "string" }
       }
+    },
+    "CloudMiner": {
+      "title": "CloudMiner",
+      "description": "User cloud mining session state, mined TFLX balance, hashrate, streak, and pre-staking parameters.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "minedTflx": { "type": "number" },
+        "isMiningActive": { "type": "boolean" },
+        "sessionStartTime": { "type": "number" },
+        "sessionDurationMs": { "type": "number" },
+        "committedYears": { "type": "number" },
+        "committedAllocation": { "type": "number" },
+        "preStakingBoost": { "type": "number" },
+        "effectiveHashrate": { "type": "number" },
+        "tier1Active": { "type": "number" },
+        "tier1Total": { "type": "number" },
+        "tier2Active": { "type": "number" },
+        "tier2Total": { "type": "number" },
+        "dayOffsCount": { "type": "number" },
+        "streakDays": { "type": "number" },
+        "claimedCheckInDays": { "type": "array", "items": { "type": "number" } },
+        "slashedCoins": { "type": "number" },
+        "lastSyncTime": { "type": "number" },
+        "lastPingTime": { "type": "number" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["userId", "minedTflx"]
     }
   },
   "firestore": {
+    "/cloudMiner/{userId}": {
+      "schema": "CloudMiner",
+      "description": "Dedicated Firestore collection for Cloud Miner sessions and balances"
+    },
     "/users/{userId}": {
       "schema": "UserProfile",
       "description": "User accounts with wallet information and tier settings"

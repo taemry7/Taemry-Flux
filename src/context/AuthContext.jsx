@@ -969,12 +969,66 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Live production auth only
-  const testLogin = async () => {
-    throw new Error('Test mode has been disabled. Please use live login with your registered account credentials.');
+  // Admin Test Mode Login (fast bypass to test Admin Panel)
+  const adminTestLogin = async () => {
+    setLoading(true);
+    try {
+      const demoAdmin = {
+        uid: 'admin_taemry_test',
+        email: 'mistrtaimur7@gmail.com',
+        displayName: 'Taimoor (Admin Test)',
+        emailVerified: true,
+        isAnonymous: false,
+      };
+      saveUserSession(demoAdmin);
+      setCurrentUser(demoAdmin);
+      setIsAdmin(true);
+      setLoading(false);
+      return demoAdmin;
+    } catch (e) {
+      setLoading(false);
+      throw e;
+    }
   };
 
-  const demoLogin = testLogin;
+  // User Panel Test Mode Login (fast bypass to test Member User Panel & Dashboard)
+  const userTestLogin = async () => {
+    setLoading(true);
+    try {
+      const demoUser = {
+        uid: 'user_taemry_test',
+        email: 'testmember@taemryflux.online',
+        displayName: 'Test Member',
+        emailVerified: true,
+        isAnonymous: false,
+      };
+      saveUserSession(demoUser);
+      setCurrentUser(demoUser);
+      setIsAdmin(false);
+
+      // Clean sample active stats for User Panel testing
+      const testStats = {
+        walletBalance: 25.50,
+        currentPackage: 'Starter Ad Pack',
+        lifetimeAds: 142,
+        dailyAdCount: 45,
+        teamAdsCount: 88,
+        referralCount: 3,
+        totalEarned: 64.20,
+        isEligible: true,
+      };
+      setUserStats(testStats);
+      try {
+        localStorage.setItem('taemry_cached_user_stats', JSON.stringify(testStats));
+      } catch {}
+
+      setLoading(false);
+      return demoUser;
+    } catch (e) {
+      setLoading(false);
+      throw e;
+    }
+  };
 
   // Listen to Firebase auth state changes
   useEffect(() => {
@@ -1025,8 +1079,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     resetPassword,
     sendVerificationEmail,
-    demoLogin,
-    testLogin,
+    adminTestLogin,
+    userTestLogin,
     updateUserProfile,
     isFirebaseConfigured,
     userStats,

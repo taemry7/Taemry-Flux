@@ -57,7 +57,7 @@ import AdminProfileModal from '../components/admin/AdminProfileModal';
 import LiveLeaderboard from '../components/LiveLeaderboard';
 
 export default function AdminLayout({ onNavigate }) {
-  const { currentUser, isAdmin, logout, loading } = useAuth();
+  const { currentUser, isAdmin, logout, loading, adminTestLogin, userTestLogin } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [stats, setStats] = useState(() => {
@@ -152,6 +152,27 @@ export default function AdminLayout({ onNavigate }) {
             <span>Sign In to Admin Control Panel</span>
           </button>
           <button
+            id="btn-admin-simple-test-mode"
+            onClick={async () => {
+              await adminTestLogin();
+            }}
+            className="px-5 py-2.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 font-bold text-xs transition-all cursor-pointer border border-amber-500/35 flex items-center gap-2"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Simple Test Mode (Admin)</span>
+          </button>
+          <button
+            id="btn-admin-user-test-mode"
+            onClick={async () => {
+              await userTestLogin();
+              onNavigate('dashboard');
+            }}
+            className="px-5 py-2.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 font-bold text-xs transition-all cursor-pointer border border-sky-500/35 flex items-center gap-2"
+          >
+            <User className="w-4 h-4 text-sky-400" />
+            <span>Simple Test Mode (User Panel)</span>
+          </button>
+          <button
             onClick={() => onNavigate('home')}
             className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors cursor-pointer"
           >
@@ -182,6 +203,16 @@ export default function AdminLayout({ onNavigate }) {
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Return to Member Dashboard</span>
+          </button>
+          <button
+            id="btn-admin-switch-test-mode"
+            onClick={async () => {
+              await adminTestLogin();
+            }}
+            className="px-5 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 font-bold text-xs transition-colors cursor-pointer flex items-center gap-2 border border-amber-500/40"
+          >
+            <Sparkles className="w-4 h-4 text-amber-400" />
+            <span>Switch to Admin Test Mode</span>
           </button>
           <button
             onClick={async () => {
@@ -254,9 +285,18 @@ export default function AdminLayout({ onNavigate }) {
                 <span className="text-white">TAEMRY</span>{' '}
                 <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span>
               </span>
-              <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">
-                ADMIN {adminFirstName}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">
+                  ADMIN {adminFirstName}
+                </span>
+                <span
+                  id="badge-admin-test-mode"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-400 text-[9px] font-bold"
+                >
+                  <span className="w-1 h-1 rounded-full bg-amber-400 animate-pulse" />
+                  <span>TEST MODE</span>
+                </span>
+              </div>
             </div>
           </div>
         </div>

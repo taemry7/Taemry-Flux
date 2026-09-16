@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Pickaxe,
   Flame,
@@ -17,11 +17,17 @@ import {
   X,
   LayoutGrid,
   CheckCircle2,
-  BellRing
+  BellRing,
+  Database,
+  AlertCircle,
+  Package,
+  ArrowDownCircle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { motion, AnimatePresence } from 'motion/react';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db, isFirebaseConfigured } from '../firebase/firebase.config';
 import MinerTapButton from '../components/miner/MinerTapButton';
 import MinerPreStaking from '../components/miner/MinerPreStaking';
 import MinerTeamBoost from '../components/miner/MinerTeamBoost';
@@ -31,8 +37,10 @@ import MinerSevenDayCheckIn from '../components/miner/MinerSevenDayCheckIn';
 const LOCAL_STORAGE_KEY = 'taemry_tflx_miner_data';
 
 export default function CloudMinerPage({ onNavigate }) {
-  const { currentUser } = useAuth();
+  const { currentUser, userStats } = useAuth();
   const { showToast } = useToast();
+
+  const isPackageActive = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
 
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' | 'reactor' | 'pre-staking' | 'guild' | 'protection'
   const [isMinerMenuOpen, setIsMinerMenuOpen] = useState(false);
@@ -159,88 +167,254 @@ export default function CloudMinerPage({ onNavigate }) {
     return () => clearInterval(timer);
   }, [effectiveHashrate]);
 
-  // Persist to local storage
+  // Persist to local storage (throttled every 5 seconds to keep the UI super fast & responsive)
+  const lastLocalSaveRef = useRef(0);
   useEffect(() => {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
-        ...minerData,
-        effectiveHashrate,
-      }));
-    } catch (e) {}
+    const now = Date.now();
+    if (now - lastLocalSaveRef.current > 5000) {
+      lastLocalSaveRef.current = now;
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+          ...minerData,
+          effectiveHashrate,
+        }));
+      } catch (e) {}
+    }
   }, [minerData, effectiveHashrate]);
+
+  // Ensure final save on window unload / unmount
+  useEffect(() => {
+    const saveImmediately = () => {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({
+          ...minerData,
+          effectiveHashrate,
+        }));
+      } catch (e) {}
+    };
+    window.addEventListener('beforeunload', saveImmediately);
+    return () => {
+      saveImmediately();
+      window.removeEventListener('beforeunload', saveImmediately);
+    };
+  }, [minerData, effectiveHashrate]);
+
+  // Firestore 'cloudMiner' collection sync state
+  const [firestoreSyncStatus, setFirestoreSyncStatus] = useState('connecting'); // 'connecting' | 'synced' | 'local'
+
+  // Helper to persist state to Firestore collection 'cloudMiner'
+  const syncToFirestore = useCallback((dataToSync) => {
+    if (!currentUser?.uid || !isFirebaseConfigured) return;
+    try {
+      const docRef = doc(db, 'cloudMiner', currentUser.uid);
+      setDoc(
+        docRef,
+        {
+          ...dataToSync,
+          userId: currentUser.uid,
+          userEmail: currentUser.email || '',
+          effectiveHashrate,
+          updatedAt: new Date().toISOString(),
+        },
+        { merge: true }
+      )
+        .then(() => setFirestoreSyncStatus('synced'))
+        .catch((err) => console.warn('[Firestore cloudMiner sync warning]:', err?.message));
+    } catch (e) {
+      console.warn('[Firestore sync call error]:', e);
+    }
+  }, [currentUser?.uid, currentUser?.email, effectiveHashrate]);
+
+  // Load and hydrate from Firestore collection 'cloudMiner'
+  useEffect(() => {
+    if (!currentUser?.uid || !isFirebaseConfigured) {
+      setFirestoreSyncStatus('local');
+      return;
+    }
+
+    let isMounted = true;
+    const docRef = doc(db, 'cloudMiner', currentUser.uid);
+
+    getDoc(docRef)
+      .then((snap) => {
+        if (!isMounted) return;
+        if (snap.exists()) {
+          const remote = snap.data();
+          const now = Date.now();
+          const lastSync = remote.lastSyncTime || now;
+          const elapsedSeconds = Math.max(0, (now - lastSync) / 1000);
+          const sessionDuration = remote.sessionDurationMs || (12 * 60 * 60 * 1000);
+          const sessionElapsed = now - (remote.sessionStartTime || now);
+
+          let addedCoins = 0;
+          let isMiningStillActive = remote.isMiningActive;
+          if (remote.isMiningActive) {
+            const effectiveRate = remote.effectiveHashrate || 16.0;
+            if (sessionElapsed < sessionDuration) {
+              addedCoins = (effectiveRate / 3600) * elapsedSeconds;
+            } else {
+              const remainingActiveSec = Math.max(0, (sessionDuration - (lastSync - remote.sessionStartTime)) / 1000);
+              addedCoins = (effectiveRate / 3600) * remainingActiveSec;
+              isMiningStillActive = false;
+            }
+          }
+
+          const existing = Number(remote.minedTflx);
+          const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 283.98;
+          setMinerData((prev) => ({
+            ...prev,
+            ...remote,
+            minedTflx: Number((baseMined + addedCoins).toFixed(4)),
+            isMiningActive: isMiningStillActive,
+            lastSyncTime: now,
+          }));
+          setFirestoreSyncStatus('synced');
+        } else {
+          // Initialize user's cloudMiner document in Firestore
+          const initialPayload = {
+            userId: currentUser.uid,
+            userEmail: currentUser.email || '',
+            minedTflx: 283.98,
+            isMiningActive: true,
+            sessionStartTime: Date.now() - (1.5 * 60 * 60 * 1000),
+            sessionDurationMs: 12 * 60 * 60 * 1000,
+            committedYears: 0,
+            committedAllocation: 0,
+            preStakingBoost: 0,
+            effectiveHashrate: 16.0,
+            tier1Active: 2,
+            tier1Total: 3,
+            tier2Active: 4,
+            tier2Total: 6,
+            dayOffsCount: 2,
+            streakDays: 4,
+            claimedCheckInDays: [1, 2, 3],
+            slashedCoins: 0,
+            lastSyncTime: Date.now(),
+            lastPingTime: 0,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          setDoc(docRef, initialPayload, { merge: true })
+            .then(() => {
+              if (isMounted) setFirestoreSyncStatus('synced');
+            })
+            .catch(() => {
+              if (isMounted) setFirestoreSyncStatus('local');
+            });
+        }
+      })
+      .catch((err) => {
+        console.warn('[Firestore cloudMiner fetch error]:', err?.message);
+        if (isMounted) setFirestoreSyncStatus('local');
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [currentUser?.uid]);
+
+  // Periodic background synchronization to Firestore collection 'cloudMiner' (every 30s to keep app responsive)
+  useEffect(() => {
+    if (!currentUser?.uid || !isFirebaseConfigured) return;
+    const timer = setInterval(() => {
+      setMinerData((current) => {
+        syncToFirestore(current);
+        return current;
+      });
+    }, 30000);
+
+    return () => clearInterval(timer);
+  }, [currentUser?.uid, syncToFirestore]);
 
   // Handlers
   const handleStartMining = () => {
+    if (!isPackageActive) {
+      showToast('Ineligible to Mine: Package buy karne ke baad ye eligible aur activate hoga.', 'error');
+      return;
+    }
     const now = Date.now();
-    setMinerData((prev) => ({
-      ...prev,
+    const updated = {
+      ...minerData,
       isMiningActive: true,
       sessionStartTime: now,
       sessionDurationMs: 12 * 60 * 60 * 1000,
       lastSyncTime: now,
-      streakDays: prev.streakDays + 1,
+      streakDays: minerData.streakDays + 1,
       // If streak reached multiple of 6, give +1 Day-Off
-      dayOffsCount: ((prev.streakDays + 1) % 6 === 0) ? prev.dayOffsCount + 1 : prev.dayOffsCount,
-    }));
-
+      dayOffsCount: ((minerData.streakDays + 1) % 6 === 0) ? minerData.dayOffsCount + 1 : minerData.dayOffsCount,
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast('12-Hour Cloud Mining session ignited! Green 3D Reactor active.', 'success');
   };
 
   const handleRenewSessionEarly = () => {
+    if (!isPackageActive) {
+      showToast('Ineligible to Mine: Package buy karne ke baad ye eligible aur activate hoga.', 'error');
+      return;
+    }
     const now = Date.now();
-    setMinerData((prev) => ({
-      ...prev,
+    const updated = {
+      ...minerData,
       isMiningActive: true,
       sessionStartTime: now,
       sessionDurationMs: 12 * 60 * 60 * 1000,
       lastSyncTime: now,
-      streakDays: prev.streakDays + 1,
-    }));
-
+      streakDays: minerData.streakDays + 1,
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast('Early Check-In successful! New 12-hour session restarted without breaking streak.', 'success');
   };
 
   const handleCommitPreStaking = ({ years, allocation, boostPercent }) => {
-    setMinerData((prev) => ({
-      ...prev,
+    const updated = {
+      ...minerData,
       committedYears: years,
       committedAllocation: allocation,
       preStakingBoost: boostPercent,
-    }));
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast(`Pre-Staking Boost of +${boostPercent}% committed!`, 'success');
   };
 
   const handlePingInactive = () => {
-    setMinerData((prev) => ({
-      ...prev,
+    const updated = {
+      ...minerData,
       lastPingTime: Date.now(),
-    }));
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast('Push alert sent to all inactive team members!', 'info');
   };
 
   const handleResurrectCoins = () => {
-    setMinerData((prev) => ({
-      ...prev,
-      minedTflx: Number((prev.minedTflx + prev.slashedCoins).toFixed(4)),
+    const updated = {
+      ...minerData,
+      minedTflx: Number((minerData.minedTflx + minerData.slashedCoins).toFixed(4)),
       slashedCoins: 0,
-    }));
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast('Slashed coins resurrected and restored to node balance!', 'success');
   };
 
   const handleClaimCheckIn = (day, reward) => {
-    setMinerData((prev) => {
-      const alreadyClaimed = (prev.claimedCheckInDays || []).includes(day);
-      if (alreadyClaimed) return prev;
+    const alreadyClaimed = (minerData.claimedCheckInDays || []).includes(day);
+    if (alreadyClaimed) return;
 
-      const newClaimed = [...(prev.claimedCheckInDays || []), day];
-      const givesDayOff = day === 7;
-      return {
-        ...prev,
-        minedTflx: Number((prev.minedTflx + reward).toFixed(4)),
-        claimedCheckInDays: newClaimed,
-        dayOffsCount: givesDayOff ? prev.dayOffsCount + 1 : prev.dayOffsCount,
-      };
-    });
+    const newClaimed = [...(minerData.claimedCheckInDays || []), day];
+    const givesDayOff = day === 7;
+    const updated = {
+      ...minerData,
+      minedTflx: Number((minerData.minedTflx + reward).toFixed(4)),
+      claimedCheckInDays: newClaimed,
+      dayOffsCount: givesDayOff ? minerData.dayOffsCount + 1 : minerData.dayOffsCount,
+    };
+    setMinerData(updated);
+    syncToFirestore(updated);
     showToast(`Day ${day} check-in reward claimed: +${reward} TFLX!`, 'success');
   };
 
@@ -335,7 +509,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
         {/* Navigation Items (1 to All) */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5">
-          <div className="hidden px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7a8c94] dark:text-[#94a3b8]">
+          <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7a8c94] dark:text-[#94a3b8]">
             Miner Navigation &bull; 1 to All
           </div>
 
@@ -373,7 +547,7 @@ export default function CloudMinerPage({ onNavigate }) {
                       {item.title}
                     </p>
                     <span
-                      className={`hidden text-[10px] ${
+                      className={`text-[10px] block ${
                         isActive ? 'text-white/80' : 'text-[#7a8c94] dark:text-[#94a3b8]'
                       }`}
                     >
@@ -482,12 +656,21 @@ export default function CloudMinerPage({ onNavigate }) {
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-center">
+                <div
+                  id="badge-firestore-cloudminer"
+                  className="hidden items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold shadow-2xs"
+                  title="Backed by Firestore collection 'cloudMiner'"
+                >
+                  <Database className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span className="whitespace-nowrap">Firestore: cloudMiner</span>
+                  <span className={`w-1.5 h-1.5 rounded-full ${firestoreSyncStatus === 'synced' ? 'bg-emerald-500' : 'bg-amber-400 animate-pulse'}`} />
+                </div>
+
                 <button
                   type="button"
                   id="btn-miner-updates-coming-soon"
                   onClick={() => {
                     setShowUpdatesModal(true);
-                    showToast('Coming Soon Updates', 'info');
                   }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#faf8f5] dark:bg-[#07151a] hover:bg-amber-500/10 dark:hover:bg-amber-500/15 border border-[#ece6d9] dark:border-[#173740] hover:border-amber-500/40 text-[#09353e] dark:text-[#f1f5f9] transition-all cursor-pointer shadow-2xs group"
                   title="Coming Soon Updates"
@@ -551,6 +734,53 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         </div>
 
+        {/* Ineligible to Mine Gate if user has no package */}
+        {!isPackageActive && (
+          <div
+            id="cloud-miner-ineligible-gate"
+            className="w-full bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-8 border-2 border-amber-500/30 dark:border-amber-500/30 shadow-xs mb-8 text-center max-w-2xl mx-auto"
+          >
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-3">
+              <AlertCircle className="w-7 h-7" />
+            </div>
+
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 text-xs font-bold mb-2 uppercase tracking-wider">
+              <span>Ineligible to Mine</span>
+              <span>•</span>
+              <span>Package Required</span>
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-[#09353e] dark:text-white mb-2">
+              Ineligible to Mine
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#526b70] dark:text-[#94a3b8] mb-5 leading-relaxed max-w-lg mx-auto">
+              Package buy karne ke baad ye eligible aur activate hoga. To start live cloud mining and earn TFLX tokens, please activate an advertising package.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              <button
+                type="button"
+                id="btn-miner-ineligible-buy"
+                onClick={() => onNavigate && onNavigate('dashboard', 'buy-package')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                <Package className="w-4 h-4" />
+                <span>Buy Package to Activate Mining</span>
+              </button>
+              <button
+                type="button"
+                id="btn-miner-ineligible-deposit"
+                onClick={() => onNavigate && onNavigate('dashboard', 'deposit')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-[#122e37] text-[#09353e] dark:text-white border border-[#d8d1c3] dark:border-[#1e4854] text-xs sm:text-sm font-bold rounded-xl hover:bg-[#f8f5ee] transition-all cursor-pointer"
+              >
+                <ArrowDownCircle className="w-4 h-4" />
+                <span>Deposit Funds</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* TAB 1: 3D TAP-TO-MINE REACTOR (12H CYCLE & EARLY CHECK-IN) */}
         {(activeSubTab === 'all' || activeSubTab === 'reactor') && (
           <div className="w-full bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] rounded-3xl p-6 sm:p-10 shadow-xs flex flex-col items-center">
@@ -559,6 +789,7 @@ export default function CloudMinerPage({ onNavigate }) {
               onStartMining={handleStartMining}
               onRenewSessionEarly={handleRenewSessionEarly}
               effectiveHashrate={effectiveHashrate}
+              isPackageActive={isPackageActive}
             />
 
             {/* Operational Rules Info Grid - Consolidated Unified Card (Ikatta) */}
@@ -634,9 +865,9 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 2: PRE-STAKING & STAKING BOOST (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
+        {/* TAB 2: PRE-STAKING & STAKING BOOST */}
         {(activeSubTab === 'all' || activeSubTab === 'pre-staking') && (
-          <div className="hidden">
+          <div className="w-full">
             <MinerPreStaking
               minerData={minerData}
               onCommitPreStaking={handleCommitPreStaking}
@@ -644,9 +875,9 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 3: 2-TIER GUILD NETWORK (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
+        {/* TAB 3: 2-TIER GUILD NETWORK */}
         {(activeSubTab === 'all' || activeSubTab === 'guild') && (
-          <div className="hidden">
+          <div className="w-full">
             <MinerTeamBoost
               user={currentUser}
               minerData={minerData}
@@ -655,9 +886,9 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 4: DAY-OFFS & SLASHING (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
+        {/* TAB 4: DAY-OFFS & SLASHING */}
         {(activeSubTab === 'all' || activeSubTab === 'protection') && (
-          <div className="hidden">
+          <div className="w-full">
             <MinerDayOffs
               minerData={minerData}
               onResurrectCoins={handleResurrectCoins}
