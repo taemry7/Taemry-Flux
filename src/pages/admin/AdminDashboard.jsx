@@ -23,8 +23,9 @@ import {
   Trophy
 } from 'lucide-react';
 import GoLiveModal from '../../components/admin/GoLiveModal';
+import AdminDualPreviewCard from '../../components/admin/AdminDualPreviewCard';
 
-export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loading }) {
+export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRefresh, loading }) {
   const [showGoLive, setShowGoLive] = useState(false);
 
   if (!stats) {
@@ -107,6 +108,15 @@ export default function AdminDashboard({ stats, onNavigateTab, onRefresh, loadin
           </div>
         </div>
       )}
+
+      {/* Featured Dual Switcher & Interactive Preview Card (Watch Ads & Cloud Miner) */}
+      <div className="w-full flex justify-center py-2">
+        <AdminDualPreviewCard
+          stats={stats}
+          onNavigate={onNavigate}
+          onNavigateTab={onNavigateTab}
+        />
+      </div>
 
       {/* Core Platform Metric Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

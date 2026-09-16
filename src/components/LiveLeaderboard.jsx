@@ -22,7 +22,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 7850,
     referrals: 64,
     dailyEarned: 200.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -130,7 +130,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 3100,
     referrals: 17,
     dailyEarned: 10.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -202,7 +202,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 2050,
     referrals: 8,
     dailyEarned: 5.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -238,7 +238,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1850,
     referrals: 6,
     dailyEarned: 5.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -292,7 +292,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1350,
     referrals: 4,
     dailyEarned: 1.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -328,7 +328,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 1190,
     referrals: 3,
     dailyEarned: 1.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -400,7 +400,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 890,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -418,7 +418,7 @@ const INITIAL_LEADERBOARD_USERS = [
     adsWatched: 820,
     referrals: 2,
     dailyEarned: 1.00,
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
     isOnline: true,
   },
@@ -648,9 +648,9 @@ const GENERATED_31_TO_100 = ADDITIONAL_MEMBERS.map((m, idx) => {
     adsWatched: ads,
     referrals: idx % 4 === 0 ? 1 : 0,
     dailyEarned: 0.20,
-    status: idx % 3 === 0 ? 'Watching Ads' : idx % 2 === 0 ? 'Active' : 'Claimed recently',
-    statusTime: idx % 3 === 0 ? 'Live' : `${(idx % 12) + 2}m ago`,
-    isOnline: idx % 2 === 0,
+    status: idx % 5 === 0 ? 'Inactive' : 'Active',
+    statusTime: idx % 5 === 0 ? 'Offline' : 'Live',
+    isOnline: idx % 5 !== 0,
   };
 });
 
@@ -702,9 +702,9 @@ export function generateLiveLeaderboardState(baseUsers, now = Date.now()) {
       totalEarned,
       adsWatched,
       dailyEarned: todayEarned > 0 ? todayEarned : +(dailyTarget * 0.4).toFixed(2),
-      status: (rank <= 3 || index % 3 === 0) ? 'Watching Ads' : 'Active',
-      statusTime: 'Live',
-      isOnline: true,
+      status: (rank <= 5 || index % 5 !== 0) ? 'Active' : 'Inactive',
+      statusTime: (rank <= 5 || index % 5 !== 0) ? 'Live' : 'Offline',
+      isOnline: (rank <= 5 || index % 5 !== 0),
     };
   });
 
@@ -830,7 +830,7 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
         member.adsWatched = (Number(member.adsWatched) || 0) + 1;
         member.totalEarned = +(Number(member.totalEarned || 0) + perAdReward).toFixed(2);
         member.dailyEarned = +(Number(member.dailyEarned || 0) + perAdReward).toFixed(2);
-        member.status = 'Watching Ads';
+        member.status = 'Active';
         member.statusTime = 'Live';
         member.isOnline = true;
 
@@ -1243,10 +1243,17 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
 
                         {/* Status */}
                         <td className="py-3.5 px-4 sm:px-6 text-center">
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                            {user.status === 'Active Now' ? 'Active' : user.status}
-                          </span>
+                          {user.status === 'Inactive' || user.isOnline === false ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 font-medium text-[11px] border border-slate-200 dark:border-slate-700/60">
+                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                              <span>Inactive</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 font-bold text-[11px] border border-emerald-200/80 dark:border-emerald-800/50">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              <span>Active</span>
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );

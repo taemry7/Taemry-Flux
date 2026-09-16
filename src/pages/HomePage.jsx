@@ -7,13 +7,18 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  TrendingUp,
   LifeBuoy,
   ShieldCheck,
   Zap,
   Tv,
   Pickaxe,
   Flame,
+  PlaySquare,
+  Cpu,
+  Coins,
+  TrendingUp,
+  Layers,
+  Clock,
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
@@ -58,24 +63,36 @@ export default function HomePage({ onNavigate }) {
 
   const homeFaqs = [
     {
-      q: 'Q1. What is TAEMRY FLUX?',
-      a: 'It is a revolutionary reward-based advertising platform. You earn US Dollars ($) by watching ads, referring friends, and achieving milestones.'
+      q: 'Q1. What is TAEMRY FLUX and its Dual-Earning Architecture?',
+      a: 'TAEMRY FLUX is a revolutionary digital wealth ecosystem combining two high-yield earning engines: 1. Watch Ads (immediate daily USD cashflow with guaranteed 20% returns), and 2. Cloud Mining (automated 12-hour session hashing of native TFLX crypto tokens). Both run seamlessly together!'
     },
     {
-      q: 'Q2. Do I have to pay to start earning?',
-      a: 'Yes. You must buy a starter package (starting from $1) to become eligible. This prevents bots and ensures serious users.'
+      q: 'Q2. What is TAEMRY Cloud Mining and how does it generate crypto yield?',
+      a: 'TAEMRY Cloud Mining is an automated, server-authoritative 12-hour session mining protocol. With a single tap, your cloud mining session activates for 12 hours. It consumes 0% of your mobile battery, requires no hardware maintenance, and hashes native TFLX tokens continuously at a base rate of +16 TFLX/h.'
     },
     {
-      q: 'Q3. How do daily ad returns on packages work?',
-      a: 'Every package delivers guaranteed daily returns through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
+      q: 'Q3. How does Watch Ads differ from Cloud Mining?',
+      a: 'Watch Ads provides immediate daily USD cashflow (20% daily return on packages across 200 daily ads) with instant wallet balance credit, withdrawable to JazzCash and Easypaisa. Cloud Mining generates passive crypto hashrate and TFLX tokens on 12-hour cycles with pre-staking boosts and halving epochs. You can run both simultaneously!'
     },
     {
-      q: 'Q4. What are the deposit and withdrawal methods?',
-      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto (USDT / BTC).'
+      q: 'Q4. What are the Slashing & Days-Off mechanics in Cloud Mining?',
+      a: 'To maintain network integrity, mining streaks require regular 12-hour check-ins. If you miss a session without protection, inactive slashing penalties can deduct a portion of uncommitted rewards. However, you can earn or activate "Days-Off" rest passes to pause your streak safely without any penalty.'
     },
     {
-      q: 'Q5. What is the minimum and maximum withdrawal?',
-      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request). You can withdraw once per day with a 5-minute cooldown.'
+      q: 'Q5. How do Pre-Staking boosts and Guild Networks work?',
+      a: 'Pre-staking allows you to commit your mined TFLX for up to 3 years to unlock multipliers up to +250% hashrate. Additionally, your 2-Tier Guild Network grants up to 20% extra hashrate power when your invited friends are actively mining.'
+    },
+    {
+      q: 'Q6. How do daily ad returns on packages work?',
+      a: 'Every package delivers guaranteed 20% daily returns through our daily ads quota (200 ads). Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.'
+    },
+    {
+      q: 'Q7. What are the deposit and withdrawal methods?',
+      a: '1. Easypaisa, 2. JazzCash (Fixed exchange rate: 1 USD = 300 PKR), 3. Crypto USDT. Instant wallet updates.'
+    },
+    {
+      q: 'Q8. What is the minimum and maximum withdrawal?',
+      a: 'Minimum: $1.00 USD. Maximum: $1,000.00 USD (per single request). You can withdraw once per day with a 5-minute cooldown directly to your mobile wallet.'
     },
   ];
 
@@ -666,7 +683,7 @@ export default function HomePage({ onNavigate }) {
                   {/* Cloud Miner Action Button - Styled with vibrant amber-orange gradient */}
                   <button
                     id="btn-card-miner-paused"
-                    onClick={() => onNavigate('dashboard', 'miner')}
+                    onClick={() => onNavigate('cloud-miner')}
                     className="w-full flex items-center justify-center gap-2 py-3.5 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] active:scale-[0.98] text-white text-sm font-bold rounded-2xl shadow-sm shadow-amber-500/25 transition-all cursor-pointer mt-1"
                   >
                     <Pickaxe className="w-4 h-4" />
@@ -729,244 +746,243 @@ export default function HomePage({ onNavigate }) {
         </div>
       </section>
 
-      {/* Packages Section */}
+      {/* Dual Wealth Engines: Watch Ads & Cloud Miner Section */}
       <section id="packages-section" className="py-16 sm:py-24 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
-            <div>
-              <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] uppercase">
-                CHOOSE YOUR PACE
-              </span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-[#09353e] mt-2">
-                Official Earning Packages. Calculated Growth.
-              </h2>
-              <p className="text-sm text-[#556e73] mt-1">
-                Start where it makes sense. You can always build into the next level as your wallet balance grows.
-              </p>
+          {/* Section Header */}
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#0c5963]/10 text-[#0c5963] text-xs font-bold uppercase tracking-wider mb-3">
+              <Sparkles className="w-3.5 h-3.5 text-[#d97706]" />
+              <span>Dual Digital Wealth Engines</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#09353e] tracking-tight">
+              Watch Ads & Cloud Mining: Maximize Daily Yields
+            </h2>
+            <p className="text-sm sm:text-base text-[#556e73] mt-3 leading-relaxed">
+              Unlock two complementary, high-yield revenue models: generate instant USD cashflow from daily sponsor ad views with guaranteed 20% returns, or harness automated 12-hour cloud mining hashpower for continuous crypto accumulation.
+            </p>
+          </div>
+
+          {/* Dual Cards Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+            {/* Card 1: Watch Ads */}
+            <div className="rounded-3xl p-6 sm:p-8 bg-white border border-[#d2ebe5] shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-[#0c5963]/50 transition-all duration-300">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-teal-100/50 via-emerald-50/20 to-transparent rounded-bl-full pointer-events-none" />
+              
+              <div>
+                {/* Header Badge */}
+                <div className="flex items-center justify-between gap-2 mb-5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-extrabold uppercase tracking-wider border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Daily Active Yield
+                  </span>
+                  <span className="text-xs font-extrabold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full">
+                    20% Guaranteed Daily ROI
+                  </span>
+                </div>
+
+                {/* Title & Icon */}
+                <div className="flex items-start gap-3.5 mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#0c5963] to-[#08424b] text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Tv className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-[#09353e] group-hover:text-[#0c5963] transition-colors">
+                      Watch & Earn: Guaranteed Daily Cash
+                    </h3>
+                    <p className="text-xs font-semibold text-[#0c5963]">
+                      200 Daily Sponsor Ads • Instant Wallet Synchronization
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-sm text-[#50686d] mb-6 leading-relaxed">
+                  Monetize your daily screen time with verifiable returns. Every activated package tier gives you a quota of 200 sponsor ads per day, delivering an industry-leading 20% daily return credited straight to your available balance.
+                </p>
+
+                {/* Core Benefits */}
+                <div className="space-y-3 pt-4 border-t border-[#f0ebe0]">
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#0c5963]">20% Guaranteed Daily Returns:</strong> Fixed, transparent earnings calculated per ad (0.10% per ad view).
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#0c5963]">Zero-Delay Instant Credit:</strong> No waiting for cycle closures — funds credit to your wallet in real time.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#0c5963]">5-Level Multi-Tier Matching:</strong> Earn 25% (L1), 20% (L2), 15% (L3), 10% (L4), and 5% (L5) matching bonuses when your network watches ads.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#0c5963]">Low $1.00 USD Entry:</strong> Start immediately with our starter Bronze tier and withdraw anytime via JazzCash, Easypaisa, or USDT.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-8 pt-5 border-t border-[#f0ebe0] flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (currentUser) {
+                      onNavigate("dashboard", "watch-ads");
+                    } else {
+                      onNavigate("login");
+                    }
+                  }}
+                  className="w-full sm:flex-1 py-3 px-5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <PlaySquare className="w-4 h-4" />
+                  <span>Start Watching Ads</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (currentUser) {
+                      onNavigate("dashboard", "buy-package");
+                    } else {
+                      onNavigate("login");
+                    }
+                  }}
+                  className="w-full sm:w-auto py-3 px-4 bg-[#f4fbf9] hover:bg-[#e6f4f1] text-[#0c5963] border border-[#b8dfd7] text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-[#d97706]" />
+                  <span>View Packages</span>
+                </button>
+              </div>
             </div>
 
-            {/* Filter Toggle with Fluid Splash Animation */}
-            <div className="relative flex items-center bg-[#eae4d8] dark:bg-[#122b33] p-1 rounded-xl self-start sm:self-auto text-xs font-semibold border border-[#dcd6c8] dark:border-[#1a3b45]">
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={(e) => handleFilterToggle(e, 'core')}
-                className={`relative px-3.5 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer font-bold overflow-hidden select-none ${
-                  selectedViewMode === 'core'
-                    ? 'text-white'
-                    : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
-                }`}
-              >
-                {selectedViewMode === 'core' && (
-                  <motion.span
-                    layoutId="activeFilterPill"
-                    className="absolute inset-0 bg-[#0c5963] rounded-lg shadow-xs"
-                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                  />
-                )}
-                {/* Fluid Splash Wave & Ring */}
-                {filterSplash && filterSplash.mode === 'core' && (
-                  <>
-                    <span
-                      key={`splash-${filterSplash.id}`}
-                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#38bdf8_0%,rgba(12,89,99,0.5)_50%,transparent_75%)] animate-fluid-splash"
-                      style={{
-                        left: filterSplash.x,
-                        top: filterSplash.y,
-                        width: '140px',
-                        height: '140px',
-                      }}
-                    />
-                    <span
-                      key={`ring-${filterSplash.id}`}
-                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/90 dark:border-teal-300/90 animate-fluid-splash-ring"
-                      style={{
-                        left: filterSplash.x,
-                        top: filterSplash.y,
-                        width: '120px',
-                        height: '120px',
-                      }}
-                    />
-                  </>
-                )}
-                <span className="relative z-10">Starter 3</span>
-              </motion.button>
+            {/* Card 2: Cloud Miner */}
+            <div className="rounded-3xl p-6 sm:p-8 bg-white border border-[#fed7aa] shadow-sm flex flex-col justify-between relative overflow-hidden group hover:border-[#ea580c]/50 transition-all duration-300">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-gradient-to-bl from-amber-100/50 via-orange-50/20 to-transparent rounded-bl-full pointer-events-none" />
 
-              <motion.button
-                type="button"
-                whileTap={{ scale: 0.94 }}
-                whileHover={{ scale: 1.02 }}
-                onClick={(e) => handleFilterToggle(e, 'all')}
-                className={`relative px-3.5 py-1.5 rounded-lg transition-colors duration-200 cursor-pointer font-bold overflow-hidden select-none ${
-                  selectedViewMode === 'all'
-                    ? 'text-white'
-                    : 'text-[#50686d] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white'
-                }`}
-              >
-                {selectedViewMode === 'all' && (
-                  <motion.span
-                    layoutId="activeFilterPill"
-                    className="absolute inset-0 bg-[#0c5963] rounded-lg shadow-xs"
-                    transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                  />
-                )}
-                {/* Fluid Splash Wave & Ring */}
-                {filterSplash && filterSplash.mode === 'all' && (
-                  <>
-                    <span
-                      key={`splash-${filterSplash.id}`}
-                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,#38bdf8_0%,rgba(12,89,99,0.5)_50%,transparent_75%)] animate-fluid-splash"
-                      style={{
-                        left: filterSplash.x,
-                        top: filterSplash.y,
-                        width: '160px',
-                        height: '160px',
-                      }}
-                    />
-                    <span
-                      key={`ring-${filterSplash.id}`}
-                      className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full border border-teal-200/90 dark:border-teal-300/90 animate-fluid-splash-ring"
-                      style={{
-                        left: filterSplash.x,
-                        top: filterSplash.y,
-                        width: '140px',
-                        height: '140px',
-                      }}
-                    />
-                  </>
-                )}
-                <span className="relative z-10">All {packageList.length} Packages</span>
-              </motion.button>
+              <div>
+                {/* Header Badge */}
+                <div className="flex items-center justify-between gap-2 mb-5">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-[11px] font-extrabold uppercase tracking-wider border border-amber-300">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                    12-Hour Mining Protocol
+                  </span>
+                  <span className="text-xs font-extrabold text-[#ea580c] bg-[#fff7ed] px-3 py-1 rounded-full border border-[#ffedd5]">
+                    +16 TFLX/h Base Power
+                  </span>
+                </div>
+
+                {/* Title & Icon */}
+                <div className="flex items-start gap-3.5 mb-3">
+                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#d97706] to-[#ea580c] text-white flex items-center justify-center shrink-0 shadow-md">
+                    <Pickaxe className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-[#09353e] group-hover:text-[#ea580c] transition-colors">
+                      Cloud Miner: Automated Hashrate
+                    </h3>
+                    <p className="text-xs font-semibold text-[#d97706]">
+                      12H Tap Cycle • 100% Cloud-Powered • Zero Device Drain
+                    </p>
+                  </div>
+                </div>
+
+                <p className="text-xs sm:text-sm text-[#50686d] mb-6 leading-relaxed">
+                  Participate in next-generation decentralized token minting. Single-tap activation launches an autonomous 12-hour mining cycle on enterprise servers with zero phone battery drain, zero device heating, and streak-protected continuity.
+                </p>
+
+                {/* Core Benefits */}
+                <div className="space-y-3 pt-4 border-t border-[#f0ebe0]">
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#ea580c]">12-Hour Session Rhythm:</strong> Tap once and let the cloud mine +16 TFLX/h passively in the background.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#ea580c]">Slashing & Days-Off Shield:</strong> Use rest passes to safeguard your mining streak and prevent inactive penalties.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#ea580c]">Pre-Staking Boost (Up to +250%):</strong> Multiply your minting yields by pre-staking before halving epochs.
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2.5 text-xs text-[#09353e]">
+                    <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
+                    <div>
+                      <strong className="font-bold text-[#ea580c]">2-Tier Guild Network:</strong> Pool computational power with friends for compound referral hashrate bonuses.
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="mt-8 pt-5 border-t border-[#f0ebe0] flex flex-col sm:flex-row items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => onNavigate("cloud-miner")}
+                  className="w-full sm:flex-1 py-3 px-5 bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Flame className="w-4 h-4" />
+                  <span>Launch Cloud Miner</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const el = document.getElementById("faqs-section");
+                    if (el) el.scrollIntoView({ behavior: "smooth" });
+                  }}
+                  className="w-full sm:w-auto py-3 px-4 bg-[#fffaf5] hover:bg-[#ffedd5] text-[#ea580c] border border-[#fed7aa] text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  <Cpu className="w-3.5 h-3.5 text-[#ea580c]" />
+                  <span>Mining Info</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Packages Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayedPackages.map((pkg, idx) => {
-              const isCurrentActive =
-                currentUser &&
-                userStats?.currentPackage &&
-                userStats.currentPackage.toLowerCase() === pkg.id.toLowerCase();
+          {/* Strategic Synergy Banner */}
+          <div className="mt-8 p-6 rounded-3xl bg-gradient-to-r from-[#0c5963]/10 via-[#faf8f5] to-[#ea580c]/10 border border-[#e4ded2] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#09353e] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <Coins className="w-5 h-5 text-[#38bdf8]" />
+              </div>
+              <div>
+                <h4 className="text-sm sm:text-base font-extrabold text-[#09353e]">
+                  Dual-Income Synergy: Earn USD Cashflow + Mint TFLX Tokens
+                </h4>
+                <p className="text-xs text-[#526d72] mt-0.5">
+                  Top earners watch daily ads for steady USD cashflow (withdrawable daily to JazzCash/Easypaisa) while keeping Cloud Miner active 24/7 for future token appreciation. Packages can be viewed and activated directly inside Watch Ads.
+                </p>
+              </div>
+            </div>
 
-              const motivationTexts = [
-                '✨ Empower your financial freedom with guaranteed 25% daily returns upon activation.',
-                '🚀 Accelerate your daily revenue momentum with verified digital asset accumulation.',
-                '💼 Secure your financial growth with maximized cashflow and steady compounding returns.',
-                '🌟 Elevate your portfolio with high-velocity earnings and priority daily payouts.',
-                '⚡ Unlock boundless financial opportunities with high-yield automated daily capital.',
-                '👑 Experience executive-grade wealth expansion with supreme daily returns and leadership perks.',
-                '🏆 Reach pinnacle financial freedom with maximum daily capital yields and apex VIP benefits.',
-              ];
-              const uniqueMotivation = pkg.motivationText || motivationTexts[idx % motivationTexts.length];
-
-              const teamRewardLines = [
-                'Earn continuous team rewards and matching bonuses whenever your downline watches daily ads.',
-                'Amplify daily earnings with active team ad bonuses across verified network members.',
-                'Maximize team rewards as your downline completes their daily ad viewing tasks.',
-                'Accelerate team ad commissions with priority multi-tier network bonuses.',
-                'Unlock high-yield team rewards and daily matching bonuses from team ad views.',
-                'Command premier team bonuses with substantial daily rewards fueled by team ads.',
-                'Pinnacle team rewards: receive maximum daily bonuses from entire team ad network.',
-              ];
-              const currentTeamRewardLine = teamRewardLines[idx % teamRewardLines.length];
-
-              return (
-                <div
-                  key={pkg.id}
-                  className={`bg-white rounded-2xl p-6 border shadow-xs hover:shadow-md transition-all flex flex-col justify-between group ${
-                    isCurrentActive
-                      ? 'border-[#0c5963] ring-2 ring-[#0c5963]/20'
-                      : 'border-[#e4dfd4] hover:border-[#0c5963]/50'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-3 h-3 rounded-full ${pkg.circleColor || 'bg-[#0d5963]'}`} />
-                        <span className="text-xs font-bold uppercase tracking-wider text-[#0c5963]">
-                          PACKAGE
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {isCurrentActive && (
-                          <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
-                            YOUR ACTIVE PACKAGE
-                          </span>
-                        )}
-                        {pkg.badge && !isCurrentActive && (
-                          <span className="text-[10px] font-bold uppercase tracking-wider bg-[#e6f4f1] text-[#0d5963] px-2 py-0.5 rounded-full border border-[#bfe3dc]">
-                            {pkg.badge}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <h3 className="text-2xl font-black text-[#09353e] mb-0.5 group-hover:text-[#0c5963] transition-colors">
-                      {pkg.name}
-                    </h3>
-                    <p className="hidden text-xs font-semibold text-[#0c5963] mb-1">
-                      {pkg.tierLabel || `${pkg.entryPrice} Tier`}
-                    </p>
-                    <p className="text-xs text-[#0c5963] font-medium mb-5 min-h-[36px] flex items-start gap-1.5 leading-relaxed">
-                      <Sparkles className="w-3.5 h-3.5 text-[#d97706] shrink-0 mt-0.5" />
-                      <span>{uniqueMotivation}</span>
-                    </p>
-
-                    <div className="pt-3 border-t border-[#f0ede6] space-y-3">
-                      <div className="flex items-baseline justify-between">
-                        <div>
-                          <span className="text-[10px] text-[#71868a] block uppercase font-medium">
-                            Activation Price
-                          </span>
-                          <span className="text-2xl font-extrabold text-[#09353e]">
-                            {pkg.entryPrice}
-                          </span>
-                        </div>
-
-                        <div className="text-right">
-                          <span className="text-[10px] text-[#71868a] block uppercase font-medium">
-                            Daily Return
-                          </span>
-                          <span className="text-sm font-bold text-[#0c5963]">
-                            {pkg.rewardRate || '20%'} Daily
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Team Rewards & Team Ads information */}
-                      <div className="bg-[#fbf8f2] p-3 rounded-xl border border-[#ece4d6] text-xs">
-                        <div className="flex items-center justify-between font-bold mb-1">
-                          <span className="text-[#0c5963]">Team Rewards &amp; Team Ads</span>
-                          <span className="text-[10px] text-[#0d5963] bg-[#e6f4f1] px-2 py-0.5 rounded-md font-semibold">5 Levels</span>
-                        </div>
-                        <p className="text-[11px] text-[#556e73] leading-snug">
-                          {currentTeamRewardLine}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleSelectPackage(pkg)}
-                    className={`mt-6 w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                      isCurrentActive
-                        ? 'bg-emerald-700 text-white hover:bg-emerald-600'
-                        : 'bg-[#faf8f5] hover:bg-[#0c5963] hover:text-white text-[#09353e] border border-[#e0dad0] hover:border-[#0c5963]'
-                    }`}
-                  >
-                    <span>
-                      {isCurrentActive
-                        ? 'Active Package'
-                        : currentUser
-                        ? 'Activate Package with Wallet'
-                        : 'Select & Activate Package'}
-                    </span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              );
-            })}
+            <button
+              type="button"
+              onClick={() => {
+                if (currentUser) {
+                  onNavigate("dashboard", "watch-ads");
+                } else {
+                  onNavigate("login");
+                }
+              }}
+              className="px-5 py-2.5 bg-[#09353e] hover:bg-[#0c5963] text-white text-xs font-bold rounded-xl shadow-xs transition-all shrink-0 cursor-pointer flex items-center gap-2"
+            >
+              <span>Explore Watch Ads</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         </div>
       </section>
@@ -1002,6 +1018,65 @@ export default function HomePage({ onNavigate }) {
       {/* Frequently Asked Questions (FAQs) Section */}
       <section id="faqs-section" className="py-16 sm:py-24 px-4 sm:px-6 bg-[#faf8f5]">
         <div className="max-w-4xl mx-auto">
+          {/* Cloud Mining Protocol Guide Card */}
+          <div className="mb-10 p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-[#fff7ed] to-white border border-[#fed7aa] shadow-xs">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#d97706] to-[#ea580c] text-white flex items-center justify-center shadow-xs shrink-0">
+                  <Pickaxe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base sm:text-lg font-extrabold text-[#7c2d12]">
+                    How TAEMRY Cloud Mining Protocol Operates
+                  </h3>
+                  <p className="text-xs text-[#9a3412]">
+                    Next-generation server-side cryptocurrency mining without hardware wear or battery drain
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onNavigate('cloud-miner')}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#ea580c] hover:bg-[#c2410c] text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs shrink-0"
+              >
+                <span>Launch Cloud Miner</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-[#fed7aa]/60 text-xs">
+              <div className="p-3.5 rounded-2xl bg-white/90 border border-[#fed7aa]/50">
+                <div className="flex items-center gap-1.5 font-bold text-[#7c2d12] mb-1">
+                  <Clock className="w-3.5 h-3.5 text-[#ea580c]" />
+                  <span>12H Tap Cycles</span>
+                </div>
+                <p className="text-[11px] text-[#9a3412] leading-relaxed">
+                  One tap powers 12 hours of hashing at +16 TFLX/h. The app does not need to remain open.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-white/90 border border-[#fed7aa]/50">
+                <div className="flex items-center gap-1.5 font-bold text-[#7c2d12] mb-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-[#ea580c]" />
+                  <span>Days-Off Streak Pass</span>
+                </div>
+                <p className="text-[11px] text-[#9a3412] leading-relaxed">
+                  Rest passes protect accumulated tokens from inactive slashing when you miss a session.
+                </p>
+              </div>
+
+              <div className="p-3.5 rounded-2xl bg-white/90 border border-[#fed7aa]/50">
+                <div className="flex items-center gap-1.5 font-bold text-[#7c2d12] mb-1">
+                  <TrendingUp className="w-3.5 h-3.5 text-[#ea580c]" />
+                  <span>Pre-Staking Boost</span>
+                </div>
+                <p className="text-[11px] text-[#9a3412] leading-relaxed">
+                  Lock tokens for up to 3 years to multiply hashrate up to +250% before epoch halving.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <div className="text-left sm:text-center mb-12">
             <span className="text-[11px] font-bold tracking-[0.2em] text-[#0d5963] uppercase">
               FREQUENTLY ASKED QUESTIONS (FAQS)
@@ -1010,7 +1085,7 @@ export default function HomePage({ onNavigate }) {
               Answers to Common Questions
             </h2>
             <p className="text-sm sm:text-base text-[#50686d] max-w-xl sm:mx-auto">
-              Everything you need to know about starting, watching daily ads, referral commissions, milestones, and withdrawals.
+              Everything you need to know about starting, watching daily ads, Cloud Mining protocols, referral commissions, milestones, and withdrawals.
             </p>
           </div>
 

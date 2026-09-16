@@ -1,206 +1,194 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
-import {
-  Lock,
-  TrendingUp,
-  Sliders,
-  Sparkles,
-  Zap,
-  CheckCircle2,
-  ShieldCheck,
-  Coins,
-  ArrowRight
-} from 'lucide-react';
-import { playMiningTruthSound } from '../../utils/audio';
+import { Lock, ShieldCheck, TrendingUp, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
 
-export default function MinerPreStaking({ minerState, setMinerState, onSelectTab }) {
-  const [years, setYears] = useState(2);
-  const [percent, setPercent] = useState(50);
-  const [isCommitted, setIsCommitted] = useState(false);
+export default function MinerPreStaking({
+  minerData,
+  onCommitPreStaking,
+}) {
+  const { committedYears = 0, committedAllocation = 0, preStakingBoost = 0 } = minerData;
 
-  // Pre-staking boost calculation: (years * 25) * (percent / 50) => max 250% for 5 years @ 100%
-  const boostPercent = Math.min(250, Math.round((years * 25) * (percent / 50)));
-  const baseRate = minerState.baseHashrate || 16.0;
-  const boostedRate = parseFloat((baseRate * (1 + boostPercent / 100)).toFixed(1));
-  const additionalHourlyYield = parseFloat((boostedRate - baseRate).toFixed(1));
+  const [selectedYears, setSelectedYears] = useState(committedYears > 0 ? committedYears : 2);
+  const [selectedAllocation, setSelectedAllocation] = useState(committedAllocation > 0 ? committedAllocation : 50);
+  const [hasAgreed, setHasAgreed] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
 
-  const handleCommitPreStaking = () => {
-    playMiningTruthSound();
-    setIsCommitted(true);
-    setMinerState((prev) => ({
-      ...prev,
-      baseHashrate: boostedRate,
-    }));
+  // Boost Formula: (years / 5) * (allocation / 100) * 250%
+  const currentCalculatedBoost = Math.round((selectedYears / 5) * (selectedAllocation / 100) * 250);
+
+  // Can only commit if values are greater than currently committed or first time
+  const isIncrease = selectedYears > committedYears || selectedAllocation > committedAllocation;
+  const canCommit = isIncrease && hasAgreed;
+
+  const handleCommit = (e) => {
+    e.preventDefault();
+    if (!canCommit) return;
+
+    onCommitPreStaking({
+      years: selectedYears,
+      allocation: selectedAllocation,
+      boostPercent: currentCalculatedBoost,
+    });
+
+    setShowSuccessToast(true);
+    setTimeout(() => setShowSuccessToast(false), 4000);
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-200">
-      {/* Header Banner */}
-      <div className="p-5 sm:p-6 rounded-3xl bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-[#eff6ff] dark:bg-[#172554] text-[#2563eb] dark:text-[#60a5fa] flex items-center justify-center font-bold">
-            <Lock className="w-5 h-5" />
+    <div className="w-full bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] rounded-3xl p-6 sm:p-7 shadow-xs">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#ece6d9] dark:border-[#173740]">
+        <div>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400">
+              <Lock className="w-4 h-4" />
+            </div>
+            <h2 className="text-lg font-bold text-[#09353e] dark:text-[#f1f5f9]">
+              Pre-Staking & Staking Boost
+            </h2>
           </div>
+          <p className="text-xs text-[#6e8286] dark:text-[#94a3b8] mt-1 max-w-lg">
+            Commit your future TFLX tokens to boost your daily mining speed by up to <strong>+250%</strong>.
+            Staking commitment can only be increased, never decreased.
+          </p>
+        </div>
+
+        {/* Live Boost Multiplier Badge */}
+        <div className="flex items-center gap-3 bg-[#faf8f5] dark:bg-[#07151a] p-3 rounded-2xl border border-[#e4ded2] dark:border-[#173740] self-start sm:self-auto">
+          <div className="text-right">
+            <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider block">
+              Active Multiplier
+            </span>
+            <span className="text-xl sm:text-2xl font-extrabold text-[#d97706] dark:text-[#f59e0b] leading-none">
+              +{committedYears > 0 ? preStakingBoost : currentCalculatedBoost}%
+            </span>
+          </div>
+          <Sparkles className="w-6 h-6 text-amber-500" />
+        </div>
+      </div>
+
+      <form onSubmit={handleCommit} className="mt-6 space-y-6">
+        {/* Slider 1: Lockup Period (1 to 5 Years) */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+            <span className="flex items-center gap-1.5">
+              <span>Lockup Period:</span>
+              <span className="text-amber-600 dark:text-amber-400 font-extrabold text-sm">
+                {selectedYears} {selectedYears === 1 ? 'Year' : 'Years'}
+              </span>
+            </span>
+            {committedYears > 0 && (
+              <span className="text-[11px] text-[#7a8c94] dark:text-[#64748b]">
+                Min locked: {committedYears} yrs
+              </span>
+            )}
+          </div>
+          <input
+            type="range"
+            min={committedYears > 0 ? committedYears : 1}
+            max={5}
+            step={1}
+            value={selectedYears}
+            onChange={(e) => setSelectedYears(Number(e.target.value))}
+            className="w-full h-2.5 bg-[#f1eee7] dark:bg-[#122b33] rounded-lg appearance-none cursor-pointer accent-[#d97706]"
+          />
+          <div className="flex justify-between text-[11px] text-[#7a8c94] dark:text-[#64748b] px-0.5">
+            <span>1 Year</span>
+            <span>2 Years</span>
+            <span>3 Years</span>
+            <span>4 Years</span>
+            <span>5 Years</span>
+          </div>
+        </div>
+
+        {/* Slider 2: Allocation Percentage (10% to 100%) */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+            <span className="flex items-center gap-1.5">
+              <span>Allocation Percentage:</span>
+              <span className="text-amber-600 dark:text-amber-400 font-extrabold text-sm">
+                {selectedAllocation}%
+              </span>
+            </span>
+            {committedAllocation > 0 && (
+              <span className="text-[11px] text-[#7a8c94] dark:text-[#64748b]">
+                Min locked: {committedAllocation}%
+              </span>
+            )}
+          </div>
+          <input
+            type="range"
+            min={committedAllocation > 0 ? committedAllocation : 10}
+            max={100}
+            step={10}
+            value={selectedAllocation}
+            onChange={(e) => setSelectedAllocation(Number(e.target.value))}
+            className="w-full h-2.5 bg-[#f1eee7] dark:bg-[#122b33] rounded-lg appearance-none cursor-pointer accent-[#d97706]"
+          />
+          <div className="flex justify-between text-[11px] text-[#7a8c94] dark:text-[#64748b] px-0.5">
+            <span>10%</span>
+            <span>25%</span>
+            <span>50%</span>
+            <span>75%</span>
+            <span>100%</span>
+          </div>
+        </div>
+
+        {/* Dynamic Formula Display Box */}
+        <div className="bg-[#faf8f5] dark:bg-[#07151a] p-4 rounded-2xl border border-[#e4ded2] dark:border-[#173740] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base sm:text-lg font-black text-[#09353e] dark:text-white">
-                3. Pre-Staking Multiplier Boost
-              </h2>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#eff6ff] dark:bg-[#172554] text-[#2563eb] dark:text-[#60a5fa] border border-[#bfdbfe] dark:border-[#1e3a8a]">
-                UP TO +250% MULTIPLIER
-              </span>
-            </div>
-            <p className="text-xs text-[#526b70] dark:text-[#94a3b8] mt-0.5">
-              Lock a percentage of your mined balance for 1 to 5 years to unlock massive compounding hashrate bonuses.
+            <span className="text-[#7a8c94] dark:text-[#94a3b8] font-medium">Boost Calculation:</span>
+            <p className="font-mono text-[#09353e] dark:text-[#f1f5f9] font-bold mt-0.5">
+              ({selectedYears}/5 yrs) &times; ({selectedAllocation}/100%) &times; 250% = <span className="text-amber-600 dark:text-amber-400 font-extrabold">+{currentCalculatedBoost}% Boost</span>
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-[#7a8c94] dark:text-[#94a3b8] font-medium">New Hashrate:</span>
+            <p className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
+              +{(16 * (1 + currentCalculatedBoost / 100)).toFixed(1)} TFLX/h
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-[#ecfdf5] dark:bg-[#064e3b]/40 text-[#065f46] dark:text-[#6ee7b7] border border-[#a7f3d0] dark:border-[#047857]/40 flex items-center gap-1.5">
-            <Zap className="w-4 h-4" />
-            <span>Active Boost: +{boostPercent}%</span>
-          </span>
+        {/* Commitment Agreement Checkbox */}
+        <div className="flex items-start gap-3 pt-2">
+          <input
+            type="checkbox"
+            id="checkbox-pre-staking-agree"
+            checked={hasAgreed}
+            onChange={(e) => setHasAgreed(e.target.checked)}
+            className="mt-0.5 w-4 h-4 text-[#d97706] rounded border-[#d0c7b7] dark:border-[#22444f] focus:ring-[#d97706] cursor-pointer"
+          />
+          <label htmlFor="checkbox-pre-staking-agree" className="text-xs text-[#546b70] dark:text-[#94a3b8] cursor-pointer">
+            I understand that pre-staking commitment is permanent and <strong>cannot be decreased</strong>. It can only be maintained or increased in the future.
+          </label>
         </div>
-      </div>
 
-      {/* Main Grid: Interactive Sliders + Live Yield Projection */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Left 2 Cols: Sliders & Lockup Config */}
-        <div className="lg:col-span-2 rounded-3xl bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] p-6 sm:p-7 shadow-xs space-y-6">
-          <div className="flex items-center justify-between pb-3 border-b border-[#f0ebe0] dark:border-[#173740]">
-            <h3 className="text-sm font-bold text-[#09353e] dark:text-white uppercase tracking-wider flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-[#0c5963] dark:text-[#38bdf8]" />
-              <span>Configure Pre-Staking Allocation</span>
-            </h3>
-            <span className="text-xs text-[#718589] dark:text-[#94a3b8]">
-              Non-custodial pledge
+        {/* Action Button */}
+        <div className="pt-2">
+          <button
+            type="submit"
+            id="btn-commit-pre-staking"
+            disabled={!canCommit}
+            className={`w-full py-3.5 px-5 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 transition-all cursor-pointer ${
+              canCommit
+                ? 'bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] text-white shadow-md shadow-amber-500/20 active:scale-[0.98]'
+                : 'bg-[#e4ded2] dark:bg-[#173740] text-[#8e9fa2] dark:text-[#526a73] cursor-not-allowed'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>
+              {committedYears > 0 ? 'Increase Pre-Staking Commitment' : 'Lock & Activate Pre-Staking Boost'}
             </span>
-          </div>
-
-          {/* Slider 1: Period in Years */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-[#09353e] dark:text-white">Lockup Duration</span>
-              <span className="text-base font-black font-mono text-[#0c5963] dark:text-[#38bdf8]">
-                {years} {years === 1 ? 'Year' : 'Years'}
-              </span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="5"
-              step="1"
-              value={years}
-              onChange={(e) => {
-                setYears(Number(e.target.value));
-                setIsCommitted(false);
-              }}
-              className="w-full h-2.5 bg-[#f1eee7] dark:bg-[#122b33] rounded-lg appearance-none cursor-pointer accent-[#0c5963] dark:accent-[#38bdf8]"
-            />
-            <div className="flex justify-between text-[11px] text-[#718589] dark:text-[#94a3b8] font-mono">
-              <span>1 Year</span>
-              <span>2 Years</span>
-              <span>3 Years</span>
-              <span>4 Years</span>
-              <span>5 Years (Max)</span>
-            </div>
-          </div>
-
-          {/* Slider 2: Percentage Allocation */}
-          <div className="space-y-2">
-            <div className="flex justify-between items-center text-xs font-bold">
-              <span className="text-[#09353e] dark:text-white">Mined Balance Allocation</span>
-              <span className="text-base font-black font-mono text-[#0c5963] dark:text-[#38bdf8]">
-                {percent}%
-              </span>
-            </div>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              step="10"
-              value={percent}
-              onChange={(e) => {
-                setPercent(Number(e.target.value));
-                setIsCommitted(false);
-              }}
-              className="w-full h-2.5 bg-[#f1eee7] dark:bg-[#122b33] rounded-lg appearance-none cursor-pointer accent-[#0c5963] dark:accent-[#38bdf8]"
-            />
-            <div className="flex justify-between text-[11px] text-[#718589] dark:text-[#94a3b8] font-mono">
-              <span>10%</span>
-              <span>25%</span>
-              <span>50%</span>
-              <span>75%</span>
-              <span>100%</span>
-            </div>
-          </div>
-
-          {/* Commit Action */}
-          <div className="pt-3 border-t border-[#f0ebe0] dark:border-[#173740] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="text-xs text-[#526b70] dark:text-[#94a3b8]">
-              {isCommitted ? (
-                <span className="text-[#065f46] dark:text-[#6ee7b7] font-bold flex items-center gap-1">
-                  <CheckCircle2 className="w-4 h-4" />
-                  Pre-staking allocation locked for Mainnet launch!
-                </span>
-              ) : (
-                <span>Commitment activates immediately on your current mining node.</span>
-              )}
-            </div>
-            <button
-              onClick={handleCommitPreStaking}
-              className="px-5 py-2.5 rounded-xl bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold shadow-xs cursor-pointer flex items-center justify-center gap-1.5 shrink-0"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>{isCommitted ? 'Update Allocation' : 'Commit Pre-Stake Multiplier'}</span>
-            </button>
-          </div>
+          </button>
         </div>
 
-        {/* Right 1 Col: Projected Multiplier Summary */}
-        <div className="space-y-4">
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-xs space-y-4">
-            <span className="text-[10px] font-bold text-[#718589] dark:text-[#64748b] uppercase tracking-wider block">
-              Resulting Hashrate Multiplier
-            </span>
-
-            <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] space-y-3">
-              <div className="flex justify-between text-xs">
-                <span className="text-[#526b70] dark:text-[#94a3b8]">Base Mining Hashrate</span>
-                <span className="font-mono font-bold text-[#09353e] dark:text-white">{baseRate} MH/s</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-[#526b70] dark:text-[#94a3b8]">Pre-Staking Multiplier</span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">+{boostPercent}%</span>
-              </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-[#526b70] dark:text-[#94a3b8]">Bonus Yield Gain</span>
-                <span className="font-mono font-bold text-[#ca8a04]">+{additionalHourlyYield} TFLX/h</span>
-              </div>
-
-              <div className="pt-2 border-t border-[#ece6d9] dark:border-[#173740] flex justify-between items-baseline">
-                <span className="text-xs font-bold text-[#09353e] dark:text-white">Effective Rate</span>
-                <span className="text-2xl font-black font-mono text-[#0c5963] dark:text-[#38bdf8]">
-                  {boostedRate} <span className="text-xs font-normal">MH/s</span>
-                </span>
-              </div>
-            </div>
-
-            <p className="text-[11px] text-[#526b70] dark:text-[#94a3b8] leading-relaxed">
-              Locked coins generate high-yield mining returns. At mainnet genesis, pre-staked funds unlock according to the on-chain vesting smart contract.
-            </p>
-
-            <button
-              onClick={() => onSelectTab && onSelectTab('guild')}
-              className="w-full py-2 px-3 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] hover:bg-[#f0ebe0] text-[#0c5963] dark:text-[#38bdf8] text-xs font-bold border border-[#e4ded2] dark:border-[#173740] flex items-center justify-center gap-1 cursor-pointer transition-colors"
-            >
-              <span>Explore 4. 2-Tier Guild Network</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </button>
+        {/* Success confirmation */}
+        {showSuccessToast && (
+          <div className="p-3 bg-emerald-500/15 border border-emerald-500/30 rounded-xl text-emerald-700 dark:text-emerald-300 text-xs flex items-center gap-2 animate-fadeIn">
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+            <span>Pre-Staking Boost of +{currentCalculatedBoost}% successfully committed!</span>
           </div>
-        </div>
-      </div>
+        )}
+      </form>
     </div>
   );
 }

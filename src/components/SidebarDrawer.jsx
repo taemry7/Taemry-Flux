@@ -46,13 +46,6 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
       badge: `$${Number(userStats?.walletBalance || 0).toFixed(2)}`,
       badgeColor: 'bg-[#ee5b5b]'
     },
-    {
-      id: 'miner',
-      label: 'Cloud Miner',
-      icon: Pickaxe,
-      badge: 'LIVE',
-      badgeColor: 'bg-[#0c5963]'
-    },
     ...(hasActivePackage
       ? [
           {
@@ -232,8 +225,23 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
             </li>
           )}
 
-          {/* Secondary Links: Whitepaper & Support */}
+          {/* Secondary Links: Cloud Miner, Whitepaper & Support */}
           <li className="pt-2 border-t border-[#e9e3d8] dark:border-[#15323b] space-y-1">
+            <button
+              type="button"
+              id="drawer-link-cloud-miner"
+              onClick={() => {
+                onNavigate('cloud-miner');
+                onClose();
+              }}
+              className="w-full flex items-center gap-3.5 px-3.5 py-2.5 rounded-[12px] text-xs font-bold text-[#d97706] dark:text-[#f59e0b] hover:bg-amber-500/10 transition-all cursor-pointer text-left"
+            >
+              <Pickaxe className="w-4 h-4 shrink-0 text-[#d97706] dark:text-[#f59e0b]" />
+              <span>Cloud Miner (12h Reactor)</span>
+              <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 font-bold">
+                +16/h
+              </span>
+            </button>
             <button
               type="button"
               id="drawer-link-whitepaper"

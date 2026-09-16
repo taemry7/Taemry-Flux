@@ -12,6 +12,7 @@ import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import WhitepaperPage from './pages/WhitepaperPage';
 import SupportPage from './pages/SupportPage';
+import CloudMinerPage from './pages/CloudMinerPage';
 import AdminLayout from './layouts/AdminLayout';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
 
@@ -191,15 +192,14 @@ function AppContent() {
         setCurrentPage('whitepaper');
       } else if (effectiveRoute === 'support') {
         setCurrentPage('support');
+      } else if (effectiveRoute === 'cloud-miner' || effectiveRoute === 'miner') {
+        setCurrentPage('cloud-miner');
       } else if (effectiveRoute === 'buy-package') {
         setCurrentPage('dashboard');
         setActiveTab('buy-package');
       } else if (effectiveRoute === 'watch-ads') {
         setCurrentPage('dashboard');
         setActiveTab('watch-ads');
-      } else if (effectiveRoute === 'miner' || effectiveRoute === 'cloud-miner') {
-        setCurrentPage('dashboard');
-        setActiveTab('miner');
       } else if (effectiveRoute === 'referrals') {
         setCurrentPage('dashboard');
         setActiveTab('referrals');
@@ -441,6 +441,10 @@ function AppContent() {
 
           {currentPage === 'support' && (
             <SupportPage onNavigate={navigateTo} />
+          )}
+
+          {currentPage === 'cloud-miner' && (
+            <CloudMinerPage onNavigate={navigateTo} />
           )}
 
           {currentPage === 'login' && (

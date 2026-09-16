@@ -75,7 +75,7 @@ export default function AdminLeaderboard({ onNavigate }) {
     adsWatched: '1200',
     referrals: '15',
     dailyEarned: '5.00',
-    status: 'Watching Ads',
+    status: 'Active',
     statusTime: 'Live',
   });
 
@@ -176,7 +176,7 @@ export default function AdminLeaderboard({ onNavigate }) {
       adsWatched: '1200',
       referrals: '15',
       dailyEarned: '5.00',
-      status: 'Watching Ads',
+      status: 'Active',
       statusTime: 'Live',
     });
   };

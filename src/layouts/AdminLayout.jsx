@@ -496,6 +496,7 @@ export default function AdminLayout({ onNavigate }) {
             <AdminDashboard
               stats={stats}
               onNavigateTab={(tab) => setActiveTab(tab)}
+              onNavigate={onNavigate}
               onRefresh={fetchStats}
               loading={loadingStats}
             />

@@ -29,15 +29,13 @@ import {
   Settings,
   Gift,
   ChevronRight,
-  User,
-  Pickaxe
+  User
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import apiClient from '../api/client';
 import BuyPackage from './BuyPackage';
 import WatchAds from './WatchAds';
-import CloudMiner from './CloudMiner';
 import Referrals from './Referrals';
 import Milestones from './Milestones';
 import DepositPage from './DepositPage';
@@ -115,7 +113,6 @@ export default function DashboardPage({
   const validTabs = [
     'overview',
     'watch-ads',
-    'miner',
     'deposit',
     'buy-package',
     'withdraw',
@@ -669,16 +666,6 @@ export default function DashboardPage({
                 onSelectTab={handleTabChange}
               />
             )
-          )}
-
-          {/* ========================================================================= */}
-          {/* TAB: CLOUD MINER (12H TAP-TO-MINE REACTOR)                                */}
-          {/* ========================================================================= */}
-          {(currentActiveTab === 'miner' || currentActiveTab === 'cloud-miner') && (
-            <CloudMiner
-              onSelectTab={handleTabChange}
-              onNavigate={onNavigate}
-            />
           )}
 
           {/* ========================================================================= */}
