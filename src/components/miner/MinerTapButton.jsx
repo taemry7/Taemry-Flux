@@ -73,10 +73,10 @@ export default function MinerTapButton({
     return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Tap & Hold Logic: Hold for exactly 1 second (1000ms)
+  // Tap & Hold Logic: Hold for exactly 1 second (1000ms) to start/renew session
+  // Rule: Do not allow hold until 6 hours have completed during an active session
   const handleHoldStart = () => {
-    // If active during first 6 hours, no hold needed
-    if (isFirstHalf) return;
+    if (isFirstHalf) return; // Block hold until 6 hours have elapsed
 
     setIsHolding(true);
     holdStartRef.current = Date.now();
@@ -93,9 +93,9 @@ export default function MinerTapButton({
         // Play futuristic sound tune
         playIgniteTune();
 
-        if (isExpired) {
+        if (isExpired || !minerData.isMiningActive) {
           onStartMining();
-        } else if (isSecondHalf) {
+        } else {
           onRenewSessionEarly();
         }
       } else {
@@ -125,9 +125,9 @@ export default function MinerTapButton({
 
   return (
     <div className="w-full flex flex-col items-center select-none py-2">
-      {/* Clean Fire Button Container (Circle completely removed) */}
-      <div className="relative flex items-center justify-center w-full max-w-sm">
-        {/* Glowing Blue Fire Blur Aura (Always Pure Blue Fire) */}
+      {/* Clean Fire Button Container */}
+      <div className="relative flex items-center justify-center w-full max-w-sm py-4">
+        {/* Glowing Blue Fire Blur Aura (Static rounded-3xl) */}
         <div
           className={`absolute -inset-3 sm:-inset-4 rounded-3xl filter blur-2xl transition-all duration-700 pointer-events-none ${
             isHolding
@@ -136,17 +136,21 @@ export default function MinerTapButton({
           }`}
         />
 
-        {/* Rectangular Rounded Fire Button - ONLY BLUE FIRE (SLOWMO) */}
+        {/* Clean Static Rounded Fire Button (Hold unlocked after 6 hours per user request) */}
         <button
           type="button"
           id="btn-tap-to-mine"
+          disabled={isFirstHalf}
           onPointerDown={handleHoldStart}
           onPointerUp={handleHoldEnd}
           onPointerLeave={handleHoldEnd}
-          className={`relative w-full py-6 sm:py-7 px-6 rounded-2xl sm:rounded-3xl flex flex-col items-center justify-center cursor-pointer transition-all duration-500 outline-none select-none overflow-hidden ${
-            isHolding
-              ? 'bg-gradient-to-b from-[#02182b] via-[#0284c7] to-[#0369a1] text-white shadow-2xl ring-4 ring-cyan-300 scale-99 shadow-cyan-500/50'
-              : 'bg-gradient-to-b from-[#02101f] via-[#082f49] to-[#0c4a6e] text-white shadow-2xl shadow-cyan-600/40 ring-2 ring-cyan-400/60 hover:scale-101'
+          title={isFirstHalf ? `Mining active. Hold unlocks in ${formatTime(remainingMs - sixHoursMs)}` : 'Hold 1s to start/renew mining session'}
+          className={`relative w-full max-w-sm py-7 px-6 rounded-3xl flex flex-col items-center justify-center transition-all duration-300 outline-none select-none overflow-hidden ${
+            isFirstHalf
+              ? 'cursor-not-allowed bg-gradient-to-b from-[#02101f] via-[#082f49] to-[#0c4a6e] text-white shadow-xl shadow-cyan-900/30 ring-2 ring-cyan-500/40 opacity-95'
+              : isHolding
+              ? 'cursor-pointer bg-gradient-to-b from-[#02182b] via-[#0284c7] to-[#0369a1] text-white shadow-2xl ring-4 ring-cyan-300 scale-98 shadow-cyan-500/50'
+              : 'cursor-pointer bg-gradient-to-b from-[#02101f] via-[#082f49] to-[#0c4a6e] text-white shadow-2xl shadow-cyan-600/40 ring-2 ring-cyan-400/60 hover:scale-[1.01]'
           }`}
         >
           {/* Top Glass Specular Curve */}
@@ -279,26 +283,27 @@ export default function MinerTapButton({
               </motion.div>
             </div>
 
-            {/* Fire Button State Title (Only Blue Fire) */}
-            <span className="text-sm sm:text-base font-black tracking-wider uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+            {/* Fire Button State Title (HOLD TO MINE after 6h / MINING ACTIVE before 6h) */}
+            <span className="text-base sm:text-lg font-black tracking-widest uppercase text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
               {isHolding
-                ? `IGNITING BLUE FIRE (${Math.round(holdProgress)}%)`
+                ? `HOLDING (${Math.round(holdProgress)}%)`
                 : isFirstHalf
-                ? 'REAL BLUE FIRE ACTIVE 🔥'
-                : isSecondHalf
-                ? 'HOLD 1S TO RENEW (BLUE FIRE) 🔥'
-                : '12H EXPIRED ⚠️ HOLD 1S (BLUE FIRE)'}
+                ? 'MINING ACTIVE'
+                : 'HOLD TO MINE'}
             </span>
 
-            {/* Subtitle Details & 6h / 12h Logic */}
-            <span className="text-xs font-bold mt-1 text-cyan-100 drop-shadow-sm">
-              {isHolding
-                ? 'Starting 12H Session with Tune...'
-                : isFirstHalf
-                ? `+${effectiveHashrate.toFixed(1)} TFLX/h LIVE • Slow-Mo Blue Fire Surge`
-                : isSecondHalf
-                ? '6 Hours Passed • Hold 1s to renew next 12h session'
-                : '12 Hours Completed • Hold 1s to ignite Blue Fire'}
+            {/* Subtitle Details: Shows unlock countdown before 6h, or instruction when ready */}
+            <span className="text-xs font-bold mt-1 text-cyan-200 drop-shadow-sm flex items-center gap-1">
+              {isFirstHalf ? (
+                <>
+                  <Clock className="w-3 h-3 text-cyan-300 inline shrink-0" />
+                  <span>Hold unlocks in {formatTime(remainingMs - sixHoursMs)}</span>
+                </>
+              ) : isHolding ? (
+                'Starting session...'
+              ) : (
+                'Hold 1s to start session'
+              )}
             </span>
           </div>
         </button>
@@ -308,11 +313,12 @@ export default function MinerTapButton({
       <div className="w-full max-w-md mt-6 bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] rounded-2xl p-4 sm:p-5 shadow-sm">
         {/* Top Status & Clean Countdown */}
         <div className="flex items-center justify-between gap-3 pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
-          <div className="flex items-center gap-2">
+          {/* Status pill hidden per user directive: "or is div ko bi hidden kardo" */}
+          <div className="hidden items-center gap-2">
             {isFirstHalf && (
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-cyan-500/15 dark:bg-cyan-500/25 border border-cyan-500/30 text-cyan-700 dark:text-cyan-300 text-xs font-black">
                 <Flame className="w-3.5 h-3.5 text-cyan-500 animate-pulse fill-cyan-400" />
-                <span>Blue Fire Active (Slow-Mo) 🔥</span>
+                <span>Blue Fire Active 🔥</span>
               </div>
             )}
             {isSecondHalf && (
@@ -329,12 +335,17 @@ export default function MinerTapButton({
             )}
           </div>
 
-          {/* Clean Time Countdown */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
-            <Clock className="w-3.5 h-3.5 text-[#7a8c94] dark:text-[#94a3b8]" />
-            <span className="font-mono text-xs sm:text-sm font-black tracking-wide text-[#09353e] dark:text-[#38bdf8] tabular-nums">
-              {formatTime(remainingMs)}
+          <div className="flex items-center justify-between w-full">
+            <span className="text-xs font-bold text-[#7a8c94] dark:text-[#94a3b8]">
+              Cycle Remaining
             </span>
+            {/* Clean Time Countdown */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
+              <Clock className="w-3.5 h-3.5 text-[#7a8c94] dark:text-[#94a3b8]" />
+              <span className="font-mono text-xs sm:text-sm font-black tracking-wide text-[#09353e] dark:text-[#38bdf8] tabular-nums">
+                {formatTime(remainingMs)}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -352,8 +363,8 @@ export default function MinerTapButton({
           </div>
         </div>
 
-        {/* 3-Column Micro-Stats: Boost + Daily Yield + Session Cycle */}
-        <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#ece6d9] dark:border-[#173740] text-center">
+        {/* 3-Column Micro-Stats (Hidden per user request: "nichy div ko bi hidden kardo") */}
+        <div className="hidden grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#ece6d9] dark:border-[#173740] text-center">
           <div className="p-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740]">
             <span className="text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase block">
               Boost
@@ -382,8 +393,8 @@ export default function MinerTapButton({
           </div>
         </div>
 
-        {/* Dynamic Context Notice */}
-        <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-3 leading-relaxed text-center font-medium">
+        {/* Dynamic Context Notice (Hidden per user request: "or is p ko bi hiddden kardo") */}
+        <p className="hidden text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-3 leading-relaxed text-center font-medium">
           {isFirstHalf && 'Blue Fire Cloud mining is active with 0% battery and CPU load.'}
           {isSecondHalf && '6 hours passed! You can hold button for 1s to renew session for another 12 hours.'}
           {isExpired && '12 hours completed (Warning Red). Hold button for 1s to ignite blue fire and start mining.'}

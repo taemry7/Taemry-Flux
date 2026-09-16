@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle } from 'lucide-react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle, Sparkles } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
@@ -178,6 +178,14 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
           >
             <Logo size="md" />
           </button>
+
+          {/* Moved from Cloud Miner Hero Card: ONLY on Cloud Miner Page (Open & No Background per user request) */}
+          {currentPage === 'cloud-miner' && (
+            <div className="inline-flex items-center gap-1.5 px-2 py-1 text-[#0c5963] dark:text-[#38bdf8] text-xs sm:text-sm font-extrabold tracking-wide">
+              <Sparkles className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+              <span>1 TFLX &asymp; $0.70</span>
+            </div>
+          )}
         </div>
 
         {/* Right Side: Auth controls */}
@@ -217,8 +225,8 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                 )}
               </button>
 
-              {/* Notification Updates Icon on Right Side - Hidden on Home Page per user directive */}
-              <div className={`${currentPage === 'home' ? 'hidden' : 'relative'}`} ref={notificationRef}>
+              {/* Notification Updates Icon on Right Side - Hidden on Home & Cloud Miner Page per user directive */}
+              <div className={`${(currentPage === 'home' || currentPage === 'cloud-miner') ? 'hidden' : 'relative'}`} ref={notificationRef}>
                 <button
                   type="button"
                   id="btn-nav-notifications"

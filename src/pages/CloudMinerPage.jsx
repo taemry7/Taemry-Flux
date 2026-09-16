@@ -16,10 +16,12 @@ import {
   Menu,
   X,
   LayoutGrid,
-  CheckCircle2
+  CheckCircle2,
+  BellRing
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { motion, AnimatePresence } from 'motion/react';
 import MinerTapButton from '../components/miner/MinerTapButton';
 import MinerPreStaking from '../components/miner/MinerPreStaking';
 import MinerTeamBoost from '../components/miner/MinerTeamBoost';
@@ -34,6 +36,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' | 'reactor' | 'pre-staking' | 'guild' | 'protection'
   const [isMinerMenuOpen, setIsMinerMenuOpen] = useState(false);
+  const [showUpdatesModal, setShowUpdatesModal] = useState(false);
 
   // Listen to Navbar menu button toggle
   useEffect(() => {
@@ -280,6 +283,11 @@ export default function CloudMinerPage({ onNavigate }) {
     },
   ];
 
+  const nowTime = Date.now();
+  const sessionElapsedMs = nowTime - (minerData.sessionStartTime || nowTime);
+  const sessionTotalDuration = minerData.sessionDurationMs || (12 * 60 * 60 * 1000);
+  const isSessionActive = Boolean(minerData.isMiningActive && sessionElapsedMs < sessionTotalDuration);
+
   return (
     <div className="w-full min-h-screen bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] pt-4 sm:pt-6 pb-16 px-4 sm:px-6 lg:px-8">
       {/* Cloud Miner Dedicated Menu Drawer (1 to All) */}
@@ -306,7 +314,7 @@ export default function CloudMinerPage({ onNavigate }) {
             </div>
             <div>
               <span className="text-[10px] font-black uppercase tracking-widest text-[#d97706] block">
-                TAEMRY PROTOCOL
+                TAEMRY FLUX
               </span>
               <h2 className="text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
                 Cloud Miner Menu
@@ -327,7 +335,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
         {/* Navigation Items (1 to All) */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-1.5">
-          <div className="px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7a8c94] dark:text-[#94a3b8]">
+          <div className="hidden px-2 py-1.5 text-[10px] font-black uppercase tracking-wider text-[#7a8c94] dark:text-[#94a3b8]">
             Miner Navigation &bull; 1 to All
           </div>
 
@@ -365,7 +373,7 @@ export default function CloudMinerPage({ onNavigate }) {
                       {item.title}
                     </p>
                     <span
-                      className={`text-[10px] ${
+                      className={`hidden text-[10px] ${
                         isActive ? 'text-white/80' : 'text-[#7a8c94] dark:text-[#94a3b8]'
                       }`}
                     >
@@ -422,52 +430,92 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         </div>
 
-        {/* Hero Header Card: Mined Hash Balance & Live Hashrate */}
-        <div className="w-full rounded-3xl p-6 sm:p-8 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-sm relative overflow-hidden">
+        {/* Hero Header Card: Mined Hash Balance & Live Hashrate (Made compact per user request) */}
+        <div className="w-full rounded-2xl sm:rounded-3xl p-4 sm:p-5 bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] shadow-sm relative overflow-hidden">
           {/* Subtle Background Glow Accent */}
           <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#d97706]/15 to-[#ea580c]/10 rounded-full filter blur-3xl pointer-events-none" />
 
-          <div className="relative z-10 space-y-6">
+          <div className="relative z-10 space-y-4">
             {/* Top Bar inside Card */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#ece6d9] dark:border-[#173740]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-[#d97706]">
-                  <Pickaxe className="w-4 h-4" />
+                <div
+                  className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-colors ${
+                    isSessionActive
+                      ? 'bg-amber-500/15 border-amber-500/30 text-[#d97706]'
+                      : 'bg-rose-500/15 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                  }`}
+                >
+                  <motion.div
+                    animate={
+                      isSessionActive
+                        ? {
+                            rotate: [0, -36, 12, -26, 0],
+                            y: [0, -2, 2, -1, 0],
+                          }
+                        : { rotate: 0, y: 0 }
+                    }
+                    transition={{
+                      repeat: isSessionActive ? Infinity : 0,
+                      duration: 0.9,
+                      ease: 'easeInOut',
+                    }}
+                    className="flex items-center justify-center"
+                  >
+                    <Pickaxe
+                      className={`w-4 h-4 ${
+                        isSessionActive
+                          ? 'text-[#d97706]'
+                          : 'text-rose-600 dark:text-rose-400'
+                      }`}
+                    />
+                  </motion.div>
                 </div>
                 <div>
                   <span className="text-[11px] font-black tracking-widest text-[#d97706] uppercase block">
-                    TAEMRY &bull; CLOUD MINER (12H)
+                    TAEMRY FLUX
                   </span>
                   <h1 className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight">
-                    TFLX Cloud Reactor
+                    TLFX Token
                   </h1>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 self-start sm:self-center">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-bold">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span>NODE SYNCED (100%)</span>
-                </div>
-                <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#faf8f5] dark:bg-[#112d36] border border-[#ece6d9] dark:border-[#1d4450] text-[#0c5963] dark:text-[#38bdf8] text-xs font-extrabold">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>1 TFLX &asymp; $0.15</span>
-                </div>
+                <button
+                  type="button"
+                  id="btn-miner-updates-coming-soon"
+                  onClick={() => {
+                    setShowUpdatesModal(true);
+                    showToast('Coming Soon Updates', 'info');
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#faf8f5] dark:bg-[#07151a] hover:bg-amber-500/10 dark:hover:bg-amber-500/15 border border-[#ece6d9] dark:border-[#173740] hover:border-amber-500/40 text-[#09353e] dark:text-[#f1f5f9] transition-all cursor-pointer shadow-2xs group"
+                  title="Coming Soon Updates"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                  </span>
+                  <BellRing className="w-3.5 h-3.5 text-amber-500 group-hover:rotate-12 transition-transform shrink-0" />
+                  <span className="text-[11px] sm:text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] whitespace-nowrap">
+                    Updates Coming Soon
+                  </span>
+                </button>
               </div>
             </div>
 
-            {/* Main Showcase: Big Mined Balance (Rectangular Div & Hidden Span per user request) */}
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 bg-[#faf8f5] dark:bg-[#07151a] p-6 sm:p-7 rounded-md border border-[#ece6d9] dark:border-[#173740]">
-              <div className="space-y-1.5">
+            {/* Main Showcase: Big Mined Balance (Smooth rounded and compact) */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-[#faf8f5] dark:bg-[#07151a] p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-[#ece6d9] dark:border-[#173740]">
+              <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <span className="text-[11px] font-black text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider">
                     Total Mined Reward Balance
                   </span>
                 </div>
 
-                {/* Giant Typography for Mined Balance (Bara Karo) */}
+                {/* Giant Typography for Mined Balance */}
                 <div className="flex flex-wrap items-baseline gap-2.5">
-                  <span className="text-4xl sm:text-5xl lg:text-6xl font-black text-[#09353e] dark:text-[#f8fafc] tracking-tight tabular-nums">
+                  <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#09353e] dark:text-[#f8fafc] tracking-tight tabular-nums">
                     {minerData.minedTflx.toFixed(2)}
                   </span>
                   <span className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">
@@ -477,14 +525,18 @@ export default function CloudMinerPage({ onNavigate }) {
 
                 {/* Real-time USD Valuation */}
                 <p className="text-xs sm:text-sm font-semibold text-[#6e8286] dark:text-[#94a3b8] flex items-center gap-1.5">
-                  <span>&asymp; ${(minerData.minedTflx * 0.15).toFixed(2)} USD</span>
-                  <span className="text-[10px] text-[#94a3b8] dark:text-[#64748b]">&bull; Target Listing Value</span>
+                  <span>&asymp; ${(minerData.minedTflx * 0.7).toFixed(2)} USD</span>
+                  <span className="hidden text-[10px] text-[#94a3b8] dark:text-[#64748b]">&bull; Target Listing Value</span>
+                </p>
+
+                {/* Hashrate moved under valuation span & made smaller per user request */}
+                <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 pt-0.5">
+                  <span>+{effectiveHashrate.toFixed(1)} TFLX/h</span>
                 </p>
               </div>
 
-              {/* Hashrate - Rectangular Card with Hidden Span per user request */}
-              <div className="rounded-md bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] shadow-2xs px-4 py-2.5 shrink-0">
-                {/* Span hidden per user request: "or is span ko hidden kardo OK" */}
+              {/* Hashrate - Hidden per user request: "or ye div 27 wala ko hidden kardo" */}
+              <div className="hidden rounded-2xl bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] shadow-2xs px-4 py-2.5 shrink-0">
                 <span className="hidden text-[10px] font-bold text-[#7a8c94] dark:text-[#94a3b8] uppercase tracking-wider">
                   Effective Speed
                 </span>
@@ -509,13 +561,6 @@ export default function CloudMinerPage({ onNavigate }) {
               effectiveHashrate={effectiveHashrate}
             />
 
-            {/* 7-Day Mining Check-In Rewards */}
-            <MinerSevenDayCheckIn
-              streakDays={minerData.streakDays || 4}
-              claimedDays={minerData.claimedCheckInDays || [1, 2, 3]}
-              onClaimDay={handleClaimCheckIn}
-            />
-
             {/* Operational Rules Info Grid - Consolidated Unified Card (Ikatta) */}
             <div className="w-full mt-8 pt-6 border-t border-[#ece6d9] dark:border-[#173740]">
               <div className="w-full rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] p-4 sm:p-5 overflow-hidden">
@@ -533,16 +578,16 @@ export default function CloudMinerPage({ onNavigate }) {
 
                 {/* Consolidated connected timeline with 3 unified phase segments */}
                 <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#ece6d9] dark:divide-[#173740] rounded-xl bg-white dark:bg-[#0a1b22] border border-[#ece6d9] dark:border-[#173740] overflow-hidden">
-                  {/* Segment 1: Green */}
-                  <div className="p-4 flex flex-col justify-between space-y-2 bg-emerald-500/[0.03]">
+                  {/* Segment 1: Blue (Green 3D replaced with Blue per user request) */}
+                  <div className="p-4 flex flex-col justify-between space-y-2 bg-blue-500/[0.03]">
                     <div className="flex items-center justify-between">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-600 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                         <Pickaxe className="w-4 h-4" />
                       </div>
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                        0 - 6 Hours (Green 3D)
+                        0 - 6 Hours (Blue)
                       </h4>
                       <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
                         Active cloud mining running at full hashrate. Continuous coin generation with zero battery usage.
@@ -550,7 +595,7 @@ export default function CloudMinerPage({ onNavigate }) {
                     </div>
                   </div>
 
-                  {/* Segment 2: Orange */}
+                  {/* Segment 2: Orange (3D removed per user request) */}
                   <div className="p-4 flex flex-col justify-between space-y-2 bg-amber-500/[0.03]">
                     <div className="flex items-center justify-between">
                       <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-amber-600 flex items-center justify-center">
@@ -559,7 +604,7 @@ export default function CloudMinerPage({ onNavigate }) {
                     </div>
                     <div>
                       <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
-                        6 - 12 Hours (Orange 3D)
+                        6 - 12 Hours (Orange)
                       </h4>
                       <p className="text-[11px] text-[#6e8286] dark:text-[#94a3b8] mt-1 leading-relaxed">
                         Early Check-In window unlocks! Hold button for 2s to renew session early without breaking streak.
@@ -589,32 +634,140 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 2: PRE-STAKING & STAKING BOOST */}
+        {/* TAB 2: PRE-STAKING & STAKING BOOST (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
         {(activeSubTab === 'all' || activeSubTab === 'pre-staking') && (
-          <MinerPreStaking
-            minerData={minerData}
-            onCommitPreStaking={handleCommitPreStaking}
-          />
+          <div className="hidden">
+            <MinerPreStaking
+              minerData={minerData}
+              onCommitPreStaking={handleCommitPreStaking}
+            />
+          </div>
         )}
 
-        {/* TAB 3: 2-TIER GUILD NETWORK */}
+        {/* TAB 3: 2-TIER GUILD NETWORK (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
         {(activeSubTab === 'all' || activeSubTab === 'guild') && (
-          <MinerTeamBoost
-            user={currentUser}
-            minerData={minerData}
-            onPingInactive={handlePingInactive}
-          />
+          <div className="hidden">
+            <MinerTeamBoost
+              user={currentUser}
+              minerData={minerData}
+              onPingInactive={handlePingInactive}
+            />
+          </div>
         )}
 
-        {/* TAB 4: DAY-OFFS & SLASHING */}
+        {/* TAB 4: DAY-OFFS & SLASHING (Hidden per user request: "akhri 3 div inko bi hidden kardo") */}
         {(activeSubTab === 'all' || activeSubTab === 'protection') && (
-          <MinerDayOffs
-            minerData={minerData}
-            onResurrectCoins={handleResurrectCoins}
-          />
+          <div className="hidden">
+            <MinerDayOffs
+              minerData={minerData}
+              onResurrectCoins={handleResurrectCoins}
+            />
+          </div>
         )}
 
       </div>
+
+      {/* Coming Soon Updates Modal */}
+      <AnimatePresence>
+        {showUpdatesModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowUpdatesModal(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-xs cursor-pointer"
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 15 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="relative z-10 w-full max-w-md bg-white dark:bg-[#0a1f27] border border-[#e4ded2] dark:border-[#173740] rounded-3xl shadow-2xl overflow-hidden p-6 sm:p-7 space-y-5"
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-[#ece6d9] dark:border-[#173740]">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <BellRing className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400 block">
+                      TAEMRY FLUX
+                    </span>
+                    <h3 className="text-lg font-black text-[#09353e] dark:text-[#f8fafc] tracking-tight">
+                      Coming Soon Updates
+                    </h3>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  id="btn-close-updates-modal"
+                  onClick={() => setShowUpdatesModal(false)}
+                  className="p-1.5 rounded-xl text-[#7a8c94] dark:text-[#94a3b8] hover:bg-[#faf8f5] dark:hover:bg-[#112d36] transition-colors cursor-pointer"
+                  aria-label="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] leading-relaxed">
+                  Exciting new upgrades and decentralized protocol features are actively being developed for your Cloud Mining experience:
+                </p>
+
+                <div className="space-y-2">
+                  <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] flex items-start gap-2.5">
+                    <Sparkles className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        On-Chain Smart Staking Pools
+                      </h4>
+                      <p className="text-[11px] text-[#7a8c94] dark:text-[#94a3b8] mt-0.5">
+                        Stake mined TFLX tokens directly to unlock multiplier hash boost tiers.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] flex items-start gap-2.5">
+                    <Users className="w-4 h-4 text-teal-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        Real-Time Guild Hashrate Sync
+                      </h4>
+                      <p className="text-[11px] text-[#7a8c94] dark:text-[#94a3b8] mt-0.5">
+                        Live visual tracking for Tier 1 & Tier 2 active downline mining contributions.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] flex items-start gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <h4 className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9]">
+                        Web3 Non-Custodial Wallet Connect
+                      </h4>
+                      <p className="text-[11px] text-[#7a8c94] dark:text-[#94a3b8] mt-0.5">
+                        Seamlessly withdraw and trade TFLX on decentralized liquidity pools upon listing.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                id="btn-confirm-updates-modal"
+                onClick={() => setShowUpdatesModal(false)}
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-[#d97706] to-[#ea580c] hover:from-[#b45309] hover:to-[#c2410c] text-white font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-amber-500/20 cursor-pointer"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
