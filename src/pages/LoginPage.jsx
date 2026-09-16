@@ -126,6 +126,29 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
 
+  // 4-Digit OTP Verification States
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpName, setOtpName] = useState('');
+  const [otpUid, setOtpUid] = useState(null);
+  const [otpError, setOtpError] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [isResendingOtp, setIsResendingOtp] = useState(false);
+  const [otpSuccess, setOtpSuccess] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [previewOtp, setPreviewOtp] = useState('');
+  const [isSmtpConfigured, setIsSmtpConfigured] = useState(true);
+
+  // Cooldown countdown for OTP resend
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   // Check URL parameters for email verification or password reset
   React.useEffect(() => {
     try {
@@ -148,7 +171,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     } catch {}
   }, []);
 
-  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured, sendOtp, verifyOtp } = useAuth();
 
   // Handle Form Submission (Sign in or Sign up)
   const handleSubmit = async (e) => {
@@ -180,7 +203,34 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             localStorage.setItem('referralCode', codeToUse);
           } catch {}
         }
-        await signup(email, password, displayName.trim(), codeToUse);
+        const newUser = await signup(email, password, displayName.trim(), codeToUse);
+
+        // Open 4-Digit OTP verification flow
+        setOtpEmail(email);
+        setOtpName(displayName.trim());
+        setOtpUid(newUser?.uid || null);
+        setOtpCode('');
+        setOtpError('');
+        setOtpSuccess(false);
+        setResendCooldown(60);
+        setShowOtpModal(true);
+        setLoading(false);
+
+        // Request / refresh OTP dispatch status
+        try {
+          const otpRes = await sendOtp(email, displayName.trim(), newUser?.uid || null);
+          if (otpRes?.previewCode) {
+            setPreviewOtp(otpRes.previewCode);
+          }
+          if (otpRes?.isSmtpConfigured === false) {
+            setIsSmtpConfigured(false);
+          } else {
+            setIsSmtpConfigured(true);
+          }
+        } catch (otpErr) {
+          console.warn('Initial OTP dispatch notice:', otpErr?.message);
+        }
+        return;
       } else {
         await login(email, password);
       }
@@ -192,7 +242,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       } catch {}
       onNavigate('home');
     } catch (err) {
-      console.error('Auth error:', err);
+      console.warn('Auth notice:', err?.message || err);
       // Friendly message
       const msg = err.message || '';
       if (
@@ -206,7 +256,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         msg.includes('Incorrect password')
       ) {
         setError('Incorrect password. Please verify your password and try again.');
-      } else if (msg.includes('invalid-credential')) {
+      } else if (msg.includes('invalid-credential') || msg.includes('Invalid email or password')) {
         setError('No account found or invalid credentials. If you have not created an account yet, please click "Sign up" below.');
       } else if (msg.includes('email-already-in-use') || msg.includes('already exists')) {
         setError('An account with this email already exists. Try signing in.');
@@ -217,6 +267,61 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Handle 4-Digit OTP Verification
+  const handleVerifyOtp = async (e) => {
+    if (e) e.preventDefault();
+    const cleanCode = (otpCode || '').trim();
+    if (!cleanCode || cleanCode.length !== 4) {
+      setOtpError('Please enter the 4-digit verification code.');
+      return;
+    }
+
+    setOtpError('');
+    setIsVerifyingOtp(true);
+    try {
+      await verifyOtp(otpEmail, cleanCode, otpUid);
+      setOtpSuccess(true);
+      setTimeout(() => {
+        setShowOtpModal(false);
+        try {
+          if (localStorage.getItem('taemry_selected_package')) {
+            onNavigate('dashboard', 'buy-package');
+            return;
+          }
+        } catch {}
+        onNavigate('home');
+      }, 1200);
+    } catch (err) {
+      console.warn('OTP verification notice:', err?.message || err);
+      setOtpError(err?.message || 'Invalid verification code. Please check your email and try again.');
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
+
+  // Handle OTP Resend
+  const handleResendOtp = async () => {
+    setOtpError('');
+    setIsResendingOtp(true);
+    try {
+      const res = await sendOtp(otpEmail, otpName, otpUid);
+      setResendCooldown(60);
+      if (res?.previewCode) {
+        setPreviewOtp(res.previewCode);
+      }
+      if (res?.isSmtpConfigured === false) {
+        setIsSmtpConfigured(false);
+      } else {
+        setIsSmtpConfigured(true);
+      }
+    } catch (err) {
+      console.warn('OTP resend notice:', err?.message || err);
+      setOtpError(err?.message || 'Failed to resend code. Please try again.');
+    } finally {
+      setIsResendingOtp(false);
     }
   };
 
@@ -234,7 +339,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       } catch {}
       onNavigate('home');
     } catch (err) {
-      console.error('Google Sign In failed:', err);
+      console.warn('Google Sign In notice:', err?.message || err);
       setError(err.message || 'Could not sign in with Google.');
     } finally {
       setLoading(false);
@@ -372,14 +477,23 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 👉 Switch to Sign In with this Email
               </button>
             )}
-            {(error.toLowerCase().includes('no account') || error.toLowerCase().includes('sign up to create') || error.toLowerCase().includes('sign up below')) && (
+            {(error.toLowerCase().includes('no account') ||
+              error.toLowerCase().includes('sign up') ||
+              error.toLowerCase().includes('create your account') ||
+              error.toLowerCase().includes('invalid credential') ||
+              error.toLowerCase().includes('invalid email or password')) && (
               <button
+                id="btn-switch-to-signup-from-error"
                 type="button"
                 onClick={() => {
                   setIsSignUp(true);
+                  if (!displayName.trim() && email) {
+                    const fallbackName = email.split('@')[0];
+                    setDisplayName(fallbackName);
+                  }
                   setError('');
                 }}
-                className="self-start mt-1 px-3 py-1.5 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-lg font-bold text-xs transition cursor-pointer"
+                className="self-start mt-1 px-3.5 py-2 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-lg font-bold text-xs transition cursor-pointer shadow-xs"
               >
                 👉 Click here to Sign Up (Create Account)
               </button>
@@ -762,6 +876,181 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       </>
                     )}
                   </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 4-Digit Email OTP Verification Modal */}
+      {showOtpModal && (
+        <div
+          id="modal-otp-verification"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#051c22]/70 backdrop-blur-xs animate-in fade-in duration-200"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 border border-[#e4ded2] shadow-2xl relative space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              id="btn-close-otp-modal"
+              onClick={() => setShowOtpModal(false)}
+              className="absolute right-4 top-4 p-1.5 text-[#788e93] hover:text-[#09353e] hover:bg-[#f3eee5] rounded-full transition-colors cursor-pointer"
+              aria-label="Close modal"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Header with Shield Icon */}
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-[#e6f4f1] text-[#0c5963] flex items-center justify-center shrink-0 border border-[#bce3db]">
+                <Shield className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-[#09353e]">Verify Your Email</h3>
+                <p className="text-xs text-[#61777b]">
+                  4-Digit Security Code
+                </p>
+              </div>
+            </div>
+
+            {otpSuccess ? (
+              <div className="p-4 bg-[#f0fdf4] border border-[#bbf7d0] rounded-2xl text-[#166534] space-y-2 text-center py-6">
+                <div className="flex justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#dcfce7] flex items-center justify-center">
+                    <CheckCircle2 className="w-6 h-6 text-[#16a34a]" />
+                  </div>
+                </div>
+                <h4 className="font-extrabold text-base text-[#15803d]">Account Verified!</h4>
+                <p className="text-xs leading-relaxed text-[#166534]">
+                  Your email address has been successfully verified. Entering your space now...
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="space-y-4">
+                <p className="text-xs text-[#526a70] leading-relaxed">
+                  We've sent a 4-digit verification code to <strong className="text-[#09353e] font-semibold">{otpEmail}</strong>. Please enter the code below to activate your account.
+                </p>
+
+                {!isSmtpConfigured && previewOtp && (
+                  <div
+                    id="banner-otp-preview"
+                    className="p-3 bg-[#fefce8] border border-[#fef08a] rounded-2xl text-xs space-y-1.5 animate-in fade-in"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-[#854d0e] flex items-center gap-1.5">
+                        <KeyRound className="w-3.5 h-3.5 text-[#ca8a04]" />
+                        Verification Code (Preview Mode)
+                      </span>
+                      <span className="text-[10px] bg-[#fef08a] text-[#854d0e] px-2 py-0.5 rounded-full font-bold">
+                        Ready
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#713f12] leading-relaxed">
+                      SMTP credentials are not yet configured on the server. Click below to apply your 4-digit code:
+                    </p>
+                    <div className="flex items-center gap-2 pt-0.5">
+                      <button
+                        type="button"
+                        id="btn-apply-preview-otp"
+                        onClick={() => {
+                          setOtpCode(previewOtp);
+                          if (otpError) setOtpError('');
+                        }}
+                        className="px-3 py-1.5 bg-[#eab308] hover:bg-[#ca8a04] text-white font-black text-sm tracking-widest rounded-xl transition cursor-pointer flex items-center gap-2 shadow-xs"
+                      >
+                        <span>{previewOtp}</span>
+                        <span className="text-[10px] tracking-normal font-semibold opacity-90">(Click to Fill Code)</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {otpError && (
+                  <div className="p-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl text-xs text-[#991b1b] flex items-start gap-2 animate-in fade-in duration-150">
+                    <AlertCircle className="w-4 h-4 text-[#ef4444] shrink-0 mt-0.5" />
+                    <span className="leading-snug font-semibold">{otpError}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label htmlFor="input-otp-code" className="block text-xs font-semibold text-[#324f55] mb-2 text-center">
+                    Enter 4-Digit Code
+                  </label>
+                  <div className="flex justify-center">
+                    <input
+                      id="input-otp-code"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={4}
+                      autoFocus
+                      required
+                      value={otpCode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').slice(0, 4);
+                        setOtpCode(val);
+                        if (otpError) setOtpError('');
+                      }}
+                      placeholder="••••"
+                      className="w-48 text-center text-2xl sm:text-3xl font-black tracking-[0.6em] pl-3 py-3 bg-[#faf8f5] border-2 border-[#0c5963]/40 rounded-2xl focus:bg-white focus:outline-none focus:border-[#0c5963] focus:ring-4 focus:ring-[#0c5963]/15 text-[#09353e] placeholder-[#9caea7] transition-all font-mono shadow-inner"
+                    />
+                  </div>
+                  <p className="text-[11px] text-[#718589] text-center mt-2">
+                    {isSmtpConfigured
+                      ? 'Check your inbox and spam/junk folder for the code.'
+                      : 'Enter the 4-digit code above to complete your verification.'}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2 pt-2">
+                  <button
+                    id="btn-submit-verify-otp"
+                    type="submit"
+                    disabled={isVerifyingOtp || otpCode.length !== 4}
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isVerifyingOtp ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Verifying Code...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Verify &amp; Continue</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </>
+                    )}
+                  </button>
+
+                  <div className="flex items-center justify-between pt-1">
+                    <button
+                      id="btn-resend-otp"
+                      type="button"
+                      disabled={isResendingOtp || resendCooldown > 0}
+                      onClick={handleResendOtp}
+                      className="text-[11px] font-semibold text-[#0c5963] hover:underline cursor-pointer disabled:opacity-50 disabled:no-underline"
+                    >
+                      {isResendingOtp
+                        ? 'Resending...'
+                        : resendCooldown > 0
+                        ? `Resend Code in ${resendCooldown}s`
+                        : 'Resend Code'}
+                    </button>
+
+                    <button
+                      id="btn-change-email-otp"
+                      type="button"
+                      onClick={() => setShowOtpModal(false)}
+                      className="text-[11px] text-[#718589] hover:text-[#09353e] hover:underline cursor-pointer"
+                    >
+                      Change Email
+                    </button>
+                  </div>
                 </div>
               </form>
             )}

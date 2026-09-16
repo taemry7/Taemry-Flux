@@ -7,9 +7,17 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { admin, getDb, initFirebaseAdmin } from '../firebaseAdmin.js';
-import { sendCustomPasswordResetEmail, sendCustomVerificationEmail } from '../utils/email.js';
+import {
+  sendCustomPasswordResetEmail,
+  sendCustomVerificationEmail,
+  sendCustomOtpVerificationEmail,
+  isSmtpConfigured,
+} from '../utils/email.js';
 
 const router = express.Router();
+
+// Memory store for active 4-digit verification OTPs (10-minute validity)
+const otpStore = new Map();
 
 const REGISTERED_USERS_FILE = path.resolve(process.cwd(), '.registered_users.json');
 
@@ -27,6 +35,8 @@ const getPersistentRegisteredEmails = () => {
     'mistrtaimur7@gmail.com',
     'taemryflux@gmail.com',
     'admin@taemryflux.com',
+    'kk3083702@gmail.com',
+    'support.taemryflux@gmail.com',
   ];
 };
 
@@ -86,6 +96,8 @@ const checkUserExists = async (cleanEmail) => {
   const isAdminEmail =
     target === 'mistrtaimur7@gmail.com' ||
     target === 'mistrtaimoor@gmail.com' ||
+    target === 'kk3083702@gmail.com' ||
+    target === 'support.taemryflux@gmail.com' ||
     target.startsWith('admin@') ||
     target.includes('taimri') ||
     target.includes('taemryadmin');
@@ -203,6 +215,153 @@ router.post('/send-verification', async (req, res) => {
 });
 
 /**
+ * POST /api/auth/send-otp
+ * Dispatches a 4-digit security OTP email to newly registered user
+ */
+router.post('/send-otp', async (req, res) => {
+  try {
+    const { email, name, uid } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid email address is required.',
+      });
+    }
+
+    // Record registered email
+    recordRegisteredEmail(cleanEmail);
+
+    // Generate random 4-digit numeric code (1000 - 9999)
+    const otp = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // Store in active OTP memory map with 10-minute validity
+    otpStore.set(cleanEmail, {
+      otp,
+      uid: uid || null,
+      name: name || cleanEmail.split('@')[0],
+      createdAt: Date.now(),
+      expiresAt: Date.now() + 10 * 60 * 1000,
+      attempts: 0,
+    });
+
+    const smtpConfigured = isSmtpConfigured();
+    let emailResult = null;
+
+    if (smtpConfigured) {
+      // Send custom branded email with the 4-digit OTP via active SMTP
+      emailResult = await sendCustomOtpVerificationEmail({
+        userEmail: cleanEmail,
+        userName: name || cleanEmail.split('@')[0],
+        otpCode: otp,
+      });
+    }
+
+    console.log(`[AuthRoute] 4-digit OTP generated for ${cleanEmail}: ${otp} (SMTP configured: ${smtpConfigured}, sent: ${Boolean(emailResult)})`);
+
+    return res.json({
+      success: true,
+      message: smtpConfigured
+        ? 'A 4-digit verification code has been dispatched to your email.'
+        : 'A 4-digit verification code has been generated. (Server SMTP credentials not configured)',
+      sent: Boolean(emailResult),
+      isSmtpConfigured: smtpConfigured,
+      // Provide preview code when SMTP server is not yet configured so user is never stuck
+      previewCode: smtpConfigured ? undefined : otp,
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Send OTP error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send verification OTP. Please try again.',
+    });
+  }
+});
+
+/**
+ * POST /api/auth/verify-otp
+ * Validates 4-digit verification code submitted by user
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const { email, otp, uid } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanOtp = String(otp || '').trim();
+
+    if (!cleanEmail || !cleanOtp) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email and 4-digit verification code are required.',
+      });
+    }
+
+    const record = otpStore.get(cleanEmail);
+
+    if (!record) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification session not found or expired. Please request a new code.',
+      });
+    }
+
+    if (Date.now() > record.expiresAt) {
+      otpStore.delete(cleanEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'This verification code has expired. Please request a new code.',
+      });
+    }
+
+    if (record.otp !== cleanOtp) {
+      record.attempts = (record.attempts || 0) + 1;
+      if (record.attempts >= 5) {
+        otpStore.delete(cleanEmail);
+        return res.status(400).json({
+          success: false,
+          message: 'Too many incorrect attempts. Please request a new verification code.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid verification code. Please check your email and try again.',
+      });
+    }
+
+    // OTP matched successfully! Mark verified in database
+    const targetUid = uid || record.uid;
+    try {
+      const db = getDb();
+      if (targetUid) {
+        await db.collection('users').doc(targetUid).set(
+          {
+            emailVerified: true,
+            verifiedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      }
+    } catch (dbErr) {
+      console.warn('[AuthRoute] Firestore user verification update notice:', dbErr.message);
+    }
+
+    // Clean up OTP from store
+    otpStore.delete(cleanEmail);
+
+    return res.json({
+      success: true,
+      message: 'Account email verified successfully!',
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Verify OTP error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to verify code. Please try again.',
+    });
+  }
+});
+
+/**
  * POST /api/auth/google
  * Direct Google OAuth authentication - validates Google credentials and establishes user session
  * Completely bypasses Firebase popup handler URLs for a direct, clean TAEMRY FLUX login.
@@ -263,6 +422,7 @@ router.post('/google', async (req, res) => {
     const isAdmin =
       cleanEmail === 'mistrtaimur7@gmail.com' ||
       cleanEmail === 'mistrtaimoor@gmail.com' ||
+      cleanEmail === 'kk3083702@gmail.com' ||
       cleanEmail.startsWith('admin@') ||
       cleanEmail.includes('taimri') ||
       cleanEmail.includes('taemryadmin');

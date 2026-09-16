@@ -14,9 +14,9 @@ let nodemailerLib = null;
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const user = process.env.SMTP_USER;
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
+  const user = process.env.SMTP_USER || 'support.taemryflux@gmail.com';
   // Clean app password (remove spaces if pasted with spaces)
   const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
 
@@ -56,9 +56,19 @@ const getTransporter = async () => {
   return transporter;
 };
 
-// Branded From address (Display Name: "TAEMRY FLUX", Address: support@taemryflux.online)
-const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support@taemryflux.online>';
-const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
+// Branded From address (Display Name: "TAEMRY FLUX", Address: support.taemryflux@gmail.com)
+const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support.taemryflux@gmail.com>';
+const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'support.taemryflux@gmail.com';
+
+/**
+ * Check whether valid SMTP credentials have been configured
+ */
+export const isSmtpConfigured = () => {
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const user = process.env.SMTP_USER || 'support.taemryflux@gmail.com';
+  const pass = process.env.SMTP_PASS;
+  return Boolean(pass);
+};
 
 /**
  * 1. Send Critical Error Alert to Platform Admin
@@ -346,6 +356,69 @@ export async function sendCustomVerificationEmail({ userEmail, userName, verifyL
     });
   } catch (err) {
     console.error('[EmailService] Failed to send verification email:', err.message);
+    return null;
+  }
+}
+
+/**
+ * 6. Send Branded 4-Digit OTP Verification Email (New User Registration)
+ */
+export async function sendCustomOtpVerificationEmail({ userEmail, userName, otpCode }) {
+  try {
+    if (!userEmail) return null;
+    const client = await getTransporter();
+
+    const subject = `${otpCode} is your TAEMRY FLUX Verification Code`;
+    const html = `
+      <div style="background-color: #f0f5f4; padding: 40px 14px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; margin: 0;">
+        <div style="max-width: 490px; margin: 0 auto; background: #ffffff; border-radius: 22px; overflow: hidden; border: 1px solid #d4e5e1; box-shadow: 0 12px 32px rgba(12, 89, 99, 0.08);">
+          
+          <!-- App-Like Teal/Emerald Header -->
+          <div style="background: linear-gradient(135deg, #072e38 0%, #0c5963 50%, #0f766e 100%); padding: 30px 24px; text-align: center;">
+            <div style="text-align: center; line-height: 1;">
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 4px; color: #ffffff; text-transform: uppercase;">TAEMRY </span>
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #2dd4bf; background-color: #062b32; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; border: 1px solid rgba(45, 212, 191, 0.35); vertical-align: middle;">FLUX</span>
+            </div>
+          </div>
+
+          <!-- Body Content -->
+          <div style="padding: 32px 28px; color: #1e293b; font-size: 14px; line-height: 1.65;">
+            <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0c5963;">Welcome, ${userName || 'Member'}!</p>
+            <p style="color: #334155; margin-bottom: 12px;">
+              Thank you for creating your account on <strong>TAEMRY FLUX</strong>.
+            </p>
+            <p style="color: #475569; margin-top: 0; margin-bottom: 20px;">
+              Please enter the 4-digit verification code below to verify your email address and activate your account:
+            </p>
+            
+            <!-- 4-Digit OTP Code Display Card -->
+            <div style="text-align: center; margin: 26px 0; background-color: #f0fdfa; border: 2px dashed #0c5963; border-radius: 16px; padding: 22px 16px;">
+              <span style="display: block; font-size: 11px; font-weight: 700; color: #0c5963; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px;">Verification Code</span>
+              <div style="display: inline-block; font-family: 'Courier New', Courier, monospace; font-size: 38px; font-weight: 900; letter-spacing: 12px; color: #072e38; background: #ffffff; padding: 10px 24px 10px 32px; border-radius: 14px; border: 1px solid #ccfbf1; box-shadow: 0 4px 12px rgba(12, 89, 99, 0.08);">
+                ${otpCode}
+              </div>
+              <p style="font-size: 11px; color: #64748b; margin: 12px 0 0 0;">This code will expire in 10 minutes. Never share this code with anyone.</p>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e8f0ee; font-size: 12px; color: #64748b; line-height: 1.6;">
+              Best regards,<br>
+              <strong style="color: #0c5963; font-size: 13px;">Team TAEMRY FLUX</strong><br>
+              <span style="font-size: 11px; color: #94a3b8;">Please do not reply directly to this email</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    return await client.sendMail({
+      from: FROM_ADDRESS,
+      to: userEmail,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send OTP verification email:', err.message);
     return null;
   }
 }

@@ -85,6 +85,7 @@ apiClient.interceptors.request.use(
               Boolean(savedUser.admin || savedUser.isAdmin) ||
               userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
+              userEmail === 'kk3083702@gmail.com' ||
               userEmail.startsWith('admin@') ||
               userEmail.includes('taimri') ||
               userEmail.includes('taemryadmin') ||

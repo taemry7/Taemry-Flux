@@ -55,7 +55,7 @@ export default function AdminWhitepaper() {
     ],
     faqs: [],
     supportContact: {
-      email: 'support@taemryflux.com',
+      email: 'support.taemryflux@gmail.com',
       whatsapp: '+92 300 0000000',
       telegram: '@TaemryFluxOfficial',
       hours: '24/7 Available (Response within 2-4 hours)',

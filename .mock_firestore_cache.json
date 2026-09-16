@@ -178,5 +178,29 @@
       "lastLoginAt": "2026-09-15T17:01:43.400Z",
       "isAdmin": false
     }
+  ],
+  [
+    "users/a3Bkgvi8sOVmVPgl0bO7PQIoNDT2",
+    {
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "uid": "a3Bkgvi8sOVmVPgl0bO7PQIoNDT2",
+      "email": "mistrtaemr7y@gmail.com",
+      "name": "8ioioo",
+      "createdAt": "2026-09-16T15:33:22.574Z"
+    }
+  ],
+  [
+    "users/test-uid",
+    {
+      "emailVerified": true,
+      "verifiedAt": "2026-09-16T15:37:19.011Z"
+    }
   ]
 ]
