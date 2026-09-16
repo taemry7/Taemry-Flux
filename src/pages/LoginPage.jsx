@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2, Lock } from 'lucide-react';
+import { Eye, EyeOff, ArrowRight, AlertCircle, CheckCircle2, Shield, Sparkles, KeyRound, Mail, X, Loader2, Lock, FlaskConical, Check, RefreshCw } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import { firebaseConfig } from '../firebase/firebase.config';
+import apiClient from '../api/client';
 
 export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [isSignUp, setIsSignUp] = useState(() => {
@@ -53,7 +54,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
+  const [displayName, setDisplayName] = useState('@');
   const [referredBy, setReferredBy] = useState(() => {
     try {
       if (typeof window === 'undefined') return '';
@@ -125,6 +126,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [forgotError, setForgotError] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
+  const [waitingForVerification, setWaitingForVerification] = useState(false);
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
 
   // Check URL parameters for email verification or password reset
   React.useEffect(() => {
@@ -140,13 +144,43 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       if (isVerified) {
         setVerifiedSuccess(true);
         setIsSignUp(false);
+        setWaitingForVerification(false);
         const emailMatch = (search + hash).match(/email=([^&#]+)/i);
         if (emailMatch && emailMatch[1]) {
-          setEmail(decodeURIComponent(emailMatch[1]));
+          const verifiedEmail = decodeURIComponent(emailMatch[1]);
+          setEmail(verifiedEmail);
+          try {
+            apiClient.post('/auth/mark-verified', { email: verifiedEmail }).catch(() => {});
+          } catch {}
         }
       }
     } catch {}
   }, []);
+
+  // Real-time automatic polling when waiting for email verification
+  React.useEffect(() => {
+    if (!waitingForVerification || !pendingVerificationEmail) return;
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await apiClient.get(`/auth/check-verification?email=${encodeURIComponent(pendingVerificationEmail)}`);
+        if (res.data && res.data.verified) {
+          clearInterval(interval);
+          setWaitingForVerification(false);
+          setVerifiedSuccess(true);
+          try {
+            if (localStorage.getItem('taemry_selected_package')) {
+              onNavigate('dashboard', 'buy-package');
+              return;
+            }
+          } catch {}
+          onNavigate('home');
+        }
+      } catch {}
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [waitingForVerification, pendingVerificationEmail, onNavigate]);
 
   const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
@@ -160,14 +194,23 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       return;
     }
 
-    if (isSignUp && !displayName.trim()) {
-      setError('Please choose a username.');
-      return;
-    }
+    if (isSignUp) {
+      const cleanUser = displayName.replace(/^@+/, '').trim();
+      if (!cleanUser) {
+        setError('Please choose a valid username after the @ symbol.');
+        return;
+      }
 
-    if (password.length < 6) {
-      setError('Password should be at least 6 characters long.');
-      return;
+      // Password requirement: at least 1 number
+      if (!/\d/.test(password)) {
+        setError('Password must contain at least 1 number.');
+        return;
+      }
+    } else {
+      if (password.length < 1) {
+        setError('Please enter your password.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -180,7 +223,13 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             localStorage.setItem('referralCode', codeToUse);
           } catch {}
         }
-        await signup(email, password, displayName.trim(), codeToUse);
+        const usernameToSave = '@' + displayName.replace(/^@+/, '').trim();
+        await signup(email, password, usernameToSave, codeToUse);
+
+        // Transition to automatic email verification screen
+        setPendingVerificationEmail(email.trim().toLowerCase());
+        setWaitingForVerification(true);
+        return;
       } else {
         await login(email, password);
       }
@@ -292,11 +341,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         touchAction: 'pan-y'
       }}
     >
-      {/* Brand Icon Header */}
-      <div className="mb-3 sm:mb-4 flex flex-col items-center">
-        <button
-          onClick={() => onNavigate('home')}
-          className="focus:outline-none transition-transform hover:scale-105 cursor-pointer flex flex-col items-center"
+      {/* Brand Icon Header (Static / Non-clickable display) */}
+      <div className="mb-3 sm:mb-4 flex flex-col items-center select-none pointer-events-none">
+        <div
+          id="brand-header-display"
+          className="flex flex-col items-center cursor-default"
         >
           <Logo size="lg" showText={false} />
           <div className="mt-2 flex items-center gap-2">
@@ -307,11 +356,44 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               FLUX
             </span>
           </div>
-        </button>
+        </div>
       </div>
 
       {/* Main Auth Card (Starts cleanly near top, not pushed down) */}
       <div className="w-full max-w-md bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 shadow-lg shadow-[#0c5963]/5 border border-[#e4ded2] dark:border-[#1e3a44]">
+        {/* Test Mode Toggle Banner */}
+        <div className="mb-4 flex items-center justify-between px-3 py-2 bg-[#f4f7f6] dark:bg-[#0c242c] border border-[#d8e3e0] dark:border-[#1c414c] rounded-xl">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2 w-2 relative">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span className="text-xs font-bold text-[#0c5963] dark:text-[#2dd4bf] flex items-center gap-1">
+              <FlaskConical className="w-3.5 h-3.5" /> Test Mode ON
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <button
+              id="btn-test-fill-user"
+              type="button"
+              onClick={() => fillTestCredentials('member')}
+              className="text-[11px] font-semibold px-2 py-1 bg-white dark:bg-[#12313a] text-[#0c5963] dark:text-[#5eead4] border border-[#c3d5d2] dark:border-[#214955] hover:bg-[#e6efec] rounded-lg transition-colors cursor-pointer"
+              title="Quick fill member credentials"
+            >
+              Fill Member
+            </button>
+            <button
+              id="btn-test-fill-admin"
+              type="button"
+              onClick={() => fillTestCredentials('admin')}
+              className="text-[11px] font-semibold px-2 py-1 bg-[#0c5963] text-white hover:bg-[#09424a] rounded-lg transition-colors cursor-pointer"
+              title="Quick fill admin credentials"
+            >
+              Fill Admin
+            </button>
+          </div>
+        </div>
+
         {/* Title */}
         <div className="text-center mb-4">
           <h2 className="text-2xl font-bold text-[#09353e] dark:text-white">
@@ -344,6 +426,67 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             >
               <X className="w-4 h-4" />
             </button>
+          </div>
+        )}
+
+        {/* Automatic Email Verification Waiting Card */}
+        {waitingForVerification && (
+          <div
+            id="waitingForVerificationCard"
+            className="mb-6 p-5 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-4 shadow-sm"
+          >
+            <div className="w-12 h-12 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/10 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
+              <Mail className="w-6 h-6 animate-bounce" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-[#09353e] dark:text-white">
+                Verify Your Email Address
+              </h3>
+              <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] mt-1.5 leading-relaxed">
+                We sent a verification link to <strong className="text-[#0c5963] dark:text-[#2dd4bf] font-semibold">{pendingVerificationEmail}</strong>.
+                Please check your inbox or spam folder in Gmail.
+              </p>
+            </div>
+
+            <div className="p-3 bg-white dark:bg-[#07171d] rounded-xl border border-[#d2e4e0] dark:border-[#143742] flex items-center justify-center gap-2 text-xs font-semibold text-[#0c5963] dark:text-[#5eead4]">
+              <Loader2 className="w-4 h-4 animate-spin shrink-0 text-[#0c5963] dark:text-[#5eead4]" />
+              <span>Checking verification automatically...</span>
+            </div>
+
+            <p className="text-[11px] text-[#6b8287] dark:text-[#8099a0]">
+              Jesy hi ap Gmail me link par click karenge, ye screen khud ba khud verify ho kar aglay step par redirect ho jay gi!
+            </p>
+
+            <div className="flex items-center justify-center gap-3 pt-1">
+              <button
+                type="button"
+                onClick={handleManualCheckVerification}
+                disabled={isCheckingVerification}
+                className="px-4 py-2 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isCheckingVerification ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Checking...</span>
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>Check Now</span>
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setWaitingForVerification(false);
+                  setIsSignUp(false);
+                }}
+                className="px-3.5 py-2 text-xs font-semibold text-[#5a7075] dark:text-[#94a3b8] hover:bg-[#e6efec] dark:hover:bg-[#102b34] rounded-xl transition cursor-pointer"
+              >
+                Back to Sign In
+              </button>
+            </div>
           </div>
         )}
 
@@ -473,18 +616,29 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
           {isSignUp && (
             <div>
-              <label className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5">
-                Username
-              </label>
-              <input
-                id="input-username"
-                type="text"
-                required
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Choose your username"
-                className="w-full px-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7] dark:placeholder-[#55727a]"
-              />
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8]">
+                  Username
+                </label>
+              </div>
+              <div className="relative">
+                <input
+                  id="input-username"
+                  type="text"
+                  required
+                  value={displayName}
+                  onChange={(e) => {
+                    let val = e.target.value;
+                    // Ensure @ stays at the beginning
+                    if (!val.startsWith('@')) {
+                      val = '@' + val.replace(/@/g, '');
+                    }
+                    setDisplayName(val);
+                  }}
+                  placeholder="@yourusername"
+                  className="w-full px-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7] dark:placeholder-[#55727a] font-medium"
+                />
+              </div>
             </div>
           )}
 
@@ -531,7 +685,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={isSignUp ? 'Create a secure password' : 'Enter your password'}
+                placeholder={isSignUp ? 'Include at least 1 number' : 'Enter your password'}
                 className="w-full pl-4 pr-11 py-3 text-sm bg-[#faf8f5] border border-[#dcd6c9] rounded-xl focus:bg-white focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] placeholder-[#9caea7]"
               />
               <button

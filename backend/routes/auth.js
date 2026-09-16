@@ -12,6 +12,25 @@ import { sendCustomPasswordResetEmail, sendCustomVerificationEmail } from '../ut
 const router = express.Router();
 
 const REGISTERED_USERS_FILE = path.resolve(process.cwd(), '.registered_users.json');
+const VERIFIED_USERS_FILE = path.resolve(process.cwd(), '.verified_users.json');
+
+// In-memory set of verified emails for real-time polling fallback
+const verifiedEmailsSet = new Set();
+try {
+  if (fs.existsSync(VERIFIED_USERS_FILE)) {
+    const data = JSON.parse(fs.readFileSync(VERIFIED_USERS_FILE, 'utf-8'));
+    if (Array.isArray(data)) data.forEach((e) => verifiedEmailsSet.add(e.toLowerCase().trim()));
+  }
+} catch (e) {}
+
+const recordVerifiedEmail = (email) => {
+  if (!email) return;
+  const clean = email.toLowerCase().trim();
+  verifiedEmailsSet.add(clean);
+  try {
+    fs.writeFileSync(VERIFIED_USERS_FILE, JSON.stringify([...verifiedEmailsSet], null, 2), 'utf-8');
+  } catch (e) {}
+};
 
 // Helper to get persistent registered emails
 const getPersistentRegisteredEmails = () => {
@@ -199,6 +218,66 @@ router.post('/send-verification', async (req, res) => {
       success: false,
       message: 'Failed to send verification email. Please try again.',
     });
+  }
+});
+
+/**
+ * GET /api/auth/check-verification
+ * Polls whether a user has clicked the verification link in their email
+ */
+router.get('/check-verification', async (req, res) => {
+  try {
+    const cleanEmail = (req.query.email || '').toString().toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(400).json({ success: false, verified: false });
+    }
+
+    if (verifiedEmailsSet.has(cleanEmail)) {
+      return res.json({ success: true, verified: true });
+    }
+
+    const db = getDb();
+    if (db) {
+      const usersSnap = await db.collection('users').where('email', '==', cleanEmail).get();
+      if (!usersSnap.empty) {
+        const u = usersSnap.docs[0].data();
+        if (u.emailVerified === true || u.isVerified === true) {
+          verifiedEmailsSet.add(cleanEmail);
+          return res.json({ success: true, verified: true });
+        }
+      }
+    }
+
+    return res.json({ success: true, verified: false });
+  } catch (err) {
+    return res.json({ success: true, verified: false });
+  }
+});
+
+/**
+ * POST /api/auth/mark-verified
+ * Marks a user account as verified when verification link is accessed
+ */
+router.post('/mark-verified', async (req, res) => {
+  try {
+    const cleanEmail = (req.body.email || '').toString().toLowerCase().trim();
+    if (!cleanEmail) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    recordVerifiedEmail(cleanEmail);
+
+    const db = getDb();
+    if (db) {
+      const usersSnap = await db.collection('users').where('email', '==', cleanEmail).get();
+      if (!usersSnap.empty) {
+        await usersSnap.docs[0].ref.set({ emailVerified: true, isVerified: true, verifiedAt: new Date().toISOString() }, { merge: true });
+      }
+    }
+
+    return res.json({ success: true, message: 'Account verified successfully' });
+  } catch (err) {
+    return res.json({ success: true });
   }
 });
 
