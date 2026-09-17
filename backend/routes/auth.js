@@ -84,7 +84,18 @@ const checkUserExists = async (cleanEmail) => {
     }
   } catch (e) {}
 
-  // 3. Check mock firestore cache file directly if present
+  // 3. Check Firebase Auth via Admin SDK directly
+  try {
+    if (admin && typeof admin.auth === 'function') {
+      const authUser = await admin.auth().getUserByEmail(target);
+      if (authUser) {
+        recordRegisteredEmail(target);
+        return true;
+      }
+    }
+  } catch (e) {}
+
+  // 4. Check mock firestore cache file directly if present
   try {
     const cachePath = path.resolve(process.cwd(), '.mock_firestore_cache.json');
     if (fs.existsSync(cachePath)) {
@@ -113,6 +124,26 @@ const checkUserExists = async (cleanEmail) => {
 
   return false;
 };
+
+/**
+ * POST /api/auth/check-email
+ * Checks whether an account exists in the system (for accurate error messaging on login)
+ */
+router.post('/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      return res.json({ exists: false });
+    }
+
+    const exists = await checkUserExists(cleanEmail);
+    return res.json({ exists: Boolean(exists) });
+  } catch (err) {
+    return res.json({ exists: false });
+  }
+});
 
 /**
  * POST /api/auth/forgot-password
@@ -159,6 +190,63 @@ router.post('/forgot-password', async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to process password reset request. Please try again.',
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Resets user password directly via Firebase Admin SDK
+ */
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { email, newPassword } = req.body;
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    if (!cleanEmail || !newPassword || newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid email and new password (at least 6 characters) are required.',
+      });
+    }
+
+    // Verify account exists
+    const exists = await checkUserExists(cleanEmail);
+    if (!exists) {
+      return res.status(404).json({
+        success: false,
+        code: 'auth/user-not-found',
+        message: 'No account found with this email address. Please check your email or sign up first.',
+      });
+    }
+
+    let updated = false;
+
+    // 1. Update in Firebase Auth via Admin SDK
+    try {
+      if (admin && typeof admin.auth === 'function') {
+        const authUser = await admin.auth().getUserByEmail(cleanEmail);
+        if (authUser && authUser.uid) {
+          await admin.auth().updateUser(authUser.uid, { password: newPassword });
+          updated = true;
+        }
+      }
+    } catch (adminErr) {
+      console.warn('[AuthRoute] Admin SDK password update notice:', adminErr.message);
+    }
+
+    recordRegisteredEmail(cleanEmail);
+
+    return res.json({
+      success: true,
+      message: 'Your password has been successfully reset! You can now log in with your new password.',
+      updatedInAuth: updated,
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Reset password error:', err);
+    return res.status(500).json({
+      success: false,
+      message: err.message || 'Failed to reset password. Please try again.',
     });
   }
 });

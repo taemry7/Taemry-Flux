@@ -569,18 +569,55 @@ export const AuthProvider = ({ children }) => {
         return mockUser;
       }
     } catch (err) {
-      console.error('Firebase login error:', err);
+      console.warn('Firebase login auth notice:', err?.message || err);
       let friendlyError = err.message || 'Failed to sign in';
+
       if (
         err.code === 'auth/user-not-found' ||
-        err.code === 'auth/invalid-credential' ||
-        err.code === 'auth/invalid-login-credentials' ||
-        err.message?.includes('user-not-found') ||
-        err.message?.includes('No account found')
+        err.message?.includes('user-not-found')
       ) {
         friendlyError = 'No account found with this email. Please sign up to create your account first.';
-      } else if (err.code === 'auth/wrong-password' || err.message?.includes('wrong-password')) {
-        friendlyError = 'Incorrect password. Please verify your password and try again.';
+      } else if (
+        err.code === 'auth/invalid-credential' ||
+        err.code === 'auth/invalid-login-credentials' ||
+        err.code === 'auth/wrong-password' ||
+        err.message?.includes('wrong-password') ||
+        err.message?.includes('invalid-credential')
+      ) {
+        // Accurately check if the email has ever signed up (Backend Admin + Local Storage)
+        let isRegistered = false;
+        try {
+          const checkRes = await apiClient.post('/auth/check-email', { email: cleanEmail });
+          if (checkRes.data?.exists) {
+            isRegistered = true;
+          }
+        } catch {}
+
+        if (!isRegistered) {
+          try {
+            const rawReg = localStorage.getItem('taemry_registered_emails');
+            const list = rawReg ? JSON.parse(rawReg) : [];
+            if (Array.isArray(list) && list.includes(cleanEmail)) {
+              isRegistered = true;
+            }
+          } catch {}
+        }
+
+        if (!isRegistered) {
+          try {
+            const rawAcc = localStorage.getItem('taemry_registered_accounts');
+            const accs = rawAcc ? JSON.parse(rawAcc) : {};
+            if (accs && accs[cleanEmail]) {
+              isRegistered = true;
+            }
+          } catch {}
+        }
+
+        if (!isRegistered) {
+          friendlyError = 'No account found with this email. Please sign up to create your account first.';
+        } else {
+          friendlyError = 'Incorrect password. If you forgot your password, please click "Forgot password?" to reset it.';
+        }
       } else if (err.code === 'auth/too-many-requests') {
         friendlyError = 'Too many failed sign in attempts. Please try again later or reset your password.';
       } else if (err.code === 'auth/invalid-email') {
@@ -869,46 +906,33 @@ export const AuthProvider = ({ children }) => {
     }
 
     try {
-      // 1. Send 100% custom branded TAEMRY FLUX HTML reset email via Backend SMTP
+      // 1. Try sending branded reset email via backend SMTP
       try {
         const response = await apiClient.post('/auth/forgot-password', { email: cleanEmail });
         if (response.data?.success) {
           return true;
         }
-        if (response.data?.code === 'auth/user-not-found' || response.data?.success === false) {
-          const notFoundErr = new Error(response.data?.message || 'No account found with this email address. Please check your email or sign up first.');
-          notFoundErr.code = response.data?.code || 'auth/user-not-found';
-          setAuthError(notFoundErr.message);
-          throw notFoundErr;
-        }
       } catch (backendErr) {
-        if (backendErr.code === 'auth/user-not-found' || backendErr.message?.includes('No account found')) {
-          throw backendErr;
-        }
-        const errStatus = backendErr.response?.status;
-        const errData = backendErr.response?.data;
-        const errMsg = errData?.message || backendErr.message || '';
-        if (
-          errStatus === 404 ||
-          errData?.code === 'auth/user-not-found' ||
-          errMsg.toLowerCase().includes('account') ||
-          errMsg.toLowerCase().includes('not found')
-        ) {
-          const notFoundErr = new Error(errMsg || 'No account found with this email address. Please check your email or sign up first.');
-          notFoundErr.code = 'auth/user-not-found';
-          setAuthError(notFoundErr.message);
-          throw notFoundErr;
-        }
         console.warn('Backend custom reset email notice:', backendErr?.message);
-        throw backendErr;
       }
 
-      // 2. Fallback to Firebase client if backend is temporarily unreachable
-      if (isFirebaseConfigured) {
-        await sendPasswordResetEmail(auth, cleanEmail);
-        return true;
-      } else {
-        // Fallback / Offline validation
+      // 2. Try Firebase Auth client-side password reset email
+      if (isFirebaseConfigured && auth) {
+        try {
+          await sendPasswordResetEmail(auth, cleanEmail);
+          return true;
+        } catch (fbErr) {
+          console.warn('Firebase client password reset error:', fbErr?.message);
+          if (fbErr.code === 'auth/user-not-found') {
+            const notFoundErr = new Error('No account found with this email address. Please check your email or sign up first.');
+            notFoundErr.code = 'auth/user-not-found';
+            setAuthError(notFoundErr.message);
+            throw notFoundErr;
+          }
+        }
+      }
+
+      // 3. Fallback / Offline validation
         let registeredUsers = [];
         try {
           const rawRegistered = localStorage.getItem('taemry_registered_emails');
@@ -928,7 +952,6 @@ export const AuthProvider = ({ children }) => {
           throw notFoundErr;
         }
         return true;
-      }
     } catch (err) {
       if (err.code !== 'auth/user-not-found' && !err.message?.includes('No account found')) {
         console.warn('Password reset notice:', err?.message || err);

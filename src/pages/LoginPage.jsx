@@ -316,7 +316,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       } catch {}
       onNavigate('home');
     } catch (err) {
-      console.error('Auth error:', err);
+      console.warn('Auth notification:', err.message || err);
       // In case of error during signup, clear the waiting verification flag
       try {
         sessionStorage.removeItem('taemry_waiting_verification');
@@ -325,18 +325,17 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       // Friendly message
       const msg = err.message || '';
       if (
-        msg.includes('user-not-found') ||
         msg.includes('No account found') ||
-        msg.includes('create your account first')
+        msg.includes('user-not-found')
       ) {
         setError('No account found with this email. Please sign up to create your account first.');
       } else if (
+        msg.includes('Incorrect password') ||
         msg.includes('wrong-password') ||
-        msg.includes('Incorrect password')
+        msg.includes('invalid-credential') ||
+        msg.includes('invalid-login-credentials')
       ) {
-        setError('Incorrect password. Please verify your password and try again.');
-      } else if (msg.includes('invalid-credential')) {
-        setError('No account found or invalid credentials. If you have not created an account yet, please click "Sign up" below.');
+        setError('Incorrect password. If you forgot your password, please click "Forgot password?" to reset it.');
       } else if (msg.includes('email-already-in-use') || msg.includes('already exists')) {
         setError('An account with this email already exists. Try signing in.');
       } else if (msg.includes('invalid-email')) {
@@ -363,7 +362,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       } catch {}
       onNavigate('home');
     } catch (err) {
-      console.error('Google Sign In failed:', err);
+      console.warn('Google Sign In notice:', err?.message || err);
       setError(err.message || 'Could not sign in with Google.');
     } finally {
       setLoading(false);
@@ -588,6 +587,22 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
               <span className="flex-1 font-medium">{error}</span>
             </div>
+            {(error.toLowerCase().includes('password') || error.toLowerCase().includes('credential') || error.toLowerCase().includes('forgot')) && !error.toLowerCase().includes('no account') && !error.toLowerCase().includes('sign up') && !isSignUp && (
+              <button
+                id="btn-error-reset-password"
+                type="button"
+                onClick={() => {
+                  setForgotEmail(email || '');
+                  setForgotError('');
+                  setResetSent(false);
+                  setShowForgotModal(true);
+                }}
+                className="self-start mt-1 px-3 py-1.5 bg-[#0c5963] hover:bg-[#09424a] text-white rounded-lg font-bold text-xs transition cursor-pointer flex items-center gap-1.5 shadow-xs"
+              >
+                <KeyRound className="w-3.5 h-3.5" />
+                <span>Forgot Password? Click here to Reset</span>
+              </button>
+            )}
             {error.toLowerCase().includes('already exist') && (
               <button
                 type="button"
@@ -927,7 +942,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             ) : (
               <form onSubmit={handleForgotPassword} className="space-y-4">
                 <p className="text-xs text-[#526a70] leading-relaxed">
-                  Enter the email address associated with your TAEMRY account. We will send you an official single-use password reset link.
+                  Enter the email address associated with your TAEMRY account. We will send you an official password reset link.
                 </p>
 
                 {forgotError && (

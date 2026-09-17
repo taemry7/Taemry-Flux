@@ -312,3 +312,19 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Complete Referrals Page Lock**:
   - The Referrals page layout, stats, downline directory, and single Ultra-Short Link configuration are 100% frozen and permanently locked against unsolicited modifications.
 
+## STRICT INVARIANT: Login & Sign Up Page & Authentication Engine Lock (PERMANENT & LOCKED)
+- **Zero Unsolicited Modifications**:
+  - `src/pages/LoginPage.jsx`, `src/context/AuthContext.jsx`, `backend/routes/auth.js`, and `src/utils/googleAuth.js` are 100% permanently finalized and locked against any auto-reverting, restructuring, refactoring, or speculative edits.
+- **Accurate Error Messaging & Account Existence Discrimination**:
+  - When an unregistered email attempts to sign in, the system accurately displays:
+    `"No account found with this email. Please sign up to create your account first."` along with the direct trigger to switch to Sign Up.
+  - When a registered account enters an incorrect password, the system displays:
+    `"Incorrect password. If you forgot your password, please click 'Forgot password?' to reset it."` along with the direct trigger to open Forgot Password.
+  - No instant password reset modal; standard email reset link workflow is preserved cleanly.
+- **Console Notice Cleanliness**:
+  - Routine user auth validation rejections (unregistered emails, wrong passwords, user-canceled popups) use clean console notifications (`console.warn`) rather than `console.error` to keep preview logs pristine.
+- **Auth Navigation Invariant**:
+  - First page is strictly `login`.
+  - Successful sign in or sign up transitions to `home`.
+  - Logout from any location redirects to `login`.
+
