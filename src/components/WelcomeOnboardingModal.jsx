@@ -22,9 +22,15 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
       if (!hasInitializedRef.current) {
         hasInitializedRef.current = true;
         setStep(1);
-        // Pre-fill if currentUser already has a default name
-        if (currentUser?.displayName && currentUser.displayName !== 'Member') {
+        // Pre-fill if currentUser already has a real display name (not @username or default 'Member')
+        if (
+          currentUser?.displayName &&
+          currentUser.displayName !== 'Member' &&
+          !currentUser.displayName.startsWith('@')
+        ) {
           setFullName(currentUser.displayName);
+        } else {
+          setFullName('');
         }
       }
     } else {
@@ -55,9 +61,10 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
     setLoading(true);
     setError('');
 
-    // Pre-emptively remove session flag to guarantee no double-triggering
+    // Pre-emptively remove session & local flags to guarantee no double-triggering
     try {
       sessionStorage.removeItem('taemry_show_new_user_welcome');
+      localStorage.removeItem('taemry_show_new_user_welcome');
     } catch {}
 
     try {

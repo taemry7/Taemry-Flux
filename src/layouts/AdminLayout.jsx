@@ -39,6 +39,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 import Logo from '../components/Logo';
+import { db, isFirebaseConfigured } from '../firebase/firebase.config.js';
+import { collection, getDocs } from 'firebase/firestore';
 
 // Sub-page components
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -83,36 +85,118 @@ export default function AdminLayout({ onNavigate }) {
     (currentUser?.email ? (currentUser.email.toLowerCase().includes('taim') ? 'TAIMOOR' : currentUser.email.split('@')[0].toUpperCase()) : 'TAIMOOR')
   ).toUpperCase();
 
-  // Fetch admin stats for pending badges
+  // Fetch admin stats for pending badges & overarching metrics
   const fetchStats = async () => {
     setLoadingStats(true);
+    let backendStats = null;
     try {
       const res = await apiClient.get('/admin/stats');
       if (res.data?.success && res.data.stats) {
-        setStats(res.data.stats);
-        try {
-          localStorage.setItem('taemry_cached_admin_stats', JSON.stringify(res.data.stats));
-        } catch (e) {}
+        backendStats = res.data.stats;
       }
     } catch (err) {
-      console.warn('Failed to load admin summary stats:', err.message);
-      // Fallback to default stats if null so dashboard never gets stuck spinning
-      setStats((prev) => prev || {
-        totalUsers: 0,
-        activeUsers: 0,
-        platformBalance: 0,
-        totalDeposits: 0,
-        totalWithdrawals: 0,
-        pendingDeposits: 0,
-        pendingWithdrawals: 0,
-        pendingTickets: 0,
-        dailyActiveUsers: 0,
-        todayActivity: { deposits: 0, withdrawals: 0, total: 0 },
-        charts: { growth: [], financials: [] }
-      });
-    } finally {
-      setLoadingStats(false);
+      console.warn('Failed to load admin summary stats from API:', err.message);
     }
+
+    // Companion client-side Firestore sync (guarantees accurate metrics across cold-starts & browser caching)
+    let fsStats = null;
+    if (isFirebaseConfigured && db) {
+      try {
+        const [uSnap, dSnap, wSnap, mSnap] = await Promise.all([
+          getDocs(collection(db, 'users')).catch(() => ({ docs: [] })),
+          getDocs(collection(db, 'deposits')).catch(() => ({ docs: [] })),
+          getDocs(collection(db, 'withdrawals')).catch(() => ({ docs: [] })),
+          getDocs(collection(db, 'cloudMiner')).catch(() => ({ docs: [] })),
+        ]);
+
+        let fsUsers = uSnap.docs?.length || 0;
+        let fsDeposits = 0;
+        let fsPendingDeposits = 0;
+        let fsWithdrawals = 0;
+        let fsPendingWithdrawals = 0;
+        let fsTotalEarned = 0;
+        let fsLiability = 0;
+        let fsTotalMined = 0;
+        let fsActiveMiners = 0;
+
+        (uSnap.docs || []).forEach((d) => {
+          const u = d.data();
+          fsLiability += Number(u.walletBalance || 0);
+          fsTotalEarned += Number(u.totalEarned || 0);
+          if (u.minedTflx) fsTotalMined += Number(u.minedTflx);
+        });
+
+        (dSnap.docs || []).forEach((d) => {
+          const dep = d.data();
+          const amt = Number(dep.amountUSD || dep.amount || 0);
+          if (dep.status === 'approved' || dep.status === 'completed') {
+            fsDeposits += amt;
+          } else if (dep.status === 'pending') {
+            fsPendingDeposits++;
+          }
+        });
+
+        (wSnap.docs || []).forEach((d) => {
+          const wd = d.data();
+          const amt = Number(wd.amountUSD || wd.amount || 0);
+          if (wd.status === 'paid' || wd.status === 'approved' || wd.status === 'completed') {
+            fsWithdrawals += amt;
+          } else if (wd.status === 'pending') {
+            fsPendingWithdrawals++;
+          }
+        });
+
+        (mSnap.docs || []).forEach((d) => {
+          const m = d.data();
+          fsTotalMined += Number(m.minedTflx || 0);
+          if (m.isMiningActive) fsActiveMiners++;
+        });
+
+        fsStats = {
+          totalUsers: fsUsers,
+          totalDeposits: fsDeposits,
+          pendingDeposits: fsPendingDeposits,
+          totalWithdrawals: fsWithdrawals,
+          pendingWithdrawals: fsPendingWithdrawals,
+          totalEarned: fsTotalEarned,
+          platformBalance: fsLiability,
+          cloudMiner: {
+            activeMiners: fsActiveMiners,
+            totalMinedTflx: fsTotalMined,
+          }
+        };
+      } catch (fsErr) {
+        console.warn('Firestore companion aggregation notice:', fsErr.message);
+      }
+    }
+
+    // Merge highest accurate values between API and Firestore
+    const merged = {
+      totalUsers: Math.max(backendStats?.totalUsers || 0, fsStats?.totalUsers || 0),
+      activeUsers: Math.max(backendStats?.activeUsers || 0, fsStats?.totalUsers || 0),
+      totalDeposits: Math.max(backendStats?.totalDeposits || 0, fsStats?.totalDeposits || 0),
+      pendingDeposits: Math.max(backendStats?.pendingDeposits || 0, fsStats?.pendingDeposits || 0),
+      totalWithdrawals: Math.max(backendStats?.totalWithdrawals || 0, fsStats?.totalWithdrawals || 0),
+      pendingWithdrawals: Math.max(backendStats?.pendingWithdrawals || 0, fsStats?.pendingWithdrawals || 0),
+      totalEarned: Math.max(backendStats?.totalEarned || 0, fsStats?.totalEarned || 0),
+      platformBalance: Math.max(backendStats?.platformBalance || 0, fsStats?.platformBalance || 0),
+      pendingTickets: backendStats?.pendingTickets || 0,
+      dailyActiveUsers: backendStats?.dailyActiveUsers || 0,
+      todayActivity: backendStats?.todayActivity || { deposits: 0, withdrawals: 0, total: 0 },
+      charts: backendStats?.charts || { growth: [], financials: [] },
+      cloudMiner: {
+        activeMiners: Math.max(backendStats?.cloudMiner?.activeMiners || 0, fsStats?.cloudMiner?.activeMiners || 0),
+        totalMinedTflx: Math.max(backendStats?.cloudMiner?.totalMinedTflx || 0, fsStats?.cloudMiner?.totalMinedTflx || 0),
+        totalHashrate: backendStats?.cloudMiner?.totalHashrate || 0,
+        totalMinersRecorded: Math.max(backendStats?.cloudMiner?.totalMinersRecorded || 0, fsStats?.totalUsers || 0),
+      },
+    };
+
+    setStats(merged);
+    try {
+      localStorage.setItem('taemry_cached_admin_stats', JSON.stringify(merged));
+    } catch (e) {}
+    setLoadingStats(false);
   };
 
   useEffect(() => {

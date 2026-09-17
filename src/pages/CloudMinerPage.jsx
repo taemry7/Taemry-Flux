@@ -260,7 +260,7 @@ export default function CloudMinerPage({ onNavigate }) {
           }
 
           const existing = Number(remote.minedTflx);
-          const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 283.98;
+          const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 0.00;
           setMinerData((prev) => ({
             ...prev,
             ...remote,
@@ -274,21 +274,21 @@ export default function CloudMinerPage({ onNavigate }) {
           const initialPayload = {
             userId: currentUser.uid,
             userEmail: currentUser.email || '',
-            minedTflx: 283.98,
-            isMiningActive: true,
-            sessionStartTime: Date.now() - (1.5 * 60 * 60 * 1000),
+            minedTflx: 0.00,
+            isMiningActive: false,
+            sessionStartTime: 0,
             sessionDurationMs: 12 * 60 * 60 * 1000,
             committedYears: 0,
             committedAllocation: 0,
             preStakingBoost: 0,
             effectiveHashrate: 16.0,
-            tier1Active: 2,
-            tier1Total: 3,
-            tier2Active: 4,
-            tier2Total: 6,
-            dayOffsCount: 2,
-            streakDays: 4,
-            claimedCheckInDays: [1, 2, 3],
+            tier1Active: 0,
+            tier1Total: 0,
+            tier2Active: 0,
+            tier2Total: 0,
+            dayOffsCount: 0,
+            streakDays: 0,
+            claimedCheckInDays: [],
             slashedCoins: 0,
             lastSyncTime: Date.now(),
             lastPingTime: 0,

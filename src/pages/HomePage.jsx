@@ -723,9 +723,9 @@ export default function HomePage({ onNavigate }) {
                         </span>
                       </div>
                       <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
-                        <span>{Number(liveMinerData?.minedTflx || 283.98).toFixed(2).split('.')[0]}</span>
+                        <span>{Number(liveMinerData?.minedTflx ?? 0).toFixed(2).split('.')[0]}</span>
                         <span className="balance-cents text-lg sm:text-xl font-extrabold text-[#d97706] dark:text-[#f59e0b]">
-                          .{Number(liveMinerData?.minedTflx || 283.98).toFixed(2).split('.')[1] || '98'}
+                          .{Number(liveMinerData?.minedTflx ?? 0).toFixed(2).split('.')[1] || '00'}
                         </span>
                         <span className="text-sm sm:text-base font-bold text-[#d97706] dark:text-[#f59e0b] ml-1.5">
                           TFLX

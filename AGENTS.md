@@ -205,6 +205,24 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
     - Schema.org `@type: "WebSite"` with `name: "TAEMRY FLUX"` and `alternateName: ["Taemry Flux", "TAEMRY FLUX Official"]` for replacing domain URL with brand name in Google Search results.
     - Schema.org `@type: "ImageObject"` and OpenGraph `og:image:alt` set to `"TAEMRY FLUX Logo"` ensuring Google Images displays `"TAEMRY FLUX Logo"`.
 
+## STRICT INVARIANT: Admin Panel Overview Metrics & Data Lock (PERMANENT & LOCKED)
+- **Admin Dashboard 8-Card Metric Grid**:
+  - The Admin Overview metric grid in `src/pages/admin/AdminDashboard.jsx` is permanently locked to 8 core cards:
+    1. **Total Users**: Total registered users and active users count.
+    2. **Total Deposits**: Total approved deposits amount in USD + pending deposits counter.
+    3. **Total Withdrawals**: Total settled payouts in USD + pending withdrawals counter.
+    4. **Total Earned**: Total platform-wide user earnings (ads + matching commissions) in USD.
+    5. **Total Mining**: Total mined TFLX tokens across all miners + live active miners counter.
+    6. **Liability**: Total user wallet balance liability in USD.
+    7. **DAU (Today)**: Live daily active users who engaged or watched ads today.
+    8. **Support Desk**: Open and pending customer support tickets.
+- **Backend & Client Aggregation Lock**:
+  - Backend route `/api/admin/stats` in `backend/routes/admin.js` must always calculate and return `totalUsers`, `totalDeposits`, `totalWithdrawals`, `totalEarned`, and `cloudMiner` (`totalMinedTflx`, `activeMiners`, `totalHashrate`).
+  - Frontend `src/layouts/AdminLayout.jsx` companion sync merges API and Firestore data to prevent missing numbers or zero resets.
 
-
-
+## STRICT INVARIANT: Cloud Miner Initial Balance & Activation Lock (PERMANENT & LOCKED)
+- **Initial Zero Balance (0 TFLX)**:
+  - New user accounts and default miner cards start strictly at `0` (or `0.00`) TFLX (the old placeholder `283.98` is permanently eliminated across `HomePage.jsx` and `CloudMinerPage.jsx`).
+- **Automatic Live Mining on Package Purchase**:
+  - Cloud mining status (`isMiningActive: true`) activates automatically upon successful advertising package purchase in `backend/routes/package.js` and `src/pages/BuyPackage.jsx`.
+  - Unactivated users or users with `currentPackage: 'None'` start with `minedTflx: 0` and mining paused until they activate a package.

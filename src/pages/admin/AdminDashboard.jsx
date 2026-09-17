@@ -23,7 +23,8 @@ import {
   Trophy,
   Pickaxe,
   Zap,
-  Flame
+  Flame,
+  Award
 } from 'lucide-react';
 import GoLiveModal from '../../components/admin/GoLiveModal';
 
@@ -36,6 +37,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
     platformBalance = 0,
     totalDeposits = 0,
     totalWithdrawals = 0,
+    totalEarned = 0,
     pendingDeposits = 0,
     pendingWithdrawals = 0,
     pendingTickets = 0,
@@ -136,8 +138,8 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
       {/* Note: Watch Ads and Cloud Miner preview cards hidden per user request */}
 
       {/* Core Platform Metric Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {/* Total Users */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* 1. Total Users */}
         <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Users</span>
@@ -157,40 +159,10 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
           </div>
         </div>
 
-        {/* Daily Active Users (DAU) Today (Phase 7) */}
+        {/* 2. Total Deposits Approved */}
         <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">DAU (Today)</span>
-            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-              <Activity className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <p className="text-2xl font-black text-emerald-400 mt-2">{dailyActiveUsers}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
-            <span>Watched ads today</span>
-            <span className="text-emerald-400 font-bold">LIVE</span>
-          </div>
-        </div>
-
-        {/* Platform Balance / Total Liability */}
-        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Liability</span>
-            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-              <Wallet className="w-3.5 h-3.5" />
-            </div>
-          </div>
-          <p className="text-2xl font-black text-indigo-400 mt-2">${Number(platformBalance).toFixed(2)}</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
-            <span>User balances</span>
-            <span className="text-indigo-300 font-semibold">USD</span>
-          </div>
-        </div>
-
-        {/* Total Deposits Approved */}
-        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Deposits</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Deposits</span>
             <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
               <ArrowDownCircle className="w-3.5 h-3.5" />
             </div>
@@ -207,10 +179,10 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
           </div>
         </div>
 
-        {/* Total Withdrawals Settled */}
+        {/* 3. Total Withdrawals Settled */}
         <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Withdrawals</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Withdrawals</span>
             <div className="w-7 h-7 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center">
               <ArrowUpRight className="w-3.5 h-3.5" />
             </div>
@@ -227,7 +199,74 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
           </div>
         </div>
 
-        {/* Tickets Pending (Phase 7) */}
+        {/* 4. Total User Earned */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Earned</span>
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+              <Award className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-amber-400 mt-2">${Number(totalEarned).toFixed(2)}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Ads & Matching</span>
+            <span className="text-amber-300 font-semibold">USD</span>
+          </div>
+        </div>
+
+        {/* 5. Total Cloud Mining (TFLX) */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Total Mining</span>
+            <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-400 flex items-center justify-center">
+              <Pickaxe className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-orange-400 mt-2">
+            {Number(cloudMiner?.totalMinedTflx || 0).toFixed(2)} <span className="text-xs font-bold text-orange-300">TFLX</span>
+          </p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Live: <strong className="text-emerald-400">{cloudMiner?.activeMiners || 0} Mining</strong></span>
+            <button
+              onClick={() => onNavigateTab('cloud-miner')}
+              className="text-orange-400 hover:underline font-semibold cursor-pointer"
+            >
+              Manage &rarr;
+            </button>
+          </div>
+        </div>
+
+        {/* 6. Platform Balance / Total Liability */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Liability</span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <Wallet className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-indigo-400 mt-2">${Number(platformBalance).toFixed(2)}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>User balances</span>
+            <span className="text-indigo-300 font-semibold">USD</span>
+          </div>
+        </div>
+
+        {/* 7. Daily Active Users (DAU) Today */}
+        <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">DAU (Today)</span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <Activity className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <p className="text-2xl font-black text-emerald-400 mt-2">{dailyActiveUsers}</p>
+          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
+            <span>Watched ads today</span>
+            <span className="text-emerald-400 font-bold">LIVE</span>
+          </div>
+        </div>
+
+        {/* 8. Tickets Pending (Support Desk) */}
         <div className="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 shadow-sm relative overflow-hidden">
           <div className="flex items-center justify-between">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Support Desk</span>

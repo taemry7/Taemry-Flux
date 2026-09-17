@@ -231,6 +231,27 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
         });
       }
 
+      // Auto-start live cloud mining state upon package purchase
+      try {
+        const existingRaw = localStorage.getItem('taemry_tflx_miner_data');
+        let existingMiner = {};
+        if (existingRaw) {
+          try { existingMiner = JSON.parse(existingRaw) || {}; } catch (e) {}
+        }
+        const updatedMiner = {
+          ...existingMiner,
+          minedTflx: Number(existingMiner.minedTflx || 0),
+          isMiningActive: true,
+          sessionStartTime: Date.now(),
+          sessionDurationMs: 12 * 60 * 60 * 1000,
+          effectiveHashrate: 16.0,
+          activePackage: data.currentPackage || selectedPkg.name,
+          lastSyncTime: Date.now(),
+        };
+        localStorage.setItem('taemry_tflx_miner_data', JSON.stringify(updatedMiner));
+        window.dispatchEvent(new Event('storage'));
+      } catch (e) {}
+
       const successMsg = `Package bought successfully! You are now on the ${selectedPkg.name} tier.`;
       toast.success(successMsg);
       setNotification({

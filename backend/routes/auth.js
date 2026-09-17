@@ -245,6 +245,16 @@ router.get('/check-verification', async (req, res) => {
       }
     }
 
+    try {
+      if (admin && admin.auth) {
+        const firebaseUser = await admin.auth().getUserByEmail(cleanEmail);
+        if (firebaseUser && firebaseUser.emailVerified) {
+          verifiedEmailsSet.add(cleanEmail);
+          return res.json({ success: true, verified: true });
+        }
+      }
+    } catch {}
+
     return res.json({ success: true, verified: false });
   } catch (err) {
     return res.json({ success: true, verified: false });

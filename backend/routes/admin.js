@@ -81,11 +81,13 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 
     let totalUsers = users.length;
     let platformBalance = 0;
+    let totalEarned = 0;
     let activeUsers = 0;
     let dailyActiveUsers = 0;
 
     users.forEach((u) => {
       platformBalance += Number(u.walletBalance || 0);
+      totalEarned += Number(u.totalEarned || 0);
       if (u.isEligible !== false && !u.isBlocked) {
         activeUsers++;
       }
@@ -93,6 +95,21 @@ router.get('/stats', verifyAdmin, async (req, res) => {
         dailyActiveUsers++;
       }
     });
+
+    // Also check transactions collection to verify total earned yields
+    try {
+      const txSnap = await db.collection('transactions').get().catch(() => ({ docs: [] }));
+      let txEarned = 0;
+      (txSnap.docs || []).forEach((tDoc) => {
+        const t = tDoc.data() || {};
+        if (['ad_reward', 'ad_earning', 'matching_commission', 'referral_bonus', 'milestone_reward', 'yield_credit'].includes(t.type)) {
+          txEarned += Math.abs(Number(t.amount || 0));
+        }
+      });
+      if (txEarned > totalEarned) {
+        totalEarned = txEarned;
+      }
+    } catch (e) {}
 
     // 3. Support Tickets
     let pendingTickets = 0;
@@ -110,8 +127,8 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let todayDepositsCount = 0;
 
     deposits.forEach((d) => {
-      const amt = Number(d.amountUSD || 0);
-      if (d.status === 'approved') {
+      const amt = Number(d.amountUSD || d.amount || 0);
+      if (d.status === 'approved' || d.status === 'completed') {
         totalDeposits += amt;
       }
       if (d.status === 'pending') {
@@ -129,8 +146,8 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let todayWithdrawalsCount = 0;
 
     withdrawals.forEach((w) => {
-      const amt = Number(w.amountUSD || 0);
-      if (w.status === 'paid' || w.status === 'approved') {
+      const amt = Number(w.amountUSD || w.amount || 0);
+      if (w.status === 'paid' || w.status === 'approved' || w.status === 'completed') {
         totalWithdrawals += amt;
       }
       if (w.status === 'pending') {
@@ -146,7 +163,9 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let totalMinedTflx = 0;
     let totalHashrateRunning = 0;
 
+    const recordedMiners = new Set();
     (minerSnap.docs || []).forEach((d) => {
+      recordedMiners.add(d.id);
       const m = d.data() || {};
       const startTime = Number(m.sessionStartTime) || 0;
       const duration = Number(m.sessionDurationMs) || (12 * 60 * 60 * 1000);
@@ -158,6 +177,13 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       if (isLive) {
         activeMiners++;
         totalHashrateRunning += hashrate;
+      }
+    });
+
+    // Also include any user records that have minedTflx
+    users.forEach((u) => {
+      if (!recordedMiners.has(u.uid) && u.minedTflx) {
+        totalMinedTflx += Number(u.minedTflx) || 0;
       }
     });
 
@@ -195,6 +221,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       stats: {
         totalUsers,
         activeUsers,
+        totalEarned: +totalEarned.toFixed(2),
         platformBalance: +platformBalance.toFixed(2),
         totalDeposits: +totalDeposits.toFixed(2),
         totalWithdrawals: +totalWithdrawals.toFixed(2),
@@ -206,7 +233,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
           activeMiners,
           totalMinedTflx: +totalMinedTflx.toFixed(2),
           totalHashrate: +totalHashrateRunning.toFixed(1),
-          totalMinersRecorded: (minerSnap.docs || []).length,
+          totalMinersRecorded: Math.max((minerSnap.docs || []).length, users.length),
         },
         todayActivity: {
           deposits: todayDepositsCount,

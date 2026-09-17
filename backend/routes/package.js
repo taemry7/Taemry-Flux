@@ -315,6 +315,50 @@ router.post('/buy', verifyToken, async (req, res) => {
       // Subcollection optional if root collection exists
     }
 
+    // 7. Auto-start live cloud mining upon package activation
+    try {
+      const minerRef = db.collection('cloudMiner').doc(uid);
+      const minerDoc = await minerRef.get();
+      const now = Date.now();
+      if (!minerDoc.exists) {
+        await minerRef.set({
+          userId: uid,
+          userEmail: userData.email || '',
+          minedTflx: 0.00,
+          isMiningActive: true,
+          sessionStartTime: now,
+          sessionDurationMs: 12 * 60 * 60 * 1000,
+          effectiveHashrate: 16.0,
+          activePackage: assignedPackageName,
+          committedYears: 0,
+          committedAllocation: 0,
+          preStakingBoost: 0,
+          tier1Active: 0,
+          tier1Total: 0,
+          tier2Active: 0,
+          tier2Total: 0,
+          dayOffsCount: 2,
+          streakDays: 1,
+          claimedCheckInDays: [],
+          slashedCoins: 0,
+          lastSyncTime: now,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      } else {
+        const mData = minerDoc.data() || {};
+        await minerRef.update({
+          isMiningActive: true,
+          sessionStartTime: mData.sessionStartTime && mData.isMiningActive ? mData.sessionStartTime : now,
+          activePackage: assignedPackageName,
+          lastSyncTime: now,
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    } catch (minerErr) {
+      console.warn('Could not auto-start cloud miner upon package purchase:', minerErr.message);
+    }
+
     return res.status(200).json({
       success: true,
       message: `${assignedPackageName} package bought successfully!`,

@@ -126,9 +126,47 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [forgotError, setForgotError] = useState('');
   const [isSendingReset, setIsSendingReset] = useState(false);
   const [verifiedSuccess, setVerifiedSuccess] = useState(false);
-  const [waitingForVerification, setWaitingForVerification] = useState(false);
-  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [waitingForVerification, setWaitingForVerification] = useState(() => {
+    try {
+      return Boolean(sessionStorage.getItem('taemry_waiting_verification'));
+    } catch {
+      return false;
+    }
+  });
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState(() => {
+    try {
+      return sessionStorage.getItem('taemry_waiting_verification') || '';
+    } catch {
+      return '';
+    }
+  });
   const [isCheckingVerification, setIsCheckingVerification] = useState(false);
+  const [resendNotice, setResendNotice] = useState('');
+  const [isResending, setIsResending] = useState(false);
+
+  // Helper to finalize verification and trigger the 3D Welcome & Full Name onboarding modal
+  const completeVerificationAndProceed = React.useCallback(() => {
+    try {
+      sessionStorage.removeItem('taemry_waiting_verification');
+    } catch {}
+    setWaitingForVerification(false);
+    setVerifiedSuccess(true);
+    try {
+      sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
+      localStorage.setItem('taemry_show_new_user_welcome', 'true');
+      window.dispatchEvent(new CustomEvent('taemry_trigger_welcome'));
+    } catch {}
+
+    setTimeout(() => {
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
+      onNavigate('home');
+    }, 600);
+  }, [onNavigate]);
 
   // Check URL parameters for email verification or password reset
   React.useEffect(() => {
@@ -142,9 +180,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         hash.includes('mode=verify');
 
       if (isVerified) {
-        setVerifiedSuccess(true);
-        setIsSignUp(false);
-        setWaitingForVerification(false);
         const emailMatch = (search + hash).match(/email=([^&#]+)/i);
         if (emailMatch && emailMatch[1]) {
           const verifiedEmail = decodeURIComponent(emailMatch[1]);
@@ -153,9 +188,10 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             apiClient.post('/auth/mark-verified', { email: verifiedEmail }).catch(() => {});
           } catch {}
         }
+        completeVerificationAndProceed();
       }
     } catch {}
-  }, []);
+  }, [completeVerificationAndProceed]);
 
   // Real-time automatic polling when waiting for email verification
   React.useEffect(() => {
@@ -166,21 +202,55 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         const res = await apiClient.get(`/auth/check-verification?email=${encodeURIComponent(pendingVerificationEmail)}`);
         if (res.data && res.data.verified) {
           clearInterval(interval);
-          setWaitingForVerification(false);
-          setVerifiedSuccess(true);
-          try {
-            if (localStorage.getItem('taemry_selected_package')) {
-              onNavigate('dashboard', 'buy-package');
-              return;
-            }
-          } catch {}
-          onNavigate('home');
+          completeVerificationAndProceed();
         }
       } catch {}
-    }, 3000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [waitingForVerification, pendingVerificationEmail, onNavigate]);
+  }, [waitingForVerification, pendingVerificationEmail, completeVerificationAndProceed]);
+
+  // Manual Check Verification
+  const handleManualCheckVerification = async () => {
+    if (!pendingVerificationEmail || isCheckingVerification) return;
+    setIsCheckingVerification(true);
+    setError('');
+    try {
+      const res = await apiClient.get(`/auth/check-verification?email=${encodeURIComponent(pendingVerificationEmail)}`);
+      if (res.data && res.data.verified) {
+        completeVerificationAndProceed();
+      } else {
+        setError('Verification link has not been clicked yet. Please open the email in Gmail and click "Verify Email Address".');
+      }
+    } catch (err) {
+      console.warn('Manual check error:', err);
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
+
+  // Resend Verification Email
+  const handleResendVerification = async () => {
+    if (!pendingVerificationEmail || isResending) return;
+    setIsResending(true);
+    setResendNotice('');
+    try {
+      const res = await apiClient.post('/auth/send-verification', {
+        email: pendingVerificationEmail,
+        name: displayName || pendingVerificationEmail.split('@')[0],
+      });
+      if (res.data && res.data.success) {
+        setResendNotice('Verification email has been re-sent! Please check inbox and spam.');
+      } else {
+        setResendNotice('Verification email sent.');
+      }
+    } catch (err) {
+      setResendNotice('Could not resend email. Please try again in a moment.');
+    } finally {
+      setIsResending(false);
+      setTimeout(() => setResendNotice(''), 6000);
+    }
+  };
 
   const { login, signup, loginWithGoogle, resetPassword, isFirebaseConfigured } = useAuth();
 
@@ -216,7 +286,12 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     setLoading(true);
     try {
       if (isSignUp) {
+        const cleanEmail = email.trim().toLowerCase();
+        // Pre-flag verification and welcome modal before signup invocation
+        sessionStorage.setItem('taemry_waiting_verification', cleanEmail);
         sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
+        localStorage.setItem('taemry_show_new_user_welcome', 'true');
+
         const codeToUse = (referredBy && referredBy.trim()) || localStorage.getItem('referralCode') || null;
         if (codeToUse) {
           try {
@@ -224,10 +299,10 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           } catch {}
         }
         const usernameToSave = '@' + displayName.replace(/^@+/, '').trim();
-        await signup(email, password, usernameToSave, codeToUse);
+        await signup(cleanEmail, password, usernameToSave, codeToUse);
 
-        // Transition to automatic email verification screen
-        setPendingVerificationEmail(email.trim().toLowerCase());
+        // Keep state locked on verification screen
+        setPendingVerificationEmail(cleanEmail);
         setWaitingForVerification(true);
         return;
       } else {
@@ -242,6 +317,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       onNavigate('home');
     } catch (err) {
       console.error('Auth error:', err);
+      // In case of error during signup, clear the waiting verification flag
+      try {
+        sessionStorage.removeItem('taemry_waiting_verification');
+      } catch {}
+      setWaitingForVerification(false);
       // Friendly message
       const msg = err.message || '';
       if (
@@ -397,21 +477,21 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         )}
 
         {/* Automatic Email Verification Waiting Card */}
-        {waitingForVerification && (
+        {waitingForVerification ? (
           <div
             id="waitingForVerificationCard"
-            className="mb-6 p-5 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-4 shadow-sm"
+            className="p-6 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-4 shadow-sm"
           >
-            <div className="w-12 h-12 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/10 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
-              <Mail className="w-6 h-6 animate-bounce" />
+            <div className="w-14 h-14 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/10 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
+              <Mail className="w-7 h-7 animate-bounce" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#09353e] dark:text-white">
+              <h3 className="text-lg font-bold text-[#09353e] dark:text-white">
                 Verify Your Email Address
               </h3>
-              <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] mt-1.5 leading-relaxed">
+              <p className="text-xs sm:text-sm text-[#526a6f] dark:text-[#94a3b8] mt-1.5 leading-relaxed">
                 We sent a verification link to <strong className="text-[#0c5963] dark:text-[#2dd4bf] font-semibold">{pendingVerificationEmail}</strong>.
-                Please check your inbox or spam folder in Gmail.
+                Please check your Gmail inbox (or spam folder) and click the verification button.
               </p>
             </div>
 
@@ -420,16 +500,29 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               <span>Checking verification automatically...</span>
             </div>
 
+            {resendNotice && (
+              <div className="p-2.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-medium">
+                {resendNotice}
+              </div>
+            )}
+
+            {error && (
+              <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs font-medium text-left">
+                {error}
+              </div>
+            )}
+
             <p className="text-[11px] text-[#6b8287] dark:text-[#8099a0]">
-              Jesy hi ap Gmail me link par click karenge, ye screen khud ba khud verify ho kar aglay step par redirect ho jay gi!
+              As soon as your email is verified, this screen will automatically open your Welcome & Full Name setup!
             </p>
 
-            <div className="flex items-center justify-center gap-3 pt-1">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 pt-2">
               <button
                 type="button"
+                id="btn-check-verification"
                 onClick={handleManualCheckVerification}
                 disabled={isCheckingVerification}
-                className="px-4 py-2 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
+                className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
               >
                 {isCheckingVerification ? (
                   <>
@@ -443,19 +536,46 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                   </>
                 )}
               </button>
+
               <button
                 type="button"
+                id="btn-resend-verification"
+                onClick={handleResendVerification}
+                disabled={isResending}
+                className="px-4 py-2.5 bg-white dark:bg-[#07171d] border border-[#c5ddd8] dark:border-[#1d4551] hover:bg-[#eaf5f3] dark:hover:bg-[#102e38] text-[#0c5963] dark:text-[#5eead4] text-xs font-bold rounded-xl flex items-center gap-1.5 transition cursor-pointer shadow-xs disabled:opacity-50"
+              >
+                {isResending ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Sending...</span>
+                  </>
+                ) : (
+                  <>
+                    <Mail className="w-3.5 h-3.5" />
+                    <span>Resend Email</span>
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                id="btn-cancel-verification"
                 onClick={() => {
+                  try {
+                    sessionStorage.removeItem('taemry_waiting_verification');
+                  } catch {}
                   setWaitingForVerification(false);
                   setIsSignUp(false);
+                  setError('');
                 }}
-                className="px-3.5 py-2 text-xs font-semibold text-[#5a7075] dark:text-[#94a3b8] hover:bg-[#e6efec] dark:hover:bg-[#102b34] rounded-xl transition cursor-pointer"
+                className="px-3.5 py-2.5 text-xs font-semibold text-[#5a7075] dark:text-[#94a3b8] hover:bg-[#e6efec] dark:hover:bg-[#102b34] rounded-xl transition cursor-pointer"
               >
                 Back to Sign In
               </button>
             </div>
           </div>
-        )}
+        ) : (
+          <>
 
         {/* Error Alert */}
         {error && (
@@ -725,6 +845,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             </p>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {/* Forgot Password Modal */}

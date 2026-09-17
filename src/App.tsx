@@ -20,7 +20,10 @@ function AppContent() {
   const { currentUser, isAdmin } = useAuth();
   const [showNewUserWelcome, setShowNewUserWelcome] = useState(() => {
     try {
-      return sessionStorage.getItem('taemry_show_new_user_welcome') === 'true';
+      return (
+        sessionStorage.getItem('taemry_show_new_user_welcome') === 'true' ||
+        localStorage.getItem('taemry_show_new_user_welcome') === 'true'
+      );
     } catch {
       return false;
     }
@@ -39,13 +42,6 @@ function AppContent() {
     };
   }, []);
 
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem('taemry_show_new_user_welcome') === 'true') {
-        setShowNewUserWelcome(true);
-      }
-    } catch {}
-  }, []);
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window === 'undefined') return 'home';
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
@@ -116,6 +112,29 @@ function AppContent() {
     }
     return 'overview';
   });
+
+  const checkShouldShowWelcome = useCallback(() => {
+    try {
+      const isWelcome =
+        sessionStorage.getItem('taemry_show_new_user_welcome') === 'true' ||
+        localStorage.getItem('taemry_show_new_user_welcome') === 'true';
+      if (isWelcome) {
+        setShowNewUserWelcome(true);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    checkShouldShowWelcome();
+    const handleTrigger = () => checkShouldShowWelcome();
+    window.addEventListener('taemry_trigger_welcome', handleTrigger);
+    window.addEventListener('storage', handleTrigger);
+    return () => {
+      window.removeEventListener('taemry_trigger_welcome', handleTrigger);
+      window.removeEventListener('storage', handleTrigger);
+    };
+  }, [checkShouldShowWelcome, currentUser, currentPage]);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isInitialSplash, setIsInitialSplash] = useState(true);
@@ -301,6 +320,13 @@ function AppContent() {
   // If user signs in while on login page, smoothly transition to put your wallet in motion page (home)
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
+      // If waiting for email verification, DO NOT redirect away from login page!
+      try {
+        if (sessionStorage.getItem('taemry_waiting_verification')) {
+          return;
+        }
+      } catch {}
+
       try {
         if (localStorage.getItem('taemry_selected_package')) {
           navigateTo('dashboard', 'buy-package');
@@ -389,6 +415,7 @@ function AppContent() {
         onComplete={() => {
           try {
             sessionStorage.removeItem('taemry_show_new_user_welcome');
+            localStorage.removeItem('taemry_show_new_user_welcome');
           } catch {}
           setShowNewUserWelcome(false);
           setCurrentPage('dashboard');
