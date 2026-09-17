@@ -674,12 +674,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] flex items-center gap-1.5">
-                  <span>Sponsor Username</span>
-                  {isReferralLocked && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#2dd4bf] text-[10px] font-bold rounded-full border border-[#b8ded7] dark:border-[#173740]">
-                      <Lock className="w-2.5 h-2.5" /> Frozen Sponsor
-                    </span>
-                  )}
+                  <span>Referral Code</span>
                 </label>
               </div>
               <div className="relative">
@@ -700,18 +695,13 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       }
                     } catch {}
                   }}
-                  placeholder="Enter sponsor username (e.g. taemry)"
+                  placeholder="Enter referral code (e.g. taemry)"
                   className={`w-full px-4 py-3 text-sm rounded-xl transition-all ${
                     isReferralLocked
-                      ? 'bg-[#f1eee7] dark:bg-[#081a20] border border-[#d2cbbe] dark:border-[#1f4049] text-[#0c5963] dark:text-[#2dd4bf] font-mono font-bold cursor-not-allowed select-none pr-10'
+                      ? 'bg-[#f1eee7] dark:bg-[#081a20] border border-[#d2cbbe] dark:border-[#1f4049] text-[#0c5963] dark:text-[#2dd4bf] font-mono font-bold cursor-not-allowed select-none'
                       : 'bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none text-[#09353e] dark:text-white placeholder-[#9caea7] dark:placeholder-[#55727a]'
                   }`}
                 />
-                {isReferralLocked && (
-                  <div className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#0c5963] dark:text-[#2dd4bf] pointer-events-none">
-                    <Lock className="w-4 h-4" />
-                  </div>
-                )}
               </div>
             </div>
           )}

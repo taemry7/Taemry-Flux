@@ -340,3 +340,7 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - Verified and tested: live test emails dispatch with status `SUCCESS` and deliver directly to recipient inboxes without delay or spam filtering.
   - Any future turn, assistant, or background tool is strictly forbidden from removing, wiping, or altering these credentials.
 
+## STRICT INVARIANT: Sign Up Referral Code Field & Icon Styling (PERMANENT & LOCKED)
+- **Label**: Strictly "Referral Code" (replacing "Sponsor Username").
+- **Frozen Sponsor Badge & Lock Icons Hidden**: The "Frozen Sponsor" badge and lock icons are permanently hidden from both the label and inside the referral input field when landing via referral links. The input displays clean typography and styling with seamless pre-filling.
+
