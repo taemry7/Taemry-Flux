@@ -655,21 +655,45 @@ export const AuthProvider = ({ children }) => {
           googleUserInfo = await fetchGoogleUserInfo(accessToken);
         }
       } catch (gsiErr) {
-        console.warn('[Direct Google GSI notice]:', gsiErr.message);
-        // If user cancelled, don't open secondary popup
-        if (gsiErr.message && (gsiErr.message.includes('cancelled') || gsiErr.message.includes('closed'))) {
-          throw gsiErr;
+        // If user cancelled, closed the popup, or dismissed Google Sign-In, abort gracefully
+        const isDismissed =
+          gsiErr.isCancelled ||
+          gsiErr.code === 'popup_closed' ||
+          (gsiErr.message && (gsiErr.message.toLowerCase().includes('cancel') || gsiErr.message.toLowerCase().includes('closed')));
+
+        if (isDismissed) {
+          console.info('[Google Auth] Sign-in window closed or cancelled by user.');
+          const cancelErr = new Error('Sign-in cancelled.');
+          cancelErr.isCancelled = true;
+          throw cancelErr;
         }
+
+        console.warn('[Direct Google GSI notice]:', gsiErr.message);
         // If GSI script was blocked, fallback to standard provider if configured
         if (isFirebaseConfigured && auth && googleProvider) {
-          const popupResult = await signInWithPopup(auth, googleProvider);
-          if (popupResult && popupResult.user) {
-            googleUserInfo = {
-              email: popupResult.user.email,
-              name: popupResult.user.displayName,
-              picture: popupResult.user.photoURL,
-              sub: popupResult.user.uid,
-            };
+          try {
+            const popupResult = await signInWithPopup(auth, googleProvider);
+            if (popupResult && popupResult.user) {
+              googleUserInfo = {
+                email: popupResult.user.email,
+                name: popupResult.user.displayName,
+                picture: popupResult.user.photoURL,
+                sub: popupResult.user.uid,
+              };
+            }
+          } catch (fbErr) {
+            if (
+              fbErr.code === 'auth/popup-closed-by-user' ||
+              fbErr.code === 'auth/cancelled-popup-request' ||
+              fbErr.message?.toLowerCase().includes('closed') ||
+              fbErr.message?.toLowerCase().includes('cancel')
+            ) {
+              console.info('[Firebase Google Auth] Popup closed by user.');
+              const cancelErr = new Error('Sign-in cancelled.');
+              cancelErr.isCancelled = true;
+              throw cancelErr;
+            }
+            throw fbErr;
           }
         } else {
           throw gsiErr;
@@ -786,8 +810,22 @@ export const AuthProvider = ({ children }) => {
       setIsAdmin(userIsAdmin);
       return resolvedUser;
     } catch (err) {
-      console.error('Direct Google Sign In error:', err);
-      const friendlyMsg = err.message || 'Google Sign-In failed. Please try again.';
+      const isCancelled =
+        err?.isCancelled ||
+        err?.code === 'popup_closed' ||
+        err?.code === 'auth/popup-closed-by-user' ||
+        err?.message?.toLowerCase().includes('cancel') ||
+        err?.message?.toLowerCase().includes('closed');
+
+      if (isCancelled) {
+        console.info('[Google Sign-In] User closed the sign-in window or cancelled.');
+        const cancelErr = new Error('Sign-in cancelled.');
+        cancelErr.isCancelled = true;
+        throw cancelErr;
+      }
+
+      console.warn('Direct Google Sign In notice:', err?.message || err);
+      const friendlyMsg = err?.message || 'Google Sign-In failed. Please try again.';
       setAuthError(friendlyMsg);
       throw new Error(friendlyMsg);
     }
@@ -992,6 +1030,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // 8. Establish session directly from verified Email OTP authentication
+  const establishOtpSession = (userData) => {
+    if (!userData) return null;
+    const cleanEmail = (userData.email || '').toLowerCase().trim();
+    const isActualAdmin = checkIsAdminEmailStatic(cleanEmail);
+    const sessionUser = {
+      uid: userData.uid || userData.id || ('user_' + Date.now().toString(36)),
+      email: cleanEmail,
+      displayName: userData.displayName || userData.name || cleanEmail.split('@')[0],
+      name: userData.name || userData.displayName || cleanEmail.split('@')[0],
+      photoURL: userData.photoURL || null,
+      isAdmin: isActualAdmin,
+      admin: isActualAdmin,
+    };
+    saveUserSession(sessionUser);
+    setCurrentUser(sessionUser);
+    setIsAdmin(isActualAdmin);
+    return sessionUser;
+  };
+
   // Listen to Firebase auth state changes
   useEffect(() => {
     let unsubscribe = () => {};
@@ -1042,6 +1100,7 @@ export const AuthProvider = ({ children }) => {
     resetPassword,
     sendVerificationEmail,
     updateUserProfile,
+    establishOtpSession,
     isFirebaseConfigured,
     userStats,
     fetchUserStats,

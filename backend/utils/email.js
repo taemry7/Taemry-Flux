@@ -350,3 +350,66 @@ export async function sendCustomVerificationEmail({ userEmail, userName, verifyL
     return null;
   }
 }
+
+/**
+ * 6. Send Branded One-Time Password (OTP) Verification Code Email
+ */
+export async function sendCustomOtpEmail({ userEmail, otpCode }) {
+  try {
+    if (!userEmail || !otpCode) return null;
+    const client = await getTransporter();
+
+    const subject = `Your TAEMRY FLUX Verification Code: ${otpCode}`;
+    const html = `
+      <div style="background-color: #f0f5f4; padding: 40px 14px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; margin: 0;">
+        <div style="max-width: 490px; margin: 0 auto; background: #ffffff; border-radius: 22px; overflow: hidden; border: 1px solid #d4e5e1; box-shadow: 0 12px 32px rgba(12, 89, 99, 0.08);">
+          
+          <!-- App-Like Teal/Emerald Header -->
+          <div style="background: linear-gradient(135deg, #072e38 0%, #0c5963 50%, #0f766e 100%); padding: 32px 24px; text-align: center;">
+            <div style="text-align: center; line-height: 1;">
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-weight: 800; font-size: 22px; letter-spacing: 4px; color: #ffffff; text-transform: uppercase;">TAEMRY </span>
+              <span style="font-family: 'Segoe UI', -apple-system, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #2dd4bf; background-color: #062b32; padding: 3px 8px; border-radius: 5px; text-transform: uppercase; border: 1px solid rgba(45, 212, 191, 0.35); vertical-align: middle;">FLUX</span>
+            </div>
+          </div>
+
+          <!-- Body Content -->
+          <div style="padding: 32px 28px; color: #1e293b; font-size: 14px; line-height: 1.65;">
+            <p style="margin-top: 0; font-size: 16px; font-weight: 700; color: #0c5963;">Hello,</p>
+            <p style="color: #334155; margin-bottom: 8px;">
+              Use the following one-time verification code to securely access your <strong>TAEMRY FLUX</strong> account:
+            </p>
+            
+            <!-- OTP Box -->
+            <div style="text-align: center; margin: 26px 0;">
+              <div style="display: inline-block; background: #f0fdf9; border: 2px dashed #0d9488; border-radius: 16px; padding: 16px 36px;">
+                <span style="font-family: monospace, 'Courier New', Courier; font-size: 36px; font-weight: 800; letter-spacing: 8px; color: #0f766e;">${otpCode}</span>
+              </div>
+              <p style="margin-top: 10px; font-size: 12px; color: #64748b;">This code will expire in 10 minutes.</p>
+            </div>
+
+            <p style="color: #475569; font-size: 13px; margin-top: 16px;">
+              If you did not request this code, you can safely ignore this email. Never share your verification code with anyone.
+            </p>
+
+            <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e8f0ee; font-size: 12px; color: #64748b; line-height: 1.6;">
+              Best regards,<br>
+              <strong style="color: #0c5963; font-size: 13px;">Team TAEMRY FLUX</strong><br>
+              <span style="font-size: 11px; color: #94a3b8;">Please do not reply directly to this email</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    return await client.sendMail({
+      from: FROM_ADDRESS,
+      to: userEmail,
+      subject,
+      html,
+    });
+  } catch (err) {
+    console.error('[EmailService] Failed to send OTP email:', err.message);
+    return null;
+  }
+}

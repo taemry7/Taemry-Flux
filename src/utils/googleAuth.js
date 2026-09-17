@@ -79,13 +79,14 @@ export const requestDirectGoogleToken = async () => {
         scope: 'email profile openid',
         callback: (response) => {
           if (response.error) {
-            console.error('[Google GSI] Token error:', response);
             if (response.error === 'access_denied') {
-              reject(new Error('Sign in cancelled.'));
-            } else {
-              reject(new Error(response.error_description || response.error || 'Google authentication failed.'));
+              console.info('[Google GSI] User cancelled sign in.');
+              const cancelErr = new Error('Sign in cancelled.');
+              cancelErr.isCancelled = true;
+              return reject(cancelErr);
             }
-            return;
+            console.warn('[Google GSI] Token error notice:', response.error_description || response.error);
+            return reject(new Error(response.error_description || response.error || 'Google authentication failed.'));
           }
           if (response.access_token) {
             resolve({ accessToken: response.access_token });
@@ -94,8 +95,33 @@ export const requestDirectGoogleToken = async () => {
           }
         },
         error_callback: (err) => {
-          console.error('[Google GSI] Error callback:', err);
-          reject(new Error(err.message || 'Google Sign-In was closed or blocked.'));
+          const errMsg = typeof err === 'string' ? err : (err?.message || err?.type || '');
+          const isClosedOrCancelled =
+            errMsg.toLowerCase().includes('closed') ||
+            errMsg.toLowerCase().includes('cancel') ||
+            err?.type === 'popup_closed';
+          const isBlocked =
+            errMsg.toLowerCase().includes('blocked') ||
+            err?.type === 'popup_blocked_by_browser';
+
+          if (isClosedOrCancelled) {
+            console.info('[Google GSI] Sign-in popup was closed or dismissed by user.');
+            const cancelErr = new Error('Sign in cancelled.');
+            cancelErr.isCancelled = true;
+            cancelErr.code = 'popup_closed';
+            return reject(cancelErr);
+          }
+
+          if (isBlocked) {
+            console.warn('[Google GSI] Sign-in popup blocked by browser/iframe.');
+            const blockErr = new Error('Google Sign-In popup was blocked by browser. Please allow popups or use Email OTP.');
+            blockErr.isBlocked = true;
+            blockErr.code = 'popup_blocked';
+            return reject(blockErr);
+          }
+
+          console.warn('[Google GSI] Error callback notice:', errMsg || err);
+          reject(new Error(errMsg || 'Google Sign-In was closed or blocked.'));
         },
       });
 

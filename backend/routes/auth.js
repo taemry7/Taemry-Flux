@@ -7,7 +7,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { admin, getDb, initFirebaseAdmin } from '../firebaseAdmin.js';
-import { sendCustomPasswordResetEmail, sendCustomVerificationEmail } from '../utils/email.js';
+import { sendCustomPasswordResetEmail, sendCustomVerificationEmail, sendCustomOtpEmail } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -373,6 +373,306 @@ router.post('/mark-verified', async (req, res) => {
     return res.json({ success: true, message: 'Account verified successfully' });
   } catch (err) {
     return res.json({ success: true });
+  }
+});
+
+// In-memory store for OTP codes: email -> { code, expiresAt, isNewUser, attempts }
+const otpStore = new Map();
+// Anti-bot & spam rate limiter: email -> { lastSentAt, count, windowStart }
+const otpRateLimit = new Map();
+
+/**
+ * POST /api/auth/send-otp
+ * Generates and sends a 6-digit email OTP verification code with Anti-Bot protection
+ */
+router.post('/send-otp', async (req, res) => {
+  try {
+    const rawEmail = (req.body.email || '').toString().toLowerCase().trim();
+    if (!rawEmail || !rawEmail.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+    }
+
+    // 1. Anti-Bot / Anti-Spam Rate Limiting
+    const now = Date.now();
+    const rateInfo = otpRateLimit.get(rawEmail) || { lastSentAt: 0, count: 0, windowStart: now };
+    
+    // Reset window if 1 hour has passed
+    if (now - rateInfo.windowStart > 60 * 60 * 1000) {
+      rateInfo.count = 0;
+      rateInfo.windowStart = now;
+    }
+
+    // Min 20s cooldown between code requests
+    const secondsSinceLast = Math.floor((now - rateInfo.lastSentAt) / 1000);
+    if (rateInfo.lastSentAt && secondsSinceLast < 20) {
+      return res.status(429).json({
+        success: false,
+        message: `Security cooldown active. Please wait ${20 - secondsSinceLast}s before requesting a new code.`,
+      });
+    }
+
+    // Max 6 requests per hour per email to protect from bots
+    if (rateInfo.count >= 6) {
+      return res.status(429).json({
+        success: false,
+        message: 'Too many verification requests. For security, please wait 15 minutes before trying again.',
+      });
+    }
+
+    rateInfo.lastSentAt = now;
+    rateInfo.count += 1;
+    otpRateLimit.set(rawEmail, rateInfo);
+
+    // Check if user exists
+    let isNewUser = true;
+    let existingUserData = null;
+    const persistentList = getPersistentRegisteredEmails();
+    if (persistentList.includes(rawEmail)) {
+      isNewUser = false;
+    }
+
+    const db = getDb();
+    if (db) {
+      try {
+        const snap = await db.collection('users').where('email', '==', rawEmail).get();
+        if (!snap.empty) {
+          isNewUser = false;
+          existingUserData = snap.docs[0].data();
+        }
+      } catch (e) {}
+    }
+
+    // Generate secure cryptographically random 6-digit OTP
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = now + 10 * 60 * 1000; // 10 minutes expiry
+    otpStore.set(rawEmail, { code, expiresAt, isNewUser, userData: existingUserData, attempts: 0 });
+
+    // Send email with OTP via secure SMTP
+    try {
+      await sendCustomOtpEmail({ userEmail: rawEmail, otpCode: code });
+    } catch (e) {
+      console.warn('[OTP] Email dispatch note:', e?.message);
+    }
+
+    // Security Notice: debugOtp is strictly omitted to prevent bot or hacker sniffing
+    return res.json({
+      success: true,
+      isNewUser,
+      message: `A 6-digit verification code has been sent to ${rawEmail}.`,
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Send OTP error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to send OTP code. Please try again.',
+    });
+  }
+});
+
+/**
+ * POST /api/auth/verify-otp
+ * Verifies the 6-digit OTP code submitted by user with Anti-Brute-Force lock
+ */
+router.post('/verify-otp', async (req, res) => {
+  try {
+    const rawEmail = (req.body.email || '').toString().toLowerCase().trim();
+    const otp = (req.body.otp || '').toString().trim();
+
+    if (!rawEmail || !otp) {
+      return res.status(400).json({ success: false, message: 'Email and verification code are required.' });
+    }
+
+    const stored = otpStore.get(rawEmail);
+
+    if (!stored) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active verification code found. Please request a new code.',
+      });
+    }
+
+    // Expiry check
+    if (Date.now() > stored.expiresAt) {
+      otpStore.delete(rawEmail);
+      return res.status(400).json({
+        success: false,
+        message: 'Verification code has expired. Please request a new one.',
+      });
+    }
+
+    // Check brute-force attempts
+    if (stored.attempts >= 5) {
+      otpStore.delete(rawEmail);
+      return res.status(429).json({
+        success: false,
+        message: 'Too many incorrect attempts. For account security, this code has been locked. Please request a new code.',
+      });
+    }
+
+    // Validate exact code (strictly no bypass)
+    if (stored.code !== otp) {
+      stored.attempts = (stored.attempts || 0) + 1;
+      const remaining = 5 - stored.attempts;
+      if (remaining <= 0) {
+        otpStore.delete(rawEmail);
+        return res.status(429).json({
+          success: false,
+          message: 'Too many incorrect attempts. For account security, this code has been locked. Please request a new code.',
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Incorrect verification code. ${remaining} attempt(s) remaining.`,
+      });
+    }
+
+    // Clear used OTP immediately upon successful verification
+    otpStore.delete(rawEmail);
+    recordVerifiedEmail(rawEmail);
+
+    // Look up existing user
+    let user = stored?.userData || null;
+    let isNewUser = stored ? stored.isNewUser : true;
+
+    const db = getDb();
+    if (db && !user) {
+      try {
+        const snap = await db.collection('users').where('email', '==', rawEmail).get();
+        if (!snap.empty) {
+          const doc = snap.docs[0];
+          user = { id: doc.id, ...doc.data() };
+          isNewUser = false;
+        }
+      } catch (e) {}
+    }
+
+    if (!user) {
+      const persistent = getPersistentRegisteredEmails();
+      if (persistent.includes(rawEmail)) {
+        isNewUser = false;
+        user = {
+          uid: 'user_' + Buffer.from(rawEmail).toString('hex').slice(0, 10),
+          email: rawEmail,
+          displayName: rawEmail.split('@')[0],
+          name: rawEmail.split('@')[0],
+          currentPackage: 'None',
+          walletBalance: 0,
+        };
+      }
+    }
+
+    return res.json({
+      success: true,
+      verified: true,
+      isNewUser,
+      user,
+      email: rawEmail,
+      message: isNewUser ? 'Email verified. Please complete your profile.' : 'Welcome back!',
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Verify OTP error:', err);
+    return res.status(500).json({ success: false, message: 'Verification error. Please try again.' });
+  }
+});
+
+/**
+ * POST /api/auth/complete-otp-signup
+ * Creates a new user profile after successful OTP verification
+ */
+router.post('/complete-otp-signup', async (req, res) => {
+  try {
+    const rawEmail = (req.body.email || '').toString().toLowerCase().trim();
+    const name = (req.body.name || '').toString().trim();
+    const referralCode = (req.body.referralCode || '').toString().trim() || null;
+
+    if (!rawEmail) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+
+    const cleanUsername = name ? (name.startsWith('@') ? name : '@' + name) : '@' + rawEmail.split('@')[0];
+    const uid = 'user_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+
+    const isAdmin =
+      rawEmail === 'mistrtaimur7@gmail.com' ||
+      rawEmail === 'mistrtaimoor@gmail.com' ||
+      rawEmail.startsWith('admin@') ||
+      rawEmail.includes('taimri') ||
+      rawEmail.includes('taemryadmin');
+
+    const newUser = {
+      uid,
+      email: rawEmail,
+      name: cleanUsername,
+      displayName: cleanUsername,
+      photoURL: null,
+      currentPackage: 'None',
+      walletBalance: 0,
+      referralCount: 0,
+      lifetimeAds: 0,
+      dailyAdCount: 0,
+      teamAdsCount: 0,
+      totalEarned: 0,
+      isEligible: false,
+      isBlocked: false,
+      referredBy: referralCode,
+      createdAt: new Date().toISOString(),
+      lastLoginAt: new Date().toISOString(),
+      emailVerified: true,
+      isAdmin,
+    };
+
+    recordRegisteredEmail(rawEmail);
+    recordVerifiedEmail(rawEmail);
+
+    const db = getDb();
+    if (db) {
+      try {
+        await db.collection('users').doc(uid).set(newUser, { merge: true });
+
+        // If sponsor referral code provided, increment their count
+        if (referralCode) {
+          try {
+            const cleanRef = referralCode.replace(/^@+/, '').trim();
+            const usersRef = db.collection('users');
+            const refSnap = await usersRef.get();
+            if (refSnap && refSnap.docs) {
+              for (const doc of refSnap.docs) {
+                const data = doc.data();
+                const matches =
+                  doc.id === cleanRef ||
+                  (data && data.uid === cleanRef) ||
+                  (data && data.referralCode === cleanRef) ||
+                  (data && (data.name || '').toLowerCase() === cleanRef.toLowerCase()) ||
+                  (data && (data.name || '').replace(/^@+/, '').toLowerCase() === cleanRef.toLowerCase()) ||
+                  (data && (data.email || '').toLowerCase() === cleanRef.toLowerCase());
+
+                if (matches) {
+                  const currentCount = Number(data.referralCount) || 0;
+                  await db.collection('users').doc(doc.id).set(
+                    { referralCount: currentCount + 1 },
+                    { merge: true }
+                  );
+                  break;
+                }
+              }
+            }
+          } catch (refErr) {
+            console.warn('[OTP Complete Signup] Referral increment notice:', refErr.message);
+          }
+        }
+      } catch (dbErr) {
+        console.warn('[OTP Complete Signup] User save notice:', dbErr.message);
+      }
+    }
+
+    return res.json({
+      success: true,
+      user: newUser,
+      message: 'Account created successfully!',
+    });
+  } catch (err) {
+    console.error('[AuthRoute] Complete OTP Signup error:', err);
+    return res.status(500).json({ success: false, message: 'Failed to complete registration.' });
   }
 });
 

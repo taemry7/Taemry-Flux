@@ -143,6 +143,30 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
     return 'TF';
   };
 
+  if (currentPage === 'login') {
+    return (
+      <header className="w-full z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2.5 sm:pt-3 pb-0 flex items-center justify-end">
+          {/* Clean Theme Toggle for guest: ONLY Sun / Moon icon on right side */}
+          <button
+            type="button"
+            id="btn-nav-theme-toggle-guest"
+            onClick={toggleTheme}
+            className="w-9 h-9 rounded-full flex items-center justify-center bg-white dark:bg-[#0c222a] border border-[#ded7ca] dark:border-[#1a3f4a] text-[#4d666b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#38bdf8] hover:bg-[#f5f1e8] dark:hover:bg-[#12313c] shadow-xs transition-colors cursor-pointer"
+            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            aria-label={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          >
+            {theme === 'dark' ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-[#09353e]" />
+            )}
+          </button>
+        </div>
+      </header>
+    );
+  }
+
   return (
     <header className={`sticky top-0 z-30 w-full bg-[#faf8f5]/90 dark:bg-[#07151a]/95 backdrop-blur-md border-b border-[#e9e3d8] dark:border-[#15323b] transition-all duration-200 ${
       isDrawerOpen ? 'blur-[2px] opacity-70 pointer-events-none' : ''
