@@ -18,6 +18,10 @@ export const DEFAULT_SETTINGS = {
   easypaisaName: 'TAEMRY OFFICIAL',
   jazzcashNumber: '03009876543',
   jazzcashName: 'TAEMRY OFFICIAL',
+  upaisaNumber: '03129876543',
+  upaisaName: 'TAEMRY OFFICIAL',
+  sadapayNumber: '03009876543',
+  sadapayName: 'TAEMRY OFFICIAL',
   cryptoAddresses: {
     USDT: '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)',
     BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',

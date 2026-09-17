@@ -20,7 +20,9 @@ import {
   ExternalLink,
   Loader2,
   RefreshCw,
-  Wallet
+  Wallet,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -32,7 +34,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
   const toast = useToast();
 
   // Selected payment method
-  const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'bank' | 'easypaisa' | 'jazzcash' | 'crypto'
+  const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'jazzcash' | 'upaisa' | 'sadapay' | 'bank' | 'crypto'
+  const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false);
   const [amountUSD, setAmountUSD] = useState('10');
   const [transactionId, setTransactionId] = useState('');
   const [screenshotFile, setScreenshotFile] = useState(null);
@@ -44,10 +47,12 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     bankAccountName: 'TAEMRY FLUX HOLDINGS LTD',
     bankAccountNumber: 'PK76MEZN0000123456789012',
     bankName: 'Meezan Bank Ltd',
-    easypaisaNumber: '03451234567',
-    easypaisaName: 'TAEMRY OFFICIAL',
     jazzcashNumber: '03009876543',
     jazzcashName: 'TAEMRY OFFICIAL',
+    upaisaNumber: '03129876543',
+    upaisaName: 'TAEMRY OFFICIAL',
+    sadapayNumber: '03009876543',
+    sadapayName: 'TAEMRY OFFICIAL',
     cryptoAddresses: {
       USDT: '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)',
       BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
@@ -182,7 +187,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     if (selectedMethod === 'bank' || selectedMethod === 'crypto') {
       setToastMessage({
         type: 'error',
-        text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
+        text: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
       });
       return;
     }
@@ -256,8 +261,49 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
   // Calculated conversions
   const exchangeRate = paymentDetails.exchangeRate || 300;
   const numUSD = parseFloat(amountUSD) || 0;
-  const isLocal = ['bank', 'easypaisa', 'jazzcash'].includes(selectedMethod);
+  const isLocal = ['bank', 'jazzcash', 'upaisa', 'sadapay'].includes(selectedMethod);
   const calculatedPKR = Math.round(numUSD * exchangeRate);
+
+  // Clean payment methods catalog (without image logos)
+  const paymentMethodsList = [
+    {
+      id: 'jazzcash',
+      name: 'JazzCash',
+      badge: 'Active • Instant',
+      description: 'Official Mobile Account Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'upaisa',
+      name: 'UPaisa',
+      badge: 'Active • Instant',
+      description: 'Official Mobile Account Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'sadapay',
+      name: 'SadaPay',
+      badge: 'Active • Instant',
+      description: 'Official Wallet / IBAN Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'bank',
+      name: 'Bank Transfer',
+      badge: 'Not Available for Now',
+      description: 'Direct Commercial Bank Wire',
+      isAvailable: false,
+    },
+    {
+      id: 'crypto',
+      name: 'Crypto (USDT)',
+      badge: 'Not Available for Now',
+      description: 'Tether TRC20 / BEP20 Network',
+      isAvailable: false,
+    },
+  ];
+
+  const currentMethodObj = paymentMethodsList.find((m) => m.id === selectedMethod) || paymentMethodsList[0];
 
   return (
     <div className="space-y-6">
@@ -324,95 +370,110 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             <span className="hidden text-xs text-[#718589] font-semibold">Instant verification</span>
           </div>
 
-          {/* Payment Method Selector Pills */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+          {/* Payment Method Selector: Choose Payment Method Button & Expandable Menu */}
+          <div className="space-y-2.5">
+            {/* Choose Payment Method Trigger Button */}
             <button
+              id="btn-choose-payment-method"
               type="button"
-              onClick={() => setSelectedMethod('jazzcash')}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                selectedMethod === 'jazzcash'
-                  ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
-                  : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
-              }`}
+              onClick={() => setIsMethodDropdownOpen((prev) => !prev)}
+              className="w-full p-4 rounded-2xl border border-[#d8d1c3] bg-[#faf8f5] hover:bg-[#f4efe5] text-[#09353e] transition-all flex items-center justify-between shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0c5963]/20"
             >
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
-                <img src="/jazzcash.png" alt="JazzCash" className="w-full h-full object-contain rounded-lg" />
+              <div className="flex items-center gap-3 text-left">
+                <div className="w-10 h-10 rounded-xl bg-[#0c5963]/10 text-[#0c5963] flex items-center justify-center font-black text-sm border border-[#0c5963]/20">
+                  {currentMethodObj?.name?.charAt(0) || 'P'}
+                </div>
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
+                    Choose Payment Method
+                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-sm font-black text-[#09353e]">
+                      {currentMethodObj?.name || 'Choose Payment Method'}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      currentMethodObj?.isAvailable
+                        ? 'bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]'
+                        : 'bg-[#fef3c7] text-[#b45309] border border-[#fde68a]'
+                    }`}>
+                      {currentMethodObj?.badge || 'Choose'}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <span className="text-xs font-bold">JazzCash</span>
+
+              <div className="flex items-center gap-2 text-[#526d72]">
+                <span className="text-xs font-bold hidden sm:inline text-[#0c5963]">
+                  {isMethodDropdownOpen ? 'Close Menu' : 'Select Method'}
+                </span>
+                <ChevronDown className={`w-5 h-5 text-[#0c5963] transition-transform duration-200 ${isMethodDropdownOpen ? 'rotate-180' : ''}`} />
+              </div>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setSelectedMethod('easypaisa')}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                selectedMethod === 'easypaisa'
-                  ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
-                  : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center shadow-xs overflow-hidden p-0.5 border border-[#e4ded2]">
-                <img src="/easypaisa.png" alt="Easypaisa" className="w-full h-full object-contain rounded-lg" />
-              </div>
-              <span className="text-xs font-bold">Easypaisa</span>
-            </button>
+            {/* Expandable Payment Methods Menu */}
+            {isMethodDropdownOpen && (
+              <div className="p-3.5 rounded-2xl bg-white border border-[#e4ded2] shadow-md space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center justify-between px-2 pt-1 pb-1.5 border-b border-[#f0ebe0] text-[11px] font-bold uppercase tracking-wider text-[#718589]">
+                  <span>All Payment Methods</span>
+                  <span>Click to select</span>
+                </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMethod('bank');
-                setToastMessage({
-                  type: 'error',
-                  text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
-                });
-              }}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                selectedMethod === 'bank'
-                  ? 'border-[#ea580c] bg-[#ea580c]/5 text-[#c2410c] ring-2 ring-[#ea580c]/20 shadow-xs'
-                  : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#0284c7] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
-                <svg viewBox="0 0 32 32" className="w-full h-full" fill="none">
-                  <rect width="32" height="32" rx="6" fill="#0284c7" />
-                  <path d="M7 11L16 6L25 11H7Z" fill="#FFFFFF" />
-                  <rect x="9" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
-                  <rect x="13.3" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
-                  <rect x="17.6" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
-                  <rect x="21.9" y="13" width="2.4" height="8" rx="0.5" fill="#FFFFFF" />
-                  <rect x="6" y="22" width="20" height="2.2" rx="0.5" fill="#FFFFFF" />
-                  <circle cx="23.5" cy="23.5" r="4.5" fill="#38BDF8" stroke="#0284c7" strokeWidth="1" />
-                  <path d="M21.5 23.5H24.5M24.5 23.5L23.2 22M24.5 23.5L23.2 25" stroke="#09353e" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <span className="text-xs font-bold">Bank Transfer</span>
-              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] px-1.5 py-0.5 rounded-md leading-none">
-                Not Available for Now
-              </span>
-            </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {paymentMethodsList.map((method) => {
+                    const isSelected = selectedMethod === method.id;
+                    return (
+                      <button
+                        key={method.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedMethod(method.id);
+                          setIsMethodDropdownOpen(false);
+                          if (!method.isAvailable) {
+                            setToastMessage({
+                              type: 'error',
+                              text: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+                            });
+                          } else {
+                            setToastMessage({ type: '', text: '' });
+                          }
+                        }}
+                        className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                          isSelected
+                            ? 'border-[#0c5963] bg-[#0c5963]/5 ring-2 ring-[#0c5963]/20 shadow-xs'
+                            : 'border-[#e4ded2] hover:bg-[#faf8f5] hover:border-[#cbd5e1]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-black text-xs ${
+                            isSelected
+                              ? 'bg-[#0c5963] text-white'
+                              : 'bg-[#f0ebe0] text-[#09353e]'
+                          }`}>
+                            {method.name.charAt(0)}
+                          </div>
+                          <div>
+                            <span className="text-xs font-black text-[#09353e] block">
+                              {method.name}
+                            </span>
+                            <span className="text-[10px] text-[#718589] block">
+                              {method.description}
+                            </span>
+                          </div>
+                        </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedMethod('crypto');
-                setToastMessage({
-                  type: 'error',
-                  text: 'Not Available for Now. Please select JazzCash or Easypaisa.',
-                });
-              }}
-              className={`p-3.5 rounded-2xl border text-center transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                selectedMethod === 'crypto'
-                  ? 'border-[#ea580c] bg-[#ea580c]/5 text-[#c2410c] ring-2 ring-[#ea580c]/20 shadow-xs'
-                  : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
-              }`}
-            >
-              <div className="w-10 h-10 rounded-xl bg-[#26A17B] flex items-center justify-center shadow-xs overflow-hidden p-1 text-white">
-                <img src="/usdt.png" alt="Crypto (USDT)" className="w-full h-full object-contain" />
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
+                          method.isAvailable
+                            ? 'bg-[#ecfdf5] text-[#047857]'
+                            : 'bg-[#fef3c7] text-[#b45309]'
+                        }`}>
+                          {method.badge}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <span className="text-xs font-bold">Crypto (USDT)</span>
-              <span className="text-[9px] font-bold text-[#b45309] bg-[#fef3c7] px-1.5 py-0.5 rounded-md leading-none">
-                Not Available for Now
-              </span>
-            </button>
+            )}
           </div>
 
           {/* Not Available for Now Alert for Bank / Crypto */}
@@ -431,14 +492,22 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                     className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
                   >
                     JazzCash
-                  </button>{' '}
-                  or{' '}
+                  </button>
+                  {', '}
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('easypaisa')}
+                    onClick={() => setSelectedMethod('upaisa')}
                     className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
                   >
-                    Easypaisa
+                    UPaisa
+                  </button>
+                  {', or '}
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMethod('sadapay')}
+                    className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                  >
+                    SadaPay
                   </button>{' '}
                   instead.
                 </p>
@@ -666,29 +735,58 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                 </div>
               )}
 
-              {/* EASYPAISA DETAILS */}
-              {selectedMethod === 'easypaisa' && (
+              {/* UPAISA DETAILS */}
+              {selectedMethod === 'upaisa' && (
                 <div className="space-y-3">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      Easypaisa Account Title
+                      UPaisa Account Title
                     </span>
-                    <p className="text-sm font-bold text-white">{paymentDetails.easypaisaName}</p>
+                    <p className="text-sm font-bold text-white">{paymentDetails.upaisaName || 'TAEMRY OFFICIAL'}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      Easypaisa Account / Mobile Number
+                      UPaisa Account / Mobile Number
                     </span>
                     <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
-                      <span className="text-base font-mono font-black text-[#4ade80]">
-                        {paymentDetails.easypaisaNumber}
+                      <span className="text-base font-mono font-black text-[#f97316]">
+                        {paymentDetails.upaisaNumber || '03129876543'}
                       </span>
                       <button
-                        onClick={() => handleCopy(paymentDetails.easypaisaNumber, 'ep')}
+                        onClick={() => handleCopy(paymentDetails.upaisaNumber || '03129876543', 'up')}
                         className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                       >
-                        {copiedKey === 'ep' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey === 'ep' ? 'Copied' : 'Copy'}</span>
+                        {copiedKey === 'up' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'up' ? 'Copied' : 'Copy'}</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* SADAPAY DETAILS */}
+              {selectedMethod === 'sadapay' && (
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
+                      SadaPay Account Title
+                    </span>
+                    <p className="text-sm font-bold text-white">{paymentDetails.sadapayName || 'TAEMRY OFFICIAL'}</p>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
+                      SadaPay Account / Mobile Number
+                    </span>
+                    <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
+                      <span className="text-base font-mono font-black text-[#2dd4bf]">
+                        {paymentDetails.sadapayNumber || '03009876543'}
+                      </span>
+                      <button
+                        onClick={() => handleCopy(paymentDetails.sadapayNumber || '03009876543', 'sp')}
+                        className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        {copiedKey === 'sp' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'sp' ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
                   </div>
@@ -706,10 +804,10 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                       Not Available for Now
                     </h3>
                     <p className="text-xs text-white/70 max-w-xs mx-auto leading-relaxed">
-                      {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available. Please switch to JazzCash or Easypaisa to proceed with your deposit.
+                      {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available. Please switch to JazzCash, UPaisa, or SadaPay to proceed with your deposit.
                     </p>
                   </div>
-                  <div className="pt-2 flex justify-center gap-2">
+                  <div className="pt-2 flex flex-wrap justify-center gap-2">
                     <button
                       type="button"
                       onClick={() => setSelectedMethod('jazzcash')}
@@ -719,10 +817,17 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSelectedMethod('easypaisa')}
-                      className="px-3 py-1.5 bg-[#00a859] hover:bg-[#008f4c] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                      onClick={() => setSelectedMethod('upaisa')}
+                      className="px-3 py-1.5 bg-[#ea580c] hover:bg-[#c2410c] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                     >
-                      Use Easypaisa
+                      Use UPaisa
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedMethod('sadapay')}
+                      className="px-3 py-1.5 bg-[#0f766e] hover:bg-[#115e59] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
+                    >
+                      Use SadaPay
                     </button>
                   </div>
                 </div>

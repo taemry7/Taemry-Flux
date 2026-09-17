@@ -106,23 +106,22 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Dashboard Overview Fallback**: Dashboard route and internal state must always default to `'overview'` so the dashboard never renders blank or empty. Clicking Overview switches smoothly to the full overview splash view.
 
 ## STRICT INVARIANT: Deposit Page & Payment Gateway Rules (PERMANENT & LOCKED)
-- **Strict Method Availability & "Not Available for Now" Lock**:
-  - **JazzCash**: Official red and yellow brand logo (`/jazzcash.png`). Fully active and operational for deposits.
-  - **Easypaisa**: Official green and white brand logo (`/easypaisa.png`). Fully active and operational for deposits.
-  - **Bank Transfer**: Permanently locked to "Not Available for Now":
-    - Button displays a "Not Available for Now" badge (`bg-[#fef3c7] text-[#b45309]`).
-    - Clicking displays an alert banner ("Not Available for Now" with advice to use JazzCash or Easypaisa).
-    - Step 2 instructions display an unavailable status card with action buttons to switch to JazzCash or Easypaisa.
-    - Submit deposit button is disabled with the label "Not Available for Now".
-  - **Crypto (USDT)**: Official Tether green logo (`/usdt.png`). Permanently locked to "Not Available for Now":
-    - Button displays a "Not Available for Now" badge (`bg-[#fef3c7] text-[#b45309]`).
-    - Clicking displays an alert banner ("Not Available for Now" with advice to use JazzCash or Easypaisa).
-    - Step 2 instructions display an unavailable status card with action buttons to switch to JazzCash or Easypaisa.
-    - Submit deposit button is disabled with the label "Not Available for Now".
+- **Interactive "Choose Payment Method" Button & Dropdown (PERMANENT)**:
+  - Replaced the static open pill grid with a dedicated "Choose Payment Method" trigger button (`#btn-choose-payment-method`).
+  - Clicking this button smoothly opens/expands the complete list of all payment methods.
+  - Selecting any method updates the state and collapses the menu cleanly.
+- **Payment Methods Availability (PERMANENT)**:
+  - **Easypaisa Removed**: Easypaisa has been completely removed per user explicit directive.
+  - **Payment Logos Removed**: All image logos (`/jazzcash.png`, `/easypaisa.png`, `/usdt.png`) have been completely removed from the payment methods selector per user explicit directive. Clean typographic cards with styled status badges are used.
+  - **UPaisa**: Added as an active payment method with instant PKR conversion, receiver title, and account number.
+  - **SadaPay**: Added as an active payment method with instant PKR conversion, receiver title, and account number.
+  - **JazzCash**: Active payment method with instant PKR conversion, receiver title, and account number.
+  - **Bank Transfer**: Permanently locked to "Not Available for Now" with warning alert advising users to use JazzCash, UPaisa, or SadaPay.
+  - **Crypto (USDT)**: Permanently locked to "Not Available for Now" with warning alert advising users to use JazzCash, UPaisa, or SadaPay.
 - **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently visible with live balance and direct routing to withdraw funds.
 - **Hidden Deposit Spans**: Rate span and Instant Verification badge span are permanently hidden in `src/pages/DepositPage.jsx`.
 - **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
-- **Footer Navigation & Copyright**: Re-enabled per user explicit directive ("is footer pehly wala dobara add karo") with quick links (Home, Packages, How it works, Sign In/Dashboard, Contact Support, Whitepaper) and copyright notice active on Home and Dashboard pages. Support link is strictly labeled "Contact Support".
+- **Footer Navigation & Copyright**: Active on Home and Dashboard pages with quick links and copyright notice. Support link is strictly labeled "Contact Support".
 
 ## STRICT INVARIANT: World Rank Calculation & Display (PERMANENT & LOCKED)
 - **Live World Rank Invariant**: World rank starts dynamically at `# 1000+` for initial and standard account activity instead of fake static numbers. It progresses live based on verified ad watch volume, displaying `World Rank # 1000+` natively.

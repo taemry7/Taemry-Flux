@@ -31,6 +31,10 @@ router.get('/payment-details', verifyToken, async (req, res) => {
         easypaisaName: settings.easypaisaName || 'TAEMRY OFFICIAL',
         jazzcashNumber: settings.jazzcashNumber || '03009876543',
         jazzcashName: settings.jazzcashName || 'TAEMRY OFFICIAL',
+        upaisaNumber: settings.upaisaNumber || '03129876543',
+        upaisaName: settings.upaisaName || 'TAEMRY OFFICIAL',
+        sadapayNumber: settings.sadapayNumber || '03009876543',
+        sadapayName: settings.sadapayName || 'TAEMRY OFFICIAL',
         cryptoAddresses: settings.cryptoAddresses || {
           USDT: '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)',
           BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
@@ -191,7 +195,7 @@ router.post(
     }
 
     // 2. Validation - Allowed payment methods
-    const allowedMethods = ['bank', 'easypaisa', 'jazzcash', 'crypto'];
+    const allowedMethods = ['bank', 'jazzcash', 'upaisa', 'sadapay', 'easypaisa', 'crypto'];
     if (!method || !allowedMethods.includes(method.toLowerCase())) {
       return res.status(400).json({
         error: 'Invalid method',
