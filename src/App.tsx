@@ -15,6 +15,7 @@ import SupportPage from './pages/SupportPage';
 import CloudMinerPage from './pages/CloudMinerPage';
 import AdminLayout from './layouts/AdminLayout';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import AdNetworkLoader from './components/AdNetworkLoader';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -134,23 +135,6 @@ function AppContent() {
       window.removeEventListener('storage', handleTrigger);
     };
   }, [checkShouldShowWelcome, currentUser, currentPage]);
-
-  // Purge any unwanted popunders, notification push scripts, or click hijackers
-  // Per user explicit directive: No background notification ads and no direct ads on general page clicks!
-  useEffect(() => {
-    try {
-      const purgeIds = ['adsterra-script-unit1', 'adsterra-script-unit3'];
-      purgeIds.forEach((id) => {
-        const el = document.getElementById(id);
-        if (el) el.remove();
-      });
-
-      // Remove any scripts from profitable popunder/social domains that hijacked clicks
-      document.querySelectorAll('script[src*="pl31367145"], script[src*="pl31367147"]').forEach((el) => {
-        el.remove();
-      });
-    } catch {}
-  }, []);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
@@ -385,6 +369,7 @@ function AppContent() {
           onFinished={handlePageLoaderFinished}
           isInitialSplash={isInitialSplash}
         />
+        <AdNetworkLoader currentPage={currentPage} activeTab={activeTab} />
         <AdminLayout onNavigate={navigateTo} />
       </>
     );
@@ -397,6 +382,9 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
+      {/* Dynamic Multi-Zone Ad Network & Direct Link Manager (Never on login/signup) */}
+      <AdNetworkLoader currentPage={currentPage} activeTab={activeTab} />
+
       {/* 5s on initial App boot splash; completely absent during smooth menu/tab navigation */}
       <PageLoader
         isLoading={isInitialSplash}

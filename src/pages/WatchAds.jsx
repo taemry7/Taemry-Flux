@@ -15,16 +15,15 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
+  Play,
+  Radio,
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
-import {
-  AdsterraBanner,
-  ResponsiveAdLeaderboard,
-  AdsterraNativeContainer,
-} from '../components/AdsterraAds';
-import AdWatchSessionModal from '../components/AdWatchSessionModal';
+import SponsorAdBanner from '../components/SponsorAdBanner';
+import { DIRECT_AD_LINKS, openDirectAdLink } from '../components/AdNetworkLoader';
 
 const WATCH_ADS_PACKAGES = [
   {
@@ -154,7 +153,6 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [adsCatalog, setAdsCatalog] = useState([]);
   const [watchingAdNum, setWatchingAdNum] = useState(null);
-  const [activeAdSession, setActiveAdSession] = useState(null);
 
   // Curated sponsors rotating across 200 ads
   const SPONSORS = [
@@ -213,33 +211,40 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   useEffect(() => {
     fetchAdStatus();
-    // Ensure Monetag service worker (5gvci.com, zone 11814728) is registered
-    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
-    }
   }, []);
 
-  // Trigger verified ad watching session
-  // Opens Direct Link in new tab and displays countdown verification modal
-  const handleWatchAd = (ad) => {
+  // Handle clicking the watch button on an ad card
+  // Direct sponsor link integration (omg10.com/4/11824188 & omg10.com/4/11824210) and ad networks
+  const handleWatchAd = async (adNumber) => {
     const limit = adStatus.dailyLimit || 200;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
     }
-    setErrorMessage('');
-    setActiveAdSession(ad);
-  };
 
-  // Called ONLY when the user views the ad and countdown timer completes
-  const handleCompleteReward = async (adNumber) => {
     try {
       setWatchingAdNum(adNumber);
       setErrorMessage('');
 
-      // Submit verified ad watch reward to server
+      // Determine target direct sponsor ad link
+      const adIndex = (adNumber - 1) % DIRECT_AD_LINKS.length;
+      const targetAdUrl = DIRECT_AD_LINKS[adIndex];
+
+      // Automatically open direct sponsor ad in new tab for user
+      try {
+        window.open(targetAdUrl, '_blank', 'noopener,noreferrer');
+      } catch (err) {
+        console.warn('[Direct Ad Open Error]:', err);
+      }
+
+      // Smooth 2.5s verification delay so the ad view registers
+      await new Promise((resolve) => setTimeout(resolve, 2500));
+
+      // Submit ad watch reward to server
       const res = await apiClient.post('/ads/watch', {
         adId: `ad_${adNumber}_${Date.now()}`,
+        adUrl: targetAdUrl,
+        directAdIndex: adIndex,
       });
 
       if (res.data?.success) {
@@ -248,12 +253,13 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         const newLifetimeAds = res.data.lifetimeAds;
         const newDailyCount = res.data.dailyAdCount;
 
-        // Show celebratory confirmation
+        // Show celebratory confirmation with verified sponsor URL
         setRecentReward({
           amount: rewardAmount,
           lifetimeAds: newLifetimeAds,
           dailyCount: newDailyCount,
           adNumber,
+          adUrl: targetAdUrl,
         });
 
         try {
@@ -279,12 +285,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
         // Background refetch user stats
         fetchUserStats();
-
-        // Close modal
-        setActiveAdSession(null);
       }
     } catch (err) {
-      console.error('Error completing ad view reward:', err);
+      console.error('Error completing ad view:', err);
       const errorMsg = err.response?.data?.message || 'Failed to claim ad reward. Please try again.';
       setErrorMessage(errorMsg);
     } finally {
@@ -342,7 +345,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       {recentReward && (
         <div className="p-4 sm:p-5 rounded-3xl bg-[#ecfdf5] border border-[#a7f3d0] text-[#065f46] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-in zoom-in-95">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#10b981] text-white flex items-center justify-center font-bold shadow-sm">
+            <div className="w-10 h-10 rounded-2xl bg-[#10b981] text-white flex items-center justify-center font-bold shadow-sm shrink-0">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
@@ -352,6 +355,20 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
               <p className="text-xs text-[#047857]">
                 Progress: <strong>{recentReward.dailyCount} of 200</strong> completed today. Ready for Ad #{Math.min(200, recentReward.dailyCount + 1)}!
               </p>
+              {recentReward.adUrl && (
+                <div className="mt-1 flex items-center gap-1.5 text-[11px] text-[#065f46] font-semibold flex-wrap">
+                  <span>Verified Direct Sponsor:</span>
+                  <a
+                    href={recentReward.adUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline text-[#0c5963] font-mono hover:text-[#08424b] inline-flex items-center gap-1 font-bold"
+                  >
+                    <span>{recentReward.adUrl}</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
             </div>
           </div>
           <button
@@ -363,11 +380,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       )}
 
-      {/* TOP RESPONSIVE LEADERBOARD AD (728x90 desktop / 468x60 tablet / 320x50 mobile) */}
-      <ResponsiveAdLeaderboard />
-
-      {/* FEATURED SPONSORED NATIVE AD CONTAINER (Unit #2) */}
-      <AdsterraNativeContainer />
+      {/* OFFICIAL AD SPONSORS & DIRECT NETWORK BANNER */}
+      <SponsorAdBanner />
 
       {/* 200 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
@@ -442,7 +456,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                   <button
                     type="button"
                     disabled={isCompleted || isBusy || adStatus.dailyAdCount >= 200}
-                    onClick={() => handleWatchAd(ad)}
+                    onClick={() => handleWatchAd(ad.adNumber)}
                     className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       isCompleted
                         ? 'text-[#15803d] bg-[#dcfce7] cursor-default'
@@ -469,20 +483,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
             );
           })}
         </div>
-
-        {/* BOTTOM ADSTERRA BANNER (Unit #5 468x60) */}
-        <div className="pt-4 border-t border-[#f0ebe0] flex justify-center">
-          <AdsterraBanner format="468x60" showLabel={true} />
-        </div>
       </div>
-
-      {/* AD WATCHING & VERIFIED COUNTDOWN MODAL */}
-      <AdWatchSessionModal
-        isOpen={Boolean(activeAdSession)}
-        adData={activeAdSession}
-        onCompleteReward={handleCompleteReward}
-        onClose={() => setActiveAdSession(null)}
-      />
     </div>
   );
 }

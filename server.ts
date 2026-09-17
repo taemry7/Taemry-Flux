@@ -194,15 +194,6 @@ async function startServer() {
     res.send('google-site-verification: googlee39205dcefb8c59c.html');
   });
 
-  // Monetag & PWA Service Worker Endpoint
-  app.get('/sw.js', (req, res) => {
-    const swPath = path.join(process.cwd(), 'public', 'sw.js');
-    res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
-    res.setHeader('Service-Worker-Allowed', '/');
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.sendFile(swPath);
-  });
-
   // Short vanity referral link redirect:
   // 1. /ref/:username (e.g. /ref/taemry or /ref/@taemry -> /#/login/signup?ref=taemry)
   // 2. Direct /@username (e.g. /@taemry -> /#/login/signup?ref=taemry)
