@@ -180,9 +180,13 @@ export default function Referrals({ onSelectTab }) {
 
   // Smart Share Trigger: Web Share API if supported, or open Share Modal
   const handleShareLink = async () => {
+    handleShareLinkUrl(currentActiveLink);
+  };
+
+  const handleShareLinkUrl = async (urlToShare) => {
     const shareTitle = 'Join TAEMRY FLUX';
-    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Use my username as your sponsor: @${activeUsername}`;
-    const shareUrl = currentActiveLink;
+    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads and building your network! Sponsor: @${activeUsername}`;
+    const shareUrl = urlToShare || currentActiveLink;
 
     if (typeof navigator !== 'undefined' && navigator.share) {
       try {
@@ -456,6 +460,15 @@ export default function Referrals({ onSelectTab }) {
                     >
                       {isItemCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       <span>{isItemCopied ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleShareLinkUrl(fmt.url)}
+                      className="text-xs font-bold px-3 py-1.5 rounded-xl flex items-center gap-1.5 bg-[#0c5963] hover:bg-[#08424b] text-white transition-all cursor-pointer shadow-xs"
+                      title="Share this format"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Share</span>
                     </button>
                   </div>
                 </div>

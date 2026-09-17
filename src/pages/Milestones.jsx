@@ -22,7 +22,11 @@ import {
   ExternalLink,
   ShieldCheck,
   RefreshCw,
-  DollarSign
+  DollarSign,
+  Clock,
+  UserCheck,
+  UserX,
+  MessageCircle
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -36,21 +40,38 @@ import {
 export default function Milestones({ onSelectTab }) {
   const { currentUser, userStats, updateLocalStats, fetchUserStats } = useAuth();
 
+  // Active rewards list synced with localStorage and live database
+  const [activeRewardsList, setActiveRewardsList] = useState(() => {
+    try {
+      const cached = localStorage.getItem('taemry_custom_milestones');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (Array.isArray(parsed.teamRewards) && parsed.teamRewards.length > 0) {
+          return parsed.teamRewards;
+        }
+      }
+    } catch (e) {}
+    return TEAM_REWARDS;
+  });
+
   const [milestoneStatus, setMilestoneStatus] = useState({
     teamRewards: {
-      currentReferrals: userStats?.referralCount ?? 0,
+      currentReferrals: 0,
       nextTier: { referralsRequired: 5, bonusAmount: 1.00, label: '5 Referrals' },
       progressPercentage: 0,
       claimableReward: null,
     },
     team: {
-      currentAds: userStats?.teamAdsCount ?? 0,
+      currentAds: 0,
       nextMilestone: { adsRequired: 2500, bonusAmount: 10.00 },
       progressPercentage: 0,
       claimableMilestone: null,
     },
     claimedTeamRewards: [],
     claimedTeamMilestones: [],
+    eligibleReferralsCount: 0,
+    totalReferralsCount: 0,
+    directReferrals: [],
   });
 
   const [referralInfo, setReferralInfo] = useState(null);
@@ -71,7 +92,17 @@ export default function Milestones({ onSelectTab }) {
       ]);
 
       if (resStatus.status === 'fulfilled' && resStatus.value?.data?.success) {
-        setMilestoneStatus(resStatus.value.data);
+        const data = resStatus.value.data;
+        setMilestoneStatus(data);
+        if (Array.isArray(data.rewardsList) && data.rewardsList.length > 0) {
+          setActiveRewardsList(data.rewardsList);
+          try {
+            localStorage.setItem('taemry_custom_milestones', JSON.stringify({
+              teamRewards: data.rewardsList,
+              teamMilestones: data.teamMilestones || TEAM_MILESTONES,
+            }));
+          } catch (e) {}
+        }
       }
       if (resRef.status === 'fulfilled' && resRef.value?.data?.success) {
         setReferralInfo(resRef.value.data);
@@ -85,6 +116,33 @@ export default function Milestones({ onSelectTab }) {
 
   useEffect(() => {
     fetchMilestoneData();
+  }, []);
+
+  // Listen for admin panel updates live in real-time
+  useEffect(() => {
+    const handleMilestonesUpdate = (e) => {
+      if (e?.detail?.teamRewards && Array.isArray(e.detail.teamRewards)) {
+        setActiveRewardsList(e.detail.teamRewards);
+      } else {
+        try {
+          const cached = localStorage.getItem('taemry_custom_milestones');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed.teamRewards)) {
+              setActiveRewardsList(parsed.teamRewards);
+            }
+          }
+        } catch (err) {}
+      }
+      fetchMilestoneData();
+    };
+
+    window.addEventListener('taemry_milestones_updated', handleMilestonesUpdate);
+    window.addEventListener('storage', handleMilestonesUpdate);
+    return () => {
+      window.removeEventListener('taemry_milestones_updated', handleMilestonesUpdate);
+      window.removeEventListener('storage', handleMilestonesUpdate);
+    };
   }, []);
 
   // Handle claiming Team Reward
@@ -139,7 +197,7 @@ export default function Milestones({ onSelectTab }) {
         const bonus = res.data.bonus;
         const newBalance = res.data.newBalance;
 
-        setSuccessMessage(`Claimed $${Number(bonus).toFixed(2)} Team Ads Bonus! Credited to your wallet.`);
+        setSuccessMessage(`Claimed $${Number(bonus).toFixed(2)} Team Ads Bonus! Credited directly to your wallet.`);
 
         updateLocalStats({
           walletBalance: newBalance,
@@ -156,9 +214,39 @@ export default function Milestones({ onSelectTab }) {
     }
   };
 
-  // Referral link fallback
-  const userReferralCode = referralInfo?.referralCode || userStats?.referralCode || (currentUser?.uid ? `FLUX-${currentUser.uid.substring(0, 6).toUpperCase()}` : 'FLUX-MEMBER');
-  const referralLink = referralInfo?.referralLink || `${window.location.origin}/#/?ref=${userReferralCode}`;
+  // Direct Referral List & Eligibility Computation
+  const rawDirectReferrals = (Array.isArray(milestoneStatus.directReferrals) && milestoneStatus.directReferrals.length > 0)
+    ? milestoneStatus.directReferrals
+    : (Array.isArray(referralInfo?.directReferrals) ? referralInfo.directReferrals : []);
+
+  const directReferrals = rawDirectReferrals.map((d) => {
+    const pkg = (d.package || d.currentPackage || '').trim();
+    const hasPackage = Boolean(pkg && pkg !== 'None' && pkg !== 'No Package');
+    const isEligible = Boolean(d.isEligible || hasPackage);
+    return {
+      ...d,
+      package: hasPackage ? pkg : 'No Package',
+      isEligible,
+      status: isEligible ? 'Eligible' : 'Ineligible',
+    };
+  });
+
+  const eligibleReferralsList = directReferrals.filter((r) => r.isEligible);
+  const ineligibleReferralsList = directReferrals.filter((r) => !r.isEligible);
+
+  // Only eligible referrals count towards progression
+  const currentReferrals = eligibleReferralsList.length > 0
+    ? eligibleReferralsList.length
+    : (milestoneStatus.eligibleReferralsCount ?? milestoneStatus.teamRewards?.currentReferrals ?? 0);
+
+  const totalReferrals = directReferrals.length > 0
+    ? directReferrals.length
+    : (milestoneStatus.totalReferralsCount ?? referralInfo?.referralCount ?? currentReferrals);
+
+  // Ultra-short direct @username link integration
+  const rawUsername = userStats?.username || currentUser?.displayName || referralInfo?.username || referralInfo?.referralCode || 'member';
+  const cleanUsername = String(rawUsername).trim().replace(/^@/, '');
+  const referralLink = `${window.location.origin}/@${cleanUsername}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -166,13 +254,35 @@ export default function Milestones({ onSelectTab }) {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  const handleShareLink = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join TAEMRY FLUX',
+          text: 'Join TAEMRY FLUX and start earning daily guaranteed ad returns and team cash bonuses!',
+          url: referralLink,
+        });
+      } catch (e) {}
+    } else {
+      handleCopyLink();
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = encodeURIComponent(`Join TAEMRY FLUX and earn daily ad returns and team cash bonuses: ${referralLink}`);
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
+
   const claimedRewardsSet = new Set((milestoneStatus.claimedTeamRewards || []).map(String));
   const claimedTeamAdsSet = new Set((milestoneStatus.claimedTeamMilestones || []).map(Number));
 
-  const currentReferrals = milestoneStatus.teamRewards?.currentReferrals ?? userStats?.referralCount ?? 0;
-  const nextTier = milestoneStatus.teamRewards?.nextTier;
-  const progressPct = milestoneStatus.teamRewards?.progressPercentage ?? 0;
-  const claimableReward = milestoneStatus.teamRewards?.claimableReward;
+  const nextTier = activeRewardsList.find((t) => t.referrals > currentReferrals) || activeRewardsList[activeRewardsList.length - 1];
+  const progressPct = nextTier ? Math.min(100, Math.round((currentReferrals / nextTier.referrals) * 100)) : 100;
+  const claimableReward = activeRewardsList.find(
+    (t) => currentReferrals >= t.referrals && !claimedRewardsSet.has(String(t.referrals)) && !claimedRewardsSet.has(t.id)
+  );
+
+  const totalPotentialRewards = activeRewardsList.reduce((acc, t) => acc + (Number(t.bonus) || 0), 0);
 
   return (
     <div className="space-y-6">
@@ -189,7 +299,7 @@ export default function Milestones({ onSelectTab }) {
             <span>Team Rewards & Milestones</span>
           </h1>
           <p className="text-xs sm:text-sm text-[#546b70] dark:text-[#94a3b8] mt-1">
-            Invite friends using your referral link. Unlock guaranteed cash rewards up to <strong>$600.00</strong> credited directly to your live balance!
+            Invite friends using your referral link. Unlock guaranteed cash rewards up to <strong>${totalPotentialRewards.toFixed(2)}</strong> credited directly to your live balance!
           </p>
         </div>
 
@@ -248,146 +358,299 @@ export default function Milestones({ onSelectTab }) {
       {/* PRIMARY TAB: TEAM REWARDS (Direct Referrals Cash Program) */}
       {activeViewTab === 'rewards' && (
         <div className="space-y-6">
-          {/* Main Hero Card + Referral Link Banner */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left 2 Cols: Active Progression & Claim Button */}
-            <div className="lg:col-span-2 bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-7 border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col justify-between space-y-6">
-              <div>
-                <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center border border-[#b8dfd7] dark:border-[#173740]">
-                      <Gift className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <h2 className="text-lg sm:text-xl font-black text-[#09353e] dark:text-white">
-                        Direct Referral Rewards
-                      </h2>
-                      <p className="text-xs text-[#546b70] dark:text-[#94a3b8]">
-                        Unlock tier bonuses automatically when members join through your personal link.
-                      </p>
-                    </div>
+          {/* PRIMARY TEAM REWARDS CARD - STYLED IDENTICALLY TO TEAM ADS LADDER */}
+          <div className="bg-white dark:bg-[#0c2027] rounded-3xl p-6 sm:p-7 border border-[#e4ded2] dark:border-[#173740] shadow-xs flex flex-col justify-between space-y-6">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-[#e6f4f1] dark:bg-[#0c262e] text-[#0c5963] dark:text-[#38bdf8] flex items-center justify-center border border-[#b8dfd7] dark:border-[#173740]">
+                    <Gift className="w-5 h-5" />
                   </div>
-
-                  <div className="text-right">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#546b70] dark:text-[#94a3b8] block">
-                      Active Referrals
-                    </span>
-                    <span className="text-2xl font-black text-[#0c5963] dark:text-[#38bdf8]">
-                      {currentReferrals} <span className="text-xs font-semibold text-[#546b70] dark:text-[#94a3b8]">Members</span>
-                    </span>
+                  <div>
+                    <h3 className="text-base font-black text-[#09353e] dark:text-white">Direct Referral Rewards</h3>
+                    <p className="text-xs text-[#546b70] dark:text-[#94a3b8]">Cash bonuses when referred members activate any package</p>
                   </div>
                 </div>
 
-                {/* Progress Bar & Next Target */}
-                <div className="mt-5 p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#081a20] border border-[#ece4d6] dark:border-[#173740] space-y-3">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-[#09353e] dark:text-white flex items-center gap-1.5">
-                      <TrendingUp className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#38bdf8]" />
-                      Next Target: <strong>{nextTier?.referralsRequired || 5} Direct Referrals</strong>
-                    </span>
-                    <span className="text-[#0c5963] dark:text-[#38bdf8] font-mono text-sm">
-                      {progressPct}%
-                    </span>
-                  </div>
-
-                  <div className="w-full h-3.5 bg-[#e9e3d7] dark:bg-[#122b33] rounded-full overflow-hidden p-0.5">
-                    <div
-                      className="h-full bg-linear-to-r from-[#0c5963] via-[#0ea5e9] to-[#10b981] rounded-full transition-all duration-700 shadow-xs"
-                      style={{ width: `${Math.min(100, Math.max(4, progressPct))}%` }}
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-center justify-between text-[11px] text-[#546b70] dark:text-[#94a3b8] pt-1">
-                    <span>
-                      Current: <strong>{currentReferrals}</strong> / {nextTier?.referralsRequired || 5} members
-                    </span>
-                    <span>
-                      Target Reward: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">${Number(nextTier?.bonusAmount || 1).toFixed(2)} USD</strong>
-                    </span>
-                  </div>
-                </div>
+                <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-3 py-1 rounded-full border border-[#b8dfd7] dark:border-[#173740]">
+                  {formatNumber(currentReferrals)} Referrals
+                </span>
               </div>
 
-              {/* Main Claim Button */}
-              <div>
-                {claimableReward ? (
-                  <button
-                    id="btn-claim-team-reward"
-                    onClick={() => handleClaimReward(claimableReward.referralsRequired, claimableReward.id)}
-                    disabled={claimLoading}
-                    className="w-full py-4 px-6 bg-linear-to-r from-[#0c5963] to-[#0d7380] hover:from-[#09424a] hover:to-[#0c5963] text-white text-sm font-black rounded-2xl shadow-lg shadow-[#0c5963]/30 transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] border border-white/20"
-                  >
-                    <Gift className="w-5 h-5 animate-bounce" />
-                    <span>
-                      {claimLoading ? 'Processing Claim...' : `CLAIM $${Number(claimableReward.bonusAmount).toFixed(2)} CASH REWARD! (${claimableReward.label})`}
-                    </span>
-                  </button>
-                ) : (
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 rounded-2xl bg-[#f2ede4] dark:bg-[#081a20] border border-[#e4ded2] dark:border-[#173740]">
-                    <div className="flex items-center gap-2.5 text-xs text-[#546b70] dark:text-[#94a3b8]">
-                      <Lock className="w-4 h-4 text-[#819599]" />
-                      <span>
-                        Next reward unlocks at <strong>{nextTier?.referralsRequired || 5} referrals</strong> ({Math.max(0, (nextTier?.referralsRequired || 5) - currentReferrals)} more needed).
-                      </span>
-                    </div>
-                    <button
-                      onClick={handleCopyLink}
-                      className="px-3.5 py-2 text-xs font-bold bg-white dark:bg-[#122b33] text-[#0c5963] dark:text-[#38bdf8] border border-[#b8dfd7] dark:border-[#173740] rounded-xl hover:bg-[#e6f4f1] transition-colors cursor-pointer shrink-0"
-                    >
-                      {copied ? 'Link Copied!' : 'Share Referral Link'}
-                    </button>
-                  </div>
-                )}
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center justify-between text-xs font-bold">
+                  <span className="text-[#546b70] dark:text-[#94a3b8]">
+                    Next Target: <strong>{nextTier?.referrals || 5} Direct Referrals</strong>
+                  </span>
+                  <span className="text-[#0c5963] dark:text-[#38bdf8] font-mono">
+                    {progressPct}%
+                  </span>
+                </div>
+
+                <div className="w-full h-3 bg-[#f0ece3] dark:bg-[#122b33] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-linear-to-r from-[#0c5963] to-[#0ea5e9] rounded-full transition-all duration-700"
+                    style={{ width: `${progressPct}%` }}
+                  />
+                </div>
+
+                <p className="text-[11px] text-[#546b70] dark:text-[#94a3b8] pt-1">
+                  Target Bonus: <strong>${Number(nextTier?.bonus || 1).toFixed(2)}</strong> unlocked when your organization reaches {nextTier?.referrals || 5} direct referrals.
+                </p>
               </div>
             </div>
 
-            {/* Right Col: Instant Referral Link & Share Card */}
-            <div className="bg-linear-to-br from-[#0c5963] to-[#07363c] text-white rounded-3xl p-6 sm:p-7 shadow-md flex flex-col justify-between space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wider bg-white/15 px-2.5 py-0.5 rounded-full border border-white/20">
-                    Your Referral Gateway
+            <div>
+              {claimableReward ? (
+                <button
+                  id="btn-claim-team-reward"
+                  onClick={() => handleClaimReward(claimableReward.referrals, claimableReward.id)}
+                  disabled={claimLoading}
+                  className="w-full py-3.5 px-4 bg-linear-to-r from-[#0c5963] to-[#09424a] hover:from-[#09424a] hover:to-[#07363c] text-white text-xs font-extrabold rounded-2xl shadow-sm shadow-[#0c5963]/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+                >
+                  <Award className="w-4 h-4" />
+                  <span>
+                    Claim ${Number(claimableReward.bonus).toFixed(2)} Team Rewards Bonus! ({claimableReward.label})
                   </span>
+                </button>
+              ) : (
+                <div className="w-full py-3 px-4 bg-[#f2ede4] dark:bg-[#081a20] text-[#718589] dark:text-[#627a7f] text-xs font-bold rounded-2xl border border-[#e4ded2] dark:border-[#173740] flex items-center justify-center gap-2">
+                  <Lock className="w-3.5 h-3.5" />
+                  <span>Next Referral Bonus at {nextTier?.referrals || 5} Direct Referrals</span>
                 </div>
-                <h3 className="text-lg font-black text-white">Share Your Link</h3>
-                <p className="text-xs text-emerald-100/80 mt-1 leading-relaxed">
-                  Every friend who creates an account using your referral link counts directly toward your cash reward milestones.
-                </p>
-
-                {/* Referral Code & Copy Box */}
-                <div className="mt-5 space-y-3">
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-200/90 block mb-1">
-                      Your Referral Code
-                    </label>
-                    <div className="px-3 py-2 bg-black/25 rounded-xl border border-white/15 font-mono text-sm font-bold text-amber-300">
-                      {userReferralCode}
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-emerald-200/90 block mb-1">
-                      Full Referral Link
-                    </label>
-                    <div className="p-2.5 bg-black/25 rounded-xl border border-white/15 text-[11px] font-mono break-all text-slate-100">
-                      {referralLink}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleCopyLink}
-                className="w-full py-3 px-4 bg-white hover:bg-slate-100 text-[#0c5963] font-black text-xs rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-              >
-                {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                <span>{copied ? 'Copied to Clipboard!' : 'Copy Referral Link'}</span>
-              </button>
+              )}
             </div>
           </div>
 
-          {/* Full Team Rewards 8-Tier Ladder Table */}
-          <div className="bg-white dark:bg-[#0c2027] rounded-3xl border border-[#e4ded2] dark:border-[#173740] shadow-xs overflow-hidden">
+          {/* 1. HIDDEN PER USER DIRECTIVE: Referral Link Strip */}
+          <div className="hidden">
+            <div className="bg-linear-to-br from-[#0c5963] to-[#07363c] text-white rounded-3xl p-6 shadow-md flex flex-col justify-between space-y-4">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-white/15 px-2.5 py-0.5 rounded-full border border-white/20">
+                    Your Personal Link
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleCopyLink}
+                      title="Copy Link"
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-white transition-colors cursor-pointer"
+                    >
+                      {copied ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={handleShareLink}
+                      title="Share Link"
+                      className="p-1.5 rounded-lg bg-white/10 hover:bg-white/25 text-white transition-colors cursor-pointer"
+                    >
+                      <Share2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={handleWhatsAppShare}
+                      title="Share on WhatsApp"
+                      className="p-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-white transition-colors cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3 bg-black/30 rounded-2xl border border-white/15 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-emerald-200/90 font-mono">
+                    <span>Direct Link</span>
+                    <span className="text-amber-300 font-bold">@{cleanUsername}</span>
+                  </div>
+                  <div className="p-2 bg-black/40 rounded-xl text-xs font-mono font-bold text-white break-all select-all">
+                    {referralLink}
+                  </div>
+                </div>
+
+                <div className="mt-4 p-3 rounded-2xl bg-white/5 border border-white/10 text-[11px] leading-relaxed text-emerald-100/90 space-y-1">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>Eligibility Requirement</span>
+                  </div>
+                  <p>
+                    Referred members must activate any advertising package to become <strong>Eligible</strong> and count toward your cash milestone tiers.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 pt-2 border-t border-white/15">
+                <button
+                  onClick={handleCopyLink}
+                  className="py-2.5 px-3 bg-white hover:bg-slate-100 text-[#0c5963] font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Copy link to clipboard"
+                >
+                  {copied ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
+                </button>
+                <button
+                  onClick={handleShareLink}
+                  className="py-2.5 px-3 bg-sky-500 hover:bg-sky-400 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Share referral link"
+                >
+                  <Share2 className="w-4 h-4" />
+                  <span>Share</span>
+                </button>
+                <button
+                  onClick={handleWhatsAppShare}
+                  className="py-2.5 px-3 bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-xs rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  title="Share via WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. HIDDEN PER USER DIRECTIVE: Direct Referrals Status Directory (Package Eligibility List) */}
+          <div className="hidden">
+            <div className="p-5 sm:p-6 border-b border-[#ece4d6] dark:border-[#173740] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#faf8f5] dark:bg-[#081a20]">
+              <div>
+                <h3 className="text-base sm:text-lg font-black text-[#09353e] dark:text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-[#0c5963] dark:text-[#38bdf8]" />
+                  <span>Direct Referrals Status Directory</span>
+                </h3>
+                <p className="text-xs text-[#546b70] dark:text-[#94a3b8] mt-0.5">
+                  Members registered through your link. Only members with an active package count toward cash milestone rewards.
+                </p>
+              </div>
+
+              {/* Status Chips */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+                  <UserCheck className="w-3.5 h-3.5" />
+                  <span>{eligibleReferralsList.length} Eligible</span>
+                </span>
+                <span className="text-xs font-bold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{ineligibleReferralsList.length} Ineligible (No Package)</span>
+                </span>
+                <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-3 py-1 rounded-full border border-[#b8dfd7] dark:border-[#173740]">
+                  {directReferrals.length} Total
+                </span>
+              </div>
+            </div>
+
+            {/* Downlines Table or Empty State */}
+            {directReferrals.length === 0 ? (
+              <div className="p-8 sm:p-10 text-center space-y-3">
+                <div className="w-14 h-14 mx-auto rounded-2xl bg-[#f2ede4] dark:bg-[#122b33] text-[#718589] dark:text-[#94a3b8] flex items-center justify-center">
+                  <Users className="w-7 h-7 opacity-70" />
+                </div>
+                <h4 className="text-sm font-bold text-[#09353e] dark:text-white">
+                  No Direct Referrals Yet
+                </h4>
+                <p className="text-xs text-[#546b70] dark:text-[#94a3b8] max-w-md mx-auto">
+                  Share your personal link to invite members. Once they register and activate any package, they will appear here as <strong>Eligible</strong> and immediately advance your Team Rewards ladder!
+                </p>
+                <div className="pt-2 flex items-center justify-center gap-2">
+                  <button
+                    onClick={handleCopyLink}
+                    className="p-2.5 rounded-xl bg-[#0c5963] text-white hover:bg-[#09424a] transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy Link</span>
+                  </button>
+                  <button
+                    onClick={handleShareLink}
+                    className="p-2.5 rounded-xl bg-sky-600 text-white hover:bg-sky-500 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <Share2 className="w-4 h-4" />
+                    <span>Share Link</span>
+                  </button>
+                  <button
+                    onClick={handleWhatsAppShare}
+                    className="p-2.5 rounded-xl bg-emerald-600 text-white hover:bg-emerald-500 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>WhatsApp</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-[#ece4d6] dark:border-[#173740] text-[11px] font-black text-[#546b70] dark:text-[#94a3b8] uppercase tracking-wider bg-[#fbf9f6] dark:bg-[#0a1d24]">
+                      <th className="py-3.5 px-4 sm:px-6">#</th>
+                      <th className="py-3.5 px-4 sm:px-6">Member</th>
+                      <th className="py-3.5 px-4 sm:px-6">Active Package</th>
+                      <th className="py-3.5 px-4 sm:px-6">Joined Date</th>
+                      <th className="py-3.5 px-4 sm:px-6 text-right">Milestone Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#ece4d6] dark:divide-[#173740] text-xs">
+                    {directReferrals.map((member, idx) => (
+                      <tr
+                        key={member.id || idx}
+                        className={`transition-colors ${
+                          member.isEligible
+                            ? 'hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20'
+                            : 'hover:bg-amber-50/40 dark:hover:bg-amber-950/20'
+                        }`}
+                      >
+                        <td className="py-3.5 px-4 sm:px-6 font-bold text-[#546b70] dark:text-[#94a3b8]">
+                          #{idx + 1}
+                        </td>
+                        <td className="py-3.5 px-4 sm:px-6 font-bold text-[#09353e] dark:text-white">
+                          <div className="flex items-center gap-2">
+                            <div
+                              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                                member.isEligible
+                                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300'
+                                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300'
+                              }`}
+                            >
+                              {(member.name || member.username || 'M')[0].toUpperCase()}
+                            </div>
+                            <div>
+                              <span>{member.name || member.username || 'Member'}</span>
+                              <span className="block text-[10px] font-mono text-[#718589] dark:text-[#627a7f]">
+                                @{(member.username || member.name || 'member').replace(/^@/, '')}
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-4 sm:px-6">
+                          <span
+                            className={`inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold ${
+                              member.isEligible
+                                ? 'bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-800'
+                                : 'bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+                            }`}
+                          >
+                            {member.package}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-4 sm:px-6 text-[#546b70] dark:text-[#94a3b8] whitespace-nowrap">
+                          {member.joinedDate ? new Date(member.joinedDate).toLocaleDateString() : 'Recent'}
+                        </td>
+                        <td className="py-3.5 px-4 sm:px-6 text-right whitespace-nowrap">
+                          {member.isEligible ? (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800">
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Eligible</span>
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                              <Clock className="w-3.5 h-3.5" />
+                              <span>Ineligible (No Package)</span>
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* 3. HIDDEN PER USER DIRECTIVE: Full Team Rewards Configurable Ladder Table */}
+          <div className="hidden">
             <div className="p-5 sm:p-6 border-b border-[#ece4d6] dark:border-[#173740] flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[#faf8f5] dark:bg-[#081a20]">
               <div>
                 <h3 className="text-base sm:text-lg font-black text-[#09353e] dark:text-white flex items-center gap-2">
@@ -401,12 +664,12 @@ export default function Milestones({ onSelectTab }) {
 
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] bg-[#e6f4f1] dark:bg-[#0c262e] px-3 py-1 rounded-full border border-[#b8dfd7] dark:border-[#173740]">
-                  Total Potential Rewards: <strong>$1,041.00 USD</strong>
+                  Total Potential Rewards: <strong>${totalPotentialRewards.toFixed(2)} USD</strong>
                 </span>
               </div>
             </div>
 
-            {/* Ladder Table */}
+            {/* Ladder Table - Mapping over activeRewardsList */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -419,7 +682,7 @@ export default function Milestones({ onSelectTab }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#ece4d6] dark:divide-[#173740] text-xs">
-                  {TEAM_REWARDS.map((tier, idx) => {
+                  {activeRewardsList.map((tier, idx) => {
                     const isClaimed = claimedRewardsSet.has(String(tier.referrals)) || claimedRewardsSet.has(tier.id);
                     const isAchieved = currentReferrals >= tier.referrals;
                     const canClaimNow = isAchieved && !isClaimed;
@@ -449,10 +712,10 @@ export default function Milestones({ onSelectTab }) {
                         {/* Target Referrals */}
                         <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
                           <div className="font-bold text-[#09353e] dark:text-white">
-                            {formatNumber(tier.referrals)} Members
+                            {formatNumber(tier.referrals)} Eligible Members
                           </div>
                           <span className="text-[10px] text-[#718589] dark:text-[#627a7f] block">
-                            {tier.stepNote}
+                            {tier.stepNote || tier.extraInfo}
                           </span>
                         </td>
 
@@ -460,7 +723,7 @@ export default function Milestones({ onSelectTab }) {
                         <td className="py-4 px-4 sm:px-6 whitespace-nowrap">
                           <span className="inline-flex items-center gap-1 font-black text-sm text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50">
                             <DollarSign className="w-3.5 h-3.5" />
-                            {tier.bonus.toFixed(2)} USD
+                            {Number(tier.bonus).toFixed(2)} USD
                           </span>
                         </td>
 
@@ -468,7 +731,9 @@ export default function Milestones({ onSelectTab }) {
                         <td className="py-4 px-4 sm:px-6 min-w-[140px]">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-[10px] font-bold text-[#546b70] dark:text-[#94a3b8]">
-                              <span>{Math.min(currentReferrals, tier.referrals)} / {tier.referrals}</span>
+                              <span>
+                                {Math.min(currentReferrals, tier.referrals)} / {tier.referrals}
+                              </span>
                               <span>{tierPct}%</span>
                             </div>
                             <div className="w-full h-2 bg-[#ece4d6] dark:bg-[#122b33] rounded-full overflow-hidden">
@@ -496,7 +761,7 @@ export default function Milestones({ onSelectTab }) {
                               className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs rounded-xl shadow-xs shadow-emerald-600/30 transition-all cursor-pointer active:scale-95 animate-pulse"
                             >
                               <Gift className="w-3.5 h-3.5" />
-                              <span>Claim ${tier.bonus.toFixed(2)}</span>
+                              <span>Claim ${Number(tier.bonus).toFixed(2)}</span>
                             </button>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-semibold bg-[#f2ede4] dark:bg-[#122b33] text-[#718589] dark:text-[#94a3b8] border border-[#e4ded2] dark:border-[#173740]">

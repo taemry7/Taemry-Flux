@@ -36,6 +36,52 @@ export async function getLiveMilestonesConfig(db) {
 }
 
 /**
+ * Helper to get user's direct downlines and partition by package eligibility
+ */
+async function getDirectDownlines(db, uid, user) {
+  let downlineDocs = [];
+  const cleanUsername = (user.username || user.displayName || user.name || '').trim().replace(/^@/, '');
+  const referralCode = cleanUsername || user.referralCode || '';
+  const queryCodes = Array.from(new Set([uid, referralCode, cleanUsername, `@${cleanUsername}`].filter(Boolean)));
+
+  for (const code of queryCodes) {
+    try {
+      const snap = await db.collection('users').where('referredBy', '==', code).get();
+      if (snap && !snap.empty) {
+        const existingIds = new Set(downlineDocs.map((d) => d.id));
+        snap.docs.forEach((d) => {
+          if (!existingIds.has(d.id) && d.id !== uid) {
+            downlineDocs.push(d);
+          }
+        });
+      }
+    } catch (e) {}
+  }
+
+  let eligibleCount = 0;
+  const list = downlineDocs.map((doc) => {
+    const d = doc.data() || {};
+    const pkg = (d.currentPackage || '').trim();
+    const hasPackage = Boolean(pkg && pkg !== 'None' && pkg !== 'No Package');
+    const isEligible = Boolean(d.isEligible || hasPackage);
+    if (isEligible) eligibleCount++;
+    return {
+      id: doc.id,
+      name: d.name || d.displayName || d.username || 'Member',
+      username: d.username || d.displayName || d.name || 'member',
+      email: d.email || 'hidden@taemryflux.com',
+      package: hasPackage ? pkg : 'None',
+      lifetimeAds: Number(d.lifetimeAds) || 0,
+      joinedDate: d.createdAt || new Date().toISOString(),
+      isEligible,
+      status: isEligible ? 'Eligible' : 'Ineligible',
+    };
+  });
+
+  return { totalCount: downlineDocs.length, eligibleCount, list };
+}
+
+/**
  * GET /api/milestones/status
  * Protected: Returns progress status and claimed rewards for Team Rewards ladder.
  */
@@ -48,16 +94,11 @@ router.get('/status', verifyToken, async (req, res) => {
 
     let user = doc.exists ? doc.data() : {};
 
-    // Get live direct referral count
-    let referralCount = user.referralCount !== undefined ? Number(user.referralCount) : 0;
-    try {
-      const downlinesSnap = await db.collection('users').where('referredBy', '==', uid).get();
-      if (downlinesSnap && !downlinesSnap.empty) {
-        referralCount = Math.max(referralCount, downlinesSnap.size);
-      }
-    } catch (refErr) {
-      // fallback to stored referralCount
-    }
+    // Get live direct downlines and strictly filter for eligible referrals (package purchased)
+    const { totalCount, eligibleCount, list: directReferrals } = await getDirectDownlines(db, uid, user);
+
+    // Only package-activated (eligible) referrals count toward team rewards progression
+    const referralCount = eligibleCount;
 
     const { teamRewards: activeRewards, teamMilestones: activeMilestones } = await getLiveMilestonesConfig(db);
 
@@ -74,6 +115,9 @@ router.get('/status', verifyToken, async (req, res) => {
       rewardsList: activeRewards,
       teamMilestones: activeMilestones,
       claimedTeamRewards,
+      eligibleReferralsCount: eligibleCount,
+      totalReferralsCount: totalCount,
+      directReferrals,
       // Backwards compatible fields
       team: teamAdsStatus,
       personal: null, // Personal ads retired
@@ -116,14 +160,9 @@ router.post('/claim', verifyToken, async (req, res) => {
     const { teamRewards: activeRewards, teamMilestones: activeMilestones } = await getLiveMilestonesConfig(db);
 
     if (type === 'team-reward' || referralsRequired || rewardId || type === 'personal') {
-      // Find actual referral count
-      let currentRefs = user.referralCount !== undefined ? Number(user.referralCount) : 0;
-      try {
-        const downlinesSnap = await db.collection('users').where('referredBy', '==', uid).get();
-        if (downlinesSnap && !downlinesSnap.empty) {
-          currentRefs = Math.max(currentRefs, downlinesSnap.size);
-        }
-      } catch (e) {}
+      // Find actual eligible referral count (only members with active package)
+      const { eligibleCount, totalCount } = await getDirectDownlines(db, uid, user);
+      const currentRefs = eligibleCount;
 
       const claimedRewards = Array.isArray(user.claimedTeamRewards) ? [...user.claimedTeamRewards] : [];
       const claimedSet = new Set(claimedRewards.map(String));
@@ -155,8 +194,9 @@ router.post('/claim', verifyToken, async (req, res) => {
       if (currentRefs < target.referrals) {
         return res.status(400).json({
           error: 'Target Not Reached',
-          message: `You need ${target.referrals} direct referrals from your link to claim this reward. Current: ${currentRefs}.`,
+          message: `You need ${target.referrals} eligible direct referrals (with active package) from your link to claim this reward. Current eligible: ${currentRefs} (Total: ${totalCount}).`,
           currentReferrals: currentRefs,
+          totalReferrals: totalCount,
           requiredReferrals: target.referrals,
         });
       }

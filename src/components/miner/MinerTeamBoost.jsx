@@ -11,8 +11,18 @@ export default function MinerTeamBoost({
   const [pingCooldown, setPingCooldown] = useState(false);
   const [pingMessage, setPingMessage] = useState(null);
 
-  const referralCode = user?.referralCode || user?.id?.substring(0, 8) || 'TFLX88';
-  const referralLink = `${window.location.origin}/#/signup?ref=${referralCode}`;
+  const cleanUsername = (
+    user?.username ||
+    userStats?.username ||
+    user?.displayName ||
+    user?.referralCode ||
+    userStats?.referralCode ||
+    user?.email?.split('@')[0] ||
+    'sponsor'
+  ).replace(/^@/, '').trim();
+
+  const ultraShortLink = `${window.location.origin}/@${encodeURIComponent(cleanUsername)}`;
+  const referralLink = ultraShortLink;
 
   const { tier1Active = 2, tier1Total = 3, tier2Active = 4, tier2Total = 6, lastPingTime = 0 } = minerData;
 
@@ -24,9 +34,31 @@ export default function MinerTeamBoost({
   const totalTeamBoostRate = tier1BoostRate + tier2BoostRate;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
+    navigator.clipboard.writeText(ultraShortLink);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  const handleShareLink = async () => {
+    const shareText = `Join my TAEMRY FLUX Cloud Mining Guild! Earn high-hashrate TFLX crypto and guaranteed daily rewards. Sponsor: @${cleanUsername}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'TAEMRY FLUX Mining Guild',
+          text: shareText,
+          url: ultraShortLink,
+        });
+      } catch (err) {
+        // Dismissed
+      }
+    } else {
+      handleWhatsAppShare();
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = `Join my TAEMRY FLUX Cloud Mining Guild!\nSponsor: @${cleanUsername}\n${ultraShortLink}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   const handlePing = () => {
@@ -168,22 +200,45 @@ export default function MinerTeamBoost({
       )}
 
       {/* Referral Link & Share Box */}
-      <div className="pt-2">
-        <span className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] block mb-2">
-          Your Mining Referral Link
-        </span>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] font-mono text-xs text-[#546b70] dark:text-[#94a3b8] truncate">
-            {referralLink}
+      <div className="pt-2 space-y-2">
+        <div className="flex items-center justify-between flex-wrap gap-1">
+          <span className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+            <span>Ultra-Short Direct @Username Link (Tier Guild Boost)</span>
+          </span>
+          <span className="text-[11px] font-mono font-bold text-teal-600 dark:text-teal-400">
+            @{cleanUsername}
+          </span>
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+          <div className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] font-mono text-xs font-bold text-[#546b70] dark:text-[#94a3b8] truncate select-all">
+            {ultraShortLink}
           </div>
           <button
             type="button"
             id="btn-copy-miner-link"
             onClick={handleCopyLink}
-            className="px-4 py-2.5 rounded-xl bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer shrink-0"
+            className="px-4 py-2.5 rounded-xl bg-[#0c5963] hover:bg-[#09424a] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
             <span>{copied ? 'Copied' : 'Copy'}</span>
+          </button>
+          <button
+            type="button"
+            id="btn-share-miner-link"
+            onClick={handleShareLink}
+            className="px-4 py-2.5 rounded-xl bg-[#112d35] hover:bg-[#081a1f] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>Share</span>
+          </button>
+          <button
+            type="button"
+            id="btn-whatsapp-miner-link"
+            onClick={handleWhatsAppShare}
+            className="px-4 py-2.5 rounded-xl bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shrink-0"
+          >
+            <span>WhatsApp</span>
           </button>
         </div>
       </div>

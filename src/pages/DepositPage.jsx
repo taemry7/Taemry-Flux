@@ -201,6 +201,22 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       return;
     }
 
+    if (!transactionId.trim()) {
+      setToastMessage({
+        type: 'error',
+        text: 'Please enter your Transaction ID (TID) before submitting.',
+      });
+      return;
+    }
+
+    if (!screenshotFile) {
+      setToastMessage({
+        type: 'error',
+        text: 'Please upload your payment proof receipt screenshot before submitting.',
+      });
+      return;
+    }
+
     try {
       setSubmitting(true);
       let res;
@@ -270,21 +286,21 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       id: 'jazzcash',
       name: 'JazzCash',
       badge: 'Active • Instant',
-      description: 'Official Mobile Account Transfer',
+      description: 'Official IBAN Transfer',
       isAvailable: true,
     },
     {
       id: 'upaisa',
       name: 'UPaisa',
       badge: 'Active • Instant',
-      description: 'Official Mobile Account Transfer',
+      description: 'Official IBAN Transfer',
       isAvailable: true,
     },
     {
       id: 'sadapay',
       name: 'SadaPay',
       badge: 'Active • Instant',
-      description: 'Official Wallet / IBAN Transfer',
+      description: 'Official IBAN Transfer',
       isAvailable: true,
     },
     {
@@ -379,26 +395,21 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
               onClick={() => setIsMethodDropdownOpen((prev) => !prev)}
               className="w-full p-4 rounded-2xl border border-[#d8d1c3] bg-[#faf8f5] hover:bg-[#f4efe5] text-[#09353e] transition-all flex items-center justify-between shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0c5963]/20"
             >
-              <div className="flex items-center gap-3 text-left">
-                <div className="w-10 h-10 rounded-xl bg-[#0c5963]/10 text-[#0c5963] flex items-center justify-center font-black text-sm border border-[#0c5963]/20">
-                  {currentMethodObj?.name?.charAt(0) || 'P'}
-                </div>
-                <div>
-                  <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
-                    Choose Payment Method
+              <div className="text-left">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
+                  Choose Payment Method
+                </span>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-sm font-black text-[#09353e]">
+                    {currentMethodObj?.name || 'Choose Payment Method'}
                   </span>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-sm font-black text-[#09353e]">
-                      {currentMethodObj?.name || 'Choose Payment Method'}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      currentMethodObj?.isAvailable
-                        ? 'bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]'
-                        : 'bg-[#fef3c7] text-[#b45309] border border-[#fde68a]'
-                    }`}>
-                      {currentMethodObj?.badge || 'Choose'}
-                    </span>
-                  </div>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    currentMethodObj?.isAvailable
+                      ? 'bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]'
+                      : 'bg-[#fef3c7] text-[#b45309] border border-[#fde68a]'
+                  }`}>
+                    {currentMethodObj?.badge || 'Choose'}
+                  </span>
                 </div>
               </div>
 
@@ -443,22 +454,13 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                             : 'border-[#e4ded2] hover:bg-[#faf8f5] hover:border-[#cbd5e1]'
                         }`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-9 h-9 rounded-lg flex items-center justify-center font-black text-xs ${
-                            isSelected
-                              ? 'bg-[#0c5963] text-white'
-                              : 'bg-[#f0ebe0] text-[#09353e]'
-                          }`}>
-                            {method.name.charAt(0)}
-                          </div>
-                          <div>
-                            <span className="text-xs font-black text-[#09353e] block">
-                              {method.name}
-                            </span>
-                            <span className="text-[10px] text-[#718589] block">
-                              {method.description}
-                            </span>
-                          </div>
+                        <div>
+                          <span className="text-xs font-black text-[#09353e] block">
+                            {method.name}
+                          </span>
+                          <span className="text-[10px] text-[#718589] block">
+                            {method.description}
+                          </span>
                         </div>
 
                         <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
@@ -578,16 +580,17 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
               </div>
             )}
 
-            {/* Transaction ID / Reference (Optional) */}
+            {/* Transaction ID */}
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
-                Transaction ID / Sender Name (Optional)
+                Transaction ID <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
+                required
                 value={transactionId}
                 onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="e.g. TID-982183 or sender phone number"
+                placeholder="e.g. TID-982183492"
                 className="w-full px-4 py-2.5 bg-[#faf8f5] border border-[#d8d1c3] rounded-2xl text-xs font-medium text-[#09353e] focus:outline-none focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/20"
               />
             </div>
@@ -595,7 +598,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             {/* Screenshot Receipt Upload */}
             <div>
               <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
-                Payment Proof Screenshot
+                Payment Proof Screenshot <span className="text-rose-500">*</span>
               </label>
 
               <div
@@ -699,7 +702,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
             <div className="relative z-10 space-y-4">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#38bdf8]">
-                  Official Admin Receiver
+                  Official Receiver
                 </span>
                 <span className="text-[11px] text-white/70 font-mono">
                   Method: <strong className="text-white uppercase">{selectedMethod}</strong>
@@ -717,7 +720,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      JazzCash Account / Mobile Number
+                      JazzCash IBAN Number
                     </span>
                     <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
                       <span className="text-base font-mono font-black text-[#38bdf8]">
@@ -746,7 +749,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      UPaisa Account / Mobile Number
+                      UPaisa IBAN Number
                     </span>
                     <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
                       <span className="text-base font-mono font-black text-[#f97316]">
@@ -775,7 +778,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      SadaPay Account / Mobile Number
+                      SadaPay IBAN Number
                     </span>
                     <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
                       <span className="text-base font-mono font-black text-[#2dd4bf]">
@@ -837,7 +840,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
               <div className="pt-2 border-t border-white/10 text-[11px] text-white/70 space-y-1">
                 <p>1. Send the exact calculated amount to the verified account above.</p>
                 <p>2. Capture a full screenshot of the completed transfer.</p>
-                <p>3. Upload receipt proof and submit. Approval completes in ~15 minutes.</p>
+                <p>3. Upload receipt proof and submit. Approval completes in ~1 minute.</p>
               </div>
             </div>
           </div>

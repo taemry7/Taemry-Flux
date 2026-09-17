@@ -105,23 +105,37 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **LK Avatar Button in Navbar**: The standalone user initials avatar button in the top navbar is permanently hidden per user specification.
 - **Dashboard Overview Fallback**: Dashboard route and internal state must always default to `'overview'` so the dashboard never renders blank or empty. Clicking Overview switches smoothly to the full overview splash view.
 
-## STRICT INVARIANT: Deposit Page & Payment Gateway Rules (PERMANENT & LOCKED)
+## STRICT INVARIANT: Deposit & Withdrawal System Rules (PERMANENT & LOCKED)
 - **Interactive "Choose Payment Method" Button & Dropdown (PERMANENT)**:
-  - Replaced the static open pill grid with a dedicated "Choose Payment Method" trigger button (`#btn-choose-payment-method`).
-  - Clicking this button smoothly opens/expands the complete list of all payment methods.
+  - Both `DepositPage.jsx` and `WithdrawPage.jsx` use a dedicated "Choose Payment Method" trigger button (`#btn-choose-payment-method`).
+  - Clicking this button smoothly expands the complete list of payment methods.
   - Selecting any method updates the state and collapses the menu cleanly.
-- **Payment Methods Availability (PERMANENT)**:
-  - **Easypaisa Removed**: Easypaisa has been completely removed per user explicit directive.
-  - **Payment Logos Removed**: All image logos (`/jazzcash.png`, `/easypaisa.png`, `/usdt.png`) have been completely removed from the payment methods selector per user explicit directive. Clean typographic cards with styled status badges are used.
-  - **UPaisa**: Added as an active payment method with instant PKR conversion, receiver title, and account number.
-  - **SadaPay**: Added as an active payment method with instant PKR conversion, receiver title, and account number.
-  - **JazzCash**: Active payment method with instant PKR conversion, receiver title, and account number.
-  - **Bank Transfer**: Permanently locked to "Not Available for Now" with warning alert advising users to use JazzCash, UPaisa, or SadaPay.
-  - **Crypto (USDT)**: Permanently locked to "Not Available for Now" with warning alert advising users to use JazzCash, UPaisa, or SadaPay.
+- **Payment Methods Availability & Icon Removal (PERMANENT)**:
+  - **All Icons & Logos Removed**: Strictly zero icons or image logos across payment method selection buttons in both Deposit and Withdrawal pages. Clean typography with styled status badges.
+  - **IBAN Transfer Specification**: Renamed "Account Transfer" and "Mobile Account" to "IBAN Transfer" and "IBAN Number" in `DepositPage.jsx`. In `WithdrawPage.jsx`, "IBAN" is removed from the dropdown description ("Official Account Transfer") and the input label is strictly "Account Number".
+  - **Official Receiver**: Renamed "Official Admin Receiver" to "Official Receiver" across all payment cards.
+  - **Approval Time Frame**: Updated deposit processing instruction to "~1 minute" (replacing 15 minutes).
+  - **Active Methods**: JazzCash, UPaisa, and SadaPay are active with instant PKR conversion and receiver details.
+  - **Locked Methods**: Bank Transfer and Crypto (USDT) are permanently locked to "Not Available for Now" with warning alerts advising users to use JazzCash, UPaisa, or SadaPay.
+- **Withdrawal Referral Ineligibility & Permanent Eligibility Invariant (PERMANENT & LOCKED)**:
+  - When a user without referrals (0 referrals) clicks the "Request Withdrawal" button, the system triggers the Ineligible warning: *"Ineligible: You need at least 1 active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible forever!"*.
+  - The submit button remains interactive and validates input fields and referral requirements upon click.
+  - **1 Referral = Permanent Eligibility**: First time 1 referral is required; once a user refers at least 1 member, their account becomes permanently eligible for withdrawals forever (`hasUnlockedWithdrawal: true`), never requiring additional referrals.
+- **Mandatory Form Validation (Zero Empty Submissions)**:
+  - In `WithdrawPage.jsx`: Both Account Holder Name and Account Number (or USDT Address) are strictly required before submission. Submitting empty inputs is blocked with instant toast and notification warnings.
+  - In `DepositPage.jsx`: TID and receipt proof screenshot are mandatory before submission.
+- **Ultra-Short Direct @Username Link Integration (PERMANENT & LOCKED)**:
+  - The format `${origin}/@${username}` is integrated with dedicated "Copy Link", "Share Link", and "WhatsApp" share triggers across:
+    1. Withdrawal Page (`WithdrawPage.jsx`) in the eligibility alert box and policy sidebar.
+    2. Referral Center (`Referrals.jsx`) in top hero card, selector, and format option cards.
+    3. Cloud Miner (`MinerTeamBoost.jsx`) in the 2-Tier Guild Network Boost card.
+- **Admin Panel Deposit Verification (PERMANENT)**:
+  - `AdminDeposits.jsx` displays dedicated, prominent **Receipt Proof** (with thumbnail & lightbox zoom) and **Transaction ID (TID)** (with monospace badge and 1-click copy).
+  - Both Receipt Proof and TID are displayed inside the Approval/Rejection confirmation modal for pre-approval verification.
 - **Withdraw Funds Card**: The quick wallet / withdraw funds summary card in `src/pages/DepositPage.jsx` is permanently visible with live balance and direct routing to withdraw funds.
 - **Hidden Deposit Spans**: Rate span and Instant Verification badge span are permanently hidden in `src/pages/DepositPage.jsx`.
 - **Records Count Format**: The recent deposits count badge strictly displays "{count} Rec" (e.g., "0 Rec").
-- **Footer Navigation & Copyright**: Active on Home and Dashboard pages with quick links and copyright notice. Support link is strictly labeled "Contact Support".
+- **Deposit & Withdraw Complete Page Lock**: Deposit, withdrawal, eligibility, payment methods, and admin verification implementations are 100% finalized and permanently locked against unsolicited changes.
 
 ## STRICT INVARIANT: World Rank Calculation & Display (PERMANENT & LOCKED)
 - **Live World Rank Invariant**: World rank starts dynamically at `# 1000+` for initial and standard account activity instead of fake static numbers. It progresses live based on verified ad watch volume, displaying `World Rank # 1000+` natively.
@@ -225,3 +239,35 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Automatic Live Mining on Package Purchase**:
   - Cloud mining status (`isMiningActive: true`) activates automatically upon successful advertising package purchase in `backend/routes/package.js` and `src/pages/BuyPackage.jsx`.
   - Unactivated users or users with `currentPackage: 'None'` start with `minedTflx: 0` and mining paused until they activate a package.
+
+## STRICT INVARIANT: Team Rewards & Referral Eligibility System (PERMANENT & LOCKED)
+- **10-Tier Team Rewards Structure**:
+  1. `5 Referrals` -> `$1.00`
+  2. `15 Referrals` -> `$3.00`
+  3. `25 Referrals` -> `$5.00`
+  4. `50 Referrals` -> `$10.00`
+  5. `100 Referrals` -> `$20.00`
+  6. `250 Referrals` -> `$50.00`
+  7. `500 Referrals` -> `$110.00`
+  8. `1000 Referrals` -> `$250.00`
+  9. `1500 Referrals` -> `$400.00`
+  10. `2500 Referrals` -> `$750.00`
+  - Total Potential Rewards: `$1,599.00 USD`.
+- **Package Activation Referral Eligibility Requirement**:
+  - A referred member ONLY counts towards the Team Rewards progression count once they activate an advertising package (`currentPackage !== 'None'`).
+  - Unactivated referrals are classified as **Ineligible (No Package)** and do not advance the ladder count until they buy a package.
+- **Direct Referrals Status Directory**:
+  - Displays all direct referrals with their username, active package, joined date, and live status badge (**Eligible** in green or **Ineligible (No Package)** in amber).
+- **Instant Admin Sync**:
+  - Updates saved in the Admin Panel (`/admin/milestones`) instantly synchronize with Firestore, local cache, and user-facing components in real-time via `taemry_milestones_updated` events.
+- **Icon-Only Referral Sharing UI**:
+  - Replaced bulky "Share your link" promotional card with clean, standard icon controls (Copy Link, Share Link, WhatsApp Share) utilizing the ultra-short direct `@username` link format.
+- **Complete Feature Lock**:
+  - The Team Rewards page, calculation engine, milestone progression rules, and downline eligibility filtering are permanently locked against unsolicited modifications.
+- **Team Rewards UI Layout & Divs Lock (PERMANENT & LOCKED)**:
+  - The primary Team Rewards progression card is styled identically to the Team Ads Organization Milestones card (clean unified container, 10x10 rounded icon badge, progress bar with next target, and single full-width action/status button).
+  - Per user explicit directive, the 3 sub-divs are permanently hidden:
+    1. Referral Link card / strip (`hidden`)
+    2. Direct Referrals Status Directory (`hidden`)
+    3. Team Rewards Ladder Breakdown table (`hidden`)
+  - The page is 100% frozen and locked against unsolicited modifications.

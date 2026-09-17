@@ -14,7 +14,9 @@ import {
   AlertTriangle,
   RefreshCw,
   X,
-  FileText
+  FileText,
+  Copy,
+  Check
 } from 'lucide-react';
 import apiClient from '../../api/client';
 
@@ -24,6 +26,7 @@ export default function AdminDeposits() {
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
+  const [copiedTid, setCopiedTid] = useState('');
 
   // Lightbox Screenshot Modal
   const [activeScreenshot, setActiveScreenshot] = useState(null);
@@ -223,7 +226,8 @@ export default function AdminDeposits() {
           <table className="w-full text-left text-xs text-slate-300">
             <thead className="bg-slate-950/60 text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800">
               <tr>
-                <th className="py-3.5 px-4">Receipt</th>
+                <th className="py-3.5 px-4">Receipt Proof</th>
+                <th className="py-3.5 px-4">Transaction ID (TID)</th>
                 <th className="py-3.5 px-4">Member User</th>
                 <th className="py-3.5 px-4">Method</th>
                 <th className="py-3.5 px-4 text-right">Amount (USD / PKR)</th>
@@ -235,14 +239,14 @@ export default function AdminDeposits() {
             <tbody className="divide-y divide-slate-800/80">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-400" />
                     <span>Loading deposit records...</span>
                   </td>
                 </tr>
               ) : displayedDeposits.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-500">
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
                     No deposits matching the "{statusFilter}" filter.
                   </td>
                 </tr>
@@ -250,30 +254,70 @@ export default function AdminDeposits() {
                 displayedDeposits.map((dep) => {
                   const depId = dep.depositId || dep.id;
                   const isPending = dep.status === 'pending';
+                  const tid = dep.transactionId || dep.trxId || '';
                   return (
                     <tr key={depId} className="hover:bg-slate-800/30 transition-colors">
-                      {/* Screenshot thumbnail */}
+                      {/* Screenshot thumbnail & View Receipt button */}
                       <td className="py-3.5 px-4">
                         {dep.screenshotURL ? (
-                          <div
-                            onClick={() => setActiveScreenshot(dep.screenshotURL)}
-                            className="w-12 h-12 rounded-xl overflow-hidden border border-slate-700 bg-slate-800 cursor-pointer relative group shrink-0"
-                            title="Click to view full receipt"
-                          >
-                            <img
-                              src={dep.screenshotURL}
-                              alt="Receipt"
-                              referrerPolicy="no-referrer"
-                              className="w-full h-full object-cover group-hover:scale-110 transition-transform"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                              <Eye className="w-4 h-4 text-white" />
+                          <div className="flex items-center gap-2">
+                            <div
+                              onClick={() => setActiveScreenshot(dep.screenshotURL)}
+                              className="w-12 h-12 rounded-xl overflow-hidden border-2 border-emerald-500/40 bg-slate-800 cursor-pointer relative group shrink-0 shadow-xs"
+                              title="Click to zoom receipt"
+                            >
+                              <img
+                                src={dep.screenshotURL}
+                                alt="Receipt"
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-cover group-hover:scale-110 transition-transform"
+                              />
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                <Eye className="w-4 h-4 text-white" />
+                              </div>
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => setActiveScreenshot(dep.screenshotURL)}
+                              className="text-[11px] font-bold text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer"
+                            >
+                              View
+                            </button>
                           </div>
                         ) : (
-                          <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-500">
-                            <FileText className="w-5 h-5" />
+                          <div className="flex items-center gap-1 text-slate-500 text-[11px]">
+                            <FileText className="w-4 h-4 text-slate-600" />
+                            <span>No receipt</span>
                           </div>
+                        )}
+                      </td>
+
+                      {/* Transaction ID (TID) */}
+                      <td className="py-3.5 px-4">
+                        {tid ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold text-emerald-400 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800 text-[11px]">
+                              {tid}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(tid);
+                                setCopiedTid(tid);
+                                setTimeout(() => setCopiedTid(''), 2000);
+                              }}
+                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white cursor-pointer transition-colors"
+                              title="Copy Transaction ID"
+                            >
+                              {copiedTid === tid ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-400" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="text-slate-500 italic text-[11px]">No TID provided</span>
                         )}
                       </td>
 
@@ -421,10 +465,37 @@ export default function AdminDeposits() {
               </button>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2 text-xs text-slate-300">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-2.5 text-xs text-slate-300">
               <div className="flex justify-between">
                 <span className="text-slate-500">Member:</span>
                 <span className="font-semibold text-white">{confirmModal.deposit.userEmail}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-slate-500">Transaction ID (TID):</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-bold text-emerald-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                    {confirmModal.deposit.transactionId || confirmModal.deposit.trxId || 'N/A'}
+                  </span>
+                  {(confirmModal.deposit.transactionId || confirmModal.deposit.trxId) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const t = confirmModal.deposit.transactionId || confirmModal.deposit.trxId;
+                        navigator.clipboard.writeText(t);
+                        setCopiedTid(t);
+                        setTimeout(() => setCopiedTid(''), 2000);
+                      }}
+                      className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white"
+                      title="Copy TID"
+                    >
+                      {copiedTid === (confirmModal.deposit.transactionId || confirmModal.deposit.trxId) ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-500">Amount USD:</span>
@@ -434,6 +505,37 @@ export default function AdminDeposits() {
                 <span className="text-slate-500">Method:</span>
                 <span className="font-semibold capitalize text-slate-200">{confirmModal.deposit.method}</span>
               </div>
+
+              {confirmModal.deposit.screenshotURL && (
+                <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 font-bold text-[11px]">Attached Receipt Proof:</span>
+                    <button
+                      type="button"
+                      onClick={() => setActiveScreenshot(confirmModal.deposit.screenshotURL)}
+                      className="text-emerald-400 hover:underline text-[11px] font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <Eye className="w-3 h-3" />
+                      <span>Zoom Full View</span>
+                    </button>
+                  </div>
+                  <div
+                    onClick={() => setActiveScreenshot(confirmModal.deposit.screenshotURL)}
+                    className="w-full h-32 bg-slate-900 rounded-xl overflow-hidden border border-slate-800 cursor-pointer flex items-center justify-center relative group"
+                    title="Click to zoom receipt"
+                  >
+                    <img
+                      src={confirmModal.deposit.screenshotURL}
+                      alt="Receipt Proof"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform"
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Eye className="w-5 h-5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {confirmModal.action === 'approve' ? (

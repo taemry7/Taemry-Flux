@@ -67,15 +67,20 @@ router.get('/info', verifyToken, async (req, res) => {
 
       if (downlineDocs.length > 0) {
         directReferrals = downlineDocs.map((doc) => {
-          const d = doc.data();
+          const d = doc.data() || {};
+          const pkg = (d.currentPackage || '').trim();
+          const hasPackage = Boolean(pkg && pkg !== 'None' && pkg !== 'No Package');
+          const isEligible = Boolean(d.isEligible || hasPackage);
           return {
             id: doc.id,
-            name: d.name || d.username || 'Member',
+            name: d.name || d.displayName || d.username || 'Member',
+            username: d.username || d.displayName || d.name || 'member',
             email: d.email || 'hidden@taemryflux.com',
-            package: d.currentPackage || 'Bronze',
+            package: hasPackage ? pkg : 'None',
             lifetimeAds: Number(d.lifetimeAds) || 0,
             joinedDate: d.createdAt || new Date().toISOString(),
-            status: d.isEligible ? 'Active' : 'Pending',
+            isEligible,
+            status: isEligible ? 'Eligible' : 'Ineligible',
           };
         });
       }

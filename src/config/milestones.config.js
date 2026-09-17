@@ -5,14 +5,16 @@
  */
 
 export const TEAM_REWARDS = [
-  { id: 'tr-5', referrals: 5, bonus: 1.00, label: '5 Direct Referrals', stepNote: 'Invite 5 members from your link' },
-  { id: 'tr-15', referrals: 15, bonus: 5.00, label: '15 Direct Referrals', stepNote: '10 more members (+10) = 15 total' },
-  { id: 'tr-40', referrals: 40, bonus: 10.00, label: '40 Direct Referrals', stepNote: '25 more members (+25) = 40 total' },
-  { id: 'tr-90', referrals: 90, bonus: 25.00, label: '90 Direct Referrals', stepNote: '50 more members (+50) = 90 total' },
-  { id: 'tr-190', referrals: 190, bonus: 50.00, label: '190 Direct Referrals', stepNote: '100 more members (+100) = 190 total' },
-  { id: 'tr-250', referrals: 250, bonus: 100.00, label: '250 Direct Referrals', stepNote: 'Reach 250 total direct downlines' },
-  { id: 'tr-500', referrals: 500, bonus: 250.00, label: '500 Direct Referrals', stepNote: 'Reach 500 total direct downlines' },
-  { id: 'tr-1000', referrals: 1000, bonus: 600.00, label: '1,000 Direct Referrals', stepNote: '$500 Base + $100 Special Mega Bonus ($600 Total)' },
+  { id: 'tr-5', referrals: 5, bonus: 1.00, label: '5 Referrals', extraInfo: 'Invite 5 members from your link', stepNote: 'Invite 5 members from your link' },
+  { id: 'tr-15', referrals: 15, bonus: 3.00, label: '15 Referrals', extraInfo: '15 more members = 20 total', stepNote: '15 more members = 20 total' },
+  { id: 'tr-25', referrals: 25, bonus: 5.00, label: '25 Referrals', extraInfo: '25 more members = 45 total', stepNote: '25 more members = 45 total' },
+  { id: 'tr-50', referrals: 50, bonus: 10.00, label: '50 Referrals', extraInfo: '50 more members = 95 total', stepNote: '50 more members = 95 total' },
+  { id: 'tr-100', referrals: 100, bonus: 20.00, label: '100 Referrals', extraInfo: '100 more members = 195 total', stepNote: '100 more members = 195 total' },
+  { id: 'tr-250', referrals: 250, bonus: 40.00, label: '250 Referrals', extraInfo: '250 more members = 445 total', stepNote: '250 more members = 445 total' },
+  { id: 'tr-500', referrals: 500, bonus: 100.00, label: '500 Referrals', extraInfo: '500 more members = 945 total', stepNote: '500 more members = 945 total' },
+  { id: 'tr-1000', referrals: 1000, bonus: 250.00, label: '1,000 Referrals', extraInfo: '1000 more members = 1945 total', stepNote: '1000 more members = 1945 total' },
+  { id: 'tr-1500', referrals: 1500, bonus: 500.00, label: '1,500 Referrals', extraInfo: 'Reach 3445 total direct downlines', stepNote: 'Reach 3445 total direct downlines' },
+  { id: 'tr-2500', referrals: 2500, bonus: 750.00, label: '2,500 Referrals', extraInfo: 'Reach 5945 total direct downlines', stepNote: 'Reach 5945 total direct downlines' },
 ];
 
 // Empty legacy export to prevent import errors in older components

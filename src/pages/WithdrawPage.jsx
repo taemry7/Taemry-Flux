@@ -20,7 +20,11 @@ import {
   Check,
   RefreshCw,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  ChevronDown,
+  Share2,
+  Sparkles,
+  AtSign
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -32,11 +36,53 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
   const toast = useToast();
 
   // Form State
-  const [method, setMethod] = useState('jazzcash'); // 'bank' | 'easypaisa' | 'jazzcash' | 'crypto'
+  const [method, setMethod] = useState('jazzcash');
+  const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false);
   const [accountName, setAccountName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
   const [amountUSD, setAmountUSD] = useState('');
+
+  // Payment methods catalog (strictly without icons)
+  const paymentMethodsList = [
+    {
+      id: 'jazzcash',
+      name: 'JazzCash',
+      badge: 'Active • Instant',
+      description: 'Official Account Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'upaisa',
+      name: 'UPaisa',
+      badge: 'Active • Instant',
+      description: 'Official Account Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'sadapay',
+      name: 'SadaPay',
+      badge: 'Active • Instant',
+      description: 'Official Account Transfer',
+      isAvailable: true,
+    },
+    {
+      id: 'bank',
+      name: 'Bank Transfer',
+      badge: 'Not Available for Now',
+      description: 'Direct Commercial Bank Wire',
+      isAvailable: false,
+    },
+    {
+      id: 'crypto',
+      name: 'Crypto (USDT)',
+      badge: 'Not Available for Now',
+      description: 'Tether TRC20 / BEP20 Network',
+      isAvailable: false,
+    },
+  ];
+
+  const currentMethodObj = paymentMethodsList.find((m) => m.id === method) || paymentMethodsList[0];
 
   // Data & Status State
   const [settings, setSettings] = useState({
@@ -85,21 +131,70 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
     ? settings.referralRequired
     : 1;
   const isUserAdmin = userStats?.role === 'admin' || userStats?.isAdmin;
-  const isEligible = referralCount >= requiredReferrals || isUserAdmin;
 
-  const referralCode = userStats?.referralCode || userStats?.uid?.substring(0, 8) || 'REF1234';
-  const referralLink = `${window.location.origin}/register?ref=${referralCode}`;
+  // STRICT INVARIANT: 1 Referral = Permanent Eligibility forever
+  const hasStoredUnlock = typeof window !== 'undefined' && userStats?.uid && localStorage.getItem(`taemry_withdrawal_unlocked_${userStats.uid}`) === 'true';
+  const isPermanentlyUnlocked = Boolean(
+    userStats?.hasUnlockedWithdrawal || 
+    userStats?.isWithdrawalUnlocked || 
+    hasStoredUnlock || 
+    referralCount >= requiredReferrals
+  );
+  const isEligible = isPermanentlyUnlocked || isUserAdmin;
+
+  // Lock in permanent unlock in localStorage whenever requirement is met
+  useEffect(() => {
+    if (referralCount >= requiredReferrals && userStats?.uid) {
+      try {
+        localStorage.setItem(`taemry_withdrawal_unlocked_${userStats.uid}`, 'true');
+      } catch (e) {}
+    }
+  }, [referralCount, requiredReferrals, userStats?.uid]);
+
+  // Ultra-Short Direct @Username Link
+  const cleanUsername = (
+    userStats?.username ||
+    userStats?.displayName ||
+    userStats?.referralCode ||
+    userStats?.email?.split('@')[0] ||
+    'sponsor'
+  ).replace(/^@/, '').trim();
+
+  const ultraShortLink = `${window.location.origin}/@${encodeURIComponent(cleanUsername)}`;
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(referralLink);
+    navigator.clipboard.writeText(ultraShortLink);
     setCopiedLink(true);
+    toast.success('Ultra-Short Direct @Username Link copied!');
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleShareLink = async () => {
+    const shareText = `Join TAEMRY FLUX - Earn guaranteed daily rewards by viewing ads & mining crypto! Sponsor: @${cleanUsername}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Join TAEMRY FLUX',
+          text: shareText,
+          url: ultraShortLink,
+        });
+      } catch (err) {
+        // User cancelled or share dismissed
+      }
+    } else {
+      handleWhatsAppShare();
+    }
+  };
+
+  const handleWhatsAppShare = () => {
+    const text = `Join TAEMRY FLUX - Earn guaranteed daily returns & mine crypto! Sponsor: @${cleanUsername}\n${ultraShortLink}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
   };
 
   // Calculated conversions
   const exchangeRate = settings.exchangeRate || 300;
   const numUSD = parseFloat(amountUSD) || 0;
-  const isLocal = ['bank', 'easypaisa', 'jazzcash'].includes(method);
+  const isLocal = ['bank', 'jazzcash', 'upaisa', 'sadapay'].includes(method);
   const calculatedPKR = Math.round(numUSD * exchangeRate);
 
   // Submit withdrawal
@@ -107,15 +202,54 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
     e.preventDefault();
     setNotification({ type: '', message: '' });
 
+    // Ineligible check triggered on button click
     if (!isEligible) {
+      const msg = `Ineligible: You need at least ${requiredReferrals} active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible for withdrawals forever!`;
       setNotification({
         type: 'error',
-        message: `You need at least ${requiredReferrals} active referral(s) to withdraw. Share your referral link!`,
+        message: msg,
+      });
+      toast.error('Ineligible: At least 1 active referral is required to unlock withdrawals.');
+      return;
+    }
+
+    if (method === 'bank' || method === 'crypto') {
+      setNotification({
+        type: 'error',
+        message: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
       });
       return;
     }
 
-    if (numUSD < (settings.minWithdrawal || 1) || numUSD > (settings.maxWithdrawal || 1000)) {
+    if (method !== 'crypto') {
+      if (!accountName || !accountName.trim()) {
+        setNotification({
+          type: 'error',
+          message: 'Please enter your Account Holder Name before submitting.',
+        });
+        toast.error('Account Holder Name cannot be left empty.');
+        return;
+      }
+      if (!accountNumber || !accountNumber.trim()) {
+        setNotification({
+          type: 'error',
+          message: 'Please enter your Account Number before submitting.',
+        });
+        toast.error('Account Number cannot be left empty.');
+        return;
+      }
+    } else {
+      if (!walletAddress || !walletAddress.trim()) {
+        setNotification({
+          type: 'error',
+          message: 'Please enter your USDT Wallet Address before submitting.',
+        });
+        toast.error('USDT Wallet Address cannot be left empty.');
+        return;
+      }
+    }
+
+    if (!amountUSD || isNaN(numUSD) || numUSD < (settings.minWithdrawal || 1) || numUSD > (settings.maxWithdrawal || 1000)) {
       setNotification({
         type: 'error',
         message: `Withdrawal amount must be between $${settings.minWithdrawal || 1} and $${settings.maxWithdrawal || 1000} USD.`,
@@ -228,39 +362,76 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
       {/* ⚠️ STRICT ELIGIBILITY ALERT: If referralCount < 1 */}
       {!isEligible && (
-        <div className="p-6 rounded-3xl bg-[#fef2f2] border-2 border-[#fca5a5] text-[#991b1b] shadow-xs space-y-3">
+        <div className="p-6 rounded-3xl bg-[#fef2f2] border-2 border-[#fca5a5] text-[#991b1b] shadow-xs space-y-4">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-2xl bg-[#fee2e2] text-[#dc2626] flex items-center justify-center flex-shrink-0">
               <AlertTriangle className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-extrabold text-[#7f1d1d]">
-                ⚠️ You need at least {requiredReferrals} active referral{requiredReferrals > 1 ? 's' : ''} to withdraw. Share your referral link!
-              </h3>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-base font-extrabold text-[#7f1d1d]">
+                  ⚠️ Withdrawal Ineligible — Requires 1 Active Referral
+                </h3>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]">
+                  1 Refer = Permanent Eligibility Forever
+                </span>
+              </div>
               <p className="text-xs text-[#991b1b] leading-relaxed max-w-2xl">
-                To maintain network security and encourage collaborative growth, withdrawals require having at least {requiredReferrals} active member{requiredReferrals > 1 ? 's' : ''} enrolled through your referral link. You currently have <strong>{referralCount} referrals</strong>.
+                Jab aap 1 bandy ko refer karenge to aapka account hamesha ke liye withdrawals ke liye eligible ho jayega. Sirf first time 1 referral zaroori hai. Currently you have <strong>{referralCount} referrals</strong>. Share your Ultra-Short link below!
               </p>
             </div>
           </div>
 
-          {/* Referral link share box */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2">
-            <div className="flex-1 bg-white px-3.5 py-2 rounded-xl border border-[#fca5a5] text-xs font-mono text-[#7f1d1d] truncate">
-              {referralLink}
+          {/* Ultra-Short Direct @Username Link Box */}
+          <div className="space-y-2 pt-1 border-t border-[#fecaca]">
+            <div className="flex items-center justify-between flex-wrap gap-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#991b1b] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#dc2626]" />
+                <span>Ultra-Short Direct @Username Link</span>
+              </span>
+              <span className="text-[10px] font-mono font-bold text-[#b91c1c]">
+                @{cleanUsername}
+              </span>
             </div>
-            <button
-              onClick={handleCopyLink}
-              className="px-4 py-2 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-            >
-              {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-              <span>{copiedLink ? 'Link Copied!' : 'Copy Referral Link'}</span>
-            </button>
-            <button
-              onClick={() => onSelectTab && onSelectTab('referrals')}
-              className="px-4 py-2 bg-white hover:bg-[#fef2f2] text-[#991b1b] text-xs font-bold rounded-xl border border-[#fca5a5] transition-colors cursor-pointer"
-            >
-              Go to Referral Center
-            </button>
+
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <div className="flex-1 bg-white px-3.5 py-2.5 rounded-xl border border-[#fca5a5] text-xs font-mono font-bold text-[#7f1d1d] truncate select-all">
+                {ultraShortLink}
+              </div>
+              <button
+                type="button"
+                id="btn-copy-withdraw-link"
+                onClick={handleCopyLink}
+                className="px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
+              </button>
+              <button
+                type="button"
+                id="btn-share-withdraw-link"
+                onClick={handleShareLink}
+                className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </button>
+              <button
+                type="button"
+                id="btn-whatsapp-withdraw-link"
+                onClick={handleWhatsAppShare}
+                className="px-4 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              >
+                <span>WhatsApp</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onSelectTab && onSelectTab('referrals')}
+                className="px-4 py-2.5 bg-white hover:bg-[#fef2f2] text-[#991b1b] text-xs font-bold rounded-xl border border-[#fca5a5] transition-colors cursor-pointer shrink-0"
+              >
+                Referral Center
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -280,70 +451,147 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
           </div>
 
           <form onSubmit={handleSubmitWithdrawal} className="space-y-5">
-            {/* Method Dropdown */}
-            <div>
-              <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
+            {/* Payment Method Selector: Choose Payment Method Button & Expandable Menu */}
+            <div className="space-y-2.5">
+              <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block">
                 Withdrawal Method
               </label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                {[
-                  {
-                    id: 'jazzcash',
-                    name: 'JazzCash',
-                    image: '/jazzcash.png',
-                    bg: 'bg-white',
-                    border: 'border-[#e4ded2]',
-                  },
-                  {
-                    id: 'easypaisa',
-                    name: 'Easypaisa',
-                    image: '/easypaisa.png',
-                    bg: 'bg-white',
-                    border: 'border-[#e4ded2]',
-                  },
-                  {
-                    id: 'bank',
-                    name: 'Bank Transfer',
-                    icon: Building2,
-                    bg: 'bg-[#0284c7]',
-                    iconColor: 'text-white',
-                  },
-                  {
-                    id: 'crypto',
-                    name: 'Crypto (USDT)',
-                    image: '/usdt.png',
-                    bg: 'bg-[#26A17B]',
-                  },
-                ].map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setMethod(item.id)}
-                    className={`p-3 rounded-2xl border text-center transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                      method === item.id
-                        ? 'border-[#0c5963] bg-[#0c5963]/5 text-[#0c5963] ring-2 ring-[#0c5963]/20 shadow-xs'
-                        : 'border-[#e4ded2] hover:bg-[#faf8f5] text-[#526d72]'
-                    }`}
-                  >
-                    <div className={`w-10 h-10 rounded-xl ${item.bg} flex items-center justify-center shadow-xs overflow-hidden p-0.5 border ${item.border || 'border-transparent'}`}>
-                      {item.image ? (
-                        <img src={item.image} alt={item.name} className="w-full h-full object-contain rounded-lg" />
-                      ) : (
-                        <item.icon className={`w-5 h-5 ${item.iconColor}`} />
-                      )}
-                    </div>
-                    <span className="text-xs font-bold">{item.name}</span>
-                  </button>
-                ))}
-              </div>
+
+              {/* Choose Payment Method Trigger Button */}
+              <button
+                id="btn-choose-payment-method"
+                type="button"
+                onClick={() => setIsMethodDropdownOpen((prev) => !prev)}
+                className="w-full p-4 rounded-2xl border border-[#d8d1c3] bg-[#faf8f5] hover:bg-[#f4efe5] text-[#09353e] transition-all flex items-center justify-between shadow-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#0c5963]/20"
+              >
+                <div className="text-left">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
+                    Choose Payment Method
+                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-sm font-black text-[#09353e]">
+                      {currentMethodObj?.name || 'Choose Payment Method'}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      currentMethodObj?.isAvailable
+                        ? 'bg-[#ecfdf5] text-[#047857] border border-[#a7f3d0]'
+                        : 'bg-[#fef3c7] text-[#b45309] border border-[#fde68a]'
+                    }`}>
+                      {currentMethodObj?.badge || 'Choose'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 text-[#526d72]">
+                  <span className="text-xs font-bold hidden sm:inline text-[#0c5963]">
+                    {isMethodDropdownOpen ? 'Close Menu' : 'Select Method'}
+                  </span>
+                  <ChevronDown className={`w-5 h-5 text-[#0c5963] transition-transform duration-200 ${isMethodDropdownOpen ? 'rotate-180' : ''}`} />
+                </div>
+              </button>
+
+              {/* Expandable Payment Methods Menu (strictly without icons) */}
+              {isMethodDropdownOpen && (
+                <div className="p-3.5 rounded-2xl bg-white border border-[#e4ded2] shadow-md space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="flex items-center justify-between px-2 pt-1 pb-1.5 border-b border-[#f0ebe0] text-[11px] font-bold uppercase tracking-wider text-[#718589]">
+                    <span>All Payment Methods</span>
+                    <span>Click to select</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {paymentMethodsList.map((mItem) => {
+                      const isSelected = method === mItem.id;
+                      return (
+                        <button
+                          key={mItem.id}
+                          type="button"
+                          onClick={() => {
+                            setMethod(mItem.id);
+                            setIsMethodDropdownOpen(false);
+                            if (!mItem.isAvailable) {
+                              setNotification({
+                                type: 'error',
+                                message: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+                              });
+                            } else {
+                              setNotification({ type: '', message: '' });
+                            }
+                          }}
+                          className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between cursor-pointer ${
+                            isSelected
+                              ? 'border-[#0c5963] bg-[#0c5963]/5 ring-2 ring-[#0c5963]/20 shadow-xs'
+                              : 'border-[#e4ded2] hover:bg-[#faf8f5] hover:border-[#cbd5e1]'
+                          }`}
+                        >
+                          <div>
+                            <span className="text-xs font-black text-[#09353e] block">
+                              {mItem.name}
+                            </span>
+                            <span className="text-[10px] text-[#718589] block">
+                              {mItem.description}
+                            </span>
+                          </div>
+
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-md whitespace-nowrap ${
+                            mItem.isAvailable
+                              ? 'bg-[#ecfdf5] text-[#047857]'
+                              : 'bg-[#fef3c7] text-[#b45309]'
+                          }`}>
+                            {mItem.badge}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* Not Available for Now Alert for Bank / Crypto */}
+            {(method === 'bank' || method === 'crypto') && (
+              <div className="p-4 rounded-2xl bg-[#fff7ed] border border-[#fed7aa] text-[#c2410c] flex items-start gap-3 animate-in fade-in duration-200">
+                <AlertCircle className="w-5 h-5 flex-shrink-0 text-[#ea580c] mt-0.5" />
+                <div className="flex-1 text-xs">
+                  <p className="font-black uppercase tracking-wider text-[#9a3412]">
+                    Not Available for Now
+                  </p>
+                  <p className="text-[#c2410c] mt-0.5">
+                    {method === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available for withdrawal. Please use{' '}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('jazzcash')}
+                      className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                    >
+                      JazzCash
+                    </button>
+                    {', '}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('upaisa')}
+                      className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                    >
+                      UPaisa
+                    </button>
+                    {', or '}
+                    <button
+                      type="button"
+                      onClick={() => setMethod('sadapay')}
+                      className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
+                    >
+                      SadaPay
+                    </button>
+                    {' to receive your payout.'}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Conditional Fields: Bank / Mobile vs Crypto */}
             {method !== 'crypto' ? (
               <>
                 <div>
                   <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
-                    Account Holder Name
+                    Account Holder Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
@@ -357,14 +605,14 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
                 <div>
                   <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
-                    {method === 'bank' ? 'IBAN / Bank Account Number' : `${method === 'jazzcash' ? 'JazzCash' : 'Easypaisa'} Mobile Number`}
+                    {currentMethodObj?.name || 'Account'} Account Number <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
                     value={accountNumber}
                     onChange={(e) => setAccountNumber(e.target.value)}
-                    placeholder={method === 'bank' ? 'PK76MEZN...' : '03001234567'}
+                    placeholder="e.g. Account number / Mobile number"
                     className="w-full px-4 py-3 bg-[#faf8f5] border border-[#d8d1c3] rounded-2xl text-xs font-medium text-[#09353e] focus:outline-none focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/20"
                   />
                 </div>
@@ -372,7 +620,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
             ) : (
               <div>
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e] block mb-1.5">
-                  USDT (TRC20 / BEP20) Wallet Address
+                  USDT (TRC20 / BEP20) Wallet Address <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -389,7 +637,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="text-xs font-extrabold uppercase tracking-wider text-[#09353e]">
-                  Withdrawal Amount (USD)
+                  Withdrawal Amount (USD) <span className="text-rose-500">*</span>
                 </label>
                 <button
                   type="button"
@@ -439,7 +687,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
             {/* Submit Button */}
             <button
               type="submit"
-              disabled={submitting || !isEligible || numUSD > walletBalance || numUSD < 1}
+              disabled={submitting}
               className="w-full py-3.5 px-6 bg-[#0c5963] hover:bg-[#08424b] text-white text-sm font-extrabold rounded-2xl shadow-sm shadow-[#0c5963]/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
@@ -450,7 +698,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
               ) : (
                 <>
                   <ArrowUpRight className="w-4 h-4" />
-                  <span>Request Withdrawal (${numUSD || '0.00'})</span>
+                  <span>Request Withdrawal (${numUSD ? numUSD.toFixed(2) : '0.00'})</span>
                 </>
               )}
             </button>
@@ -459,6 +707,49 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
         {/* Right Column: Withdrawal Policy & Account Status */}
         <div className="lg:col-span-5 space-y-6">
+          {/* Permanent Ultra-Short Referral Link Card */}
+          <div className="bg-white rounded-3xl p-6 border border-[#e4ded2] shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0c5963] flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-[#0c5963]" />
+                <span>Ultra-Short Direct @Username Link</span>
+              </span>
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isEligible ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                {isEligible ? 'Withdrawals Eligible' : 'Requires 1 Referral'}
+              </span>
+            </div>
+            <p className="text-xs text-[#526d72] leading-relaxed">
+              1 bandy ko refer karne se aapka account permanently eligible ho jata hai. Share your personal sponsor link:
+            </p>
+            <div className="p-3 bg-[#faf8f5] rounded-xl border border-[#ece6d9] font-mono text-xs font-bold text-[#09353e] truncate select-all">
+              {ultraShortLink}
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="flex-1 py-2 px-3 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copiedLink ? 'Copied' : 'Copy Link'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleShareLink}
+                className="py-2 px-3 bg-[#112d35] hover:bg-[#091b20] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                <span>Share</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleWhatsAppShare}
+                className="py-2 px-3 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <span>WhatsApp</span>
+              </button>
+            </div>
+          </div>
           {/* Policy Checklist Card */}
           <div className="bg-white rounded-3xl p-6 border border-[#e4ded2] shadow-xs space-y-4">
             <h3 className="text-sm font-extrabold text-[#09353e] uppercase tracking-wider">

@@ -155,7 +155,7 @@ router.post('/request', verifyToken, async (req, res) => {
     }
 
     // 4. Validate Payment Method
-    const allowedMethods = ['bank', 'easypaisa', 'jazzcash', 'crypto'];
+    const allowedMethods = ['bank', 'easypaisa', 'jazzcash', 'upaisa', 'sadapay', 'crypto'];
     if (!method || !allowedMethods.includes(method.toLowerCase())) {
       return res.status(400).json({
         error: 'Invalid Method',
@@ -169,29 +169,46 @@ router.post('/request', verifyToken, async (req, res) => {
     if (!destinationAccount || !destinationAccount.trim()) {
       return res.status(400).json({
         error: 'Missing Account Number',
-        message: cleanMethod === 'crypto' ? 'Wallet address is required.' : 'Account number or phone number is required.',
+        message: cleanMethod === 'crypto' ? 'Wallet address is required.' : 'Account number is required.',
       });
     }
 
     if (cleanMethod !== 'crypto' && (!accountName || !accountName.trim())) {
       return res.status(400).json({
         error: 'Missing Account Name',
-        message: 'Account holder name is required for bank and mobile wallet transfers.',
+        message: 'Account holder name is required before submitting.',
       });
     }
 
-    // 5. Strict Rule: Referral Check (requires at least 1 referral unless admin)
+    // 5. Strict Rule: Referral Check (requires at least 1 referral, once unlocked permanent forever)
     const requiredReferrals = (typeof settings.referralRequired === 'number' && settings.referralRequired > 0)
       ? settings.referralRequired
       : 1;
 
     const referralCount = Number(userData.referralCount) || 0;
-    if (!isUserAdmin && referralCount < requiredReferrals) {
+    const isWithdrawalPermanentlyUnlocked = Boolean(
+      userData.hasUnlockedWithdrawal ||
+      userData.isWithdrawalUnlocked ||
+      referralCount >= requiredReferrals ||
+      isUserAdmin
+    );
+
+    if (!isWithdrawalPermanentlyUnlocked) {
       return res.status(400).json({
-        error: 'Referral Requirement Not Met',
-        message: `You need at least ${requiredReferrals} active referral(s) to withdraw.`,
+        error: 'Ineligible',
+        message: `Ineligible: You need at least ${requiredReferrals} active referral to unlock withdrawals. Once you refer 1 member, you are permanently eligible forever!`,
         referralCount,
+        requiredReferrals,
       });
+    }
+
+    // Lock in permanent unlocked status for the user in database
+    if (!userData.hasUnlockedWithdrawal && (referralCount >= requiredReferrals || isUserAdmin)) {
+      try {
+        await userRef.set({ hasUnlockedWithdrawal: true }, { merge: true });
+      } catch (saveErr) {
+        console.warn('Failed to persist hasUnlockedWithdrawal flag:', saveErr.message);
+      }
     }
 
     // 6. Strict Rule: Daily Limit Check (once per day)

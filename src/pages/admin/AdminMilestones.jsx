@@ -41,16 +41,40 @@ export default function AdminMilestones() {
     try {
       const res = await apiClient.get('/admin/milestones');
       if (res.data?.success) {
-        setTeamRewards(res.data.teamRewards || DEFAULT_TEAM_REWARDS);
-        setTeamMilestones(res.data.teamMilestones || DEFAULT_TEAM_MILESTONES);
+        const tr = res.data.teamRewards || DEFAULT_TEAM_REWARDS;
+        const tm = res.data.teamMilestones || DEFAULT_TEAM_MILESTONES;
+        setTeamRewards(tr);
+        setTeamMilestones(tm);
+        try {
+          localStorage.setItem('taemry_custom_milestones', JSON.stringify({ teamRewards: tr, teamMilestones: tm }));
+        } catch (e) {}
+      } else {
+        const cached = localStorage.getItem('taemry_custom_milestones');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setTeamRewards(parsed.teamRewards || DEFAULT_TEAM_REWARDS);
+          setTeamMilestones(parsed.teamMilestones || DEFAULT_TEAM_MILESTONES);
+        } else {
+          setTeamRewards(DEFAULT_TEAM_REWARDS);
+          setTeamMilestones(DEFAULT_TEAM_MILESTONES);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load milestones from API, using defaults:', err.message);
+      const cached = localStorage.getItem('taemry_custom_milestones');
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached);
+          setTeamRewards(parsed.teamRewards || DEFAULT_TEAM_REWARDS);
+          setTeamMilestones(parsed.teamMilestones || DEFAULT_TEAM_MILESTONES);
+        } catch (e) {
+          setTeamRewards(DEFAULT_TEAM_REWARDS);
+          setTeamMilestones(DEFAULT_TEAM_MILESTONES);
+        }
       } else {
         setTeamRewards(DEFAULT_TEAM_REWARDS);
         setTeamMilestones(DEFAULT_TEAM_MILESTONES);
       }
-    } catch (err) {
-      console.warn('Failed to load milestones from API, using defaults:', err.message);
-      setTeamRewards(DEFAULT_TEAM_REWARDS);
-      setTeamMilestones(DEFAULT_TEAM_MILESTONES);
     } finally {
       setLoading(false);
     }
@@ -70,6 +94,10 @@ export default function AdminMilestones() {
         teamMilestones,
       });
       if (res.data?.success) {
+        try {
+          localStorage.setItem('taemry_custom_milestones', JSON.stringify({ teamRewards, teamMilestones }));
+          window.dispatchEvent(new CustomEvent('taemry_milestones_updated', { detail: { teamRewards, teamMilestones } }));
+        } catch (e) {}
         setStatusMessage({
           type: 'success',
           text: 'Milestones & Team Rewards updated live in database! All user accounts will instantly see the new parameters.',
