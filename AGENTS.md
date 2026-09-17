@@ -344,3 +344,16 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Label**: Strictly "Referral Code" (replacing "Sponsor Username").
 - **Frozen Sponsor Badge & Lock Icons Hidden**: The "Frozen Sponsor" badge and lock icons are permanently hidden from both the label and inside the referral input field when landing via referral links. The input displays clean typography and styling with seamless pre-filling.
 
+## STRICT INVARIANT: Full-Screen Blur Splash Animate Page & Option Transitions Lock (PERMANENT & LOCKED)
+- **Strictly Zero Solid Black**: Page and option transitions exclusively use pure backdrop blur and fluid radial splash waves (`backdrop-filter: blur(14px)` + centered radial splash pulse), strictly with no solid black background.
+- **HTML Element**: `<div class="fade-overlay loaded" id="fadeOverlay"><div class="fade-overlay-splash"></div></div>` placed inside `index.html`.
+- **CSS Architecture**: `.fade-overlay`, `.fade-overlay.loaded`, `.fade-overlay.show`, `.fade-overlay-splash`, and `.fade-trigger` with 0.2s transition.
+- **Universal Transition Coverage**:
+  - All page opens and navigation flows across the app (Login to Home, Home to Dashboard, Dashboard to Login, Support, Whitepaper, Cloud Miner, Admin, etc.).
+  - All page Back & Forward events (browser Back button, mobile swipe back, hashchange, popstate).
+  - All dashboard tabs & option switches (Overview, Buy Package, Watch Ads, Deposit, Withdraw, Referrals, Milestones, Transactions, Leaderboard, Account Settings).
+  - All Cloud Miner subtab option clicks (1 to All).
+  - All dedicated `.fade-trigger` links and buttons.
+- **Permanent Freeze**: This transition system is 100% completed and permanently locked against any changes or removal.
+
+

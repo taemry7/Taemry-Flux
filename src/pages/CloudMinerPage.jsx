@@ -33,6 +33,7 @@ import MinerPreStaking from '../components/miner/MinerPreStaking';
 import MinerTeamBoost from '../components/miner/MinerTeamBoost';
 import MinerDayOffs from '../components/miner/MinerDayOffs';
 import MinerSevenDayCheckIn from '../components/miner/MinerSevenDayCheckIn';
+import { triggerPageTransition } from '../utils/pageTransitions';
 
 const LOCAL_STORAGE_KEY = 'taemry_tflx_miner_data';
 
@@ -562,8 +563,10 @@ export default function CloudMinerPage({ onNavigate }) {
                 type="button"
                 id={`btn-miner-menu-${item.id}`}
                 onClick={() => {
-                  setActiveSubTab(item.id);
                   setIsMinerMenuOpen(false);
+                  triggerPageTransition(() => {
+                    setActiveSubTab(item.id);
+                  }, 200);
                 }}
                 className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all cursor-pointer ${
                   isActive

@@ -44,6 +44,7 @@ import TransactionHistory from './TransactionHistory';
 import AccountSettings from './AccountSettings';
 import LiveLeaderboard from '../components/LiveLeaderboard';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
+import { triggerPageTransition } from '../utils/pageTransitions';
 
 const STARTER_PACKAGE = {
   id: 'bronze',
@@ -200,10 +201,12 @@ export default function DashboardPage({
 
   const handleTabChange = (tabId) => {
     const sanitized = sanitizeTab(tabId);
-    setActiveTab(sanitized);
-    if (onSelectTab) {
-      onSelectTab(sanitized);
-    }
+    triggerPageTransition(() => {
+      setActiveTab(sanitized);
+      if (onSelectTab) {
+        onSelectTab(sanitized);
+      }
+    }, 200);
   };
 
   // Fetch Dashboard Stats from Backend API (GET /api/dashboard/stats)

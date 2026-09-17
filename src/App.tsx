@@ -15,6 +15,12 @@ import SupportPage from './pages/SupportPage';
 import CloudMinerPage from './pages/CloudMinerPage';
 import AdminLayout from './layouts/AdminLayout';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import { 
+  triggerPageTransition, 
+  initGlobalPageTransitions, 
+  setInternalNavigationFlag, 
+  getInternalNavigationFlag 
+} from './utils/pageTransitions';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -30,6 +36,12 @@ function AppContent() {
   });
 
   const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Initialize global page transitions for .fade-trigger and initial fade-in
+  useEffect(() => {
+    const cleanup = initGlobalPageTransitions();
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -145,133 +157,148 @@ function AppContent() {
   }, []);
 
   // Sync with browser URL (handles both /admin, /login and #/admin, #/login)
+  const isFirstMountRef = useRef(true);
 
   useEffect(() => {
     const handleLocationChange = () => {
-      // Capture referral code from URL if present (?ref=CODE or #/?ref=CODE)
-      let hasReferral = false;
-      try {
-        if (typeof window !== 'undefined') {
-          let refCode: string | null = null;
-          if (window.location.search) {
-            const searchParams = new URLSearchParams(window.location.search);
-            refCode = searchParams.get('ref') || searchParams.get('referral');
-          }
-          if (!refCode && window.location.hash) {
-            const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
-            if (match && match[1]) {
-              refCode = match[1];
+      const runSync = () => {
+        // Capture referral code from URL if present (?ref=CODE or #/?ref=CODE)
+        let hasReferral = false;
+        try {
+          if (typeof window !== 'undefined') {
+            let refCode: string | null = null;
+            if (window.location.search) {
+              const searchParams = new URLSearchParams(window.location.search);
+              refCode = searchParams.get('ref') || searchParams.get('referral');
+            }
+            if (!refCode && window.location.hash) {
+              const match = window.location.hash.match(/[?&]ref=([^&#]+)/i);
+              if (match && match[1]) {
+                refCode = match[1];
+              }
+            }
+            if (refCode && refCode.trim()) {
+              const cleanCode = decodeURIComponent(refCode).trim();
+              localStorage.setItem('referralCode', cleanCode);
+              hasReferral = true;
             }
           }
-          if (refCode && refCode.trim()) {
-            const cleanCode = decodeURIComponent(refCode).trim();
-            localStorage.setItem('referralCode', cleanCode);
-            hasReferral = true;
+        } catch (err) {
+          console.warn('[Referral Capture Error]:', err);
+        }
+
+        // Keep loader hidden on all menu and internal navigation for smooth, instantaneous transitions
+        setIsPageLoading(false);
+
+        const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
+        const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
+
+        // Check if user is navigating directly to admin (e.g. /admin or #/admin)
+        if (rawPath === 'admin' || rawPath.startsWith('admin/') || rawHash === 'admin' || rawHash.startsWith('admin/')) {
+          setCurrentPage('admin');
+          const parts = (rawHash.startsWith('admin') ? rawHash : rawPath).split('/');
+          if (parts[1]) {
+            setActiveTab(parts[1]);
           }
-        }
-      } catch (err) {
-        console.warn('[Referral Capture Error]:', err);
-      }
-
-      // Keep loader hidden on all menu and internal navigation for smooth, instantaneous transitions
-      setIsPageLoading(false);
-
-      const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
-      const rawHash = window.location.hash.replace(/^#\/?/, '').replace(/\/+$/, '').toLowerCase();
-
-      // Check if user is navigating directly to admin (e.g. /admin or #/admin)
-      if (rawPath === 'admin' || rawPath.startsWith('admin/') || rawHash === 'admin' || rawHash.startsWith('admin/')) {
-        setCurrentPage('admin');
-        const parts = (rawHash.startsWith('admin') ? rawHash : rawPath).split('/');
-        if (parts[1]) {
-          setActiveTab(parts[1]);
-        }
-        return;
-      }
-
-      // Direct referral link opening straight to signup
-      if (hasReferral && (!rawPath || rawPath === 'home' || rawHash === '' || rawHash === 'home' || rawHash.includes('ref='))) {
-        setCurrentPage('login');
-        setActiveTab('signup');
-        return;
-      }
-
-      const effectiveRoute = rawHash || rawPath;
-
-      if (effectiveRoute === 'signup' || effectiveRoute.startsWith('signup/')) {
-        setCurrentPage('login');
-        setActiveTab('signup');
-      } else if (effectiveRoute === 'login' || effectiveRoute.startsWith('login/')) {
-        setCurrentPage('login');
-        const parts = effectiveRoute.split('/');
-        if (parts[1]) {
-          setActiveTab(parts[1]);
-        } else {
-          setActiveTab('signin');
-        }
-      } else if (effectiveRoute === 'whitepaper') {
-        setCurrentPage('whitepaper');
-      } else if (effectiveRoute === 'support') {
-        setCurrentPage('support');
-      } else if (effectiveRoute === 'cloud-miner' || effectiveRoute === 'miner') {
-        setCurrentPage('cloud-miner');
-      } else if (effectiveRoute === 'buy-package') {
-        setCurrentPage('dashboard');
-        setActiveTab('buy-package');
-      } else if (effectiveRoute === 'watch-ads') {
-        setCurrentPage('dashboard');
-        setActiveTab('watch-ads');
-      } else if (effectiveRoute === 'referrals') {
-        setCurrentPage('dashboard');
-        setActiveTab('referrals');
-      } else if (effectiveRoute === 'milestones') {
-        setCurrentPage('dashboard');
-        setActiveTab('milestones');
-      } else if (effectiveRoute === 'deposit') {
-        setCurrentPage('dashboard');
-        setActiveTab('deposit');
-      } else if (effectiveRoute === 'withdraw') {
-        setCurrentPage('dashboard');
-        setActiveTab('withdraw');
-      } else if (effectiveRoute === 'transactions') {
-        setCurrentPage('dashboard');
-        setActiveTab('transactions');
-      } else if (effectiveRoute === 'leaderboard') {
-        setCurrentPage('dashboard');
-        setActiveTab('leaderboard');
-      } else if (effectiveRoute.startsWith('dashboard')) {
-        let hasPersistedUser = false;
-        try {
-          const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
-          if (rawUser) hasPersistedUser = true;
-        } catch {}
-        if (!hasPersistedUser) {
-          setCurrentPage('login');
-          setActiveTab('signin');
           return;
         }
-        setCurrentPage('dashboard');
-        const parts = effectiveRoute.split('/');
-        if (parts[1]) {
-          setActiveTab(parts[1] === 'packages' ? 'buy-package' : parts[1]);
-        } else {
-          setActiveTab('overview');
-        }
-      } else if (effectiveRoute === 'home') {
-        let hasPersistedUser = false;
-        try {
-          const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
-          if (rawUser) hasPersistedUser = true;
-        } catch {}
-        if (!hasPersistedUser) {
+
+        // Direct referral link opening straight to signup
+        if (hasReferral && (!rawPath || rawPath === 'home' || rawHash === '' || rawHash === 'home' || rawHash.includes('ref='))) {
           setCurrentPage('login');
-          setActiveTab('signin');
+          setActiveTab('signup');
           return;
         }
-        setCurrentPage('home');
-      } else if (effectiveRoute === '') {
-        setCurrentPage('login');
-        setActiveTab('signin');
+
+        const effectiveRoute = rawHash || rawPath;
+
+        if (effectiveRoute === 'signup' || effectiveRoute.startsWith('signup/')) {
+          setCurrentPage('login');
+          setActiveTab('signup');
+        } else if (effectiveRoute === 'login' || effectiveRoute.startsWith('login/')) {
+          setCurrentPage('login');
+          const parts = effectiveRoute.split('/');
+          if (parts[1]) {
+            setActiveTab(parts[1]);
+          } else {
+            setActiveTab('signin');
+          }
+        } else if (effectiveRoute === 'whitepaper') {
+          setCurrentPage('whitepaper');
+        } else if (effectiveRoute === 'support') {
+          setCurrentPage('support');
+        } else if (effectiveRoute === 'cloud-miner' || effectiveRoute === 'miner') {
+          setCurrentPage('cloud-miner');
+        } else if (effectiveRoute === 'buy-package') {
+          setCurrentPage('dashboard');
+          setActiveTab('buy-package');
+        } else if (effectiveRoute === 'watch-ads') {
+          setCurrentPage('dashboard');
+          setActiveTab('watch-ads');
+        } else if (effectiveRoute === 'referrals') {
+          setCurrentPage('dashboard');
+          setActiveTab('referrals');
+        } else if (effectiveRoute === 'milestones') {
+          setCurrentPage('dashboard');
+          setActiveTab('milestones');
+        } else if (effectiveRoute === 'deposit') {
+          setCurrentPage('dashboard');
+          setActiveTab('deposit');
+        } else if (effectiveRoute === 'withdraw') {
+          setCurrentPage('dashboard');
+          setActiveTab('withdraw');
+        } else if (effectiveRoute === 'transactions') {
+          setCurrentPage('dashboard');
+          setActiveTab('transactions');
+        } else if (effectiveRoute === 'leaderboard') {
+          setCurrentPage('dashboard');
+          setActiveTab('leaderboard');
+        } else if (effectiveRoute.startsWith('dashboard')) {
+          let hasPersistedUser = false;
+          try {
+            const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+            if (rawUser) hasPersistedUser = true;
+          } catch {}
+          if (!hasPersistedUser) {
+            setCurrentPage('login');
+            setActiveTab('signin');
+            return;
+          }
+          setCurrentPage('dashboard');
+          const parts = effectiveRoute.split('/');
+          if (parts[1]) {
+            setActiveTab(parts[1] === 'packages' ? 'buy-package' : parts[1]);
+          } else {
+            setActiveTab('overview');
+          }
+        } else if (effectiveRoute === 'home') {
+          let hasPersistedUser = false;
+          try {
+            const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+            if (rawUser) hasPersistedUser = true;
+          } catch {}
+          if (!hasPersistedUser) {
+            setCurrentPage('login');
+            setActiveTab('signin');
+            return;
+          }
+          setCurrentPage('home');
+        } else if (effectiveRoute === '') {
+          setCurrentPage('login');
+          setActiveTab('signin');
+        }
+      };
+
+      if (isFirstMountRef.current) {
+        isFirstMountRef.current = false;
+        runSync();
+      } else if (!getInternalNavigationFlag()) {
+        // External page change, back/forward button, or popstate
+        triggerPageTransition(() => {
+          runSync();
+        }, 200);
+      } else {
+        runSync();
       }
     };
 
@@ -284,7 +311,7 @@ function AppContent() {
     };
   }, []);
 
-  // Update hash when navigating (fromMenu flag prevents loader)
+  // Update hash when navigating with 200ms blur splash animate transition
   const navigateTo = (page: string, tab: string | null = null, fromMenu: boolean = false) => {
     // If navigating to the exact same page and tab, scroll to top
     if (currentPage === page && (!tab || activeTab === tab)) {
@@ -292,26 +319,29 @@ function AppContent() {
       return;
     }
 
-    // Immediately reset scroll to top so incoming page and overlays start at top 0
-    try {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    } catch {
-      window.scrollTo(0, 0);
-    }
+    triggerPageTransition(() => {
+      // Immediately reset scroll to top so incoming page and overlays start at top 0
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      } catch {
+        window.scrollTo(0, 0);
+      }
 
-    // Never show full-screen loader on menu clicks or client route transitions
-    setIsPageLoading(false);
+      setIsPageLoading(false);
+      setInternalNavigationFlag(true);
 
-    setCurrentPage(page);
-    if (page === 'dashboard') {
-      setActiveTab(tab || 'overview');
-    } else if (tab) {
-      setActiveTab(tab);
-    } else {
-      setActiveTab('overview');
-    }
-    window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+      setCurrentPage(page);
+      if (page === 'dashboard') {
+        setActiveTab(tab || 'overview');
+      } else if (tab) {
+        setActiveTab(tab);
+      } else {
+        setActiveTab('overview');
+      }
+      window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
+      setTimeout(() => setInternalNavigationFlag(false), 300);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 200);
   };
 
   // Track previous user reference to instantly detect logout
@@ -393,17 +423,16 @@ function AppContent() {
         onClose={() => setIsDrawerOpen(false)}
         activeTab={activeTab}
         onSelectTab={(tab) => {
-          // Direct instantaneous switch from menu without any loader
-          setIsPageLoading(false);
-          setActiveTab(tab);
-          setCurrentPage('dashboard');
-          window.location.hash = `#/${'dashboard'}/${tab}`;
           setIsDrawerOpen(false);
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          triggerPageTransition(() => {
+            setIsPageLoading(false);
+            setActiveTab(tab);
+            setCurrentPage('dashboard');
+            window.location.hash = `#/${'dashboard'}/${tab}`;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }, 200);
         }}
         onNavigate={(page, tab) => {
-          // Instantaneous navigation from menu without loader
-          setIsPageLoading(false);
           setIsDrawerOpen(false);
           navigateTo(page, tab, true);
         }}
@@ -489,7 +518,11 @@ function AppContent() {
             <ProtectedRoute onRedirectToLogin={() => navigateTo('login')}>
               <DashboardPage
                 activeTab={activeTab}
-                onSelectTab={(tab) => setActiveTab(tab)}
+                onSelectTab={(tab) => {
+                  triggerPageTransition(() => {
+                    setActiveTab(tab);
+                  }, 200);
+                }}
                 onNavigate={navigateTo}
               />
             </ProtectedRoute>

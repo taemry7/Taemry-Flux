@@ -511,7 +511,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 >
                   Verification Code (6-digits)
                 </label>
-                <span className="text-[11px] font-medium text-[#0f766e] dark:text-[#2dd4bf] flex items-center gap-1">
+                <span className="hidden">
                   <ShieldCheck className="w-3.5 h-3.5" />
                   Anti-Bot Protection Active
                 </span>
