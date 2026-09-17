@@ -242,11 +242,15 @@
             window.__pwa_deferred_prompt = e;
           });
 
-          // Service Worker registration for PWA installability
+          // Service Worker registration for PWA installability & Monetag Web Push
           if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').catch(function(err) {
-                console.warn('[PWA SW Registration]:', err);
+              navigator.serviceWorker.register('/sw.js', { scope: '/' }).then(function(reg) {
+                if (reg && typeof reg.update === 'function') {
+                  reg.update();
+                }
+              }).catch(function(err) {
+                console.warn('[PWA/Monetag SW Registration]:', err);
               });
             });
           }

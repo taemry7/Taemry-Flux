@@ -135,6 +135,23 @@ function AppContent() {
     };
   }, [checkShouldShowWelcome, currentUser, currentPage]);
 
+  // Purge any unwanted popunders, notification push scripts, or click hijackers
+  // Per user explicit directive: No background notification ads and no direct ads on general page clicks!
+  useEffect(() => {
+    try {
+      const purgeIds = ['adsterra-script-unit1', 'adsterra-script-unit3'];
+      purgeIds.forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.remove();
+      });
+
+      // Remove any scripts from profitable popunder/social domains that hijacked clicks
+      document.querySelectorAll('script[src*="pl31367145"], script[src*="pl31367147"]').forEach((el) => {
+        el.remove();
+      });
+    } catch {}
+  }, []);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isPageLoading, setIsPageLoading] = useState(true);
   const [isInitialSplash, setIsInitialSplash] = useState(true);

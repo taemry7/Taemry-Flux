@@ -19,6 +19,12 @@ import {
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
+import {
+  AdsterraBanner,
+  ResponsiveAdLeaderboard,
+  AdsterraNativeContainer,
+} from '../components/AdsterraAds';
+import AdWatchSessionModal from '../components/AdWatchSessionModal';
 
 const WATCH_ADS_PACKAGES = [
   {
@@ -148,6 +154,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [adsCatalog, setAdsCatalog] = useState([]);
   const [watchingAdNum, setWatchingAdNum] = useState(null);
+  const [activeAdSession, setActiveAdSession] = useState(null);
 
   // Curated sponsors rotating across 200 ads
   const SPONSORS = [
@@ -206,22 +213,31 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   useEffect(() => {
     fetchAdStatus();
+    // Ensure Monetag service worker (5gvci.com, zone 11814728) is registered
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch(() => {});
+    }
   }, []);
 
-  // Handle clicking the watch button on an ad card
-  // User note: "agar monetag ya adsterra koi or ki bat karo to is watch button ko click karky wo ads hongy ye me bata donga OK apko"
-  const handleWatchAd = async (adNumber) => {
+  // Trigger verified ad watching session
+  // Opens Direct Link in new tab and displays countdown verification modal
+  const handleWatchAd = (ad) => {
     const limit = adStatus.dailyLimit || 200;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
     }
+    setErrorMessage('');
+    setActiveAdSession(ad);
+  };
 
+  // Called ONLY when the user views the ad and countdown timer completes
+  const handleCompleteReward = async (adNumber) => {
     try {
       setWatchingAdNum(adNumber);
       setErrorMessage('');
 
-      // Submit ad watch reward to server
+      // Submit verified ad watch reward to server
       const res = await apiClient.post('/ads/watch', {
         adId: `ad_${adNumber}_${Date.now()}`,
       });
@@ -263,9 +279,12 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
         // Background refetch user stats
         fetchUserStats();
+
+        // Close modal
+        setActiveAdSession(null);
       }
     } catch (err) {
-      console.error('Error completing ad view:', err);
+      console.error('Error completing ad view reward:', err);
       const errorMsg = err.response?.data?.message || 'Failed to claim ad reward. Please try again.';
       setErrorMessage(errorMsg);
     } finally {
@@ -344,6 +363,12 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       )}
 
+      {/* TOP RESPONSIVE LEADERBOARD AD (728x90 desktop / 468x60 tablet / 320x50 mobile) */}
+      <ResponsiveAdLeaderboard />
+
+      {/* FEATURED SPONSORED NATIVE AD CONTAINER (Unit #2) */}
+      <AdsterraNativeContainer />
+
       {/* 200 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
         <div className="flex items-center justify-between border-b border-[#f0ebe0] pb-4">
@@ -417,7 +442,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                   <button
                     type="button"
                     disabled={isCompleted || isBusy || adStatus.dailyAdCount >= 200}
-                    onClick={() => handleWatchAd(ad.adNumber)}
+                    onClick={() => handleWatchAd(ad)}
                     className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       isCompleted
                         ? 'text-[#15803d] bg-[#dcfce7] cursor-default'
@@ -444,7 +469,20 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
             );
           })}
         </div>
+
+        {/* BOTTOM ADSTERRA BANNER (Unit #5 468x60) */}
+        <div className="pt-4 border-t border-[#f0ebe0] flex justify-center">
+          <AdsterraBanner format="468x60" showLabel={true} />
+        </div>
       </div>
+
+      {/* AD WATCHING & VERIFIED COUNTDOWN MODAL */}
+      <AdWatchSessionModal
+        isOpen={Boolean(activeAdSession)}
+        adData={activeAdSession}
+        onCompleteReward={handleCompleteReward}
+        onClose={() => setActiveAdSession(null)}
+      />
     </div>
   );
 }
