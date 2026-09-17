@@ -14,11 +14,12 @@ let nodemailerLib = null;
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  const host = process.env.SMTP_HOST;
-  const port = parseInt(process.env.SMTP_PORT || '587', 10);
-  const user = process.env.SMTP_USER;
+  const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+  const port = parseInt(process.env.SMTP_PORT || '465', 10);
+  const user = process.env.SMTP_USER || 'support.taemryflux@gmail.com';
   // Clean app password (remove spaces if pasted with spaces)
-  const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : '';
+  const rawPass = process.env.SMTP_PASS || 'wshvsmniwfjengii';
+  const pass = rawPass ? rawPass.replace(/\s+/g, '') : '';
 
   if (host && user && pass) {
     try {
@@ -56,8 +57,8 @@ const getTransporter = async () => {
   return transporter;
 };
 
-// Branded From address (Display Name: "TAEMRY FLUX", Address: support@taemryflux.online)
-const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support@taemryflux.online>';
+// Branded From address (Display Name: "TAEMRY FLUX", Address: support.taemryflux@gmail.com)
+const FROM_ADDRESS = process.env.SMTP_FROM || '"TAEMRY FLUX" <support.taemryflux@gmail.com>';
 const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'mistrtaimoor@gmail.com';
 
 /**
