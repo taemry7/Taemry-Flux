@@ -271,3 +271,44 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
     2. Direct Referrals Status Directory (`hidden`)
     3. Team Rewards Ladder Breakdown table (`hidden`)
   - The page is 100% frozen and locked against unsolicited modifications.
+
+## STRICT INVARIANT: Cloud Miner Page, Tap Mining Engine & Sub-divs Lock (PERMANENT & LOCKED)
+- **Package Eligibility Requirement**:
+  - Cloud Mining activation requires an active advertising package (`currentPackage !== 'None'` or `isEligible: true`).
+  - Purchasing any package on the Home page / Buy Package page immediately unlocks full Cloud Miner eligibility.
+  - If a user has no active package, the interactive Ineligible Gate appears with direct routing to activate a package.
+- **Continuous 12-Hour Mining Engine & Tap / Hold Activation**:
+  - Users can ignite or renew their 12-hour session via instant single tap or 1-second hold on the fire reactor button (`#btn-tap-to-mine`).
+  - Mining progresses live in real-time and continues calculating seamlessly offline while away/closed, accumulating tokens based on elapsed session time without producing NaN values (`safeNumber` protection applied).
+- **Sub-Divs Hidden from Main View & Moved to Menu**:
+  - Per user explicit directive ("or ye 3 div isko menu me show karna hai yahan par nhi hidden kardo"):
+    1. Pre-Staking & Boost (+250%)
+    2. 2-Tier Guild Network
+    3. Day-Offs & Inactivity Slashing Protection
+  - These 3 sub-divs are hidden from the primary Miner Overview screen and only accessible when selected from the dedicated Cloud Miner menu drawer (`isMinerMenuOpen`), with an instant "← Back to Miner Overview" navigation trigger.
+- **Ultra-Short Link Hidden**:
+  - Per user explicit directive ("or ye ultra short,, @taemryadmin ko hidden kardo"), the ultra-short referral link section inside `MinerTeamBoost.jsx` is permanently hidden.
+- **Cloud Miner Page Complete Lock**:
+  - The Cloud Miner page, reactor state machine, calculation formulas, and UI layout are 100% permanently frozen and locked against unsolicited modifications.
+
+## STRICT INVARIANT: Whitepaper Page & Policy Rules Lock (PERMANENT & LOCKED)
+- **Complete Protocol Synchronization**:
+  - Section 6: 5-Level Daily Ads Matching Commissions (L1: 25%, L2: 20%, L3: 15%, L4: 10%, L5: 5%) and 5-Level Package Activation Commissions (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%).
+  - Section 7: Withdrawal Rules & Policy ($1.00 USD minimum threshold; 1 active referral unlocks permanent lifetime eligibility; 1 to 5 hour review; anti-VPN/bot rules).
+  - Section 8: Payment Channels (Active local mobile wallets JazzCash, UPaisa, and SadaPay pegged at 1 USD = 300 PKR; Bank Transfer and Crypto USDT marked Not Available for Now undergoing scheduled infrastructure upgrades).
+  - Section 9 & Backend FAQs: Fully synchronized across frontend and backend routes.
+- **Complete Whitepaper Lock**:
+  - Whitepaper page and documentation endpoints are 100% frozen and locked against unsolicited modifications.
+
+## STRICT INVARIANT: Referrals Page & Single Ultra-Short Link Format Lock (PERMANENT & LOCKED)
+- **Ultra-Short Direct @Username Link Active**:
+  - The Referral link is strictly set to the Ultra-Short Direct @Username format (`${baseUrl}/@${username}`).
+  - Direct copy and share controls (Copy Link, Share Link, WhatsApp) exclusively distribute this clean link.
+- **Hidden Elements per Owner Directive**:
+  - "Referral Username" span text updated strictly to "Your Referral Code".
+  - Two sponsor id spans are permanently hidden (`hidden` on "Permanent Sponsor ID" badge span and header `&bull; Sponsor: @username` span).
+  - The format selector pills div is permanently hidden (`hidden`).
+  - The 5 link format cards directory div is permanently hidden (`hidden`).
+- **Complete Referrals Page Lock**:
+  - The Referrals page layout, stats, downline directory, and single Ultra-Short Link configuration are 100% frozen and permanently locked against unsolicited modifications.
+

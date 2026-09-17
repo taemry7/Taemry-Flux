@@ -120,6 +120,18 @@ export default function MinerTapButton({
     }
   };
 
+  // Instant tap support when idle or expired
+  const handleClick = () => {
+    if (isPackageActive === false) {
+      onStartMining();
+      return;
+    }
+    if (isExpired || !minerData.isMiningActive) {
+      playIgniteTune();
+      onStartMining();
+    }
+  };
+
   useEffect(() => {
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -146,6 +158,7 @@ export default function MinerTapButton({
           type="button"
           id="btn-tap-to-mine"
           disabled={isFirstHalf}
+          onClick={handleClick}
           onPointerDown={handleHoldStart}
           onPointerUp={handleHoldEnd}
           onPointerLeave={handleHoldEnd}

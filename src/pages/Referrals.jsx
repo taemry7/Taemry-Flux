@@ -250,7 +250,7 @@ export default function Referrals({ onSelectTab }) {
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#0c5963] dark:text-[#2dd4bf] bg-[#e6f4f1] dark:bg-[#0c262e] px-2.5 py-0.5 rounded-full border border-[#b8dfd7] dark:border-[#173740]">
               Affiliate &amp; Downline
             </span>
-            <span className="text-[11px] font-bold text-[#526d72] dark:text-[#94a3b8]">
+            <span className="hidden text-[11px] font-bold text-[#526d72] dark:text-[#94a3b8]">
               &bull; Sponsor: @{activeUsername}
             </span>
           </div>
@@ -276,7 +276,7 @@ export default function Referrals({ onSelectTab }) {
           <div className="space-y-2 max-w-xl">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d8286] dark:text-[#94a3b8] flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf]" />
-              <span>Your Personal Username Invitation Link</span>
+              <span>Ultra-Short Direct @Username Link</span>
             </span>
             <h3 className="text-lg sm:text-xl font-black text-[#09353e] dark:text-white">
               Invite members to earn multi-level matching commission
@@ -290,19 +290,19 @@ export default function Referrals({ onSelectTab }) {
           <div className="bg-[#faf8f5] dark:bg-[#07151a] p-4 sm:p-5 rounded-2xl border border-[#e2dcce] dark:border-[#173740] flex flex-col items-center justify-center min-w-[200px] shadow-xs">
             <span className="text-[10px] font-bold uppercase tracking-widest text-[#798e92] dark:text-[#94a3b8] flex items-center gap-1">
               <AtSign className="w-3 h-3 text-[#0c5963] dark:text-[#2dd4bf]" />
-              <span>Referral Username</span>
+              <span>Your Referral Code</span>
             </span>
             <span className="text-xl font-black font-mono text-[#0c5963] dark:text-[#2dd4bf] tracking-wider mt-1 flex items-center gap-1">
               @{activeUsername}
             </span>
-            <span className="text-[10px] text-[#718589] dark:text-[#64748b] mt-1 font-medium">
+            <span className="hidden text-[10px] text-[#718589] dark:text-[#64748b] mt-1 font-medium">
               Permanent Sponsor ID
             </span>
           </div>
         </div>
 
-        {/* Format Selector Pills */}
-        <div className="mt-6 pt-5 border-t border-[#eee8dd] dark:border-[#173740]">
+        {/* Format Selector Pills (Hidden per user request: "or 2 div ko hidden krdon Ok") */}
+        <div className="hidden mt-6 pt-5 border-t border-[#eee8dd] dark:border-[#173740]">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d8286] dark:text-[#94a3b8]">
               Select Active Link Format
@@ -334,8 +334,10 @@ export default function Referrals({ onSelectTab }) {
               );
             })}
           </div>
+        </div>
 
-          {/* Copy & Share input bar */}
+        {/* Copy & Share input bar for Ultra-Short Direct @Username Link */}
+        <div className="mt-6 pt-5 border-t border-[#eee8dd] dark:border-[#173740]">
           <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
             <div className="relative flex-1">
               <input
@@ -394,8 +396,8 @@ export default function Referrals({ onSelectTab }) {
         </div>
       </div>
 
-      {/* ALL 5 REFERRAL LINK OPTIONS DIRECT LIST */}
-      <div className="bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 border border-[#e4ded2] dark:border-[#173740] shadow-xs space-y-4">
+      {/* ALL 5 REFERRAL LINK OPTIONS DIRECT LIST (Hidden per user request: "or baqi ko hidden kardo ... or 2 div ko hidden krdon Ok") */}
+      <div className="hidden bg-white dark:bg-[#0a1b22] rounded-3xl p-6 sm:p-8 border border-[#e4ded2] dark:border-[#173740] shadow-xs space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#eee8dd] dark:border-[#173740] pb-4">
           <div>
             <h3 className="text-base sm:text-lg font-black text-[#09353e] dark:text-white flex items-center gap-2">
@@ -687,7 +689,7 @@ export default function Referrals({ onSelectTab }) {
             <div className="bg-[#faf8f5] dark:bg-[#07151a] p-3.5 rounded-2xl border border-[#e2dcce] dark:border-[#173740] mb-5 flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-bold uppercase tracking-wider text-[#798e92] dark:text-[#94a3b8] block">
-                  Your Referral Username
+                  Your Referral Code
                 </span>
                 <span className="text-base font-black font-mono text-[#0c5963] dark:text-[#2dd4bf]">
                   @{activeUsername}

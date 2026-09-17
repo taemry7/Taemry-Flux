@@ -600,28 +600,56 @@ export default function WhitepaperPage({ onNavigate }) {
             <div className="flex items-center gap-2.5">
               <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">6</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
-                5-LEVEL DOWNLINE PACKAGE COMMISSIONS
+                5-LEVEL DOWNLINE & ADS MATCHING COMMISSIONS
               </h2>
             </div>
-            <div className="pl-9 space-y-3 text-sm text-[#374151] dark:text-[#cbd5e1]">
-              <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
-                Whenever downline members in your organizational hierarchy purchase or upgrade packages, commissions are distributed automatically across 5 tiers:
-              </p>
+            <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] uppercase tracking-wider">
+                  A) Daily Ads Matching Commission (Earned per ad viewed by downline)
+                </h3>
+                <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
+                  Whenever downline members in your 5-tier team watch their daily ads quota, you instantly receive matching commissions credited to your wallet balance:
+                </p>
+                <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                  {[
+                    { lvl: 'Level 1', pct: '25%', label: 'Direct' },
+                    { lvl: 'Level 2', pct: '20%', label: 'Tier 2' },
+                    { lvl: 'Level 3', pct: '15%', label: 'Tier 3' },
+                    { lvl: 'Level 4', pct: '10%', label: 'Tier 4' },
+                    { lvl: 'Level 5', pct: '5%', label: 'Tier 5' },
+                  ].map((item) => (
+                    <div key={item.lvl} className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                      <span className="text-[10px] font-bold text-[#718286] dark:text-[#94a3b8] block">{item.lvl}</span>
+                      <strong className="text-base font-black text-emerald-600 dark:text-emerald-400 block my-0.5">{item.pct}</strong>
+                      <span className="text-[10px] text-[#52666a] dark:text-[#94a3b8]">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-              <div className="grid grid-cols-5 gap-2 text-center text-xs">
-                {[
-                  { lvl: 'Level 1', pct: '20%', label: 'Direct' },
-                  { lvl: 'Level 2', pct: '10%', label: 'Tier 2' },
-                  { lvl: 'Level 3', pct: '5%', label: 'Tier 3' },
-                  { lvl: 'Level 4', pct: '3%', label: 'Tier 4' },
-                  { lvl: 'Level 5', pct: '2%', label: 'Tier 5' },
-                ].map((item) => (
-                  <div key={item.lvl} className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
-                    <span className="text-[10px] font-bold text-[#718286] dark:text-[#94a3b8] block">{item.lvl}</span>
-                    <strong className="text-base font-black text-[#0c5963] dark:text-[#38bdf8] block my-0.5">{item.pct}</strong>
-                    <span className="text-[10px] text-[#52666a] dark:text-[#94a3b8]">{item.label}</span>
-                  </div>
-                ))}
+              <div className="space-y-2 pt-2 border-t border-[#ece5d8] dark:border-[#173740]">
+                <h3 className="text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] uppercase tracking-wider">
+                  B) Package Activation Referral Commission
+                </h3>
+                <p className="text-xs text-[#52666a] dark:text-[#94a3b8]">
+                  Whenever members in your network activate or upgrade an advertising package, direct downline commissions are distributed across 5 tiers:
+                </p>
+                <div className="grid grid-cols-5 gap-2 text-center text-xs">
+                  {[
+                    { lvl: 'Level 1', pct: '20%', label: 'Direct' },
+                    { lvl: 'Level 2', pct: '10%', label: 'Tier 2' },
+                    { lvl: 'Level 3', pct: '5%', label: 'Tier 3' },
+                    { lvl: 'Level 4', pct: '3%', label: 'Tier 4' },
+                    { lvl: 'Level 5', pct: '2%', label: 'Tier 5' },
+                  ].map((item) => (
+                    <div key={item.lvl} className="p-3 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49]">
+                      <span className="text-[10px] font-bold text-[#718286] dark:text-[#94a3b8] block">{item.lvl}</span>
+                      <strong className="text-base font-black text-[#0c5963] dark:text-[#38bdf8] block my-0.5">{item.pct}</strong>
+                      <span className="text-[10px] text-[#52666a] dark:text-[#94a3b8]">{item.label}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </section>
@@ -631,16 +659,17 @@ export default function WhitepaperPage({ onNavigate }) {
             <div className="flex items-center gap-2.5">
               <span className="flex items-center justify-center w-7 h-7 rounded-xl bg-[#0c5963] text-white font-bold text-xs">7</span>
               <h2 className="text-xl font-bold text-[#093e4a] dark:text-white">
-                WITHDRAWAL RULES & COMPLIANCE
+                WITHDRAWAL RULES & ELIGIBILITY POLICY
               </h2>
             </div>
             <div className="pl-9 space-y-3 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="space-y-2">
                 {[
-                  { title: '1. Minimum Withdrawal', desc: '$1.00 USD' },
-                  { title: '2. Maximum Withdrawal', desc: '$1,000.00 USD (per single request)' },
-                  { title: '3. Daily Request Frequency', desc: '1 withdrawal request per calendar day' },
-                  { title: '4. Anti-VPN & Multi-Account Policy', desc: 'VPNs, proxies, and emulator automation are strictly forbidden.' },
+                  { title: '1. Minimum Withdrawal', desc: '$1.00 USD threshold for easy accessibility.' },
+                  { title: '2. Permanent Referral Eligibility', desc: '1 active referral is required to unlock your withdrawal gateway. Once referred, your account is permanently eligible forever.' },
+                  { title: '3. Maximum Withdrawal', desc: '$1,000.00 USD per single request.' },
+                  { title: '4. Fast Processing Time', desc: 'Withdrawals are audited and transferred within 1 to 5 hours.' },
+                  { title: '5. Anti-VPN & Integrity Policy', desc: 'Operating proxies, VPN tunnels, or headless automation bots is strictly prohibited and results in immediate forfeiture.' },
                 ].map((rule) => (
                   <div key={rule.title} className="p-3 rounded-xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
@@ -665,26 +694,32 @@ export default function WhitepaperPage({ onNavigate }) {
             <div className="pl-9 space-y-4 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-2">
-                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">
-                    A) LOCAL CURRENCY (Bank / Easypaisa / JazzCash)
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#093e4a] dark:text-white text-sm">
+                      A) LOCAL WALLETS (JazzCash / UPaisa / SadaPay)
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">ACTIVE</span>
                   </div>
                   <div className="inline-block px-3 py-1 rounded-lg bg-[#0c5963] text-white text-xs font-black">
                     Pegged Exchange Rate: 1 USD = 300 PKR
                   </div>
                   <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
-                    Deposit PKR directly to our verified company accounts and upload your transaction receipt. Withdrawals are processed back to your mobile wallet or IBAN within 1 to 24 hours.
+                    Deposit PKR directly to our verified Official Receiver accounts and submit your Transaction ID (TID) and receipt proof. Deposits are confirmed in ~1 minute. Withdrawals are processed directly to your Account Number or IBAN within 1 to 5 hours.
                   </p>
                 </div>
 
                 <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-2">
-                  <div className="font-bold text-[#093e4a] dark:text-white text-sm">
-                    B) CRYPTOCURRENCY CHANNELS (USDT & BTC)
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-[#093e4a] dark:text-white text-sm">
+                      B) BANK TRANSFER & CRYPTO (USDT)
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400">NOT AVAILABLE FOR NOW</span>
                   </div>
-                  <div className="inline-block px-3 py-1 rounded-lg bg-emerald-700 text-white text-xs font-black">
-                    Global Borderless Settlement
+                  <div className="inline-block px-3 py-1 rounded-lg bg-[#718286] text-white text-xs font-black">
+                    Scheduled Infrastructure Upgrades
                   </div>
                   <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
-                    Supports USDT (TRC-20 / BEP-20) and Bitcoin (BTC). Instant on-chain tracking for deposits and direct wallet payouts worldwide.
+                    Direct commercial Bank Transfer and on-chain USDT/Crypto channels are currently undergoing scheduled network maintenance. Please utilize our active JazzCash, UPaisa, or SadaPay gateways for instant transactions.
                   </p>
                 </div>
               </div>

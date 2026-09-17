@@ -65,11 +65,11 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q5. How deep is the referral network for commissions?',
-      a: 'Downline commissions are paid 5 Levels deep (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%) whenever direct downlines purchase advertising packages.'
+      a: 'Downline commissions are distributed 5 Levels deep: Daily Ads Matching Commissions (L1: 25%, L2: 20%, L3: 15%, L4: 10%, L5: 5%) and Package Activation Referral Commissions (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%).'
     },
     {
-      q: 'Q6. How are member withdrawals processed?',
-      a: 'Withdrawals are processed directly to your preferred payment method (Bank, Easypaisa, JazzCash, or USDT/BTC) with a low $1.00 minimum threshold, reviewed within 1 to 24 hours.'
+      q: 'Q6. How are member withdrawals processed and what are the requirements?',
+      a: 'Withdrawals require a low $1.00 minimum threshold and 1 active direct referral to unlock lifetime permanent eligibility. Once unlocked, requests are processed to your mobile account or IBAN within 1 to 5 hours.'
     },
     {
       q: 'Q7. What happens if I do not watch ads for a few days?',
@@ -77,7 +77,7 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q8. What deposit and withdrawal methods are supported?',
-      a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Pegged exchange rate: 1 USD = 300 PKR), 3. Cryptocurrency (USDT TRC20 / BEP20 and Bitcoin).'
+      a: 'Active channels: JazzCash, UPaisa, and SadaPay (Pegged exchange rate: 1 USD = 300 PKR). Direct Bank Transfer and Cryptocurrency USDT are currently undergoing scheduled upgrades.'
     },
     {
       q: 'Q9. What are the minimum and maximum withdrawal thresholds?',

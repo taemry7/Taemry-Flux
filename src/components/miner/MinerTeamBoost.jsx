@@ -199,8 +199,8 @@ export default function MinerTeamBoost({
         </div>
       )}
 
-      {/* Referral Link & Share Box */}
-      <div className="pt-2 space-y-2">
+      {/* Referral Link & Share Box (Hidden per user request: "or ye ultra short,, @taemryadmin ko hidden kardo") */}
+      <div className="hidden pt-2 space-y-2">
         <div className="flex items-center justify-between flex-wrap gap-1">
           <span className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] flex items-center gap-1.5">
             <Sparkles className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />

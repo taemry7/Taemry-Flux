@@ -40,7 +40,17 @@ export default function CloudMinerPage({ onNavigate }) {
   const { currentUser, userStats } = useAuth();
   const { showToast } = useToast();
 
-  const isPackageActive = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
+  const isPackageActive = Boolean(
+    (userStats?.currentPackage && userStats?.currentPackage !== 'None') ||
+    userStats?.isEligible
+  );
+
+  // Bulletproof numeric sanitizer to prevent any NaN or infinite values
+  const safeNumber = (val, fallback = 0) => {
+    if (val === null || val === undefined) return fallback;
+    const n = Number(val);
+    return (!isNaN(n) && isFinite(n) && n >= 0) ? n : fallback;
+  };
 
   const [activeSubTab, setActiveSubTab] = useState('all'); // 'all' | 'reactor' | 'pre-staking' | 'guild' | 'protection'
   const [isMinerMenuOpen, setIsMinerMenuOpen] = useState(false);
@@ -63,41 +73,56 @@ export default function CloudMinerPage({ onNavigate }) {
     };
   }, []);
 
-  // Initialize Miner State from LocalStorage or Defaults
+  // Initialize Miner State from LocalStorage or Defaults with NaN Protection
   const [minerData, setMinerData] = useState(() => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        // Calculate cloud elapsed mining while away
         const now = Date.now();
-        const lastSync = parsed.lastSyncTime || now;
-        const elapsedSeconds = Math.max(0, (now - lastSync) / 1000);
-
-        // Check if session was active during elapsed
-        const sessionDuration = parsed.sessionDurationMs || (12 * 60 * 60 * 1000);
-        const sessionElapsed = now - (parsed.sessionStartTime || now);
+        const startTime = safeNumber(parsed.sessionStartTime, 0);
+        const sessionDuration = safeNumber(parsed.sessionDurationMs, 12 * 60 * 60 * 1000);
+        const lastSync = safeNumber(parsed.lastSyncTime, startTime || now);
+        const elapsedSinceStart = now - startTime;
+        const rate = safeNumber(parsed.effectiveHashrate, 16.0);
 
         let addedCoins = 0;
-        if (parsed.isMiningActive) {
-          const effectiveRate = parsed.effectiveHashrate || 16.0;
-          if (sessionElapsed < sessionDuration) {
-            // Still active
-            addedCoins = (effectiveRate / 3600) * elapsedSeconds;
+        let isMiningActive = Boolean(parsed.isMiningActive);
+
+        if (isMiningActive && startTime > 0) {
+          if (elapsedSinceStart < sessionDuration) {
+            // Still active during offline / away duration
+            const elapsedSeconds = Math.max(0, (now - lastSync) / 1000);
+            addedCoins = (rate / 3600) * elapsedSeconds;
           } else {
-            // Expired in between
-            const remainingActiveSec = Math.max(0, (sessionDuration - (lastSync - parsed.sessionStartTime)) / 1000);
-            addedCoins = (effectiveRate / 3600) * remainingActiveSec;
-            parsed.isMiningActive = false;
+            // Expired in between away time
+            const remainingActiveSec = Math.max(0, (sessionDuration - (lastSync - startTime)) / 1000);
+            addedCoins = (rate / 3600) * Math.min(remainingActiveSec, sessionDuration / 1000);
+            isMiningActive = false;
           }
         }
 
-        const existing = Number(parsed.minedTflx);
-        const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 0;
+        const baseMined = safeNumber(parsed.minedTflx, 0.00);
+        const totalMined = Number((baseMined + safeNumber(addedCoins, 0)).toFixed(4));
+
         return {
-          ...parsed,
-          minedTflx: Number((baseMined + addedCoins).toFixed(2)),
+          minedTflx: totalMined,
+          isMiningActive,
+          sessionStartTime: startTime,
+          sessionDurationMs: sessionDuration,
+          committedYears: safeNumber(parsed.committedYears, 0),
+          committedAllocation: safeNumber(parsed.committedAllocation, 0),
+          preStakingBoost: safeNumber(parsed.preStakingBoost, 0),
+          tier1Active: safeNumber(parsed.tier1Active, 0),
+          tier1Total: safeNumber(parsed.tier1Total, 0),
+          tier2Active: safeNumber(parsed.tier2Active, 0),
+          tier2Total: safeNumber(parsed.tier2Total, 0),
+          dayOffsCount: safeNumber(parsed.dayOffsCount, 0),
+          streakDays: safeNumber(parsed.streakDays, 0),
+          claimedCheckInDays: Array.isArray(parsed.claimedCheckInDays) ? parsed.claimedCheckInDays : [],
+          slashedCoins: safeNumber(parsed.slashedCoins, 0),
           lastSyncTime: now,
+          lastPingTime: safeNumber(parsed.lastPingTime, 0),
         };
       }
     } catch (e) {
@@ -127,34 +152,44 @@ export default function CloudMinerPage({ onNavigate }) {
     };
   });
 
-  // Calculate Base and Total Hashrate
+  // Calculate Base and Total Hashrate with strict NaN immunity
   // Base: 16 TFLX/h
   // Pre-Staking Multiplier: e.g. +50% -> 16 * 1.5 = 24
   // Guild: Tier 1 (+4 TFLX/h each) + Tier 2 (+0.8 TFLX/h each)
   const baseRate = 16.0;
-  const preStakingMultiplier = 1 + (minerData.preStakingBoost || 0) / 100;
-  const teamRate = (minerData.tier1Active * 4.0) + (minerData.tier2Active * 0.8);
-  const effectiveHashrate = (baseRate * preStakingMultiplier) + teamRate;
+  const preStakingBoost = safeNumber(minerData?.preStakingBoost, 0);
+  const preStakingMultiplier = 1 + (preStakingBoost / 100);
+  const tier1Active = safeNumber(minerData?.tier1Active, 0);
+  const tier2Active = safeNumber(minerData?.tier2Active, 0);
+  const teamRate = (tier1Active * 4.0) + (tier2Active * 0.8);
+  const effectiveHashrate = Math.max(16.0, Number(((baseRate * preStakingMultiplier) + teamRate).toFixed(1)));
 
   // Real-time ticking engine for Continuous Cloud Mining
   useEffect(() => {
     const timer = setInterval(() => {
       setMinerData((prev) => {
         const now = Date.now();
-        const elapsedSinceStart = now - prev.sessionStartTime;
+        const startTime = safeNumber(prev.sessionStartTime, 0);
+        const duration = safeNumber(prev.sessionDurationMs, 12 * 60 * 60 * 1000);
+        const elapsedSinceStart = now - startTime;
 
-        if (!prev.isMiningActive || elapsedSinceStart >= prev.sessionDurationMs) {
+        if (!prev.isMiningActive || startTime === 0 || elapsedSinceStart >= duration) {
           // Session expired or paused
-          return {
-            ...prev,
-            isMiningActive: false,
-            lastSyncTime: now,
-          };
+          if (prev.isMiningActive) {
+            return {
+              ...prev,
+              isMiningActive: false,
+              lastSyncTime: now,
+            };
+          }
+          return prev;
         }
 
-        // Add 1-second increment of TFLX
-        const tflxPerSec = effectiveHashrate / 3600;
-        const newBalance = Number((prev.minedTflx + tflxPerSec).toFixed(4));
+        // Add 1-second increment of TFLX with absolute NaN protection
+        const prevCoins = safeNumber(prev.minedTflx, 0);
+        const rate = safeNumber(effectiveHashrate, 16.0);
+        const tflxPerSec = rate / 3600;
+        const newBalance = Number((prevCoins + tflxPerSec).toFixed(4));
 
         return {
           ...prev,
@@ -241,31 +276,37 @@ export default function CloudMinerPage({ onNavigate }) {
         if (snap.exists()) {
           const remote = snap.data();
           const now = Date.now();
-          const lastSync = remote.lastSyncTime || now;
-          const elapsedSeconds = Math.max(0, (now - lastSync) / 1000);
-          const sessionDuration = remote.sessionDurationMs || (12 * 60 * 60 * 1000);
-          const sessionElapsed = now - (remote.sessionStartTime || now);
+          const startTime = safeNumber(remote.sessionStartTime, 0);
+          const sessionDuration = safeNumber(remote.sessionDurationMs, 12 * 60 * 60 * 1000);
+          const lastSync = safeNumber(remote.lastSyncTime, startTime || now);
+          const elapsedSinceStart = now - startTime;
+          const rate = safeNumber(remote.effectiveHashrate, 16.0);
 
           let addedCoins = 0;
-          let isMiningStillActive = remote.isMiningActive;
-          if (remote.isMiningActive) {
-            const effectiveRate = remote.effectiveHashrate || 16.0;
-            if (sessionElapsed < sessionDuration) {
-              addedCoins = (effectiveRate / 3600) * elapsedSeconds;
+          let isMiningStillActive = Boolean(remote.isMiningActive);
+          if (isMiningStillActive && startTime > 0) {
+            if (elapsedSinceStart < sessionDuration) {
+              const elapsedSeconds = Math.max(0, (now - lastSync) / 1000);
+              addedCoins = (rate / 3600) * elapsedSeconds;
             } else {
-              const remainingActiveSec = Math.max(0, (sessionDuration - (lastSync - remote.sessionStartTime)) / 1000);
-              addedCoins = (effectiveRate / 3600) * remainingActiveSec;
+              const remainingActiveSec = Math.max(0, (sessionDuration - (lastSync - startTime)) / 1000);
+              addedCoins = (rate / 3600) * Math.min(remainingActiveSec, sessionDuration / 1000);
               isMiningStillActive = false;
             }
           }
 
-          const existing = Number(remote.minedTflx);
-          const baseMined = (!isNaN(existing) && existing >= 0) ? existing : 0.00;
+          const baseMined = safeNumber(remote.minedTflx, 0.00);
+          const totalMined = Number((baseMined + safeNumber(addedCoins, 0)).toFixed(4));
           setMinerData((prev) => ({
             ...prev,
             ...remote,
-            minedTflx: Number((baseMined + addedCoins).toFixed(4)),
+            minedTflx: totalMined,
             isMiningActive: isMiningStillActive,
+            sessionStartTime: startTime,
+            sessionDurationMs: sessionDuration,
+            preStakingBoost: safeNumber(remote.preStakingBoost, 0),
+            tier1Active: safeNumber(remote.tier1Active, 0),
+            tier2Active: safeNumber(remote.tier2Active, 0),
             lastSyncTime: now,
           }));
           setFirestoreSyncStatus('synced');
@@ -699,7 +740,7 @@ export default function CloudMinerPage({ onNavigate }) {
                 {/* Giant Typography for Mined Balance */}
                 <div className="flex flex-wrap items-baseline gap-2.5">
                   <span className="text-3xl sm:text-4xl lg:text-5xl font-black text-[#09353e] dark:text-[#f8fafc] tracking-tight tabular-nums">
-                    {minerData.minedTflx.toFixed(2)}
+                    {safeNumber(minerData?.minedTflx, 0).toFixed(2)}
                   </span>
                   <span className="text-lg sm:text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">
                     TFLX
@@ -708,13 +749,13 @@ export default function CloudMinerPage({ onNavigate }) {
 
                 {/* Real-time USD Valuation */}
                 <p className="text-xs sm:text-sm font-semibold text-[#6e8286] dark:text-[#94a3b8] flex items-center gap-1.5">
-                  <span>&asymp; ${(minerData.minedTflx * 0.7).toFixed(2)} USD</span>
+                  <span>&asymp; ${(safeNumber(minerData?.minedTflx, 0) * 0.7).toFixed(2)} USD</span>
                   <span className="hidden text-[10px] text-[#94a3b8] dark:text-[#64748b]">&bull; Target Listing Value</span>
                 </p>
 
                 {/* Hashrate moved under valuation span & made smaller per user request */}
                 <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 pt-0.5">
-                  <span>+{effectiveHashrate.toFixed(1)} TFLX/h</span>
+                  <span>+{safeNumber(effectiveHashrate, 16.0).toFixed(1)} TFLX/h</span>
                 </p>
               </div>
 
@@ -865,8 +906,27 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 2: PRE-STAKING & STAKING BOOST */}
-        {(activeSubTab === 'all' || activeSubTab === 'pre-staking') && (
+        {/* Sub-tab Navigation Back Button */}
+        {activeSubTab !== 'all' && (
+          <div className="w-full flex items-center justify-between pb-2">
+            <button
+              type="button"
+              onClick={() => setActiveSubTab('all')}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c2027] border border-[#ece6d9] dark:border-[#173740] text-xs font-bold text-[#0c5963] dark:text-[#38bdf8] hover:bg-[#faf8f5] dark:hover:bg-[#08181f] transition-all cursor-pointer shadow-2xs"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Back to Miner Overview</span>
+            </button>
+            <span className="text-[11px] font-bold text-[#6e8286] dark:text-[#94a3b8] uppercase tracking-wider">
+              {activeSubTab === 'pre-staking' && '2. Pre-Staking & Staking Boost'}
+              {activeSubTab === 'guild' && '3. 2-Tier Guild Network'}
+              {activeSubTab === 'protection' && '4. Day-Offs & Slashing'}
+            </span>
+          </div>
+        )}
+
+        {/* TAB 2: PRE-STAKING & STAKING BOOST (Shown only when selected from menu per user request) */}
+        {activeSubTab === 'pre-staking' && (
           <div className="w-full">
             <MinerPreStaking
               minerData={minerData}
@@ -875,8 +935,8 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 3: 2-TIER GUILD NETWORK */}
-        {(activeSubTab === 'all' || activeSubTab === 'guild') && (
+        {/* TAB 3: 2-TIER GUILD NETWORK (Shown only when selected from menu per user request) */}
+        {activeSubTab === 'guild' && (
           <div className="w-full">
             <MinerTeamBoost
               user={currentUser}
@@ -886,8 +946,8 @@ export default function CloudMinerPage({ onNavigate }) {
           </div>
         )}
 
-        {/* TAB 4: DAY-OFFS & SLASHING */}
-        {(activeSubTab === 'all' || activeSubTab === 'protection') && (
+        {/* TAB 4: DAY-OFFS & SLASHING (Shown only when selected from menu per user request) */}
+        {activeSubTab === 'protection' && (
           <div className="w-full">
             <MinerDayOffs
               minerData={minerData}
