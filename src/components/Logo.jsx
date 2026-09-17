@@ -16,7 +16,7 @@ export default function Logo({ size = 'md', showText = true, className = '' }) {
     <div className={`flex items-center gap-2.5 ${className}`}>
       <div
         className={`${sizeMap[size] || sizeMap.md} relative flex-shrink-0 rounded-2xl overflow-hidden shadow-sm transition-transform hover:scale-105`}
-        title="TAEMRY FLUX"
+        title="TAEMRY FLUX Logo"
       >
         <img
           src="/taemry-logo.svg"

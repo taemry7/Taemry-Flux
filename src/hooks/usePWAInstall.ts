@@ -31,6 +31,11 @@ export function usePWAInstall() {
       setIsIOS(isIOSDevice);
     }
 
+    // Check if early beforeinstallprompt was already captured in index.html
+    if (typeof window !== 'undefined' && (window as any).__pwa_deferred_prompt) {
+      setDeferredPrompt((window as any).__pwa_deferred_prompt as BeforeInstallPromptEvent);
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       // Prevent browser default mini-infobar so custom in-app button/banner can prompt
       e.preventDefault();

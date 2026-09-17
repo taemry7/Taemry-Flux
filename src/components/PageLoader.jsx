@@ -63,11 +63,15 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
     const originalBodyOverflow = document.body.style.overflow;
     const originalOverscroll = document.body.style.overscrollBehavior;
     const originalTouchAction = document.body.style.touchAction;
+    const originalHtmlBg = document.documentElement.style.backgroundColor;
+    const originalBodyBg = document.body.style.backgroundColor;
 
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
     document.body.style.overscrollBehavior = 'none';
     document.body.style.touchAction = 'none';
+    document.documentElement.style.backgroundColor = '#0c5963';
+    document.body.style.backgroundColor = '#0c5963';
 
     return () => {
       window.removeEventListener('touchmove', preventTouch);
@@ -76,6 +80,8 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
       document.body.style.overflow = originalBodyOverflow;
       document.body.style.overscrollBehavior = originalOverscroll;
       document.body.style.touchAction = originalTouchAction;
+      document.documentElement.style.backgroundColor = originalHtmlBg;
+      document.body.style.backgroundColor = originalBodyBg;
     };
   }, [isLoading]);
 
@@ -139,8 +145,8 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
       }`}
       style={{
         backgroundColor: '#0c5963',
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         minHeight: '100dvh',
         position: 'fixed',
         top: 0,

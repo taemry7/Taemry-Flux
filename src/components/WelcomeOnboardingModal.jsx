@@ -14,16 +14,24 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
   const [fullName, setFullName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const isSubmittingRef = React.useRef(false);
+  const hasInitializedRef = React.useRef(false);
 
   useEffect(() => {
     if (isOpen) {
-      setStep(1);
-      // Pre-fill if currentUser already has a default name
-      if (currentUser?.displayName && currentUser.displayName !== 'Member') {
-        setFullName(currentUser.displayName);
+      if (!hasInitializedRef.current) {
+        hasInitializedRef.current = true;
+        setStep(1);
+        // Pre-fill if currentUser already has a default name
+        if (currentUser?.displayName && currentUser.displayName !== 'Member') {
+          setFullName(currentUser.displayName);
+        }
       }
+    } else {
+      hasInitializedRef.current = false;
+      isSubmittingRef.current = false;
     }
-  }, [isOpen, currentUser]);
+  }, [isOpen]); // NEVER depend on currentUser here to prevent step being reset back to 1 on profile update
 
   const handleProceedToName = () => {
     setStep(2);
@@ -31,6 +39,8 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
 
   const handleSubmitName = async (e) => {
     e?.preventDefault();
+    if (isSubmittingRef.current) return;
+
     const cleanName = fullName.trim();
     if (!cleanName) {
       setError('Please enter your full name to personalize your account.');
@@ -41,25 +51,28 @@ export default function WelcomeOnboardingModal({ isOpen, onComplete }) {
       return;
     }
 
+    isSubmittingRef.current = true;
     setLoading(true);
     setError('');
 
+    // Pre-emptively remove session flag to guarantee no double-triggering
+    try {
+      sessionStorage.removeItem('taemry_show_new_user_welcome');
+    } catch {}
+
     try {
       await updateUserProfile({ displayName: cleanName });
-      setStep(3);
-      setTimeout(() => {
-        setLoading(false);
-        onComplete();
-      }, 1200);
     } catch (err) {
-      console.warn('Profile update error during onboarding:', err);
-      // Even if warning occurs, finalize and let user into dashboard
-      setStep(3);
-      setTimeout(() => {
-        setLoading(false);
-        onComplete();
-      }, 1000);
+      console.warn('Profile update notice during onboarding:', err);
     }
+
+    // Advance directly to step 3 (Celebration) and then finish
+    setStep(3);
+    setTimeout(() => {
+      setLoading(false);
+      isSubmittingRef.current = false;
+      onComplete();
+    }, 1200);
   };
 
   const getInitials = (name) => {

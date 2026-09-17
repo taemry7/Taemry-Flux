@@ -199,8 +199,11 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 - **Favicon & Crawler Asset Lock**:
   - `public/favicon.ico` (multi-size 64x64, 48x48, 32x32, 16x16 MS Windows icon resource)
   - `public/favicon-48x48.png` & `public/favicon-96x96.png` (exact Google Search guidelines multiples of 48px square)
-  - `public/robots.txt` & `public/sitemap.xml` with Googlebot-Favicon crawler permissions
+  - `public/robots.txt` & `public/sitemap.xml` with Googlebot-Favicon crawler permissions and Google Image Sitemap (`<image:title>TAEMRY FLUX Logo</image:title>`)
   - `server.ts` explicit crawler routes ensuring `/favicon.ico` never falls back to SPA HTML.
+  - **Google Site Names & Image Object Schema**:
+    - Schema.org `@type: "WebSite"` with `name: "TAEMRY FLUX"` and `alternateName: ["Taemry Flux", "TAEMRY FLUX Official"]` for replacing domain URL with brand name in Google Search results.
+    - Schema.org `@type: "ImageObject"` and OpenGraph `og:image:alt` set to `"TAEMRY FLUX Logo"` ensuring Google Images displays `"TAEMRY FLUX Logo"`.
 
 
 

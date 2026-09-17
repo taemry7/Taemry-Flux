@@ -15,19 +15,25 @@
     <meta name="google-site-verification" content="KzVE4rT4HQ1GQxV_3zzSNB3lsSlxUv4e5C2j1To679w" />
     <meta name="google-site-verification" content="googlee39205dcefb8c59c" />
     
-    <!-- OpenGraph Social Sharing -->
+    <!-- OpenGraph Social Sharing & Image Metadata -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="TAEMRY FLUX" />
     <meta property="og:title" content="TAEMRY FLUX" />
     <meta property="og:description" content="Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network." />
-    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:image" content="https://www.taemryflux.online/pwa-512x512.png" />
+    <meta property="og:image:secure_url" content="https://www.taemryflux.online/pwa-512x512.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:image:alt" content="TAEMRY FLUX Logo" />
     <meta property="og:url" content="https://www.taemryflux.online" />
 
     <!-- Twitter / X Cards -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="TAEMRY FLUX" />
     <meta name="twitter:description" content="Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network." />
-    <meta name="twitter:image" content="/pwa-512x512.png" />
+    <meta name="twitter:image" content="https://www.taemryflux.online/pwa-512x512.png" />
+    <meta name="twitter:image:alt" content="TAEMRY FLUX Logo" />
 
     <!-- Primary Favicons & Icons (Google Search & Multi-device compliant) -->
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
@@ -40,24 +46,80 @@
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.json" />
 
-    <!-- Schema.org JSON-LD Structured Data for Google Search -->
+    <!-- Schema.org JSON-LD Structured Data for Google Search, Site Names & Images -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "TAEMRY FLUX",
-      "alternateName": "Taemry Flux Platform",
-      "url": "https://www.taemryflux.online",
-      "applicationCategory": "FinanceApplication",
-      "operatingSystem": "All",
-      "description": "Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network.",
-      "image": "https://www.taemryflux.online/pwa-512x512.png",
-      "logo": "https://www.taemryflux.online/favicon-96x96.png",
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://www.taemryflux.online/#website",
+          "url": "https://www.taemryflux.online",
+          "name": "TAEMRY FLUX",
+          "alternateName": ["Taemry Flux", "TAEMRY FLUX Official", "TAEMRY FLUX Platform"],
+          "publisher": {
+            "@id": "https://www.taemryflux.online/#organization"
+          }
+        },
+        {
+          "@type": "Organization",
+          "@id": "https://www.taemryflux.online/#organization",
+          "name": "TAEMRY FLUX",
+          "legalName": "TAEMRY FLUX",
+          "url": "https://www.taemryflux.online",
+          "logo": {
+            "@type": "ImageObject",
+            "@id": "https://www.taemryflux.online/#logo",
+            "url": "https://www.taemryflux.online/pwa-512x512.png",
+            "contentUrl": "https://www.taemryflux.online/pwa-512x512.png",
+            "caption": "TAEMRY FLUX Logo",
+            "name": "TAEMRY FLUX Logo",
+            "width": 512,
+            "height": 512
+          },
+          "image": "https://www.taemryflux.online/pwa-512x512.png",
+          "brand": {
+            "@type": "Brand",
+            "name": "TAEMRY FLUX"
+          }
+        },
+        {
+          "@type": "ImageObject",
+          "@id": "https://www.taemryflux.online/#primaryimage",
+          "name": "TAEMRY FLUX Logo",
+          "caption": "TAEMRY FLUX Logo",
+          "description": "Official TAEMRY FLUX Logo and brand emblem",
+          "url": "https://www.taemryflux.online/pwa-512x512.png",
+          "contentUrl": "https://www.taemryflux.online/pwa-512x512.png",
+          "thumbnailUrl": "https://www.taemryflux.online/favicon-96x96.png",
+          "width": 512,
+          "height": 512,
+          "creditText": "TAEMRY FLUX",
+          "copyrightNotice": "TAEMRY FLUX",
+          "author": {
+            "@id": "https://www.taemryflux.online/#organization"
+          }
+        },
+        {
+          "@type": "WebApplication",
+          "@id": "https://www.taemryflux.online/#webapp",
+          "name": "TAEMRY FLUX",
+          "alternateName": "Taemry Flux Platform",
+          "url": "https://www.taemryflux.online",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All",
+          "description": "Decentralized ecosystem for verified ads watching, high-hashrate crypto cloud mining, and TFLX Token distribution across a secure community network.",
+          "image": {
+            "@id": "https://www.taemryflux.online/#primaryimage"
+          },
+          "logo": "https://www.taemryflux.online/favicon-96x96.png",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        }
+      ]
     }
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -173,6 +235,12 @@
               window.location.hash = '#/login/signup?ref=' + encodeURIComponent(cleanRef);
             }
           }
+
+          // Catch and defer native beforeinstallprompt so browser does not show intrusive banner during loading
+          window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window.__pwa_deferred_prompt = e;
+          });
 
           // Service Worker registration for PWA installability
           if ('serviceWorker' in navigator) {

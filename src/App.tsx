@@ -45,7 +45,7 @@ function AppContent() {
         setShowNewUserWelcome(true);
       }
     } catch {}
-  }, [currentUser]);
+  }, []);
   const [currentPage, setCurrentPage] = useState(() => {
     if (typeof window === 'undefined') return 'home';
     const rawPath = window.location.pathname.replace(/^\/+/, '').replace(/\/+$/, '').toLowerCase();
@@ -408,6 +408,10 @@ function AppContent() {
       {/* Main Screen (Normal clean layout without splash scale/shrink animation) */}
       <div
         id="mainScreen"
+        style={{
+          opacity: isInitialSplash ? 0 : 1,
+          visibility: isInitialSplash ? 'hidden' : 'visible',
+        }}
         className="main-screen relative w-full min-h-screen flex flex-col bg-[#faf8f5] dark:bg-[#07151a] text-[#112d35] dark:text-[#ecf3f4] z-10"
       >
         {/* Transparent tap-to-close backdrop when menu is open */}
@@ -470,7 +474,7 @@ function AppContent() {
       </div>
 
       {/* PWA Android Home Screen Install Banner & Modal */}
-      <PWAInstallPrompt currentPage={currentPage} />
+      {!isInitialSplash && <PWAInstallPrompt currentPage={currentPage} />}
     </div>
   );
 }
