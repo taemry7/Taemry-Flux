@@ -33,7 +33,6 @@ import MinerPreStaking from '../components/miner/MinerPreStaking';
 import MinerTeamBoost from '../components/miner/MinerTeamBoost';
 import MinerDayOffs from '../components/miner/MinerDayOffs';
 import MinerSevenDayCheckIn from '../components/miner/MinerSevenDayCheckIn';
-import SponsorAdBanner from '../components/SponsorAdBanner';
 
 const LOCAL_STORAGE_KEY = 'taemry_tflx_miner_data';
 
@@ -904,9 +903,6 @@ export default function CloudMinerPage({ onNavigate }) {
                 </div>
               </div>
             </div>
-
-            {/* Official Sponsor Ad Network Banner */}
-            <SponsorAdBanner className="w-full mt-6" />
           </div>
         )}
 

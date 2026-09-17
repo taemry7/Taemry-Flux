@@ -15,7 +15,6 @@ import SupportPage from './pages/SupportPage';
 import CloudMinerPage from './pages/CloudMinerPage';
 import AdminLayout from './layouts/AdminLayout';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
-import AdNetworkLoader from './components/AdNetworkLoader';
 
 function AppContent() {
   const { currentUser, isAdmin } = useAuth();
@@ -369,7 +368,6 @@ function AppContent() {
           onFinished={handlePageLoaderFinished}
           isInitialSplash={isInitialSplash}
         />
-        <AdNetworkLoader currentPage={currentPage} activeTab={activeTab} />
         <AdminLayout onNavigate={navigateTo} />
       </>
     );
@@ -382,9 +380,6 @@ function AppContent() {
         isDrawerOpen ? 'menu-open' : ''
       }`}
     >
-      {/* Dynamic Multi-Zone Ad Network & Direct Link Manager (Never on login/signup) */}
-      <AdNetworkLoader currentPage={currentPage} activeTab={activeTab} />
-
       {/* 5s on initial App boot splash; completely absent during smooth menu/tab navigation */}
       <PageLoader
         isLoading={isInitialSplash}

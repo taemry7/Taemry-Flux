@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Flame, AlertTriangle, Clock, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
-import { openDirectAdLink } from '../AdNetworkLoader';
 
 /**
  * Clean Fire Reactor Button (No Circle) with:
@@ -99,11 +98,6 @@ export default function MinerTapButton({
         // Play futuristic sound tune
         playIgniteTune();
 
-        // Open sponsor direct ad link when hold-to-mine starts
-        if (isPackageActive) {
-          openDirectAdLink(Math.floor(Math.random() * 4));
-        }
-
         if (isExpired || !minerData.isMiningActive) {
           onStartMining();
         } else {
@@ -134,7 +128,6 @@ export default function MinerTapButton({
     }
     if (isExpired || !minerData.isMiningActive) {
       playIgniteTune();
-      openDirectAdLink(Math.floor(Math.random() * 4));
       onStartMining();
     }
   };

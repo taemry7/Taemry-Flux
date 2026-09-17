@@ -27,7 +27,6 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
 import LiveLeaderboard from '../components/LiveLeaderboard';
-import SponsorAdBanner from '../components/SponsorAdBanner';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 import { db, isFirebaseConfigured } from '../firebase/firebase.config';
@@ -1362,11 +1361,6 @@ export default function HomePage({ onNavigate }) {
             </button>
           </div>
         </div>
-      </section>
-
-      {/* Verified Sponsor Ad Banner */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 my-8">
-        <SponsorAdBanner />
       </section>
 
       {/* Live Leaderboard (Unlimited) */}

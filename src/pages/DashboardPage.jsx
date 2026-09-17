@@ -44,7 +44,6 @@ import TransactionHistory from './TransactionHistory';
 import AccountSettings from './AccountSettings';
 import LiveLeaderboard from '../components/LiveLeaderboard';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
-import SponsorAdBanner from '../components/SponsorAdBanner';
 
 const STARTER_PACKAGE = {
   id: 'bronze',
@@ -639,9 +638,6 @@ export default function DashboardPage({
                   </button>
                 </div>
               </div>
-
-              {/* Verified Sponsor Ad Banner */}
-              <SponsorAdBanner className="mt-2" />
             </div>
           )}
 
