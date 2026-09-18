@@ -474,3 +474,27 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
     - Removed "Continue with Google" (`#btn-google-auth`) button and "or continue with email" divider span (`div > span`) per explicit user instructions ("bs is span or button ko hata do ok").
   - **Conditional Login Ad Banner**:
     - Bottom Google AdSense unit on the Login page is hidden by default per user instruction ("or is nichy div ko bi filhal hidden kardo jad ads shro ho jay tab show kardo OK") and activates only when ads start.
+
+## STRICT INVARIANT: Global Button Fluid Splash Animation (PERMANENT & LOCKED)
+- **Fluid Splash Wave & Ring on ALL Buttons Across App**:
+  - Per user explicit directive ("kitna bi button hai apps ky andar hai osko fluid splash animation me karo Ok"):
+  - Every single button across the application (`button`, `[role="button"]`, `.btn-splash`, `.btn-fluid-splash`) is equipped with hardware-accelerated, dynamic fluid splash ripple animation on click.
+  - Generates an expanding dual radial wave (`.fluid-splash-wave`) and glowing resonant ring (`.fluid-splash-ring`) originating from the exact touch/click coordinates `(e.clientX, e.clientY)`.
+  - Configured with `cubic-bezier(0.16, 0.84, 0.44, 1)` easing and smooth blur dissipation.
+  - Managed by high-performance event capturing in `src/utils/pageTransitions.ts` and styled in `src/index.css`, guaranteeing 100% universal coverage across all present and future components.
+
+## STRICT INVARIANT: Global Page Transitions with Back/Forward Navigation (PERMANENT & LOCKED)
+- **Seamless Page Transitions with Browser History Support**:
+  - Per user explicit directive ("or jitny pages hai osko page transition karo Ok,.. back ky sath Ok fit it and lock parmanent all"):
+  - All pages across the app (`home`, `login`, `verify-otp`, `dashboard`, `cloud-miner`, `support`, `whitepaper`, `admin`) are wrapped in `AnimatePresence mode="wait"` with `motion.div` animated page transitions in `src/App.tsx`.
+  - Browser Back and Forward navigation (`popstate` and `hashchange` events) triggers the full-screen 200ms blur splash animate overlay via `triggerPageTransition()` and smooth page entrance animations.
+  - Page transitions occur without page flicker or jump, automatically scrolling cleanly to top `(0, 0)`.
+
+## STRICT INVARIANT: Mandatory Email OTP Verification & Account Persistence (PERMANENT & LOCKED)
+- **Immediate Credential & Email Persistence**:
+  - Upon clicking "Create Account", user profile details and email are saved immediately to Firebase Firestore and backend persistent storage (`/api/auth/save-registered-user`, `/api/auth/complete-otp-signup`).
+- **Guarded OTP Verification Page**:
+  - Users are navigated immediately to the permanent **Email OTP Verification** page (`src/pages/OtpVerificationPage.jsx`).
+  - Access to `home`, `dashboard`, or any member page is locked until the user successfully verifies the 6-digit OTP code sent to their email.
+  - Old / existing users logging in are also required to verify their email OTP before accessing the platform.
+

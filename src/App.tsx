@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
@@ -515,45 +516,56 @@ function AppContent() {
           isDrawerOpen={isDrawerOpen}
         />
 
-        {/* Main Page Routing */}
-        <main className="flex-1">
-          {currentPage === 'home' && (
-            <HomePage onNavigate={navigateTo} />
-          )}
+        {/* Main Page Routing with Fluid Page Transitions */}
+        <main className="flex-1 overflow-x-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentPage}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full flex-1"
+            >
+              {currentPage === 'home' && (
+                <HomePage onNavigate={navigateTo} />
+              )}
 
-          {currentPage === 'whitepaper' && (
-            <WhitepaperPage onNavigate={navigateTo} />
-          )}
+              {currentPage === 'whitepaper' && (
+                <WhitepaperPage onNavigate={navigateTo} />
+              )}
 
-          {currentPage === 'support' && (
-            <SupportPage onNavigate={navigateTo} />
-          )}
+              {currentPage === 'support' && (
+                <SupportPage onNavigate={navigateTo} />
+              )}
 
-          {currentPage === 'cloud-miner' && (
-            <CloudMinerPage onNavigate={navigateTo} />
-          )}
+              {currentPage === 'cloud-miner' && (
+                <CloudMinerPage onNavigate={navigateTo} />
+              )}
 
-          {currentPage === 'login' && (
-            <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
-          )}
+              {currentPage === 'login' && (
+                <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
+              )}
 
-          {currentPage === 'verify-otp' && (
-            <OtpVerificationPage onNavigate={navigateTo} />
-          )}
+              {currentPage === 'verify-otp' && (
+                <OtpVerificationPage onNavigate={navigateTo} />
+              )}
 
-          {currentPage === 'dashboard' && (
-            <ProtectedRoute onRedirectToLogin={() => navigateTo('login')}>
-              <DashboardPage
-                activeTab={activeTab}
-                onSelectTab={(tab) => {
-                  triggerPageTransition(() => {
-                    setActiveTab(tab);
-                  }, 200);
-                }}
-                onNavigate={navigateTo}
-              />
-            </ProtectedRoute>
-          )}
+              {currentPage === 'dashboard' && (
+                <ProtectedRoute onRedirectToLogin={() => navigateTo('login')}>
+                  <DashboardPage
+                    activeTab={activeTab}
+                    onSelectTab={(tab) => {
+                      triggerPageTransition(() => {
+                        setActiveTab(tab);
+                      }, 200);
+                    }}
+                    onNavigate={navigateTo}
+                  />
+                </ProtectedRoute>
+              )}
+            </motion.div>
+          </AnimatePresence>
         </main>
 
         {/* Global Footer with 2026 Copyright */}

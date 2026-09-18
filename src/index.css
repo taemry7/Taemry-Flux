@@ -344,6 +344,61 @@ aside {
 }
 
 /* Fluid Splash Button Animations */
+button,
+[role="button"],
+.btn-splash,
+.btn-fluid-splash {
+  position: relative;
+  overflow: hidden;
+}
+
+.fluid-splash-wave {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0);
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.45) 0%, rgba(12, 89, 99, 0.28) 45%, rgba(56, 189, 248, 0.12) 65%, transparent 75%);
+  animation: fluid-button-splash 0.65s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+  will-change: transform, opacity, filter;
+  z-index: 40;
+}
+
+.dark .fluid-splash-wave {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.55) 0%, rgba(45, 212, 191, 0.35) 45%, rgba(56, 189, 248, 0.15) 65%, transparent 75%);
+}
+
+.fluid-splash-ring {
+  position: absolute;
+  border-radius: 9999px;
+  pointer-events: none;
+  border: 1.5px solid rgba(15, 118, 110, 0.5);
+  transform: translate(-50%, -50%) scale(0.1);
+  animation: fluid-splash-ring 0.6s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  will-change: transform, opacity;
+  z-index: 41;
+}
+
+.dark .fluid-splash-ring {
+  border-color: rgba(56, 189, 248, 0.6);
+}
+
+@keyframes fluid-button-splash {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.85;
+    filter: blur(0px);
+  }
+  40% {
+    opacity: 0.65;
+    filter: blur(0.5px);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+    filter: blur(2.5px);
+  }
+}
+
 @keyframes fluid-splash {
   0% {
     transform: translate(-50%, -50%) scale(0);

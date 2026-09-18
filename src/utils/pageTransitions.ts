@@ -69,7 +69,7 @@ export function triggerPageTransition(callback?: () => void, delayMs: number = 2
 }
 
 /**
- * Initializes global event listeners for .fade-trigger elements and initial page load
+ * Initializes global event listeners for .fade-trigger elements, button fluid splash ripples, and initial page load
  */
 export function initGlobalPageTransitions(): () => void {
   if (typeof window === 'undefined') return () => {};
@@ -80,7 +80,57 @@ export function initGlobalPageTransitions(): () => void {
     overlay.classList.add('loaded');
   }
 
-  // Delegate click for any element with .fade-trigger class
+  // 1. Global Fluid Splash Ripple Animation on ALL buttons across the entire app
+  const handleButtonSplash = (e: MouseEvent) => {
+    const target = (e.target as HTMLElement)?.closest('button, [role="button"], .btn-splash, .btn-fluid-splash');
+    if (!target) return;
+    if (target.hasAttribute('disabled') || target.getAttribute('aria-disabled') === 'true') return;
+
+    const el = target as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) return;
+
+    const isPointer = e.clientX > 0 || e.clientY > 0;
+    const x = isPointer ? e.clientX - rect.left : rect.width / 2;
+    const y = isPointer ? e.clientY - rect.top : rect.height / 2;
+    const size = Math.max(rect.width, rect.height) * 2.2;
+
+    const computedStyle = window.getComputedStyle(el);
+    if (computedStyle.position === 'static') {
+      el.style.position = 'relative';
+    }
+    el.style.overflow = 'hidden';
+
+    // Remove old waves if user clicks repeatedly
+    const prevWaves = el.querySelectorAll('.fluid-splash-wave, .fluid-splash-ring');
+    if (prevWaves.length > 4) {
+      prevWaves[0].remove();
+    }
+
+    const splash = document.createElement('span');
+    splash.className = 'fluid-splash-wave';
+    splash.style.width = `${size}px`;
+    splash.style.height = `${size}px`;
+    splash.style.left = `${x}px`;
+    splash.style.top = `${y}px`;
+
+    const ring = document.createElement('span');
+    ring.className = 'fluid-splash-ring';
+    ring.style.width = `${size * 0.85}px`;
+    ring.style.height = `${size * 0.85}px`;
+    ring.style.left = `${x}px`;
+    ring.style.top = `${y}px`;
+
+    el.appendChild(splash);
+    el.appendChild(ring);
+
+    setTimeout(() => {
+      splash.remove();
+      ring.remove();
+    }, 700);
+  };
+
+  // 2. Delegate click for any element with .fade-trigger class
   const handleClick = (e: MouseEvent) => {
     const target = (e.target as HTMLElement)?.closest('.fade-trigger');
     if (!target) return;
@@ -98,9 +148,11 @@ export function initGlobalPageTransitions(): () => void {
     }
   };
 
+  document.addEventListener('click', handleButtonSplash, true);
   document.addEventListener('click', handleClick);
 
   return () => {
+    document.removeEventListener('click', handleButtonSplash, true);
     document.removeEventListener('click', handleClick);
   };
 }
