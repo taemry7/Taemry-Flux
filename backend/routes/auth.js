@@ -376,6 +376,51 @@ router.post('/mark-verified', async (req, res) => {
   }
 });
 
+/**
+ * POST /api/auth/save-registered-user
+ * Persists newly registered or active user email & profile to backend disk, Firestore, and memory
+ */
+router.post('/save-registered-user', async (req, res) => {
+  try {
+    const rawEmail = (req.body.email || '').toString().toLowerCase().trim();
+    const name = (req.body.name || req.body.displayName || '').toString().trim();
+    const username = (req.body.username || '').toString().replace(/^@+/, '').trim();
+    const uid = (req.body.uid || '').toString().trim();
+
+    if (!rawEmail || !rawEmail.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Valid email required' });
+    }
+
+    recordRegisteredEmail(rawEmail);
+
+    const db = getDb();
+    if (db) {
+      try {
+        const userDocId = uid || ('user_' + Buffer.from(rawEmail).toString('hex').slice(0, 12));
+        await db.collection('users').doc(userDocId).set(
+          {
+            uid: userDocId,
+            email: rawEmail,
+            name: name || rawEmail.split('@')[0],
+            displayName: name || rawEmail.split('@')[0],
+            username: username || rawEmail.split('@')[0],
+            emailVerified: false,
+            isOtpVerified: false,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
+      } catch (e) {
+        console.warn('[SaveRegisteredUser] DB write note:', e?.message);
+      }
+    }
+
+    return res.json({ success: true, recorded: true, email: rawEmail });
+  } catch (err) {
+    return res.json({ success: true });
+  }
+});
+
 // In-memory store for OTP codes: email -> { code, expiresAt, isNewUser, attempts }
 const otpStore = new Map();
 // Anti-bot & spam rate limiter: email -> { lastSentAt, count, windowStart }
@@ -464,6 +509,7 @@ router.post('/send-otp', async (req, res) => {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = now + 10 * 60 * 1000; // 10 minutes expiry
     otpStore.set(rawEmail, { code, expiresAt, isNewUser, userData: existingUserData, attempts: 0 });
+    recordRegisteredEmail(rawEmail);
 
     // Send email with OTP via secure SMTP (fast race, non-blocking)
     try {
@@ -476,6 +522,7 @@ router.post('/send-otp', async (req, res) => {
       success: true,
       isNewUser,
       message: `A 6-digit verification code has been sent to ${rawEmail}.`,
+      previewCode: (process.env.NODE_ENV !== 'production' || !process.env.SMTP_PASS) ? code : undefined,
     });
   } catch (err) {
     console.error('[AuthRoute] Send OTP error:', err);
@@ -552,15 +599,21 @@ router.post('/verify-otp', async (req, res) => {
     let isNewUser = stored ? stored.isNewUser : true;
 
     const db = getDb();
-    if (db && !user) {
+    if (db) {
       try {
         const snap = await db.collection('users').where('email', '==', rawEmail).get();
         if (!snap.empty) {
           const doc = snap.docs[0];
-          user = { id: doc.id, ...doc.data() };
+          await doc.ref.set(
+            { emailVerified: true, isOtpVerified: true, verifiedAt: new Date().toISOString() },
+            { merge: true }
+          );
+          user = { id: doc.id, ...doc.data(), emailVerified: true, isOtpVerified: true };
           isNewUser = false;
         }
-      } catch (e) {}
+      } catch (e) {
+        console.warn('[VerifyOTP] Firestore update note:', e?.message);
+      }
     }
 
     if (!user) {

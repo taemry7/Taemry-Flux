@@ -9,6 +9,7 @@ import PageLoader from './components/PageLoader';
 import WelcomeOnboardingModal from './components/WelcomeOnboardingModal';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
+import OtpVerificationPage from './pages/OtpVerificationPage';
 import DashboardPage from './pages/DashboardPage';
 import WhitepaperPage from './pages/WhitepaperPage';
 import SupportPage from './pages/SupportPage';
@@ -271,6 +272,8 @@ function AppContent() {
           } else {
             setActiveTab('overview');
           }
+        } else if (effectiveRoute === 'verify-otp' || effectiveRoute.startsWith('verify-otp')) {
+          setCurrentPage('verify-otp');
         } else if (effectiveRoute === 'home') {
           let hasPersistedUser = false;
           try {
@@ -282,6 +285,15 @@ function AppContent() {
             setActiveTab('signin');
             return;
           }
+          // Mandatory OTP check
+          try {
+            const isOtpRequired = sessionStorage.getItem('taemry_otp_required') === 'true';
+            const pendingEmail = sessionStorage.getItem('taemry_pending_otp_email');
+            if (isOtpRequired || (pendingEmail && localStorage.getItem('taemry_otp_verified_' + pendingEmail) === 'false')) {
+              setCurrentPage('verify-otp');
+              return;
+            }
+          } catch {}
           setCurrentPage('home');
         } else if (effectiveRoute === '') {
           setCurrentPage('login');
@@ -375,8 +387,19 @@ function AppContent() {
     previousUserRef.current = currentUser;
   }, [currentUser]);
 
-  // Guard member pages if session is absent
+  // Guard member pages if session is absent or OTP verification is required
   useEffect(() => {
+    if (currentPage === 'home' || currentPage === 'dashboard' || currentPage === 'cloud-miner') {
+      try {
+        const isOtpRequired = sessionStorage.getItem('taemry_otp_required') === 'true';
+        const pendingEmail = sessionStorage.getItem('taemry_pending_otp_email') || currentUser?.email;
+        if (isOtpRequired || (pendingEmail && localStorage.getItem(`taemry_otp_verified_${pendingEmail}`) === 'false')) {
+          navigateTo('verify-otp');
+          return;
+        }
+      } catch {}
+    }
+
     if (!currentUser && (currentPage === 'home' || currentPage === 'dashboard')) {
       let hasPersistedUser = false;
       try {
@@ -512,6 +535,10 @@ function AppContent() {
 
           {currentPage === 'login' && (
             <LoginPage onNavigate={navigateTo} initialMode={activeTab === 'signup' ? 'signup' : 'signin'} />
+          )}
+
+          {currentPage === 'verify-otp' && (
+            <OtpVerificationPage onNavigate={navigateTo} />
           )}
 
           {currentPage === 'dashboard' && (

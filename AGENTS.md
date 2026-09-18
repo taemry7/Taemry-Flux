@@ -449,4 +449,28 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
       - **Whitepaper Page** (`src/pages/WhitepaperPage.jsx`): Official protocol sponsor unit.
       - **Support Page** (`src/pages/SupportPage.jsx`): Support desk sponsor unit.
 
-
+## STRICT INVARIANT: Restored Original Login & Sign Up Page Structure (PERMANENT & LOCKED)
+- **Original Auth Card Architecture Restored**:
+  - Per user explicit directive ("is div login page ko pehli tarah ly aw or signup page bi OK jis tarah pehly os tarah OK"):
+  - Restored `#login-auth-card` to the original two-tab layout with `#auth-mode-tabs` switching between **Sign In** and **Sign Up** (`#btn-tab-signin` and `#btn-tab-signup`).
+  - **Sign In Tab**:
+    - Title: "Welcome back" with motivation cards.
+    - "Continue with Google" (`#btn-google-auth`) and divider.
+    - Email address (`#input-email`) and Password (`#input-password`) with show/hide toggle and "Forgot password?" link.
+    - "Sign In" submit button (`#btn-auth-submit`) with 2-second max loading duration.
+    - Switcher link: "Don't have an account? Sign Up" (`#btn-switch-to-signup`).
+  - **Sign Up Tab**:
+    - Title: "Create an Account" with subtitle.
+    - "Continue with Google" and divider.
+    - Full Name (`#input-fullname`), Username (`#input-username`), Email (`#input-signup-email`), Password (`#input-signup-password`), and Sponsor/Referral Code (`#input-referral`).
+    - Connected sponsor badge (`#badge-auto-referral`) when joining via `@username` referral link.
+    - "Create Account" submit button (`#btn-signup-submit`) with 2-second max loading duration.
+    - Switcher link: "Already have an account? Sign In" (`#btn-switch-to-signin`).
+  - **Error & Success Alerts**: Preserved `#auth-error-alert` with `#btn-error-ok` button and `#auth-forgot-success` with `#btn-forgot-success-ok`.
+  - **Fluid Splash & Motion Page Transitions**:
+    - `#auth-mode-tabs` features dynamic fluid splash wave ripple animation on click calculated from click coordinates, paired with smooth `layoutId` pill morph.
+    - Smooth page transition between Sign In and Sign Up views powered by `AnimatePresence mode="wait"` with scale, opacity, and translateY motion.
+  - **Removed Elements**:
+    - Removed "Continue with Google" (`#btn-google-auth`) button and "or continue with email" divider span (`div > span`) per explicit user instructions ("bs is span or button ko hata do ok").
+  - **Conditional Login Ad Banner**:
+    - Bottom Google AdSense unit on the Login page is hidden by default per user instruction ("or is nichy div ko bi filhal hidden kardo jad ads shro ho jay tab show kardo OK") and activates only when ads start.
