@@ -28,7 +28,10 @@ import {
   Play,
   Pause,
   Flame,
-  Clock
+  Clock,
+  Package,
+  Award,
+  Check
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
@@ -49,6 +52,10 @@ export default function AdminUsers() {
   const [userDetails, setUserDetails] = useState(null);
   const [userMiner, setUserMiner] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+
+  // Manual Package & Eligibility state
+  const [selectedPackage, setSelectedPackage] = useState('None');
+  const [packageReason, setPackageReason] = useState('');
 
   // Manual Wallet Adjustment state
   const [adjustAmount, setAdjustAmount] = useState('');
@@ -246,6 +253,9 @@ export default function AdminUsers() {
 
       setUserMiner(minerData);
       setMinerHashrateInput(String(minerData.effectiveHashrate || 8.0));
+      const currentPkg = res?.data?.user?.currentPackage || (userDetails?.user?.currentPackage) || 'None';
+      setSelectedPackage(currentPkg);
+      setPackageReason('');
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -253,6 +263,82 @@ export default function AdminUsers() {
       });
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  // Update user's advertising package tier
+  const handleUpdateUserPackage = async (e) => {
+    e.preventDefault();
+    if (!selectedUid) return;
+    setActionLoading(true);
+    try {
+      const res = await apiClient.put(`/admin/users/${selectedUid}/package`, {
+        packageTier: selectedPackage,
+        reason: packageReason || 'Manual package override by Administrator',
+      });
+      if (res.data?.success) {
+        setFeedback({
+          type: 'success',
+          message: `Package successfully updated to ${selectedPackage} for ${userDetails?.user?.email || selectedUid}.`,
+        });
+        setUserDetails((prev) => ({
+          ...prev,
+          user: {
+            ...prev?.user,
+            currentPackage: selectedPackage,
+            isEligible: selectedPackage !== 'None',
+          },
+        }));
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.uid === selectedUid
+              ? { ...u, currentPackage: selectedPackage, isEligible: selectedPackage !== 'None' }
+              : u
+          )
+        );
+      }
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to update package tier.',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Toggle user's earning and withdrawal eligibility
+  const handleToggleUserEligibility = async () => {
+    if (!selectedUid || !userDetails?.user) return;
+    const nextEligibility = !userDetails.user.isEligible;
+    setActionLoading(true);
+    try {
+      const res = await apiClient.put(`/admin/users/${selectedUid}/eligibility`, {
+        isEligible: nextEligibility,
+      });
+      if (res.data?.success) {
+        setFeedback({
+          type: 'success',
+          message: `User eligibility updated to ${nextEligibility ? 'Eligible' : 'Ineligible'}.`,
+        });
+        setUserDetails((prev) => ({
+          ...prev,
+          user: {
+            ...prev?.user,
+            isEligible: nextEligibility,
+          },
+        }));
+        setUsers((prev) =>
+          prev.map((u) => (u.uid === selectedUid ? { ...u, isEligible: nextEligibility } : u))
+        );
+      }
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to toggle eligibility.',
+      });
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -668,7 +754,7 @@ export default function AdminUsers() {
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
                       <span className="text-[10px] uppercase font-bold text-slate-400 block">Package Tier</span>
                       <p className="text-sm font-black text-sky-400 mt-1 uppercase">
-                        {userDetails.user?.currentPackage || 'Bronze'}
+                        {userDetails.user?.currentPackage || 'None'}
                       </p>
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
@@ -684,11 +770,76 @@ export default function AdminUsers() {
                       </p>
                     </div>
                     <div className="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800">
-                      <span className="text-[10px] uppercase font-bold text-slate-400 block">Security Status</span>
-                      <p className={`text-sm font-black mt-1 ${userDetails.user?.isBlocked ? 'text-rose-400' : 'text-emerald-400'}`}>
-                        {userDetails.user?.isBlocked ? 'Blocked' : 'Active'}
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 block">Eligibility</span>
+                        <button
+                          type="button"
+                          onClick={handleToggleUserEligibility}
+                          disabled={actionLoading}
+                          className={`text-[9px] font-bold px-1.5 py-0.5 rounded cursor-pointer transition-colors ${
+                            userDetails.user?.isEligible
+                              ? 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                              : 'bg-rose-500/20 text-rose-300 hover:bg-rose-500/30'
+                          }`}
+                        >
+                          {userDetails.user?.isEligible ? 'Revoke' : 'Grant'}
+                        </button>
+                      </div>
+                      <p className={`text-sm font-black mt-1 ${userDetails.user?.isEligible ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {userDetails.user?.isEligible ? 'Eligible' : 'Ineligible'}
                       </p>
                     </div>
+                  </div>
+
+                  {/* Manual Package Tier Management */}
+                  <div className="p-4 rounded-2xl bg-slate-950/80 border border-sky-500/20 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                        <Package className="w-4 h-4 text-sky-400" />
+                        <span>Package Tier Management (Admin Override)</span>
+                      </h4>
+                      <span className="text-[10px] font-mono text-sky-400 bg-sky-950/50 px-2 py-0.5 rounded border border-sky-800/40">
+                        Current: {userDetails.user?.currentPackage || 'None'}
+                      </span>
+                    </div>
+                    <form onSubmit={handleUpdateUserPackage} className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-end">
+                      <div>
+                        <label className="text-[11px] text-slate-400 block mb-1">Select Package Tier</label>
+                        <select
+                          value={selectedPackage}
+                          onChange={(e) => setSelectedPackage(e.target.value)}
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold text-xs focus:outline-none focus:border-sky-500"
+                        >
+                          <option value="None">None (No Active Contract)</option>
+                          <option value="Bronze">Bronze ($20 USD - 40 Ads/day)</option>
+                          <option value="Silver">Silver ($50 USD - 80 Ads/day)</option>
+                          <option value="Gold">Gold ($100 USD - 120 Ads/day)</option>
+                          <option value="Platinum">Platinum ($250 USD - 160 Ads/day)</option>
+                          <option value="Diamond">Diamond ($500 USD - 200 Ads/day)</option>
+                          <option value="Apex">Apex ($1,000 USD - 200 Ads/day)</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[11px] text-slate-400 block mb-1">Audit Note (Optional)</label>
+                        <input
+                          type="text"
+                          value={packageReason}
+                          onChange={(e) => setPackageReason(e.target.value)}
+                          placeholder="e.g. Manual package upgrade approved"
+                          className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div>
+                        <button
+                          type="submit"
+                          disabled={actionLoading || selectedPackage === (userDetails.user?.currentPackage || 'None')}
+                          className="w-full py-2 px-4 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+                        >
+                          <Award className="w-3.5 h-3.5" />
+                          <span>Save Package Tier</span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
 
                   {/* Manual Balance Adjustment Form */}

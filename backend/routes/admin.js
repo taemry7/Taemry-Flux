@@ -533,6 +533,109 @@ router.put('/users/:uid/wallet', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * e1) PUT /api/admin/users/:uid/package
+ * Manually update or assign a user's advertising package tier.
+ */
+router.put('/users/:uid/package', verifyAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { packageTier, reason } = req.body;
+    const db = getDb();
+
+    const allowedPackages = ['None', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Apex'];
+    const selectedPkg = packageTier || 'None';
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    const oldPackage = userData.currentPackage || 'None';
+    const isEligible = selectedPkg !== 'None';
+
+    await userRef.update({
+      currentPackage: selectedPkg,
+      isEligible,
+      packagePurchasedAt: selectedPkg !== 'None' ? (userData.packagePurchasedAt || new Date().toISOString()) : null,
+      updatedAt: new Date().toISOString(),
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'update_user_package',
+      targetUid: uid,
+      targetEmail: userData.email || 'N/A',
+      details: `Admin changed package tier from ${oldPackage} to ${selectedPkg}. Reason: ${reason || 'Admin manual update'}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `User package successfully updated to ${selectedPkg}.`,
+      currentPackage: selectedPkg,
+      isEligible,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/users/:uid/package:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update user package',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * e2) PUT /api/admin/users/:uid/eligibility
+ * Manually toggle a user's withdrawal and earning eligibility.
+ */
+router.put('/users/:uid/eligibility', verifyAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const { isEligible, reason } = req.body;
+    const db = getDb();
+
+    const userRef = db.collection('users').doc(uid);
+    const userDoc = await userRef.get();
+    if (!userDoc.exists) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    const newStatus = typeof isEligible === 'boolean' ? isEligible : !userData.isEligible;
+
+    await userRef.update({
+      isEligible: newStatus,
+      updatedAt: new Date().toISOString(),
+    });
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'toggle_user_eligibility',
+      targetUid: uid,
+      targetEmail: userData.email || 'N/A',
+      details: `Admin set user eligibility to ${newStatus}. Reason: ${reason || 'Admin manual toggle'}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `User eligibility updated to ${newStatus ? 'Eligible' : 'Ineligible'}.`,
+      isEligible: newStatus,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/users/:uid/eligibility:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to toggle user eligibility',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * f) GET /api/admin/deposits
  * Retrieve deposit requests with status filter.
  */
@@ -804,6 +907,71 @@ router.put('/deposits/:depositId/reject', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * h1) PUT /api/admin/deposits/:depositId/edit
+ * Edit deposit Transaction ID (TID) or Admin notes.
+ */
+router.put('/deposits/:depositId/edit', verifyAdmin, async (req, res) => {
+  try {
+    const { depositId } = req.params;
+    const { tid, adminNotes } = req.body;
+    const db = getDb();
+
+    let depositRef = db.collection('deposits').doc(depositId);
+    let depositDoc = await depositRef.get();
+
+    if (!depositDoc.exists) {
+      const snap = await db.collection('deposits').get();
+      const match = snap.docs.find(
+        (d) => d.id === depositId || d.data().id === depositId || d.data().depositId === depositId
+      );
+      if (match) {
+        depositRef = db.collection('deposits').doc(match.id);
+        depositDoc = match;
+      }
+    }
+
+    if (!depositDoc.exists) {
+      return res.status(404).json({ success: false, message: 'Deposit record not found.' });
+    }
+
+    const updates = {
+      updatedAt: new Date().toISOString(),
+    };
+    if (tid !== undefined && tid !== null) {
+      updates.tid = String(tid).trim();
+    }
+    if (adminNotes !== undefined && adminNotes !== null) {
+      updates.adminNotes = String(adminNotes).trim();
+    }
+
+    await depositRef.update(updates);
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'edit_deposit_details',
+      targetUid: depositDoc.data().userId || null,
+      targetEmail: depositDoc.data().userEmail || 'N/A',
+      details: `Admin edited deposit details: TID updated to ${updates.tid || '(unchanged)'}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: 'Deposit details updated successfully.',
+      depositId,
+      updates,
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/deposits/:depositId/edit:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update deposit details',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * i) GET /api/admin/withdrawals
  * Retrieve withdrawals list with status filter.
  */
@@ -904,11 +1072,16 @@ router.put('/withdrawals/:withdrawalId/mark-paid', verifyAdmin, async (req, res)
       });
     }
 
-    await withdrawalRef.update({
+    const { payoutTid, payoutReference } = req.body || {};
+    const updateData = {
       status: 'paid',
       paidBy: req.user.email,
       paidAt: new Date().toISOString(),
-    });
+    };
+    if (payoutTid) updateData.payoutTid = String(payoutTid).trim();
+    if (payoutReference) updateData.payoutReference = String(payoutReference).trim();
+
+    await withdrawalRef.update(updateData);
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,
@@ -917,7 +1090,7 @@ router.put('/withdrawals/:withdrawalId/mark-paid', verifyAdmin, async (req, res)
       targetEmail: withdrawal.userEmail || 'N/A',
       amountUSD,
       withdrawalId,
-      details: `Settled withdrawal of $${amountUSD} (${withdrawal.amountPKR} PKR) to ${withdrawal.accountName} via ${withdrawal.method}`,
+      details: `Settled withdrawal of $${amountUSD} (${withdrawal.amountPKR} PKR) to ${withdrawal.accountName} via ${withdrawal.method}${payoutTid ? ` (TID: ${payoutTid})` : ''}`,
       timestamp: new Date().toISOString(),
     });
 

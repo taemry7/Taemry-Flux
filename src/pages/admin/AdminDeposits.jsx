@@ -16,17 +16,35 @@ import {
   X,
   FileText,
   Copy,
-  Check
+  Check,
+  Edit2,
+  Search,
+  Filter,
+  Save,
+  Zap,
+  Radio,
+  Smartphone,
+  Send
 } from 'lucide-react';
 import apiClient from '../../api/client';
 
 export default function AdminDeposits() {
   const [allDeposits, setAllDeposits] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'approved' | 'rejected'
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
   const [copiedTid, setCopiedTid] = useState('');
+
+  // 3737 / 8484 Instant SMS Gateway State
+  const [showSmsGatewayModal, setShowSmsGatewayModal] = useState(false);
+  const [smsRecords, setSmsRecords] = useState([]);
+  const [smsTestInput, setSmsTestInput] = useState('You have received Rs. 3000 from 03001234567. Trx ID: 1029384756. New balance is Rs. 15000.');
+  const [smsTestSender, setSmsTestSender] = useState('3737');
+  const [smsTestResult, setSmsTestResult] = useState(null);
+  const [smsTesting, setSmsTesting] = useState(false);
 
   // Lightbox Screenshot Modal
   const [activeScreenshot, setActiveScreenshot] = useState(null);
@@ -37,6 +55,14 @@ export default function AdminDeposits() {
     action: '', // 'approve' | 'reject'
     deposit: null,
     reason: '',
+  });
+
+  // Edit Deposit Details Modal
+  const [editModal, setEditModal] = useState({
+    isOpen: false,
+    deposit: null,
+    transactionId: '',
+    adminNotes: '',
   });
 
   const fetchDeposits = async () => {
@@ -62,6 +88,42 @@ export default function AdminDeposits() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSmsRecords = async () => {
+    try {
+      const res = await apiClient.get('/deposits/sms-records');
+      if (res.data?.success) {
+        setSmsRecords(res.data.records || []);
+      }
+    } catch (e) {
+      console.warn('Failed to load SMS records:', e);
+    }
+  };
+
+  const handleTestSms = async () => {
+    setSmsTesting(true);
+    setSmsTestResult(null);
+    try {
+      const res = await apiClient.post('/deposits/sms-webhook', {
+        sender: smsTestSender,
+        message: smsTestInput,
+      });
+      setSmsTestResult(res.data);
+      fetchSmsRecords();
+      fetchDeposits();
+      setFeedback({
+        type: 'success',
+        message: 'Test SMS successfully processed! Verification completed.',
+      });
+    } catch (err) {
+      setSmsTestResult({
+        success: false,
+        error: err.response?.data?.message || err.message,
+      });
+    } finally {
+      setSmsTesting(false);
     }
   };
 
@@ -159,6 +221,54 @@ export default function AdminDeposits() {
     }
   };
 
+  const openEditModal = (deposit) => {
+    setEditModal({
+      isOpen: true,
+      deposit,
+      transactionId: deposit.transactionId || deposit.tid || '',
+      adminNotes: deposit.adminNotes || '',
+    });
+  };
+
+  const handleSaveDepositEdit = async (e) => {
+    e.preventDefault();
+    if (!editModal.deposit) return;
+    const depId = editModal.deposit.depositId || editModal.deposit.id;
+    setActionLoading(true);
+    try {
+      const res = await apiClient.put(`/admin/deposits/${depId}/edit`, {
+        transactionId: editModal.transactionId,
+        adminNotes: editModal.adminNotes,
+      });
+      if (res.data?.success) {
+        setFeedback({
+          type: 'success',
+          message: `Deposit details for #${depId} successfully updated.`,
+        });
+        setAllDeposits((prev) =>
+          prev.map((d) =>
+            (d.depositId || d.id) === depId
+              ? {
+                  ...d,
+                  transactionId: editModal.transactionId,
+                  tid: editModal.transactionId,
+                  adminNotes: editModal.adminNotes,
+                }
+              : d
+          )
+        );
+        setEditModal({ isOpen: false, deposit: null, transactionId: '', adminNotes: '' });
+      }
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to update deposit record.',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const pendingCount = allDeposits.filter((d) => d.status === 'pending').length;
   const approvedCount = allDeposits.filter((d) => d.status === 'approved').length;
   const rejectedCount = allDeposits.filter((d) => d.status === 'rejected').length;
@@ -172,9 +282,28 @@ export default function AdminDeposits() {
     .filter((d) => d.status === 'pending')
     .reduce((sum, d) => sum + Number(d.amountUSD || 0), 0);
 
-  const displayedDeposits = statusFilter === 'all'
-    ? allDeposits
-    : allDeposits.filter((d) => d.status === statusFilter);
+  const displayedDeposits = allDeposits.filter((d) => {
+    // 1. Status Filter
+    if (statusFilter !== 'all' && d.status !== statusFilter) return false;
+    // 2. Method Filter
+    if (methodFilter !== 'all') {
+      const m = (d.method || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const fm = methodFilter.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!m.includes(fm)) return false;
+    }
+    // 3. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const tid = String(d.transactionId || d.tid || '').toLowerCase();
+      const email = String(d.userEmail || '').toLowerCase();
+      const amount = String(d.amountUSD || '');
+      const id = String(d.depositId || d.id || '').toLowerCase();
+      if (!tid.includes(q) && !email.includes(q) && !amount.includes(q) && !id.includes(q)) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -216,8 +345,20 @@ export default function AdminDeposits() {
           </p>
         </div>
 
-        {/* Tab Filter & Refresh Button */}
-        <div className="flex items-center gap-2">
+        {/* Tab Filter, SMS Gateway & Refresh Button */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setShowSmsGatewayModal(true);
+              fetchSmsRecords();
+            }}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 to-emerald-500/20 hover:from-amber-500/30 hover:to-emerald-500/30 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            title="Configure and Test 3737 / 8484 SMS Auto-Approval"
+          >
+            <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+            <span>3737 / 8484 SMS Gateway</span>
+          </button>
           <button
             onClick={fetchDeposits}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs transition-colors cursor-pointer border border-slate-700"
@@ -245,6 +386,44 @@ export default function AdminDeposits() {
               </button>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Search & Method Filters Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800 text-xs">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search deposits by TID, Member Email, or Amount..."
+            className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 text-xs"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <select
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-emerald-500 text-xs font-semibold cursor-pointer"
+          >
+            <option value="all">All Gateways</option>
+            <option value="jazzcash">JazzCash</option>
+            <option value="upaisa">UPaisa</option>
+            <option value="sadapay">SadaPay</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="crypto">Crypto (USDT)</option>
+          </select>
         </div>
       </div>
 
@@ -397,10 +576,18 @@ export default function AdminDeposits() {
                       {/* Status */}
                       <td className="py-3.5 px-4 text-center">
                         {dep.status === 'approved' ? (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                            <CheckCircle2 className="w-3 h-3" />
-                            <span>Approved</span>
-                          </span>
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Approved</span>
+                            </span>
+                            {dep.autoApproved && (
+                              <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[9px] font-bold">
+                                <Zap className="w-2.5 h-2.5 text-amber-400" />
+                                <span>1-Sec SMS</span>
+                              </span>
+                            )}
+                          </div>
                         ) : dep.status === 'rejected' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[10px] font-bold">
                             <XCircle className="w-3 h-3" />
@@ -421,24 +608,33 @@ export default function AdminDeposits() {
 
                       {/* Actions */}
                       <td className="py-3.5 px-4 text-right">
-                        {isPending ? (
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => openActionModal(dep, 'approve')}
-                              className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => openActionModal(dep, 'reject')}
-                              className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs transition-colors cursor-pointer"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-[11px] text-slate-500">Settled</span>
-                        )}
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isPending && (
+                            <>
+                              <button
+                                onClick={() => openActionModal(dep, 'approve')}
+                                className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs transition-colors cursor-pointer"
+                              >
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => openActionModal(dep, 'reject')}
+                                className="px-3 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white font-bold text-xs transition-colors cursor-pointer"
+                              >
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => openEditModal(dep)}
+                            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700 flex items-center gap-1"
+                            title="Edit TID or Admin Notes"
+                          >
+                            <Edit2 className="w-3.5 h-3.5 text-sky-400" />
+                            <span className="text-[10px] hidden sm:inline">Edit</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -633,6 +829,325 @@ export default function AdminDeposits() {
                   : confirmModal.action === 'approve'
                   ? 'Confirm Approval'
                   : 'Confirm Rejection'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* EDIT DEPOSIT DETAILS MODAL (Admin Edit Option) */}
+      {/* ========================================================================= */}
+      {editModal.isOpen && editModal.deposit && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-base font-bold text-white flex items-center gap-2">
+                <Edit2 className="w-4 h-4 text-sky-400" />
+                <span>Edit Deposit Record #{editModal.deposit.depositId || editModal.deposit.id}</span>
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEditModal({ isOpen: false, deposit: null, transactionId: '', adminNotes: '' })}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDepositEdit} className="space-y-4 text-xs">
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-1">
+                <p className="text-slate-400">
+                  <strong className="text-slate-300">Member:</strong> {editModal.deposit.userEmail}
+                </p>
+                <p className="text-slate-400">
+                  <strong className="text-slate-300">Amount:</strong> ${editModal.deposit.amountUSD} USD ({editModal.deposit.method})
+                </p>
+                <p className="text-slate-400">
+                  <strong className="text-slate-300">Status:</strong> <span className="capitalize font-semibold text-emerald-400">{editModal.deposit.status}</span>
+                </p>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                  Transaction ID (TID)
+                </label>
+                <input
+                  type="text"
+                  value={editModal.transactionId}
+                  onChange={(e) => setEditModal((prev) => ({ ...prev, transactionId: e.target.value }))}
+                  placeholder="Enter or correct Transaction ID"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-mono focus:outline-none focus:border-sky-500 text-xs"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                  Admin Verification Notes
+                </label>
+                <textarea
+                  rows={3}
+                  value={editModal.adminNotes}
+                  onChange={(e) => setEditModal((prev) => ({ ...prev, adminNotes: e.target.value }))}
+                  placeholder="e.g. Verified transaction manually in JazzCash merchant app at 14:32"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-xs resize-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setEditModal({ isOpen: false, deposit: null, transactionId: '', adminNotes: '' })}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                  <Save className="w-3.5 h-3.5" />
+                  <span>{actionLoading ? 'Saving...' : 'Save Changes'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* 4. 3737 & 8484 SMS AUTO-APPROVAL GATEWAY MODAL                            */}
+      {/* ========================================================================= */}
+      {showSmsGatewayModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-2xl w-full p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white flex items-center gap-2">
+                    <span>3737 & 8484 Instant Auto-Approval Gateway</span>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold">
+                      Live Engine
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Automated 1-to-5 second deposit verification for Easypaisa & JazzCash
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSmsGatewayModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Webhook URL Bar */}
+            <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-300 flex items-center gap-1.5">
+                  <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                  <span>Incoming SMS Webhook URL (Forwarder Endpoint):</span>
+                </span>
+                <span className="text-[11px] text-emerald-400 font-mono">POST</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/api/deposits/sms-webhook`}
+                  className="flex-1 bg-slate-900 border border-slate-700/60 rounded-xl px-3 py-2 text-xs font-mono text-emerald-300 select-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/api/deposits/sms-webhook`);
+                    setFeedback({ type: 'success', message: 'Webhook URL copied to clipboard!' });
+                  }}
+                  className="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold cursor-pointer flex items-center gap-1.5 transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Copy</span>
+                </button>
+              </div>
+            </div>
+
+            {/* How It Works Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-xs">
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 space-y-1">
+                <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                  <Smartphone className="w-3.5 h-3.5" />
+                  <span>1. SIM Receives SMS</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Easypaisa <strong>3737</strong> or JazzCash <strong>8484/8558</strong> sends transaction SMS to your phone.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 space-y-1">
+                <div className="flex items-center gap-1.5 text-sky-300 font-bold">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>2. 1-Sec Auto Match</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  System parses TID & PKR amount. Matching user deposit is auto-approved in 1 second & balance credited!
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950/40 border border-slate-800 space-y-1">
+                <div className="flex items-center gap-1.5 text-emerald-300 font-bold">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>3. Permanent Lock</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  TID is marked <strong>CLAIMED</strong> immediately. If anyone tries to submit the same TID again, it is blocked.
+                </p>
+              </div>
+            </div>
+
+            {/* Interactive Live SMS Simulator & Tester */}
+            <div className="p-4 rounded-2xl bg-slate-950/70 border border-amber-500/20 space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                  <Zap className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Live Simulator / Test Parser (Try it now)</span>
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400">Sender:</span>
+                  <select
+                    value={smsTestSender}
+                    onChange={(e) => setSmsTestSender(e.target.value)}
+                    className="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs text-white"
+                  >
+                    <option value="3737">Easypaisa (3737)</option>
+                    <option value="8484">JazzCash (8484)</option>
+                    <option value="8558">JazzCash (8558)</option>
+                    <option value="SadaPay">SadaPay</option>
+                  </select>
+                </div>
+              </div>
+
+              <textarea
+                rows={2}
+                value={smsTestInput}
+                onChange={(e) => setSmsTestInput(e.target.value)}
+                placeholder="Paste incoming SMS text here..."
+                className="w-full bg-slate-900 border border-slate-700/80 rounded-xl p-2.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+              />
+
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] text-slate-400">
+                  Simulates incoming SMS payload to test instant TID detection & auto-approval.
+                </span>
+                <button
+                  type="button"
+                  onClick={handleTestSms}
+                  disabled={smsTesting || !smsTestInput.trim()}
+                  className="px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white text-xs font-bold cursor-pointer transition-colors flex items-center gap-1.5 shadow-xs"
+                >
+                  <Send className={`w-3.5 h-3.5 ${smsTesting ? 'animate-spin' : ''}`} />
+                  <span>{smsTesting ? 'Processing...' : 'Test & Push SMS Webhook'}</span>
+                </button>
+              </div>
+
+              {/* Test Result Display */}
+              {smsTestResult && (
+                <div className={`p-3 rounded-xl border text-xs font-mono space-y-1 ${
+                  smsTestResult.success
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                }`}>
+                  <p className="font-bold flex items-center gap-1.5">
+                    {smsTestResult.success ? <Check className="w-4 h-4 text-emerald-400" /> : <AlertTriangle className="w-4 h-4 text-rose-400" />}
+                    <span>{smsTestResult.message || (smsTestResult.success ? 'SMS Parsed Successfully!' : 'Failed to parse SMS')}</span>
+                  </p>
+                  {smsTestResult.tid && (
+                    <p className="text-[11px] text-slate-300">
+                      Detected TID: <strong>{smsTestResult.tid}</strong> &bull; Amount: <strong>Rs. {smsTestResult.amountPKR}</strong> &bull; Method: <strong className="uppercase">{smsTestResult.method}</strong>
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* List of Incoming SMS Records */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Recent SMS Payment Logs ({smsRecords.length})</span>
+                </h4>
+                <button
+                  type="button"
+                  onClick={fetchSmsRecords}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 flex items-center gap-1 cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Refresh</span>
+                </button>
+              </div>
+
+              <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/40">
+                {smsRecords.length === 0 ? (
+                  <div className="py-6 text-center text-xs text-slate-500">
+                    No SMS records received yet. Test one above or connect your SMS forwarder app!
+                  </div>
+                ) : (
+                  <div className="max-h-48 overflow-y-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-900/80 text-[11px] text-slate-400 border-b border-slate-800">
+                        <tr>
+                          <th className="py-2 px-3">TID</th>
+                          <th className="py-2 px-3">Amount</th>
+                          <th className="py-2 px-3">Gateway</th>
+                          <th className="py-2 px-3">Status</th>
+                          <th className="py-2 px-3">Received</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-800/60 font-mono text-[11px]">
+                        {smsRecords.map((r, i) => (
+                          <tr key={r.id || i} className="hover:bg-slate-800/30">
+                            <td className="py-2 px-3 text-slate-200 font-bold">{r.tid}</td>
+                            <td className="py-2 px-3 text-emerald-400 font-bold">Rs. {Number(r.amountPKR || 0).toLocaleString()}</td>
+                            <td className="py-2 px-3 text-slate-400 uppercase">{r.method || 'SMS'}</td>
+                            <td className="py-2 px-3">
+                              {r.status === 'CLAIMED' ? (
+                                <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 text-[10px] font-semibold">
+                                  CLAIMED
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">
+                                  UNCLAIMED
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2 px-3 text-slate-500 text-[10px]">
+                              {r.receivedAt ? new Date(r.receivedAt).toLocaleTimeString() : 'N/A'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-end pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowSmsGatewayModal(false)}
+                className="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer"
+              >
+                Close
               </button>
             </div>
           </div>

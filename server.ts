@@ -17,7 +17,7 @@ import supportRoutes from './backend/routes/support.js';
 import whitepaperRoutes from './backend/routes/whitepaper.js';
 import authRoutes from './backend/routes/auth.js';
 import minerRoutes from './backend/routes/miner.js';
-import { initFirebaseAdmin } from './backend/firebaseAdmin.js';
+import { initFirebaseAdmin, getDb } from './backend/firebaseAdmin.js';
 import { sendAdminErrorAlert } from './backend/utils/email.js';
 
 async function startServer() {
@@ -26,7 +26,6 @@ async function startServer() {
 
   // Auto-purge pre-seeded test accounts, dummy deposits, and dummy withdrawals on boot
   try {
-    const { getDb } = await import('./backend/firebaseAdmin.js');
     const db = getDb() as any;
     if (db && db.data && typeof db.data.delete === 'function') {
       const keysToDelete: string[] = [];

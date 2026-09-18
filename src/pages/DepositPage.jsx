@@ -248,10 +248,15 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       }
 
       if (res.data?.success) {
-        toast.success('Deposit request submitted! Wait for admin approval.');
+        const isAuto = Boolean(res.data?.autoApproved);
+        const successMsg = isAuto
+          ? 'Deposit verified & auto-approved in 1 second! Funds credited to your wallet.'
+          : 'Deposit request submitted! Wait for admin approval.';
+
+        toast.success(successMsg);
         setToastMessage({
           type: 'success',
-          text: 'Deposit request submitted! Wait for admin approval.',
+          text: successMsg,
         });
 
         // Clear form

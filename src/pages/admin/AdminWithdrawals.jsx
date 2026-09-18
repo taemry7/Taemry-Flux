@@ -14,13 +14,18 @@ import {
   X,
   CreditCard,
   Copy,
-  Check
+  Check,
+  Search,
+  Filter,
+  FileText
 } from 'lucide-react';
 import apiClient from '../../api/client';
 
 export default function AdminWithdrawals() {
   const [allWithdrawals, setAllWithdrawals] = useState([]);
   const [statusFilter, setStatusFilter] = useState('all'); // 'all' | 'pending' | 'paid' | 'rejected'
+  const [methodFilter, setMethodFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
@@ -32,6 +37,8 @@ export default function AdminWithdrawals() {
     action: '', // 'mark-paid' | 'reject'
     withdrawal: null,
     reason: '',
+    payoutTid: '',
+    payoutReference: '',
   });
 
   const fetchWithdrawals = async () => {
@@ -75,18 +82,23 @@ export default function AdminWithdrawals() {
       action,
       withdrawal,
       reason: action === 'reject' ? 'Recipient account details mismatch or bank failure.' : '',
+      payoutTid: '',
+      payoutReference: '',
     });
   };
 
   const handleConfirmAction = async () => {
-    const { withdrawal, action, reason } = confirmModal;
+    const { withdrawal, action, reason, payoutTid, payoutReference } = confirmModal;
     if (!withdrawal) return;
 
     setActionLoading(true);
     const wid = withdrawal.withdrawalId || withdrawal.id;
     try {
       if (action === 'mark-paid') {
-        const res = await apiClient.put(`/admin/withdrawals/${wid}/mark-paid`);
+        const res = await apiClient.put(`/admin/withdrawals/${wid}/mark-paid`, {
+          payoutTid: payoutTid.trim(),
+          payoutReference: payoutReference.trim(),
+        });
         if (res.data?.success) {
           setFeedback({
             type: 'success',
@@ -94,7 +106,14 @@ export default function AdminWithdrawals() {
           });
           setAllWithdrawals((prev) =>
             prev.map((w) =>
-              (w.withdrawalId || w.id) === wid ? { ...w, status: 'paid' } : w
+              (w.withdrawalId || w.id) === wid
+                ? {
+                    ...w,
+                    status: 'paid',
+                    payoutTid: payoutTid.trim() || w.payoutTid,
+                    payoutReference: payoutReference.trim() || w.payoutReference,
+                  }
+                : w
             )
           );
         }
@@ -114,7 +133,7 @@ export default function AdminWithdrawals() {
           );
         }
       }
-      setConfirmModal({ isOpen: false, action: '', withdrawal: null, reason: '' });
+      setConfirmModal({ isOpen: false, action: '', withdrawal: null, reason: '', payoutTid: '', payoutReference: '' });
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -138,9 +157,29 @@ export default function AdminWithdrawals() {
     .filter((w) => w.status === 'pending')
     .reduce((sum, w) => sum + Number(w.amountUSD || 0), 0);
 
-  const displayedWithdrawals = statusFilter === 'all'
-    ? allWithdrawals
-    : allWithdrawals.filter((w) => w.status === statusFilter);
+  const displayedWithdrawals = allWithdrawals.filter((w) => {
+    // 1. Status Filter
+    if (statusFilter !== 'all' && w.status !== statusFilter) return false;
+    // 2. Method Filter
+    if (methodFilter !== 'all') {
+      const wm = (w.method || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const fm = methodFilter.toLowerCase().replace(/[^a-z0-9]/g, '');
+      if (!wm.includes(fm)) return false;
+    }
+    // 3. Search Query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const name = String(w.accountName || '').toLowerCase();
+      const num = String(w.accountNumber || '').toLowerCase();
+      const email = String(w.userEmail || '').toLowerCase();
+      const id = String(w.withdrawalId || w.id || '').toLowerCase();
+      const pTid = String(w.payoutTid || '').toLowerCase();
+      if (!name.includes(q) && !num.includes(q) && !email.includes(q) && !id.includes(q) && !pTid.includes(q)) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -214,6 +253,44 @@ export default function AdminWithdrawals() {
         </div>
       </div>
 
+      {/* Search & Method Filter Bar */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/60 p-3 rounded-2xl border border-slate-800 text-xs">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by Beneficiary Name, Account Number, Member Email, or Payout TID..."
+            className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-9 pr-8 py-2 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 text-xs"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+          <select
+            value={methodFilter}
+            onChange={(e) => setMethodFilter(e.target.value)}
+            className="bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:border-sky-500 text-xs font-semibold cursor-pointer"
+          >
+            <option value="all">All Gateways</option>
+            <option value="jazzcash">JazzCash</option>
+            <option value="upaisa">UPaisa</option>
+            <option value="sadapay">SadaPay</option>
+            <option value="bank">Bank Transfer</option>
+            <option value="crypto">Crypto (USDT)</option>
+          </select>
+        </div>
+      </div>
+
       {/* Withdrawals Table */}
       <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
@@ -271,6 +348,11 @@ export default function AdminWithdrawals() {
                               </button>
                             )}
                           </div>
+                          {w.payoutTid && (
+                            <p className="text-[10px] text-emerald-400 font-mono font-semibold flex items-center gap-1 pt-0.5">
+                              <span>Payout TID: {w.payoutTid}</span>
+                            </p>
+                          )}
                         </div>
                       </td>
 
@@ -400,9 +482,39 @@ export default function AdminWithdrawals() {
             </div>
 
             {confirmModal.action === 'mark-paid' ? (
-              <p className="text-xs text-sky-300/90 leading-relaxed">
-                Ensure you have dispatched <strong>{confirmModal.withdrawal.amountPKR} PKR</strong> to {confirmModal.withdrawal.accountName}. Confirming will mark this withdrawal as paid and deduct ${confirmModal.withdrawal.amountUSD} USD from their platform wallet.
-              </p>
+              <div className="space-y-3">
+                <p className="text-xs text-sky-300/90 leading-relaxed">
+                  Ensure you have dispatched <strong>{confirmModal.withdrawal.amountPKR} PKR</strong> to {confirmModal.withdrawal.accountName}. Confirming will mark this withdrawal as paid and deduct ${confirmModal.withdrawal.amountUSD} USD from their platform wallet.
+                </p>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                    Payout Transaction ID (TID) / Bank Ref (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={confirmModal.payoutTid}
+                    onChange={(e) =>
+                      setConfirmModal((prev) => ({ ...prev, payoutTid: e.target.value }))
+                    }
+                    placeholder="e.g. JC893429183 or Bank Ref #..."
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-bold text-slate-300 block mb-1">
+                    Payment Note / Reference (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    value={confirmModal.payoutReference}
+                    onChange={(e) =>
+                      setConfirmModal((prev) => ({ ...prev, payoutReference: e.target.value }))
+                    }
+                    placeholder="e.g. Sent via JazzCash Business at 15:40"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+              </div>
             ) : (
               <div className="space-y-1.5">
                 <label className="text-xs text-slate-400 font-semibold block">
