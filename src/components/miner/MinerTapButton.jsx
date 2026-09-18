@@ -315,7 +315,7 @@ export default function MinerTapButton({
             {/* Subtitle Details: Shows unlock countdown before 6h, or instruction when ready */}
             <span className="text-xs font-bold mt-1 text-cyan-200 drop-shadow-sm flex items-center gap-1">
               {!isPackageActive ? (
-                <span>Package buy karne ke baad activate hoga</span>
+                <span>Activates after purchasing a package</span>
               ) : isFirstHalf ? (
                 <>
                   <Clock className="w-3 h-3 text-cyan-300 inline shrink-0" />

@@ -372,7 +372,7 @@ export default function CloudMinerPage({ onNavigate }) {
   // Handlers
   const handleStartMining = () => {
     if (!isPackageActive) {
-      showToast('Ineligible to Mine: Package buy karne ke baad ye eligible aur activate hoga.', 'error');
+      showToast('Ineligible to Mine: Activates after purchasing an advertising package.', 'error');
       return;
     }
     const now = Date.now();
@@ -393,7 +393,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
   const handleRenewSessionEarly = () => {
     if (!isPackageActive) {
-      showToast('Ineligible to Mine: Package buy karne ke baad ye eligible aur activate hoga.', 'error');
+      showToast('Ineligible to Mine: Activates after purchasing an advertising package.', 'error');
       return;
     }
     const now = Date.now();
@@ -799,7 +799,7 @@ export default function CloudMinerPage({ onNavigate }) {
             </h3>
 
             <p className="text-xs sm:text-sm text-[#526b70] dark:text-[#94a3b8] mb-5 leading-relaxed max-w-lg mx-auto">
-              Package buy karne ke baad ye eligible aur activate hoga. To start live cloud mining and earn TFLX tokens, please activate an advertising package.
+              This feature unlocks after purchasing an advertising package. To start live cloud mining and earn TFLX tokens, please activate a package.
             </p>
 
             <div className="flex flex-wrap items-center justify-center gap-3">

@@ -1609,7 +1609,7 @@ export default function HomePage({ onNavigate }) {
               </h3>
 
               <p className="text-xs sm:text-sm text-[#526b70] dark:text-[#94a3b8] mb-6 leading-relaxed">
-                Package buy karne ke baad ye eligible aur activate hoga. To start live cloud mining and earn TFLX tokens, please activate an advertising package.
+                This feature unlocks after purchasing an advertising package. To start live cloud mining and earn TFLX tokens, please activate a package.
               </p>
 
               <div className="flex flex-col gap-2.5">

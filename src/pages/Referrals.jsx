@@ -115,10 +115,10 @@ export default function Referrals({ onSelectTab }) {
       {
         id: 'direct-at-vanity',
         number: 1,
-        title: 'Option 1: Ultra-Short Direct @Username Link (Aapka Pasandeeda)',
+        title: 'Option 1: Ultra-Short Direct @Username Link (Recommended)',
         badge: 'Ultra Short & Clean',
         badgeColor: 'bg-[#ecfdf5] text-[#047857] dark:bg-[#064e3b] dark:text-[#6ee7b7] border-[#a7f3d0] dark:border-[#065f46]',
-        description: `Baghair /ref/ ke sabse chhota aur modern link (${baseUrl}/@${u}). Click karne par visitor seedha Signup page par aapke sponsor username ke sath redirect hota hai.`,
+        description: `Cleanest and shortest direct link (${baseUrl}/@${u}). Clicking this link redirects visitors directly to the Sign Up page with your sponsor username attached.`,
         url: `${baseUrl}/@${encodeURIComponent(u)}`,
       },
       {

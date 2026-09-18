@@ -378,7 +378,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
                 </span>
               </div>
               <p className="text-xs text-[#991b1b] leading-relaxed max-w-2xl">
-                Jab aap 1 bandy ko refer karenge to aapka account hamesha ke liye withdrawals ke liye eligible ho jayega. Sirf first time 1 referral zaroori hai. Currently you have <strong>{referralCount} referrals</strong>. Share your Ultra-Short link below!
+                Once you refer at least 1 member, your account becomes permanently eligible for withdrawals forever. Only 1 referral is required for initial activation. Currently you have <strong>{referralCount} referrals</strong>. Share your Ultra-Short link below!
               </p>
             </div>
           </div>
@@ -720,7 +720,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
               </span>
             </div>
             <p className="text-xs text-[#526d72] leading-relaxed">
-              1 bandy ko refer karne se aapka account permanently eligible ho jata hai. Share your personal sponsor link:
+              Referring 1 active member permanently unlocks withdrawals for your account. Share your personal sponsor link:
             </p>
             <div className="p-3 bg-[#faf8f5] rounded-xl border border-[#ece6d9] font-mono text-xs font-bold text-[#09353e] truncate select-all">
               {ultraShortLink}
