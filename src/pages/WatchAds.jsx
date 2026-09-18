@@ -18,6 +18,7 @@ import {
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import SponsorAdModal from '../components/SponsorAdModal';
+import { MONETAG_ADS, getMonetagAdForNumber } from '../config/monetagAds';
 
 const WATCH_ADS_PACKAGES = [
   {
@@ -166,21 +167,23 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
-  // Generate 1 to N Ads mapped to verified sponsors rotation
+  // Generate 1 to N Ads mapped to the 13 official Monetag partner units rotation
   const generate400Ads = (watchedCount, rewardRate, limit = 400) => {
     const list = [];
     const totalCount = limit || 400;
     for (let i = 1; i <= totalCount; i++) {
-      const sponsorTemplate = VERIFIED_SPONSORS[(i - 1) % VERIFIED_SPONSORS.length];
+      const monetagUnit = getMonetagAdForNumber(i);
       const isCompleted = i <= watchedCount;
       const isAvailable = i === watchedCount + 1;
 
       list.push({
         adNumber: i,
         id: `ad_${i}`,
-        title: `${sponsorTemplate.name} #${i}`,
-        sponsor: sponsorTemplate.name,
-        category: sponsorTemplate.category,
+        title: monetagUnit.name,
+        sponsor: monetagUnit.shortName,
+        category: monetagUnit.category,
+        badge: monetagUnit.badge,
+        adConfig: monetagUnit,
         reward: rewardRate,
         isWatched: isCompleted,
         isAvailable,
@@ -434,10 +437,17 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
                 {/* Title & Tag */}
                 <div>
-                  <p className="text-xs font-bold text-[#09353e] truncate">
-                    {ad.sponsor}
-                  </p>
-                  <span className="text-[10px] text-[#718589] font-medium block truncate">
+                  <div className="flex items-center justify-between gap-1">
+                    <p className="text-xs font-bold text-[#09353e] truncate">
+                      {ad.sponsor}
+                    </p>
+                    {ad.badge && (
+                      <span className="text-[9px] font-black px-1.5 py-0.5 rounded bg-[#0c5963]/10 text-[#0c5963] shrink-0">
+                        {ad.badge}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-[#718589] font-medium block truncate mt-0.5">
                     {ad.category}
                   </span>
                 </div>
@@ -488,6 +498,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           setActiveModalAd(null);
         }}
         ad={activeModalAd}
+        adConfig={activeModalAd?.adConfig}
         rewardAmount={adStatus.rewardPerAd || computedReward}
         onClaimReward={handleClaimReward}
         isClaiming={isClaiming}
