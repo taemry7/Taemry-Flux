@@ -491,7 +491,7 @@ export default function HomePage({ onNavigate }) {
 
           {/* Subtitle */}
           <p className="text-base sm:text-lg text-[#476066] dark:text-[#94a3b8] max-w-2xl leading-relaxed mb-8">
-            TAEMRY <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span> turns consistent attention into a visible earnings habit.
+            TAEMRY FLUX turns consistent attention into a visible earnings habit.
             Fund your wallet, choose your pace, and earn from the work you can see.
           </p>
         </div>
@@ -587,9 +587,9 @@ export default function HomePage({ onNavigate }) {
               {heroCardMode === 'ads' ? (
                 <motion.div
                   key="hero-mode-ads-card"
-                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(2px)' }}
                   animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(2px)' }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="flex flex-col justify-between flex-1"
                 >
@@ -690,9 +690,9 @@ export default function HomePage({ onNavigate }) {
               ) : (
                 <motion.div
                   key="hero-mode-miner-card"
-                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  initial={{ opacity: 0, scale: 0.97, filter: 'blur(2px)' }}
                   animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(4px)' }}
+                  exit={{ opacity: 0, scale: 0.97, filter: 'blur(2px)' }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
                   className="flex flex-col justify-between flex-1"
                 >

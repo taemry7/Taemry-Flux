@@ -344,9 +344,8 @@ export default function AdminLayout({ onNavigate }) {
               <ShieldCheck className="w-5 h-5" />
             </span>
             <div>
-              <span className="text-sm font-black tracking-wider uppercase block">
-                <span className="text-white">TAEMRY</span>{' '}
-                <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-[#d97706] to-[#ea580c]">FLUX</span>
+              <span className="text-sm font-black tracking-wider uppercase block text-white">
+                TAEMRY FLUX
               </span>
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold text-sky-400 uppercase tracking-widest block -mt-1">

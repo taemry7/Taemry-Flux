@@ -417,15 +417,15 @@ aside {
   -webkit-backdrop-filter: blur(0px) !important;
 }
 
-/* Jab user click kare / page change / back ho, tab overlay wapas aa jaye (Fade Out blur splash) */
+/* Jab user click kare / page change / back ho, tab overlay wapas aa jaye (Fade Out blur splash - 50% blur capacity) */
 .fade-overlay.show {
   opacity: 1 !important;
   pointer-events: auto !important;
-  backdrop-filter: blur(14px) !important;
-  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: blur(7px) !important;
+  -webkit-backdrop-filter: blur(7px) !important;
 }
 
-/* Center fluid splash blur wave inside overlay */
+/* Center fluid splash blur wave inside overlay (50% blur capacity) */
 .fade-overlay-splash {
   position: absolute;
   top: 50%;
@@ -437,7 +437,7 @@ aside {
   background: radial-gradient(circle, rgba(12, 89, 99, 0.3) 0%, rgba(15, 118, 110, 0.16) 45%, transparent 70%);
   opacity: 0;
   pointer-events: none;
-  filter: blur(10px);
+  filter: blur(5px);
   will-change: transform, opacity, filter;
 }
 
@@ -454,16 +454,16 @@ aside {
   0% {
     transform: translate(-50%, -50%) scale(0.1);
     opacity: 0.95;
-    filter: blur(4px);
+    filter: blur(2px);
   }
   40% {
     opacity: 0.75;
-    filter: blur(10px);
+    filter: blur(5px);
   }
   100% {
     transform: translate(-50%, -50%) scale(5.5);
     opacity: 0;
-    filter: blur(24px);
+    filter: blur(12px);
   }
 }
 
