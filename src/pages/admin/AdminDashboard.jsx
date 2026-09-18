@@ -24,12 +24,116 @@ import {
   Pickaxe,
   Zap,
   Flame,
-  Award
+  Award,
+  Trash2,
+  X
 } from 'lucide-react';
+import apiClient from '../../api/client';
+import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
+import { collection, getDocs, doc, setDoc, deleteDoc } from 'firebase/firestore';
 import GoLiveModal from '../../components/admin/GoLiveModal';
 
 export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRefresh, loading }) {
   const [showGoLive, setShowGoLive] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetFeedback, setResetFeedback] = useState({ type: '', message: '' });
+
+  const handleResetPlatform = async () => {
+    const confirmed = window.confirm(
+      'CRITICAL CONFIRMATION: Are you sure you want to reset the platform?\n\n' +
+      '1. All user accounts will be permanently deleted except mistrtaimoor@gmail.com.\n' +
+      '2. Other users will be able to sign up fresh.\n' +
+      '3. Deposits, Withdrawals, Total Earned, Liability, and DAU will be reset to 0.\n' +
+      '4. Super Admin account (mistrtaimoor@gmail.com) will start with clean 0 balance.\n\n' +
+      'Do you want to proceed with this fresh restart?'
+    );
+    if (!confirmed) return;
+
+    setResetting(true);
+    try {
+      // 1. Client-side Firestore purge if configured
+      if (isFirebaseConfigured && db) {
+        try {
+          const [uSnap, dSnap, wSnap, mSnap] = await Promise.all([
+            getDocs(collection(db, 'users')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'deposits')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'withdrawals')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'cloudMiner')).catch(() => ({ docs: [] })),
+          ]);
+
+          // Clear non-admin users
+          for (const d of uSnap.docs || []) {
+            const uData = d.data() || {};
+            const email = (uData.email || '').toLowerCase().trim();
+            if (email !== 'mistrtaimoor@gmail.com' && d.id !== 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') {
+              await deleteDoc(d.ref).catch(() => {});
+            } else {
+              // Reset super admin doc
+              await setDoc(doc(db, 'users', d.id), {
+                ...uData,
+                uid: d.id,
+                email: 'mistrtaimoor@gmail.com',
+                name: uData.name || uData.displayName || 'Taimoor',
+                displayName: uData.displayName || uData.name || 'Taimoor',
+                walletBalance: 0,
+                currentPackage: 'None',
+                lifetimeAds: 0,
+                dailyAdCount: 0,
+                teamAdsCount: 0,
+                referralCount: 0,
+                totalEarned: 0,
+                isEligible: false,
+                isBlocked: false,
+                isAdmin: true,
+                minedTflx: 0,
+                lastAdWatchDate: null,
+                updatedAt: new Date().toISOString(),
+              }, { merge: true }).catch(() => {});
+            }
+          }
+
+          // Clear financial and miner collections
+          for (const d of (dSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+          for (const d of (wSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+          for (const d of (mSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+        } catch (fsErr) {
+          console.warn('Client Firestore reset notice:', fsErr.message);
+        }
+      }
+
+      // 2. Call backend reset endpoint
+      const res = await apiClient.post('/admin/purge-users');
+
+      // 3. Clear local storage cached stats
+      try {
+        localStorage.removeItem('taemry_cached_admin_stats');
+      } catch (e) {}
+
+      // 4. Global refresh
+      window.dispatchEvent(new Event('taemry_admin_stats_refresh'));
+      if (typeof onRefresh === 'function') {
+        await onRefresh();
+      }
+
+      setResetFeedback({
+        type: 'success',
+        message: res.data?.message || 'Platform successfully reset! All users removed except mistrtaimoor@gmail.com. Metrics reset to 0.',
+      });
+    } catch (err) {
+      setResetFeedback({
+        type: 'error',
+        message: err.response?.data?.message || err.message || 'Failed to reset platform.',
+      });
+    } finally {
+      setResetting(false);
+    }
+  };
 
   const {
     totalUsers = 0,
@@ -59,6 +163,32 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
       {loading && (
         <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-sky-500 to-amber-500 animate-pulse w-full" />
+        </div>
+      )}
+
+      {/* Reset Feedback Alert */}
+      {resetFeedback.message && (
+        <div
+          className={`p-4 rounded-2xl flex items-center justify-between gap-3 text-xs font-semibold ${
+            resetFeedback.type === 'success'
+              ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+              : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
+          }`}
+        >
+          <div className="flex items-center gap-2">
+            {resetFeedback.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-400" />
+            )}
+            <span>{resetFeedback.message}</span>
+          </div>
+          <button
+            onClick={() => setResetFeedback({ type: '', message: '' })}
+            className="text-slate-400 hover:text-white cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
@@ -499,12 +629,21 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
             <span>System Settings</span>
           </button>
           <button
+            onClick={handleResetPlatform}
+            disabled={resetting || loading}
+            className="px-3.5 py-2 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+            title="Reset Platform: Remove all users except mistrtaimoor@gmail.com, reset deposits, total earned, liability, DAU to 0"
+          >
+            <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+            <span>{resetting ? 'Resetting...' : 'Reset Platform (Fresh Start)'}</span>
+          </button>
+          <button
             onClick={onRefresh}
-            disabled={loading}
+            disabled={loading || resetting}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors cursor-pointer"
             title="Refresh analytics data"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading || resetting ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>

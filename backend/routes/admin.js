@@ -11,7 +11,9 @@
  */
 
 import express from 'express';
-import { getDb } from '../firebaseAdmin.js';
+import fs from 'fs';
+import path from 'path';
+import { admin, getDb } from '../firebaseAdmin.js';
 import { verifyAdmin } from '../middleware/admin.js';
 import { sendDailyReportEmail, sendAdminErrorAlert } from '../utils/email.js';
 import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
@@ -461,15 +463,80 @@ router.delete('/users/:uid', verifyAdmin, async (req, res) => {
 });
 
 /**
- * c2) POST /api/admin/purge-users
+ * c2) POST /api/admin/purge-users and POST /api/admin/reset-platform
  * Deletes all non-admin users, keeping ONLY mistrtaimoor@gmail.com,
  * and resets all deposits, withdrawals, transactions, earned stats, and platform liabilities to 0.
  */
-router.post('/purge-users', verifyAdmin, async (req, res) => {
+const handlePlatformPurgeAndReset = async (req, res) => {
   try {
     const db = getDb();
     let deletedCount = 0;
 
+    // 1. If standard Firestore (with collection method)
+    if (db && typeof db.collection === 'function') {
+      const collectionsToClear = [
+        'deposits',
+        'withdrawals',
+        'transactions',
+        'cloudMiner',
+        'supportTickets',
+        'auditLogs',
+        'smsRecords',
+      ];
+
+      for (const colName of collectionsToClear) {
+        try {
+          const snap = await db.collection(colName).get();
+          if (snap && snap.docs) {
+            const batchPromises = snap.docs.map((d) => d.ref.delete().catch(() => {}));
+            await Promise.all(batchPromises);
+          }
+        } catch (e) {
+          console.warn(`Error clearing collection ${colName}:`, e.message);
+        }
+      }
+
+      // Clear users except mistrtaimoor@gmail.com
+      try {
+        const usersSnap = await db.collection('users').get();
+        if (usersSnap && usersSnap.docs) {
+          for (const doc of usersSnap.docs) {
+            const u = doc.data() || {};
+            const email = (u.email || '').toLowerCase().trim();
+            if (email !== 'mistrtaimoor@gmail.com' && doc.id !== 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') {
+              await doc.ref.delete().catch(() => {});
+              deletedCount++;
+            } else {
+              // Reset mistrtaimoor to completely clean state
+              await doc.ref.set({
+                ...u,
+                uid: doc.id,
+                email: 'mistrtaimoor@gmail.com',
+                name: u.name || u.displayName || 'Taimoor',
+                displayName: u.displayName || u.name || 'Taimoor',
+                walletBalance: 0,
+                currentPackage: 'None',
+                lifetimeAds: 0,
+                dailyAdCount: 0,
+                teamAdsCount: 0,
+                referralCount: 0,
+                totalEarned: 0,
+                isEligible: false,
+                isBlocked: false,
+                isAdmin: true,
+                minedTflx: 0,
+                lastAdWatchDate: null,
+                updatedAt: new Date().toISOString(),
+              }, { merge: true }).catch(() => {});
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('Error clearing users collection:', e.message);
+      }
+    }
+
+    // 2. If MockFirestore (with in-memory map)
     if (db && db.data && typeof db.data.delete === 'function') {
       const keysToDelete = [];
       for (const [key, val] of db.data.entries()) {
@@ -480,7 +547,8 @@ router.post('/purge-users', verifyAdmin, async (req, res) => {
           key.startsWith('transactions/') ||
           key.startsWith('cloudMiner/') ||
           key.startsWith('supportTickets/') ||
-          key.startsWith('auditLogs/')
+          key.startsWith('auditLogs/') ||
+          key.startsWith('smsRecords/')
         ) {
           keysToDelete.push(key);
         }
@@ -528,7 +596,27 @@ router.post('/purge-users', verifyAdmin, async (req, res) => {
       if (typeof db._persist === 'function') db._persist();
     }
 
-    // Clean registry files to contain only mistrtaimoor@gmail.com
+    // 3. Purge Firebase Auth users if Admin SDK auth is configured
+    try {
+      if (admin && typeof admin.auth === 'function') {
+        const authInstance = admin.auth();
+        if (typeof authInstance.listUsers === 'function') {
+          const listRes = await authInstance.listUsers(1000).catch(() => null);
+          if (listRes && listRes.users) {
+            for (const userRecord of listRes.users) {
+              const uEmail = (userRecord.email || '').toLowerCase().trim();
+              if (uEmail && uEmail !== 'mistrtaimoor@gmail.com') {
+                await authInstance.deleteUser(userRecord.uid).catch(() => {});
+              }
+            }
+          }
+        }
+      }
+    } catch (authErr) {
+      console.warn('Firebase Auth users purge notice:', authErr.message);
+    }
+
+    // 4. Clean registry files to contain strictly mistrtaimoor@gmail.com
     try {
       const regFile = path.resolve(process.cwd(), '.registered_users.json');
       fs.writeFileSync(regFile, JSON.stringify(['mistrtaimoor@gmail.com'], null, 2), 'utf-8');
@@ -536,10 +624,47 @@ router.post('/purge-users', verifyAdmin, async (req, res) => {
       fs.writeFileSync(verFile, JSON.stringify(['mistrtaimoor@gmail.com'], null, 2), 'utf-8');
     } catch (e) {}
 
+    // 5. Update .mock_firestore_cache.json if exists
+    try {
+      const cachePath = path.resolve(process.cwd(), '.mock_firestore_cache.json');
+      if (fs.existsSync(cachePath)) {
+        const raw = fs.readFileSync(cachePath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        const cleaned = {};
+        for (const [k, v] of Object.entries(parsed)) {
+          if (k.startsWith('systemSettings/')) {
+            cleaned[k] = v;
+          } else if (k === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' || v?.email === 'mistrtaimoor@gmail.com') {
+            cleaned[k] = {
+              ...v,
+              uid: 'RNva69V1XoMwaxGgVaKtJ4jXfYY2',
+              email: 'mistrtaimoor@gmail.com',
+              name: 'Taimoor',
+              displayName: 'Taimoor',
+              walletBalance: 0,
+              currentPackage: 'None',
+              lifetimeAds: 0,
+              dailyAdCount: 0,
+              teamAdsCount: 0,
+              referralCount: 0,
+              totalEarned: 0,
+              isEligible: false,
+              isBlocked: false,
+              isAdmin: true,
+              minedTflx: 0,
+              lastAdWatchDate: null,
+              updatedAt: new Date().toISOString(),
+            };
+          }
+        }
+        fs.writeFileSync(cachePath, JSON.stringify(cleaned, null, 2), 'utf-8');
+      }
+    } catch (e) {}
+
     return res.json({
       success: true,
       deletedCount,
-      message: `System successfully reset! All users removed except mistrtaimoor@gmail.com. Deposits, Total Earned, Liability, and DAU reset to 0.`,
+      message: `System successfully reset! All non-admin accounts removed. Deposits ($0.00), Total Earned ($0.00), Liability ($0.00), and DAU (0) reset to zero. Fresh start ready!`,
     });
   } catch (error) {
     console.error('Error in POST /api/admin/purge-users:', error);
@@ -549,7 +674,10 @@ router.post('/purge-users', verifyAdmin, async (req, res) => {
       message: error.message,
     });
   }
-});
+};
+
+router.post('/purge-users', verifyAdmin, handlePlatformPurgeAndReset);
+router.post('/reset-platform', verifyAdmin, handlePlatformPurgeAndReset);
 
 /**
  * d) GET /api/admin/users/:uid

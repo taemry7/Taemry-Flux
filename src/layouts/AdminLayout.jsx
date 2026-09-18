@@ -203,6 +203,11 @@ export default function AdminLayout({ onNavigate }) {
     if (isAdmin) {
       fetchStats();
     }
+    const handleGlobalRefresh = () => {
+      fetchStats();
+    };
+    window.addEventListener('taemry_admin_stats_refresh', handleGlobalRefresh);
+    return () => window.removeEventListener('taemry_admin_stats_refresh', handleGlobalRefresh);
   }, [isAdmin, activeTab]);
 
   // 1. Loading state: Avoid brief flashes while Firebase credentials verify

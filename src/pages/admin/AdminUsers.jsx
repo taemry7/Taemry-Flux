@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
-import { collection, getDocs, doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -229,17 +229,83 @@ export default function AdminUsers() {
 
   // Purge all fake / test accounts keeping only mistrtaimoor@gmail.com
   const handlePurgeAllExceptAdmin = async () => {
-    if (!window.confirm('CRITICAL ACTION: This will purge and delete ALL test/fake/bot user accounts, leaving ONLY mistrtaimoor@gmail.com preserved with 0 balance for the fresh live launch. Continue?')) {
+    if (!window.confirm('CRITICAL ACTION: This will purge and delete ALL non-admin user accounts, leaving ONLY mistrtaimoor@gmail.com preserved with 0 balance for the fresh start. Deposits, total earned, liabilities, and DAU will be reset to 0. Other users can then sign up fresh. Continue?')) {
       return;
     }
 
     setActionLoading(true);
     try {
+      // 1. Client-side Firestore purge if configured
+      if (isFirebaseConfigured && db) {
+        try {
+          const [uSnap, dSnap, wSnap, mSnap] = await Promise.all([
+            getDocs(collection(db, 'users')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'deposits')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'withdrawals')).catch(() => ({ docs: [] })),
+            getDocs(collection(db, 'cloudMiner')).catch(() => ({ docs: [] })),
+          ]);
+
+          // Clear non-admin users
+          for (const d of uSnap.docs || []) {
+            const uData = d.data() || {};
+            const email = (uData.email || '').toLowerCase().trim();
+            if (email !== 'mistrtaimoor@gmail.com' && d.id !== 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') {
+              await deleteDoc(d.ref).catch(() => {});
+            } else {
+              // Reset super admin document to zero state
+              await setDoc(doc(db, 'users', d.id), {
+                ...uData,
+                uid: d.id,
+                email: 'mistrtaimoor@gmail.com',
+                name: uData.name || uData.displayName || 'Taimoor',
+                displayName: uData.displayName || uData.name || 'Taimoor',
+                walletBalance: 0,
+                currentPackage: 'None',
+                lifetimeAds: 0,
+                dailyAdCount: 0,
+                teamAdsCount: 0,
+                referralCount: 0,
+                totalEarned: 0,
+                isEligible: false,
+                isBlocked: false,
+                isAdmin: true,
+                minedTflx: 0,
+                lastAdWatchDate: null,
+                updatedAt: new Date().toISOString(),
+              }, { merge: true }).catch(() => {});
+            }
+          }
+
+          // Clear financial and miner collections
+          for (const d of (dSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+          for (const d of (wSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+          for (const d of (mSnap.docs || [])) {
+            await deleteDoc(d.ref).catch(() => {});
+          }
+        } catch (fsErr) {
+          console.warn('Client Firestore purge notice:', fsErr.message);
+        }
+      }
+
+      // 2. Call backend reset endpoint
       const res = await apiClient.post('/admin/purge-users');
+      
+      // 3. Clear cached admin stats
+      try {
+        localStorage.removeItem('taemry_cached_admin_stats');
+      } catch (e) {}
+
+      // 4. Dispatch global event to update AdminLayout & dashboard
+      window.dispatchEvent(new Event('taemry_admin_stats_refresh'));
+
       if (res.data?.success) {
         setFeedback({
           type: 'success',
-          message: res.data.message || 'System cleaned! Only mistrtaimoor@gmail.com preserved.',
+          message: res.data.message || 'System cleaned! Only mistrtaimoor@gmail.com preserved with 0 balance. Fresh start ready!',
         });
         await fetchUsers(1, '');
       }
