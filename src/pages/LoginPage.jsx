@@ -328,6 +328,20 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       setError('Please enter a valid email address.');
       return;
     }
+
+    // Check for throwaway / disposable emails
+    const emailDomain = (cleanEmail.split('@')[1] || '').toLowerCase();
+    const bannedTempDomains = [
+      'mailinator.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 
+      'yopmail.com', 'trashmail.com', 'dispostable.com', 'sharklasers.com', 
+      'getnada.com', 'burnermail.io', 'fakeinbox.com', 'inboxkitten.com',
+      'throwawaymail.com', 'temp-mail.org', 'dropmail.me'
+    ];
+    if (bannedTempDomains.includes(emailDomain)) {
+      setError('Disposable and temporary email addresses are prohibited. Please use a verified email address (Gmail, Yahoo, Outlook, etc.).');
+      return;
+    }
+
     if (!cleanPassword || cleanPassword.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
@@ -765,6 +779,16 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
               {/* Sign Up Form */}
               <form id="auth-signup-form" onSubmit={handleSignUp} className="space-y-4">
+                {/* Honeypot Bot Trap: Hidden to humans, filled by automated bot crawlers */}
+                <input
+                  type="text"
+                  name="hp_bot_trap"
+                  className="hidden"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                />
+
                 {/* 1. Full Name */}
                 <div>
                   <label

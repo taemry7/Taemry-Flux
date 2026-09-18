@@ -9,6 +9,7 @@ import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 import { getSystemSettings } from './settings.js';
+import { adBotGuard } from '../middleware/antiBot.js';
 
 const router = express.Router();
 
@@ -170,9 +171,9 @@ router.get('/listing', verifyToken, async (req, res) => {
 
 /**
  * POST /api/ads/watch
- * Protected: Processes single ad watch reward with server-side validation.
+ * Protected: Processes single ad watch reward with server-side validation & anti-bot velocity protection.
  */
-router.post('/watch', verifyToken, async (req, res) => {
+router.post('/watch', verifyToken, adBotGuard, async (req, res) => {
   try {
     const { adId = 'sample' } = req.body || {};
     const uid = req.user.uid;

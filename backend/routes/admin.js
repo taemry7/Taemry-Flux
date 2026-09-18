@@ -392,6 +392,166 @@ router.put('/users/:uid/block', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * c1) DELETE /api/admin/users/:uid
+ * Permanently deletes a single user from Firestore, memory, and registry.
+ * Protected: Super Admin (mistrtaimoor@gmail.com) can never be deleted.
+ */
+router.delete('/users/:uid', verifyAdmin, async (req, res) => {
+  try {
+    const { uid } = req.params;
+    const db = getDb();
+    const userRef = db.collection('users').doc(uid);
+    const doc = await userRef.get();
+
+    const userData = doc.exists ? doc.data() : null;
+    const userEmail = (userData?.email || '').toLowerCase().trim();
+
+    if (userEmail === 'mistrtaimoor@gmail.com' || uid === 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') {
+      return res.status(403).json({
+        success: false,
+        message: 'Super Admin account (mistrtaimoor@gmail.com) is permanently protected and cannot be deleted.',
+      });
+    }
+
+    // 1. Delete from database
+    await userRef.delete().catch(() => {});
+    if (db && db.data && typeof db.data.delete === 'function') {
+      db.data.delete(`users/${uid}`);
+      if (typeof db._persist === 'function') db._persist();
+    }
+
+    // 2. Remove from persistent files
+    try {
+      const regFile = path.resolve(process.cwd(), '.registered_users.json');
+      if (fs.existsSync(regFile) && userEmail) {
+        const list = JSON.parse(fs.readFileSync(regFile, 'utf-8'));
+        const updated = list.filter((e) => (e || '').toLowerCase().trim() !== userEmail);
+        fs.writeFileSync(regFile, JSON.stringify(updated, null, 2), 'utf-8');
+      }
+      const verFile = path.resolve(process.cwd(), '.verified_users.json');
+      if (fs.existsSync(verFile) && userEmail) {
+        const list = JSON.parse(fs.readFileSync(verFile, 'utf-8'));
+        const updated = list.filter((e) => (e || '').toLowerCase().trim() !== userEmail);
+        fs.writeFileSync(verFile, JSON.stringify(updated, null, 2), 'utf-8');
+      }
+    } catch (e) {}
+
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'delete_user',
+      targetUid: uid,
+      targetEmail: userEmail || 'N/A',
+      details: `User ${userEmail || uid} was permanently deleted by admin.`,
+      amountUSD: null,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `User ${userEmail || uid} has been permanently deleted.`,
+    });
+  } catch (error) {
+    console.error('Error in DELETE /api/admin/users/:uid:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to delete user',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * c2) POST /api/admin/purge-users
+ * Deletes all non-admin users, keeping ONLY mistrtaimoor@gmail.com,
+ * and resets all deposits, withdrawals, transactions, earned stats, and platform liabilities to 0.
+ */
+router.post('/purge-users', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    let deletedCount = 0;
+
+    if (db && db.data && typeof db.data.delete === 'function') {
+      const keysToDelete = [];
+      for (const [key, val] of db.data.entries()) {
+        // Delete all deposits, withdrawals, transactions, logs, miner sessions
+        if (
+          key.startsWith('deposits/') ||
+          key.startsWith('withdrawals/') ||
+          key.startsWith('transactions/') ||
+          key.startsWith('cloudMiner/') ||
+          key.startsWith('supportTickets/') ||
+          key.startsWith('auditLogs/')
+        ) {
+          keysToDelete.push(key);
+        }
+
+        // Delete all users except mistrtaimoor@gmail.com / Super Admin
+        if (
+          key.startsWith('users/') &&
+          key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' &&
+          val?.email?.toLowerCase() !== 'mistrtaimoor@gmail.com'
+        ) {
+          keysToDelete.push(key);
+        }
+      }
+      keysToDelete.forEach((k) => {
+        db.data.delete(k);
+        if (k.startsWith('users/')) deletedCount++;
+      });
+
+      // Reset mistrtaimoor to clean state (0 balance, 0 earned, 0 ads, 0 liability)
+      for (const [key, val] of db.data.entries()) {
+        if (key.startsWith('users/') && (val?.email === 'mistrtaimoor@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')) {
+          db.data.set(key, {
+            ...val,
+            uid: 'RNva69V1XoMwaxGgVaKtJ4jXfYY2',
+            email: 'mistrtaimoor@gmail.com',
+            name: 'Taimoor',
+            displayName: 'Taimoor',
+            walletBalance: 0,
+            currentPackage: 'None',
+            lifetimeAds: 0,
+            dailyAdCount: 0,
+            teamAdsCount: 0,
+            referralCount: 0,
+            totalEarned: 0,
+            isEligible: false,
+            isBlocked: false,
+            isAdmin: true,
+            minedTflx: 0,
+            lastAdWatchDate: null,
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      }
+
+      if (typeof db._persist === 'function') db._persist();
+    }
+
+    // Clean registry files to contain only mistrtaimoor@gmail.com
+    try {
+      const regFile = path.resolve(process.cwd(), '.registered_users.json');
+      fs.writeFileSync(regFile, JSON.stringify(['mistrtaimoor@gmail.com'], null, 2), 'utf-8');
+      const verFile = path.resolve(process.cwd(), '.verified_users.json');
+      fs.writeFileSync(verFile, JSON.stringify(['mistrtaimoor@gmail.com'], null, 2), 'utf-8');
+    } catch (e) {}
+
+    return res.json({
+      success: true,
+      deletedCount,
+      message: `System successfully reset! All users removed except mistrtaimoor@gmail.com. Deposits, Total Earned, Liability, and DAU reset to 0.`,
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/purge-users:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to purge users and reset stats',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * d) GET /api/admin/users/:uid
  * Returns comprehensive profile, Level 1 downline network, and transaction audit ledger.
  */

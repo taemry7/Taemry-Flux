@@ -31,7 +31,8 @@ import {
   Clock,
   Package,
   Award,
-  Check
+  Check,
+  Trash2
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
@@ -184,6 +185,68 @@ export default function AdminUsers() {
       setFeedback({
         type: 'error',
         message: err.response?.data?.message || 'Failed to update user block status.',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Delete individual user permanently
+  const handleDeleteUser = async (user) => {
+    const userEmail = (user?.email || '').toLowerCase().trim();
+    if (userEmail === 'mistrtaimoor@gmail.com' || user.uid === 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') {
+      alert('Super Admin account (mistrtaimoor@gmail.com) is permanently protected and cannot be deleted.');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to permanently DELETE user: ${user.email || user.uid}? This action cannot be undone.`)) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await apiClient.delete(`/admin/users/${user.uid}`);
+      if (res.data?.success) {
+        setFeedback({
+          type: 'success',
+          message: res.data.message || `User deleted successfully.`,
+        });
+        setUsers((prev) => prev.filter((u) => u.uid !== user.uid));
+        setTotalUsers((prev) => Math.max(0, prev - 1));
+        if (selectedUid === user.uid) {
+          setSelectedUid(null);
+        }
+      }
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to delete user.',
+      });
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // Purge all fake / test accounts keeping only mistrtaimoor@gmail.com
+  const handlePurgeAllExceptAdmin = async () => {
+    if (!window.confirm('CRITICAL ACTION: This will purge and delete ALL test/fake/bot user accounts, leaving ONLY mistrtaimoor@gmail.com preserved with 0 balance for the fresh live launch. Continue?')) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await apiClient.post('/admin/purge-users');
+      if (res.data?.success) {
+        setFeedback({
+          type: 'success',
+          message: res.data.message || 'System cleaned! Only mistrtaimoor@gmail.com preserved.',
+        });
+        await fetchUsers(1, '');
+      }
+    } catch (err) {
+      setFeedback({
+        type: 'error',
+        message: err.response?.data?.message || 'Failed to purge users.',
       });
     } finally {
       setActionLoading(false);
@@ -550,38 +613,63 @@ export default function AdminUsers() {
           </p>
         </div>
 
-        {/* Search Bar */}
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-72">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search email, name or UID..."
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 transition-colors"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
-          >
-            Search
-          </button>
-          {search && (
+        {/* Search & Actions Bar */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <form onSubmit={handleSearchSubmit} className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="relative flex-1 sm:w-64">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search email, name or UID..."
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder:text-slate-500 focus:outline-none focus:border-sky-500 transition-colors"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-xl transition-colors cursor-pointer"
+            >
+              Search
+            </button>
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  fetchUsers(1, '');
+                }}
+                className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              >
+                Clear
+              </button>
+            )}
+          </form>
+
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                setSearch('');
-                fetchUsers(1, '');
-              }}
-              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer"
+              onClick={() => fetchUsers(currentPage, search)}
+              disabled={loading}
+              className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors cursor-pointer flex items-center gap-1.5"
+              title="Refresh Users List"
             >
-              Clear
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
             </button>
-          )}
-        </form>
+            <button
+              type="button"
+              onClick={handlePurgeAllExceptAdmin}
+              disabled={actionLoading}
+              className="px-3 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
+              title="Purge all fake, bot, and test accounts"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+              <span>Purge Fake Accounts</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -671,12 +759,22 @@ export default function AdminUsers() {
                             className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                               isBlocked
                                 ? 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400'
-                                : 'bg-rose-500/10 hover:bg-rose-500/20 text-rose-400'
+                                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400'
                             }`}
                             title={isBlocked ? 'Unblock Account' : 'Block Account'}
                           >
                             {isBlocked ? <UserCheck className="w-4 h-4" /> : <UserX className="w-4 h-4" />}
                           </button>
+                          {(u.email?.toLowerCase() !== 'mistrtaimoor@gmail.com' && u.uid !== 'RNva69V1XoMwaxGgVaKtJ4jXfYY2') && (
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              disabled={actionLoading}
+                              className="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 hover:text-rose-300 transition-colors cursor-pointer"
+                              title="Delete User Permanently"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -732,12 +830,25 @@ export default function AdminUsers() {
                   <p className="text-xs text-slate-400">{userDetails?.user?.email} &bull; UID: {selectedUid}</p>
                 </div>
               </div>
-              <button
-                onClick={() => setSelectedUid(null)}
-                className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex items-center gap-2">
+                {userDetails?.user?.email?.toLowerCase() !== 'mistrtaimoor@gmail.com' && (
+                  <button
+                    onClick={() => handleDeleteUser(userDetails.user)}
+                    disabled={actionLoading}
+                    className="px-3 py-1.5 rounded-xl bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+                    title="Permanently delete this user"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Delete User</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setSelectedUid(null)}
+                  className="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Modal Body (Scrollable) */}

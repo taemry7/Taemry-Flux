@@ -19,68 +19,55 @@ import authRoutes from './backend/routes/auth.js';
 import minerRoutes from './backend/routes/miner.js';
 import { initFirebaseAdmin, getDb } from './backend/firebaseAdmin.js';
 import { sendAdminErrorAlert } from './backend/utils/email.js';
+import { antiBotGuard } from './backend/middleware/antiBot.js';
 
 async function startServer() {
   // Initialize Firebase Admin SDK (lazy fallback if keys not in env)
   initFirebaseAdmin();
 
-  // Auto-purge pre-seeded test accounts, dummy deposits, and dummy withdrawals on boot
+  // Auto-purge pre-seeded test accounts, bots, and dummy ledgers on boot
+  // Preserving ONLY mistrtaimoor@gmail.com with clean 0 balance
   try {
     const db = getDb() as any;
     if (db && db.data && typeof db.data.delete === 'function') {
       const keysToDelete: string[] = [];
-      for (const [key] of db.data.entries()) {
+      for (const [key, val] of db.data.entries()) {
         if (
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
           key.startsWith('auditLogs/') ||
           key.startsWith('supportTickets/') ||
           key.startsWith('transactions/') ||
-          (key.startsWith('users/') && key !== 'users/admin_taemry' && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (
-            key.includes('user_tariq') ||
-            key.includes('user_sara') ||
-            key.includes('user_bilal') ||
-            key.includes('user_hamza') ||
-            key.includes('demo-user-1') ||
-            key.includes('demo-') ||
-            key.includes('transactions/')
-          ))
+          key.startsWith('cloudMiner/') ||
+          (key.startsWith('users/') && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && val?.email !== 'mistrtaimoor@gmail.com')
         ) {
           keysToDelete.push(key);
         }
       }
       keysToDelete.forEach((k) => db.data.delete(k));
 
-      // Reset admin_taemry to 0 balance & clean state
-      const adminDoc = db.data.get('users/admin_taemry');
-      if (adminDoc) {
-        db.data.set('users/admin_taemry', {
-          ...adminDoc,
-          walletBalance: 0,
-          currentPackage: 'None',
-          lifetimeAds: 0,
-          dailyAdCount: 0,
-          teamAdsCount: 0,
-          referralCount: 0,
-          totalEarned: 0,
-          isEligible: false,
-        });
-      }
-
-      // Reset any real user to 0 balance & clean state if newly created
-      const realUserDoc = db.data.get('users/RNva69V1XoMwaxGgVaKtJ4jXfYY2');
-      if (realUserDoc && (realUserDoc.currentPackage === 'None' || !realUserDoc.currentPackage)) {
-        db.data.set('users/RNva69V1XoMwaxGgVaKtJ4jXfYY2', {
-          ...realUserDoc,
-          walletBalance: 0,
-          currentPackage: 'None',
-          lifetimeAds: 0,
-          dailyAdCount: 0,
-          teamAdsCount: 0,
-          referralCount: 0,
-          totalEarned: 0,
-          isEligible: false,
-        });
+      // Reset mistrtaimoor@gmail.com to 0 balance & pristine clean live state
+      for (const [key, val] of db.data.entries()) {
+        if (key.startsWith('users/') && (val?.email === 'mistrtaimoor@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')) {
+          db.data.set(key, {
+            ...val,
+            uid: 'RNva69V1XoMwaxGgVaKtJ4jXfYY2',
+            email: 'mistrtaimoor@gmail.com',
+            name: 'Taimoor',
+            displayName: 'Taimoor',
+            walletBalance: 0,
+            currentPackage: 'None',
+            lifetimeAds: 0,
+            dailyAdCount: 0,
+            teamAdsCount: 0,
+            referralCount: 0,
+            totalEarned: 0,
+            isEligible: false,
+            isBlocked: false,
+            isAdmin: true,
+            updatedAt: new Date().toISOString(),
+          });
+        }
       }
 
       if (typeof db._persist === 'function') {
@@ -117,6 +104,9 @@ async function startServer() {
       timestamp: new Date().toISOString(),
     });
   });
+
+  // Anti-Bot & Anti-Fake Security Middleware on all /api routes
+  app.use('/api', antiBotGuard);
 
   // Mount Backend API Routes
   app.use('/api/user', userRoutes);
