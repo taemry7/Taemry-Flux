@@ -374,7 +374,7 @@ export const AuthProvider = ({ children }) => {
     } catch {}
 
     if (registeredUsers.includes(cleanEmail) || registeredAccounts[cleanEmail]) {
-      const msg = 'Account already exists! An account with this email address already exists. Please sign in instead.';
+      const msg = 'Account already exists! An account with this email address already exists. Please Sign In instead.';
       setAuthError(msg);
       throw new Error(msg);
     }
@@ -496,7 +496,7 @@ export const AuthProvider = ({ children }) => {
       console.error('Firebase signup error:', err);
       let friendlyError = err.message || 'Failed to sign up';
       if (err.code === 'auth/email-already-in-use') {
-        friendlyError = 'Account already exists! An account with this email address already exists. Please sign in instead.';
+        friendlyError = 'Account already exists! An account with this email address already exists. Please Sign In instead.';
       } else if (err.code === 'auth/operation-not-allowed') {
         friendlyError = 'Firebase Error: Email/Password sign-in is disabled in your Firebase Console. Please enable Email/Password provider in Firebase Authentication -> Sign-in method.';
       } else if (err.code === 'auth/unauthorized-domain') {
@@ -541,7 +541,7 @@ export const AuthProvider = ({ children }) => {
         const isEmailRegistered = registeredUsers.includes(cleanEmail) || Boolean(userRecord);
 
         if (!isEmailRegistered) {
-          const notFoundError = new Error('No account found with this email. Please sign up to create your account first.');
+          const notFoundError = new Error('No account found with this email. Please check your email or Sign Up to create an account.');
           notFoundError.code = 'auth/user-not-found';
           setAuthError(notFoundError.message);
           throw notFoundError;
@@ -576,7 +576,7 @@ export const AuthProvider = ({ children }) => {
         err.code === 'auth/user-not-found' ||
         err.message?.includes('user-not-found')
       ) {
-        friendlyError = 'No account found with this email. Please sign up to create your account first.';
+        friendlyError = 'No account found with this email. Please check your email or Sign Up to create an account.';
       } else if (
         err.code === 'auth/invalid-credential' ||
         err.code === 'auth/invalid-login-credentials' ||
@@ -614,9 +614,9 @@ export const AuthProvider = ({ children }) => {
         }
 
         if (!isRegistered) {
-          friendlyError = 'No account found with this email. Please sign up to create your account first.';
+          friendlyError = 'No account found with this email. Please check your email or Sign Up to create an account.';
         } else {
-          friendlyError = 'Incorrect password. If you forgot your password, please click "Forgot password?" to reset it.';
+          friendlyError = 'Incorrect password. Please verify your password and try again.';
         }
       } else if (err.code === 'auth/too-many-requests') {
         friendlyError = 'Too many failed sign in attempts. Please try again later or reset your password.';

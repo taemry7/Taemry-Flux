@@ -344,12 +344,53 @@ aside {
 }
 
 /* Fluid Splash Button Animations */
-button,
-[role="button"],
+button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
+[role="button"]:not(#btn-toggle-password):not(#btn-toggle-signup-password),
 .btn-splash,
 .btn-fluid-splash {
   position: relative;
   overflow: hidden;
+}
+
+/* Password Visibility Toggle Eye Icon Inside Input */
+#btn-toggle-password,
+#btn-toggle-signup-password {
+  position: absolute !important;
+  right: 0.875rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  z-index: 20 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  padding: 0.25rem !important;
+  cursor: pointer !important;
+  color: #788e93;
+}
+
+.dark #btn-toggle-password,
+.dark #btn-toggle-signup-password {
+  color: #64748b;
+}
+
+#btn-toggle-password:hover,
+#btn-toggle-signup-password:hover {
+  color: #09353e !important;
+}
+
+.dark #btn-toggle-password:hover,
+.dark #btn-toggle-signup-password:hover {
+  color: #ffffff !important;
+}
+
+#btn-toggle-password svg,
+#btn-toggle-signup-password svg {
+  width: 1.125rem !important;
+  height: 1.125rem !important;
+  display: block !important;
+  pointer-events: none !important;
 }
 
 .fluid-splash-wave {

@@ -225,30 +225,81 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         });
       } catch (e) {}
 
-      // Dispatch OTP verification code for login verification
+      // Clear legacy OTP flags completely per user directive
       try {
-        await apiClient.post('/auth/send-otp', {
-          email: cleanEmail,
-          isResend: false,
-        });
-      } catch (otpErr) {
-        console.warn('OTP dispatch notice:', otpErr?.message);
-      }
-
-      // Set mandatory verification lock
-      try {
-        sessionStorage.setItem('taemry_pending_otp_email', cleanEmail);
-        sessionStorage.setItem('taemry_otp_required', 'true');
-        sessionStorage.setItem('taemry_waiting_verification', 'true');
-        localStorage.setItem(`taemry_otp_verified_${cleanEmail}`, 'false');
+        sessionStorage.removeItem('taemry_pending_otp_email');
+        sessionStorage.removeItem('taemry_otp_required');
+        sessionStorage.removeItem('taemry_waiting_verification');
+        localStorage.removeItem(`taemry_otp_verified_${cleanEmail}`);
       } catch {}
 
-      // Navigate immediately to the permanent OTP verification page
-      onNavigate('verify-otp');
+      // If user had clicked to buy a package previously, route to buy-package
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
+
+      // Navigate directly to the "Put your wallet in motion" page
+      onNavigate('home');
     } catch (err) {
       clearTimeout(loadingTimer);
       setLoading(false);
-      setError(err?.message || 'Incorrect email or password. Please verify your credentials and try again.');
+
+      const errMsg = err?.message || '';
+      const lowerMsg = errMsg.toLowerCase();
+
+      if (
+        err?.code === 'auth/user-not-found' ||
+        lowerMsg.includes('user-not-found') ||
+        lowerMsg.includes('no account found') ||
+        lowerMsg.includes('user not found')
+      ) {
+        setError('No account found with this email. Please check your email or Sign Up to create an account.');
+      } else if (
+        err?.code === 'auth/wrong-password' ||
+        lowerMsg.includes('wrong-password') ||
+        lowerMsg.includes('incorrect password') ||
+        lowerMsg.includes('wrong password')
+      ) {
+        setError('Incorrect password. Please verify your password and try again.');
+      } else if (
+        err?.code === 'auth/invalid-credential' ||
+        err?.code === 'auth/invalid-login-credentials' ||
+        lowerMsg.includes('invalid-credential') ||
+        lowerMsg.includes('invalid credential')
+      ) {
+        // Accurately verify if this email is registered in system
+        let emailExists = false;
+        try {
+          const checkRes = await apiClient.post('/auth/check-email', { email: cleanEmail });
+          if (checkRes.data?.exists) emailExists = true;
+        } catch {}
+
+        if (!emailExists) {
+          try {
+            const rawReg = localStorage.getItem('taemry_registered_emails');
+            const list = rawReg ? JSON.parse(rawReg) : [];
+            if (Array.isArray(list) && list.includes(cleanEmail)) emailExists = true;
+          } catch {}
+        }
+        if (!emailExists) {
+          try {
+            const rawAcc = localStorage.getItem('taemry_registered_accounts');
+            const accs = rawAcc ? JSON.parse(rawAcc) : {};
+            if (accs && accs[cleanEmail]) emailExists = true;
+          } catch {}
+        }
+
+        if (!emailExists) {
+          setError('No account found with this email. Please check your email or Sign Up to create an account.');
+        } else {
+          setError('Incorrect password. Please verify your password and try again.');
+        }
+      } else {
+        setError(errMsg || 'Incorrect email or password. Please verify your credentials and try again.');
+      }
     }
   };
 
@@ -289,21 +340,36 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }, 2000);
 
     try {
-      // 1. Record signup profile in backend
+      // 1. Verify if account already exists before creating
+      let emailAlreadyExists = false;
       try {
-        await apiClient.post('/auth/complete-otp-signup', {
-          email: cleanEmail,
-          fullName: cleanFullName,
-          name: cleanFullName,
-          username: cleanUsername,
-          password: cleanPassword,
-          referralCode: cleanReferral || null,
-        });
-      } catch (apiErr) {
-        console.warn('Backend signup notification notice:', apiErr?.message);
+        const checkRes = await apiClient.post('/auth/check-email', { email: cleanEmail });
+        if (checkRes.data?.exists) emailAlreadyExists = true;
+      } catch {}
+
+      if (!emailAlreadyExists) {
+        try {
+          const rawReg = localStorage.getItem('taemry_registered_emails');
+          const list = rawReg ? JSON.parse(rawReg) : [];
+          if (Array.isArray(list) && list.includes(cleanEmail)) emailAlreadyExists = true;
+        } catch {}
+      }
+      if (!emailAlreadyExists) {
+        try {
+          const rawAcc = localStorage.getItem('taemry_registered_accounts');
+          const accs = rawAcc ? JSON.parse(rawAcc) : {};
+          if (accs && accs[cleanEmail]) emailAlreadyExists = true;
+        } catch {}
       }
 
-      // Ensure user is recorded in backend persistent store
+      if (emailAlreadyExists) {
+        clearTimeout(loadingTimer);
+        setLoading(false);
+        setError('Account already exists! An account with this email address already exists. Please Sign In instead.');
+        return;
+      }
+
+      // Record in backend persistent store
       try {
         await apiClient.post('/auth/save-registered-user', {
           email: cleanEmail,
@@ -320,32 +386,37 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       try {
         localStorage.removeItem('referralCode');
         localStorage.removeItem('taemry_referral_sponsor');
+        // Clear all legacy OTP flags
+        sessionStorage.removeItem('taemry_pending_otp_email');
+        sessionStorage.removeItem('taemry_otp_required');
+        sessionStorage.removeItem('taemry_waiting_verification');
       } catch {}
 
-      // 3. Dispatch OTP verification code
+      // 3. User directive: "agar new user account create kary to create account ky bad welcome page laya karo OK..."
       try {
-        await apiClient.post('/auth/send-otp', {
-          email: cleanEmail,
-          isResend: false,
-        });
-      } catch (otpErr) {
-        console.warn('OTP dispatch notice:', otpErr?.message);
-      }
-
-      // Set mandatory verification lock
-      try {
-        sessionStorage.setItem('taemry_pending_otp_email', cleanEmail);
-        sessionStorage.setItem('taemry_otp_required', 'true');
-        sessionStorage.setItem('taemry_waiting_verification', 'true');
-        localStorage.setItem(`taemry_otp_verified_${cleanEmail}`, 'false');
+        sessionStorage.setItem('taemry_show_new_user_welcome', 'true');
+        localStorage.setItem('taemry_show_new_user_welcome', 'true');
+        window.dispatchEvent(new CustomEvent('taemry_trigger_welcome'));
       } catch {}
 
-      // Navigate immediately to the permanent OTP verification page
-      onNavigate('verify-otp');
+      // Navigate directly to home where the 3D Welcome Splash immediately appears
+      onNavigate('home');
     } catch (err) {
       clearTimeout(loadingTimer);
       setLoading(false);
-      setError(err?.message || 'Failed to create account. Please try again.');
+      const errMsg = err?.message || '';
+      const lowerMsg = errMsg.toLowerCase();
+
+      if (
+        err?.code === 'auth/email-already-in-use' ||
+        lowerMsg.includes('already-in-use') ||
+        lowerMsg.includes('already exists') ||
+        lowerMsg.includes('already in use')
+      ) {
+        setError('Account already exists! An account with this email address already exists. Please Sign In instead.');
+      } else {
+        setError(errMsg || 'Failed to create account. Please try again.');
+      }
     }
   };
 
@@ -611,7 +682,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       {forgotLoading ? 'Sending link...' : 'Forgot password?'}
                     </button>
                   </div>
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <input
                       id="input-password"
                       type={showPassword ? 'text' : 'password'}
@@ -622,16 +693,17 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                         if (error) setError('');
                       }}
                       placeholder="Enter your password"
-                      className="w-full pl-10 pr-10 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
+                      className="w-full pl-10 pr-11 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
                     />
-                    <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       id="btn-toggle-password"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#788e93] dark:text-[#64748b] hover:text-[#09353e] dark:hover:text-white cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="!absolute right-3 top-1/2 -translate-y-1/2 z-10 p-1 flex items-center justify-center text-[#788e93] dark:text-[#64748b] hover:text-[#09353e] dark:hover:text-white cursor-pointer focus:outline-none rounded-lg transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="w-4 h-4 shrink-0 block" /> : <Eye className="w-4 h-4 shrink-0 block" />}
                     </button>
                   </div>
                 </div>
@@ -774,7 +846,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                   >
                     Password (min 6 characters) <span className="text-red-500">*</span>
                   </label>
-                  <div className="relative">
+                  <div className="relative flex items-center">
                     <input
                       id="input-signup-password"
                       type={showPassword ? 'text' : 'password'}
@@ -785,16 +857,17 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                         if (error) setError('');
                       }}
                       placeholder="Create your password"
-                      className="w-full pl-10 pr-10 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
+                      className="w-full pl-10 pr-11 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
                     />
-                    <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
                     <button
                       type="button"
                       id="btn-toggle-signup-password"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#788e93] dark:text-[#64748b] hover:text-[#09353e] dark:hover:text-white cursor-pointer"
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      className="!absolute right-3 top-1/2 -translate-y-1/2 z-10 p-1 flex items-center justify-center text-[#788e93] dark:text-[#64748b] hover:text-[#09353e] dark:hover:text-white cursor-pointer focus:outline-none rounded-lg transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPassword ? <EyeOff className="w-4 h-4 shrink-0 block" /> : <Eye className="w-4 h-4 shrink-0 block" />}
                     </button>
                   </div>
                 </div>

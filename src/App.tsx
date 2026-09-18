@@ -274,7 +274,7 @@ function AppContent() {
             setActiveTab('overview');
           }
         } else if (effectiveRoute === 'verify-otp' || effectiveRoute.startsWith('verify-otp')) {
-          setCurrentPage('verify-otp');
+          setCurrentPage('home');
         } else if (effectiveRoute === 'home') {
           let hasPersistedUser = false;
           try {
@@ -286,15 +286,6 @@ function AppContent() {
             setActiveTab('signin');
             return;
           }
-          // Mandatory OTP check
-          try {
-            const isOtpRequired = sessionStorage.getItem('taemry_otp_required') === 'true';
-            const pendingEmail = sessionStorage.getItem('taemry_pending_otp_email');
-            if (isOtpRequired || (pendingEmail && localStorage.getItem('taemry_otp_verified_' + pendingEmail) === 'false')) {
-              setCurrentPage('verify-otp');
-              return;
-            }
-          } catch {}
           setCurrentPage('home');
         } else if (effectiveRoute === '') {
           setCurrentPage('login');
@@ -360,13 +351,27 @@ function AppContent() {
   // Track previous user reference to instantly detect logout
   const previousUserRef = useRef(currentUser);
 
+  // Listen to external triggers to open Welcome Onboarding modal (e.g. after signup)
+  useEffect(() => {
+    const handleWelcomeTrigger = () => {
+      setShowNewUserWelcome(true);
+    };
+    window.addEventListener('taemry_trigger_welcome', handleWelcomeTrigger);
+    return () => {
+      window.removeEventListener('taemry_trigger_welcome', handleWelcomeTrigger);
+    };
+  }, []);
+
   // If user signs in while on login page, smoothly transition to put your wallet in motion page (home)
   useEffect(() => {
     if (currentUser && currentPage === 'login') {
-      // If waiting for email verification, DO NOT redirect away from login page!
+      // Check if new user welcome modal is pending
       try {
-        if (sessionStorage.getItem('taemry_waiting_verification')) {
-          return;
+        if (
+          sessionStorage.getItem('taemry_show_new_user_welcome') === 'true' ||
+          localStorage.getItem('taemry_show_new_user_welcome') === 'true'
+        ) {
+          setShowNewUserWelcome(true);
         }
       } catch {}
 
@@ -388,19 +393,8 @@ function AppContent() {
     previousUserRef.current = currentUser;
   }, [currentUser]);
 
-  // Guard member pages if session is absent or OTP verification is required
+  // Guard member pages if session is absent
   useEffect(() => {
-    if (currentPage === 'home' || currentPage === 'dashboard' || currentPage === 'cloud-miner') {
-      try {
-        const isOtpRequired = sessionStorage.getItem('taemry_otp_required') === 'true';
-        const pendingEmail = sessionStorage.getItem('taemry_pending_otp_email') || currentUser?.email;
-        if (isOtpRequired || (pendingEmail && localStorage.getItem(`taemry_otp_verified_${pendingEmail}`) === 'false')) {
-          navigateTo('verify-otp');
-          return;
-        }
-      } catch {}
-    }
-
     if (!currentUser && (currentPage === 'home' || currentPage === 'dashboard')) {
       let hasPersistedUser = false;
       try {
