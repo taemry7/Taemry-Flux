@@ -18,6 +18,7 @@ import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
 import { TEAM_REWARDS, TEAM_MILESTONES } from '../milestoneLogic.js';
 import { DEFAULT_PACKAGES, normalizePackages } from './package.js';
 import { getPersistentRegisteredEmails } from './auth.js';
+import { upload, uploadScreenshotToStorage } from '../middleware/upload.js';
 
 const router = express.Router();
 
@@ -566,6 +567,72 @@ router.get('/deposits', verifyAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: 'Failed to fetch deposits',
+      message: error.message,
+    });
+  }
+});
+
+/**
+ * PUT /api/admin/deposits/:depositId/receipt
+ * Allows admin to upload or attach receipt/screenshot to a deposit record.
+ */
+router.put('/deposits/:depositId/receipt', verifyAdmin, (req, res, next) => {
+  upload.single('screenshot')(req, res, (err) => {
+    if (err) console.warn('Multer admin receipt warning:', err.message);
+    next();
+  });
+}, async (req, res) => {
+  try {
+    const { depositId } = req.params;
+    const db = getDb();
+    let screenshotURL = req.body?.screenshotURL || '';
+
+    if (req.file) {
+      try {
+        screenshotURL = await uploadScreenshotToStorage(req.file, 'admin');
+      } catch (e) {
+        console.warn('Admin upload error:', e.message);
+      }
+    }
+
+    if (!screenshotURL && req.body?.screenshot) {
+      screenshotURL = req.body.screenshot;
+    }
+
+    if (!screenshotURL) {
+      return res.status(400).json({ success: false, message: 'No receipt file or URL provided.' });
+    }
+
+    let depositRef = db.collection('deposits').doc(depositId);
+    let depositDoc = await depositRef.get();
+    if (!depositDoc.exists) {
+      const snap = await db.collection('deposits').get();
+      const match = snap.docs.find((d) => d.id === depositId || d.data().id === depositId || d.data().depositId === depositId);
+      if (match) {
+        depositRef = db.collection('deposits').doc(match.id);
+        depositDoc = match;
+      }
+    }
+
+    if (!depositDoc.exists) {
+      return res.status(404).json({ success: false, message: 'Deposit record not found.' });
+    }
+
+    await depositRef.update({
+      screenshotURL,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      screenshotURL,
+      message: 'Receipt updated successfully.',
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/admin/deposits/:depositId/receipt:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to update receipt',
       message: error.message,
     });
   }

@@ -226,8 +226,14 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
         formData.append('amountUSD', parsedAmount.toString());
         if (transactionId) formData.append('transactionId', transactionId);
         formData.append('screenshot', screenshotFile);
+        if (screenshotPreview) {
+          formData.append('screenshotURL', screenshotPreview);
+        }
 
         res = await apiClient.post('/deposits/request', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
           timeout: 60000,
         });
       } else {

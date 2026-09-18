@@ -28,6 +28,7 @@ const getTransporter = async () => {
         nodemailerLib = mod.default || mod;
       }
       transporter = nodemailerLib.createTransport({
+        service: 'gmail',
         host,
         port,
         secure: port === 465,
@@ -35,9 +36,15 @@ const getTransporter = async () => {
           user,
           pass,
         },
-        connectionTimeout: 15000,
-        greetingTimeout: 15000,
-        socketTimeout: 20000,
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        tls: {
+          rejectUnauthorized: false,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000,
       });
       console.log('[EmailService] SMTP transporter initialized successfully for:', user);
       return transporter;
@@ -426,19 +433,14 @@ support.taemryflux@gmail.com`;
       subject,
       text: textContent,
       html,
-      priority: 'high',
-      headers: {
-        'X-Priority': '1',
-        'Importance': 'high',
-        'X-Mailer': 'TAEMRY-FLUX-Auth',
-      },
     };
 
     let info = null;
     try {
       info = await client.sendMail(mailOptions);
     } catch (firstErr) {
-      console.warn(`[EmailService] First delivery attempt failed for ${userEmail}: ${firstErr.message}. Retrying once...`);
+      console.warn(`[EmailService] First delivery attempt failed for ${userEmail}: ${firstErr.message}. Retrying with fresh transporter...`);
+      transporter = null;
       const freshClient = await getTransporter();
       info = await freshClient.sendMail(mailOptions);
     }

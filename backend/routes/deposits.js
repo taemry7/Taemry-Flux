@@ -211,11 +211,16 @@ router.post(
         screenshotURL = await uploadScreenshotToStorage(req.file, uid);
       } catch (uploadErr) {
         console.error('Screenshot upload failure:', uploadErr);
-        return res.status(500).json({
-          error: 'Upload Failed',
-          message: 'Could not upload screenshot. Please verify image size (<5MB) and format.',
-        });
+        if (!screenshotURL && req.body?.screenshotURL) {
+          screenshotURL = req.body.screenshotURL;
+        }
       }
+    }
+    if (!screenshotURL && req.body?.screenshotURL) {
+      screenshotURL = req.body.screenshotURL;
+    }
+    if (!screenshotURL && req.body?.screenshot && typeof req.body.screenshot === 'string') {
+      screenshotURL = req.body.screenshot;
     }
 
     // 4. Calculate local currency conversion (PKR) for local methods

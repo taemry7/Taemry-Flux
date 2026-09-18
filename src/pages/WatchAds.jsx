@@ -15,10 +15,14 @@ import {
   Loader2,
   ChevronDown,
   ChevronUp,
+  ShieldCheck,
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
+import AdsterraAdModal from '../components/AdsterraAdModal';
+import AdsterraBanner from '../components/AdsterraBanner';
+import { getAdsterraConfig } from '../config/adsterraAds';
 
 const WATCH_ADS_PACKAGES = [
   {
@@ -149,33 +153,46 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [adsCatalog, setAdsCatalog] = useState([]);
   const [watchingAdNum, setWatchingAdNum] = useState(null);
 
-  // Curated sponsors rotating across 200 ads
-  const SPONSORS = [
-    { name: 'Solstice Cloud AI', category: 'Artificial Intelligence' },
-    { name: 'Aura Protocol', category: 'Web3 & Fintech' },
-    { name: 'Apex Vantage Hardware', category: 'Computing' },
-    { name: 'Zenith Global Liquidity', category: 'Finance' },
-    { name: 'Quantum Core Networks', category: 'Telecom' },
-    { name: 'Hyperion Energy Systems', category: 'Clean Tech' },
-    { name: 'CyberShield ZeroTrust', category: 'Cybersecurity' },
-    { name: 'Nexus Orbital Data', category: 'Space Tech' },
-  ];
+  // Adsterra Ad Player Modal State
+  const [activeModalAd, setActiveModalAd] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isClaiming, setIsClaiming] = useState(false);
 
-  // Generate 1 to N Ads based on dynamic limit & watched count
+  // Mount Adsterra Social Bar Script (Unit #1) on Watch Ads page
+  useEffect(() => {
+    const scriptId = 'adsterra-social-bar-unit1';
+    if (!document.getElementById(scriptId)) {
+      const script = document.createElement('script');
+      script.id = scriptId;
+      script.src = 'https://furydonkeypharmacy.com/50/ee/2b/50ee2b17435ac4365aaf09d8b78e37fc.js';
+      script.async = true;
+      document.body.appendChild(script);
+    }
+    return () => {
+      const existing = document.getElementById(scriptId);
+      if (existing) {
+        existing.remove();
+      }
+    };
+  }, []);
+
+  // Generate 1 to N Ads mapped cleanly to 10 verified Adsterra ad units (zero adult content)
   const generate200Ads = (watchedCount, rewardRate, limit = 200) => {
     const list = [];
     const totalCount = limit || 200;
     for (let i = 1; i <= totalCount; i++) {
-      const sp = SPONSORS[(i - 1) % SPONSORS.length];
+      const adConfig = getAdsterraConfig(i);
       const isCompleted = i <= watchedCount;
       const isAvailable = i === watchedCount + 1;
 
       list.push({
         adNumber: i,
         id: `ad_${i}`,
-        title: `${sp.name} #${i}`,
-        sponsor: sp.name,
-        category: sp.category,
+        title: `${adConfig.name} #${i}`,
+        sponsor: adConfig.name,
+        category: adConfig.category,
+        unitNumber: adConfig.unitNumber,
+        adConfig,
         reward: rewardRate,
         isWatched: isCompleted,
         isAvailable,
@@ -208,22 +225,40 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     fetchAdStatus();
   }, []);
 
-  // Handle clicking the watch button on an ad card
-  // User note: "agar monetag ya adsterra koi or ki bat karo to is watch button ko click karky wo ads hongy ye me bata donga OK apko"
-  const handleWatchAd = async (adNumber) => {
+  // Open Adsterra Ad Player modal to watch ad before reward claim
+  const handleOpenAdModal = (ad) => {
     const limit = adStatus.dailyLimit || 200;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
     }
+    if (!hasActivePkg || !adStatus.isEligible) {
+      setErrorMessage('Please activate an advertising package first to unlock watching ads.');
+      return;
+    }
+
+    setErrorMessage('');
+    setActiveModalAd(ad);
+    setIsModalOpen(true);
+  };
+
+  // Submit ad watch reward to server after user finishes watching Adsterra ad
+  const handleClaimReward = async (adNumber) => {
+    const limit = adStatus.dailyLimit || 200;
+    if (adStatus.dailyAdCount >= limit) {
+      setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
+      setIsModalOpen(false);
+      return;
+    }
 
     try {
+      setIsClaiming(true);
       setWatchingAdNum(adNumber);
       setErrorMessage('');
 
       // Submit ad watch reward to server
       const res = await apiClient.post('/ads/watch', {
-        adId: `ad_${adNumber}_${Date.now()}`,
+        adId: `adsterra_ad_${adNumber}_${Date.now()}`,
       });
 
       if (res.data?.success) {
@@ -231,6 +266,10 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         const newBalance = res.data.newBalance;
         const newLifetimeAds = res.data.lifetimeAds;
         const newDailyCount = res.data.dailyAdCount;
+
+        // Close ad modal
+        setIsModalOpen(false);
+        setActiveModalAd(null);
 
         // Show celebratory confirmation
         setRecentReward({
@@ -269,6 +308,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       const errorMsg = err.response?.data?.message || 'Failed to claim ad reward. Please try again.';
       setErrorMessage(errorMsg);
     } finally {
+      setIsClaiming(false);
       setWatchingAdNum(null);
     }
   };
@@ -346,17 +386,26 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
       {/* 200 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
-        <div className="flex items-center justify-between border-b border-[#f0ebe0] pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f0ebe0] pb-4 gap-2">
           <div className="flex items-center gap-2">
             <ListOrdered className="w-5 h-5 text-[#0c5963]" />
             <h2 className="text-lg sm:text-xl font-black text-[#09353e]">
               Daily Ad Directory (1 to 200)
             </h2>
           </div>
-          <div className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full border border-[#b8dfd7]">
-            {adStatus.dailyAdCount} / {adStatus.dailyLimit || 200} Completed
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] font-bold text-[#0c5963] bg-[#e6f4f1] px-2.5 py-1 rounded-full border border-[#b8dfd7] flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5" />
+              <span>Adsterra Verified Network</span>
+            </span>
+            <div className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full border border-[#b8dfd7]">
+              {adStatus.dailyAdCount} / {adStatus.dailyLimit || 200} Completed
+            </div>
           </div>
         </div>
+
+        {/* Live Adsterra In-Page Display Banner */}
+        <AdsterraBanner unitId={7} className="my-2" />
 
         {/* 200 Ads Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -417,7 +466,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                   <button
                     type="button"
                     disabled={isCompleted || isBusy || adStatus.dailyAdCount >= 200}
-                    onClick={() => handleWatchAd(ad.adNumber)}
+                    onClick={() => handleOpenAdModal(ad)}
                     className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       isCompleted
                         ? 'text-[#15803d] bg-[#dcfce7] cursor-default'
@@ -445,6 +494,20 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           })}
         </div>
       </div>
+
+      {/* ADSTERRA AD VIEWER & REWARD CLAIM MODAL */}
+      <AdsterraAdModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setActiveModalAd(null);
+        }}
+        ad={activeModalAd}
+        adConfig={activeModalAd?.adConfig || (activeModalAd ? getAdsterraConfig(activeModalAd.adNumber) : null)}
+        rewardAmount={adStatus.rewardPerAd || computedReward}
+        onClaimReward={handleClaimReward}
+        isClaiming={isClaiming}
+      />
     </div>
   );
 }

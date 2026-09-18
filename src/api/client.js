@@ -47,6 +47,14 @@ apiClient.interceptors.request.use(
       }
     }
 
+    // Allow browser to set boundary for multipart FormData
+    if (config.data instanceof FormData && config.headers) {
+      delete config.headers['Content-Type'];
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      }
+    }
+
     try {
       let token = null;
 

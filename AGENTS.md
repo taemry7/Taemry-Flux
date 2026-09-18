@@ -397,3 +397,25 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
     4. **Action Button** (`#btn-complete-onboarding`): "Complete & Enter TAEMRY FLUX" saving full name, username, and referral code, establishing the session and redirecting cleanly to the Homepage (`home`).
     5. **Back Button** (`#btn-back-to-welcome`): Returns to the welcome page if needed.
 
+## STRICT INVARIANT: Adsterra 1 to 10 Ads Integration & Zero Adult Content (PERMANENT & LOCKED)
+- **Watch Ads Button Flow (Watch Ad First -> Then Claim Reward)**:
+  - Per explicit user directive ("ye adsterra ny dya hai ye 1 to 10 ads hai isko aapny watch ads me mtlb jab button dabay ads deky osky bad rewards mely ga OK or ismy adult khatam adult ko mat add karo Ok"):
+  - When the user clicks the "Watch Now" button on any ad in `src/pages/WatchAds.jsx`, the system opens the interactive **Adsterra Ad Modal** (`src/components/AdsterraAdModal.jsx`).
+  - The modal dynamically renders the authenticated Adsterra ad inside a secure, sandboxed container and runs an active 6-second countdown timer.
+  - The "Claim Reward" button remains locked during the 6 seconds.
+  - Only after the 6-second ad viewing is completed does the button unlock: "Claim +$X USD Reward".
+  - Clicking claim credits the reward to the user's wallet balance, updates the daily progress (e.g. 0/200 -> 1/200), and shows the celebratory reward confirmation.
+- **10 Adsterra Ad Formats Supported**:
+  1. Social Bar / Push: `https://furydonkeypharmacy.com/50/ee/2b/50ee2b17435ac4365aaf09d8b78e37fc.js`
+  2. Native Recommendations: `container-5bf63e8d1e9ee1696072543170578631` / `invoke.js`
+  3. Interstitial Display: `https://furydonkeypharmacy.com/2b/a4/b6/2ba4b6afc951cd9b28a3e0adcf11169d.js`
+  4. Direct SmartLink: `https://furydonkeypharmacy.com/b29mwk6ib?key=03c488d12ea332855ab1f15328f24d96`
+  5. Vertical Display (160x300): Key `19c6652b849bbe396022bdb7f175d56f`
+  6. Skyscraper Tower (160x600): Key `fd27a1814835fbff89ee0cb42fbae781`
+  7. Leaderboard Banner (728x90): Key `1927eacd8c0e1749c32ce23c1fa6024a`
+  8. Mobile Compact (320x50): Key `cee7411858a8277e437923a67c7238b8`
+  9. Medium Rectangle (300x250): Key `348bec7e11d69dd8e00ad7abcfda220e`
+  10. Full Banner (468x60): Key `f8a64be7a0f9f117ae6527aef89422ce`
+- **Zero Adult Content Invariant**: All ad categories, tags, labels, and configurations strictly exclude 18+ and adult content. Only clean, verified commercial sponsor categories are permitted.
+
+

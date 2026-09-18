@@ -116,16 +116,18 @@ router.get('/listing', verifyToken, async (req, res) => {
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
     const rewardPerAd = +(packagePrice * rewardRate).toFixed(4);
 
-    // Sponsors rotation
+    // 10 Clean (Non-Adult) Adsterra Sponsors rotation per publisher specification
     const sponsorTemplates = [
-      { name: 'Solstice Cloud AI', category: 'Artificial Intelligence', tag: 'High Performance' },
-      { name: 'Aura Protocol', category: 'Web3 & Fintech', tag: 'Secure Settlement' },
-      { name: 'Apex Vantage Hardware', category: 'Computing', tag: 'Next-Gen Chips' },
-      { name: 'Zenith Global Liquidity', category: 'Institutional Finance', tag: 'Cross-Border' },
-      { name: 'Quantum Core Networks', category: 'Infrastructure', tag: 'Zero Latency' },
-      { name: 'Hyperion Energy Systems', category: 'Clean Tech', tag: 'Sustainable Grid' },
-      { name: 'CyberShield ZeroTrust', category: 'Cybersecurity', tag: 'Enterprise Grade' },
-      { name: 'Nexus Orbital Data', category: 'Telecom & Satellite', tag: 'Global Mesh' },
+      { name: 'Adsterra Social Push & Display', category: 'Cloud & Digital Services', tag: 'Adsterra Unit #1' },
+      { name: 'Adsterra Native Recommendation', category: 'Tech Innovations & AI', tag: 'Adsterra Unit #2' },
+      { name: 'Adsterra Interstitial & Display', category: 'Global Web Solutions', tag: 'Adsterra Unit #3' },
+      { name: 'Adsterra Verified SmartLink', category: 'Featured Sponsor Portal', tag: 'Adsterra Unit #4' },
+      { name: 'Adsterra Vertical Display (160x300)', category: 'Financial Analytics', tag: 'Adsterra Unit #5' },
+      { name: 'Adsterra Skyscraper Display (160x600)', category: 'Cybersecurity & Infrastructure', tag: 'Adsterra Unit #6' },
+      { name: 'Adsterra Leaderboard Display (728x90)', category: 'E-Commerce & Digital Marketplace', tag: 'Adsterra Unit #7' },
+      { name: 'Adsterra Mobile Compact (320x50)', category: 'Mobile Utilities & Apps', tag: 'Adsterra Unit #8' },
+      { name: 'Adsterra Medium Rectangle (300x250)', category: 'Decentralized Networks', tag: 'Adsterra Unit #9' },
+      { name: 'Adsterra Full Banner Display (468x60)', category: 'Smart Web Systems', tag: 'Adsterra Unit #10' },
     ];
 
     // Generate ads based on dynamic dailyLimit

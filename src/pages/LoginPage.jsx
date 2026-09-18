@@ -520,16 +520,16 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         {/* ========================================================================= */}
         {authStage === 'otp' && (
           <form id="auth-otp-form" onSubmit={(e) => handleVerifyOtp(otpCode, e)} className="space-y-4">
-            <div className="p-4 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-2">
+            <div className="p-4 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-2.5">
               <div className="w-10 h-10 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/15 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
                 <Mail className="w-5 h-5" />
               </div>
               <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] leading-relaxed">
-                We sent a 6-digit one-time code to <strong className="text-[#0c5963] dark:text-[#2dd4bf]">{email}</strong>.
+                We sent a 6-digit verification code to <strong className="text-[#0c5963] dark:text-[#2dd4bf]">{email}</strong>.
               </p>
-              <p className="text-[11px] text-[#71898e] dark:text-[#64748b]">
-                Check your <strong className="text-[#324f55] dark:text-slate-300">Inbox</strong> or <strong className="text-[#324f55] dark:text-slate-300">Spam / Junk</strong> folder.
-              </p>
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300 text-left">
+                <strong>Important:</strong> If the email doesn't appear in your Primary inbox within a few seconds, please check your <strong>Spam / Junk</strong> or <strong>Promotions</strong> folder.
+              </div>
             </div>
 
             <div>
