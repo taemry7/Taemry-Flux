@@ -76,7 +76,7 @@ export default function AdminCloudMiner() {
               isMiningActive: Boolean(data.isMiningActive),
               isSessionLive,
               minedTflx: +(Number(data.minedTflx) || 0).toFixed(2),
-              effectiveHashrate: Number(data.effectiveHashrate) || 16.0,
+              effectiveHashrate: Number(data.effectiveHashrate) || 8.0,
               sessionStartTime: startTime,
               sessionDurationMs: duration,
               timeLeftMs,
@@ -120,7 +120,7 @@ export default function AdminCloudMiner() {
         m.isSessionLive = isLive;
         if (isLive) {
           activeCount++;
-          totalHash += Number(m.effectiveHashrate) || 16.0;
+          totalHash += Number(m.effectiveHashrate) || 8.0;
         }
       });
 
@@ -328,7 +328,7 @@ export default function AdminCloudMiner() {
           </p>
           <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
             <Cpu className="w-3 h-3 text-amber-400" />
-            <span>Base rate: 16.0 TFLX/h per user</span>
+            <span>Base rate: 8.0 TFLX/h per user</span>
           </div>
         </div>
 

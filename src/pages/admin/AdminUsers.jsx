@@ -237,7 +237,7 @@ export default function AdminUsers() {
           isMiningActive: false,
           isSessionLive: false,
           minedTflx: 0,
-          effectiveHashrate: 16.0,
+          effectiveHashrate: 8.0,
           streakDays: 0,
           sessionStartTime: 0,
           sessionDurationMs: 12 * 60 * 60 * 1000,
@@ -245,7 +245,7 @@ export default function AdminUsers() {
       }
 
       setUserMiner(minerData);
-      setMinerHashrateInput(String(minerData.effectiveHashrate || 16.0));
+      setMinerHashrateInput(String(minerData.effectiveHashrate || 8.0));
     } catch (err) {
       setFeedback({
         type: 'error',
@@ -795,7 +795,7 @@ export default function AdminUsers() {
                       <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
                         <span className="text-[10px] uppercase font-bold text-slate-400 block">Hashrate</span>
                         <p className="text-base font-black text-white mt-1">
-                          +{userMiner?.effectiveHashrate || 16.0} <span className="text-[10px] text-amber-400">TFLX/h</span>
+                          +{userMiner?.effectiveHashrate || 8.0} <span className="text-[10px] text-amber-400">TFLX/h</span>
                         </p>
                       </div>
                       <div className="p-3 rounded-xl bg-slate-900 border border-slate-800">
@@ -870,7 +870,7 @@ export default function AdminUsers() {
                             step="0.5"
                             value={minerHashrateInput}
                             onChange={(e) => setMinerHashrateInput(e.target.value)}
-                            placeholder="e.g. 16.0"
+                            placeholder="e.g. 8.0"
                             className="w-full bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white font-mono"
                           />
                           <button

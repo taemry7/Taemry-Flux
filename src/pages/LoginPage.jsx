@@ -155,11 +155,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     setLoading(true);
     try {
       const cleanEmail = (email || '').toLowerCase().trim();
-      const res = await apiClient.post('/auth/send-otp', { email: cleanEmail });
+      const res = await apiClient.post('/auth/send-otp', { email: cleanEmail, isResend: true });
       if (res.data?.success) {
         setOtpCountdown(15);
-        setResendNotice('New verification code sent! Please check your inbox.');
-        setTimeout(() => setResendNotice(''), 4000);
+        setResendNotice('New verification code sent! Please check your inbox and spam folder.');
+        setTimeout(() => setResendNotice(''), 5000);
       } else {
         setError(res.data?.message || 'Failed to resend code.');
       }
@@ -480,6 +480,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                     type="email"
                     required
                     autoFocus
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    spellCheck="false"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="Enter your email address"
@@ -497,7 +500,10 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 className="w-full mt-2 py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
               >
                 {loading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Sending Verification Code...</span>
+                  </div>
                 ) : (
                   <>
                     <span>Continue with Email</span>
@@ -520,6 +526,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </div>
               <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] leading-relaxed">
                 We sent a 6-digit one-time code to <strong className="text-[#0c5963] dark:text-[#2dd4bf]">{email}</strong>.
+              </p>
+              <p className="text-[11px] text-[#71898e] dark:text-[#64748b]">
+                Check your <strong className="text-[#324f55] dark:text-slate-300">Inbox</strong> or <strong className="text-[#324f55] dark:text-slate-300">Spam / Junk</strong> folder.
               </p>
             </div>
 

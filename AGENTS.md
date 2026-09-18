@@ -65,7 +65,7 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 ## STRICT INVARIANT: Hero Section Dual-Mode Preview Card (PERMANENT)
 - **Dual-Mode Interactive Switcher**: Directly above the floating preview card, two high-contrast toggle pill buttons allow switching between:
   - **"Watch Ads"**: Featuring TV/Monitor icon, active emerald ping dot, emerald-teal click splash wave, Live Available Balance, Total Earned Yield, 0/200 ad rhythm progress bar, Reward Credited status, and "Go to My Dashboard" button.
-  - **"Cloud Miner"**: Featuring Pickaxe icon, active amber ping dot, vibrant amber-orange click splash wave, "TAEMRY / 12H MINER" header with pulsing status, "Mined Hash Yield" balance with USD • TFLX badge, 12h fiery gradient progress bar (amber to orange), "Mining Active" bottom banner with green ping dot, "+16 TFLX/h" base hashrate display, and "Go to Cloud Miner" button.
+  - **"Cloud Miner"**: Featuring Pickaxe icon, active amber ping dot, vibrant amber-orange click splash wave, "TAEMRY / 12H MINER" header with pulsing status, "Mined Hash Yield" balance with USD • TFLX badge, 12h fiery gradient progress bar (amber to orange), "Mining Active" bottom banner with green ping dot, "+8 TFLX/h" base hashrate display, and "Go to Cloud Miner" button.
 - Transitions between modes are animated using Motion `AnimatePresence` with smooth scale, opacity, and blur transitions.
 - **Separation of Menus & Normal Drawer Navigation (PERMANENT)**:
   - The menu navigation drawer toggle button (`#btn-nav-drawer`) in the top navbar is completely removed/hidden from the Home page (`currentPage === 'home'`).
@@ -364,17 +364,23 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - Preserves clean visual balance, high contrast, and responsive centering across all mobile and desktop screens.
   - DO NOT change this order or revert to horizontal alignment.
 
-## STRICT INVARIANT: Custom SMTP Fast OTP Delivery & Zero Autofill (PERMANENT & LOCKED)
+## STRICT INVARIANT: Custom SMTP Fast OTP Delivery & Global Gmail Deliverability (PERMANENT & LOCKED)
 - **Zero Autofill UI**:
   - No autofill buttons, hints, or shortcuts (`btn-autofill-otp` and `serverOtpHint` are permanently forbidden and removed). Users receive their authentic one-time code directly via custom SMTP in their Gmail inbox.
-- **Fast Non-Blocking Continue Button Dispatch**:
-  - `sendCustomOtpEmail` in `backend/utils/email.js` uses pooled SMTP connections (`pool: true, maxConnections: 3`), active connection timeouts (`5000ms`, `socketTimeout: 8000ms`), and a fast race timeout to guarantee the mobile user never gets stuck loading on the Continue button (`#btn-auth-submit`).
-  - Client-side `src/api/client.js` bypasses the 800ms `authStateReady` wait for `/auth/send-otp` and `/auth/verify-otp`, making Continue button execution near-instant.
-  - In `backend/routes/auth.js`, Firestore lookups are guarded by a 1200ms timeout race.
-- **Active Code Smooth Reuse (Zero 429 Lockouts)**:
-  - If a user requests a code again within 15s cooldown and already has an active valid OTP, the system smoothly reuses the active OTP and returns `success: true` to advance the user directly to the OTP screen instead of blocking them with a 429 error.
-- **Snappy 15-Second Mobile Resend Countdown**:
-  - The OTP resend countdown in `LoginPage.jsx` is locked to 15 seconds (replacing 30s) for rapid mobile interaction.
+- **Reliable Full SMTP Handshake & Awaited Delivery**:
+  - `sendCustomOtpEmail` in `backend/utils/email.js` connects via direct SSL Gmail SMTP (`smtp.gmail.com:465`) without pooling idle sockets.
+  - The email dispatch is properly awaited until Google's SMTP servers acknowledge delivery with a `250 OK` and `messageId` before returning the response. This guarantees Cloud Run containers never freeze or drop the background SMTP socket.
+  - Automatic single-retry fallback on transient network glitches.
+- **100% Global Inbox Deliverability (Gmail & All Email Providers)**:
+  - Dispatches multipart messages containing both clean plain-text fallback (`text`) and branded HTML (`html`) to satisfy anti-spam filters (SpamAssassin / Gmail postmaster guidelines).
+  - High priority headers (`X-Priority: 1`, `Importance: high`, `X-Mailer: TAEMRY-FLUX-Auth`).
+  - Instant mobile preview subject line: `${otpCode} is your TAEMRY FLUX verification code`.
+  - Matched `from` and `replyTo` (`support.taemryflux@gmail.com`).
+- **Mobile Keyboard & Resend Optimization**:
+  - Email input in `LoginPage.jsx` configured with `autoCapitalize="none"`, `autoCorrect="off"`, and `spellCheck="false"` to prevent virtual keyboards from mangling email addresses.
+  - Real-time button indicator ("Sending Verification Code...") gives clear user feedback during SMTP transit.
+  - Intentional resends (`isResend: true`) always trigger a fresh email dispatch.
+  - 15-second resend countdown for snappy mobile UX.
 
 ## STRICT INVARIANT: New User Separate Welcome Page & Profile Setup Order (PERMANENT & LOCKED)
 - **Separate Welcome Page (`authStage === 'welcome'`)**:

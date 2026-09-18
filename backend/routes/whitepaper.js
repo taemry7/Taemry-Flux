@@ -18,11 +18,11 @@ export const DEFAULT_WHITEPAPER = {
   executiveSummary: 'TAEMRY FLUX is a decentralized ecosystem uniting reward-based verified advertising, continuous 12-hour tap-to-mine Cloud Hash Mining, and TFLX Token network distribution. Members activate advertising allocation contracts to unlock guaranteed daily ad returns up to 20%, participate in 5-tier direct downline commissions and Team Rewards, and power their cloud mining engines with pre-staking yields and guild multipliers.',
   packagesNote: 'Every package delivers a guaranteed 20% daily return rate through our daily ads quota. Once your package is activated from your wallet balance, your daily ads unlock immediately, and your daily returns are credited directly to your live balance.',
   cloudMiner: {
-    baseRate: '16.0 TFLX/h',
+    baseRate: '8.0 TFLX/h',
     cycleDuration: '12 Hours (Tap-to-Mine)',
     maxPreStakeBoost: '+250%',
-    guildTier1Boost: '+4.0 TFLX/h per active miner',
-    guildTier2Boost: '+0.8 TFLX/h per active miner',
+    guildTier1Boost: '+2.0 TFLX/h per active miner',
+    guildTier2Boost: '+0.4 TFLX/h per active miner',
     dailyShields: 'Streak Check-In & Day-Off Protection'
   },
   teamRewards: [
@@ -97,7 +97,7 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q13. What is the TAEMRY FLUX Cloud Miner and how does it work?',
-      a: 'The TAEMRY FLUX Cloud Miner is a decentralized tap-to-mine hashrate engine operating on a 12-hour continuous cycle. Members activate a 12h session by tapping the miner core, generating TFLX tokens at a base speed of 16.0 TFLX/hour without consuming phone battery or device hardware.'
+      a: 'The TAEMRY FLUX Cloud Miner is a decentralized tap-to-mine hashrate engine operating on a 12-hour continuous cycle. Members activate a 12h session by tapping the miner core, generating TFLX tokens at a base speed of 8.0 TFLX/hour without consuming phone battery or device hardware.'
     },
     {
       q: 'Q14. What are the prerequisites to activate Cloud Mining?',
@@ -105,7 +105,7 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q15. How does Pre-Staking & Guild Boosting increase mining speed?',
-      a: 'Members can lock future TFLX tokens (up to 5 years and 100% allocation) to unlock up to a +250% Pre-Staking hashrate boost. Additionally, active downline members in your 2-Tier Guild add extra hashrate: +4.0 TFLX/h per Tier 1 active miner and +0.8 TFLX/h per Tier 2 active miner.'
+      a: 'Members can lock future TFLX tokens (up to 5 years and 100% allocation) to unlock up to a +250% Pre-Staking hashrate boost. Additionally, active downline members in your 2-Tier Guild add extra hashrate: +2.0 TFLX/h per Tier 1 active miner and +0.4 TFLX/h per Tier 2 active miner.'
     },
     {
       q: 'Q16. What are Day-Offs and the Slashing mechanism in Cloud Mining?',

@@ -244,7 +244,7 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
           isMiningActive: true,
           sessionStartTime: Date.now(),
           sessionDurationMs: 12 * 60 * 60 * 1000,
-          effectiveHashrate: 16.0,
+          effectiveHashrate: 8.0,
           activePackage: data.currentPackage || selectedPkg.name,
           lastSyncTime: Date.now(),
         };

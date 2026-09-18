@@ -219,7 +219,7 @@ export default function SidebarDrawer({ isOpen, onClose, activeTab, onSelectTab,
               <Pickaxe className="w-4 h-4 shrink-0 text-[#d97706] dark:text-[#f59e0b]" />
               <span>Cloud Miner (12h Reactor)</span>
               <span className="ml-auto text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-500/15 font-bold">
-                +16/h
+                +8/h
               </span>
             </button>
             <button

@@ -404,9 +404,10 @@ router.post('/send-otp', async (req, res) => {
 
     const existingOtp = otpStore.get(rawEmail);
     const secondsSinceLast = Math.floor((now - rateInfo.lastSentAt) / 1000);
+    const isExplicitResend = Boolean(req.body.isResend);
 
-    // If request arrives within 15s cooldown and an active valid OTP exists, smoothly reuse it
-    if (rateInfo.lastSentAt && secondsSinceLast < 15) {
+    // If rapid double-click arrives within 4s debounce and not an explicit resend
+    if (rateInfo.lastSentAt && secondsSinceLast < 4 && !isExplicitResend) {
       if (existingOtp && Date.now() < existingOtp.expiresAt) {
         return res.json({
           success: true,
@@ -417,8 +418,8 @@ router.post('/send-otp', async (req, res) => {
       }
     }
 
-    // Max 10 requests per hour per email to protect from bots
-    if (rateInfo.count >= 10) {
+    // Max 15 requests per hour per email to prevent spam bots
+    if (rateInfo.count >= 15) {
       return res.status(429).json({
         success: false,
         message: 'Too many verification requests. For security, please wait 10 minutes before trying again.',

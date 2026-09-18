@@ -328,7 +328,7 @@ router.post('/buy', verifyToken, async (req, res) => {
           isMiningActive: true,
           sessionStartTime: now,
           sessionDurationMs: 12 * 60 * 60 * 1000,
-          effectiveHashrate: 16.0,
+          effectiveHashrate: 8.0,
           activePackage: assignedPackageName,
           committedYears: 0,
           committedAllocation: 0,

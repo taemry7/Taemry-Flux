@@ -170,7 +170,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       const startTime = Number(m.sessionStartTime) || 0;
       const duration = Number(m.sessionDurationMs) || (12 * 60 * 60 * 1000);
       const isLive = m.isMiningActive && (now - startTime < duration);
-      const hashrate = Number(m.effectiveHashrate) || 16.0;
+      const hashrate = Number(m.effectiveHashrate) || 8.0;
       const mined = Number(m.minedTflx) || 0;
 
       totalMinedTflx += mined;

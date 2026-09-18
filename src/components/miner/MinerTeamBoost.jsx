@@ -27,10 +27,10 @@ export default function MinerTeamBoost({
   const { tier1Active = 2, tier1Total = 3, tier2Active = 4, tier2Total = 6, lastPingTime = 0 } = minerData;
 
   // Calculate live boost from team:
-  // Tier 1: +25% base rate per active member = 16 * 0.25 = +4 TFLX/h each
-  // Tier 2: +5% base rate per active member = 16 * 0.05 = +0.8 TFLX/h each
-  const tier1BoostRate = tier1Active * 4.0;
-  const tier2BoostRate = tier2Active * 0.8;
+  // Tier 1: +25% base rate per active member = 8 * 0.25 = +2 TFLX/h each
+  // Tier 2: +5% base rate per active member = 8 * 0.05 = +0.4 TFLX/h each
+  const tier1BoostRate = tier1Active * 2.0;
+  const tier2BoostRate = tier2Active * 0.4;
   const totalTeamBoostRate = tier1BoostRate + tier2BoostRate;
 
   const handleCopyLink = () => {

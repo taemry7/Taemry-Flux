@@ -85,7 +85,7 @@ export default function CloudMinerPage({ onNavigate }) {
         const sessionDuration = safeNumber(parsed.sessionDurationMs, 12 * 60 * 60 * 1000);
         const lastSync = safeNumber(parsed.lastSyncTime, startTime || now);
         const elapsedSinceStart = now - startTime;
-        const rate = safeNumber(parsed.effectiveHashrate, 16.0);
+        const rate = safeNumber(parsed.effectiveHashrate, 8.0);
 
         let addedCoins = 0;
         let isMiningActive = Boolean(parsed.isMiningActive);
@@ -154,16 +154,16 @@ export default function CloudMinerPage({ onNavigate }) {
   });
 
   // Calculate Base and Total Hashrate with strict NaN immunity
-  // Base: 16 TFLX/h
-  // Pre-Staking Multiplier: e.g. +50% -> 16 * 1.5 = 24
-  // Guild: Tier 1 (+4 TFLX/h each) + Tier 2 (+0.8 TFLX/h each)
-  const baseRate = 16.0;
+  // Base: 8 TFLX/h
+  // Pre-Staking Multiplier: e.g. +50% -> 8 * 1.5 = 12
+  // Guild: Tier 1 (+2 TFLX/h each) + Tier 2 (+0.4 TFLX/h each)
+  const baseRate = 8.0;
   const preStakingBoost = safeNumber(minerData?.preStakingBoost, 0);
   const preStakingMultiplier = 1 + (preStakingBoost / 100);
   const tier1Active = safeNumber(minerData?.tier1Active, 0);
   const tier2Active = safeNumber(minerData?.tier2Active, 0);
-  const teamRate = (tier1Active * 4.0) + (tier2Active * 0.8);
-  const effectiveHashrate = Math.max(16.0, Number(((baseRate * preStakingMultiplier) + teamRate).toFixed(1)));
+  const teamRate = (tier1Active * 2.0) + (tier2Active * 0.4);
+  const effectiveHashrate = Math.max(8.0, Number(((baseRate * preStakingMultiplier) + teamRate).toFixed(1)));
 
   // Real-time ticking engine for Continuous Cloud Mining
   useEffect(() => {
@@ -188,7 +188,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
         // Add 1-second increment of TFLX with absolute NaN protection
         const prevCoins = safeNumber(prev.minedTflx, 0);
-        const rate = safeNumber(effectiveHashrate, 16.0);
+        const rate = safeNumber(effectiveHashrate, 8.0);
         const tflxPerSec = rate / 3600;
         const newBalance = Number((prevCoins + tflxPerSec).toFixed(4));
 
@@ -281,7 +281,7 @@ export default function CloudMinerPage({ onNavigate }) {
           const sessionDuration = safeNumber(remote.sessionDurationMs, 12 * 60 * 60 * 1000);
           const lastSync = safeNumber(remote.lastSyncTime, startTime || now);
           const elapsedSinceStart = now - startTime;
-          const rate = safeNumber(remote.effectiveHashrate, 16.0);
+          const rate = safeNumber(remote.effectiveHashrate, 8.0);
 
           let addedCoins = 0;
           let isMiningStillActive = Boolean(remote.isMiningActive);
@@ -323,7 +323,7 @@ export default function CloudMinerPage({ onNavigate }) {
             committedYears: 0,
             committedAllocation: 0,
             preStakingBoost: 0,
-            effectiveHashrate: 16.0,
+            effectiveHashrate: 8.0,
             tier1Active: 0,
             tier1Total: 0,
             tier2Active: 0,
@@ -758,7 +758,7 @@ export default function CloudMinerPage({ onNavigate }) {
 
                 {/* Hashrate moved under valuation span & made smaller per user request */}
                 <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums flex items-center gap-1 pt-0.5">
-                  <span>+{safeNumber(effectiveHashrate, 16.0).toFixed(1)} TFLX/h</span>
+                  <span>+{safeNumber(effectiveHashrate, 8.0).toFixed(1)} TFLX/h</span>
                 </p>
               </div>
 

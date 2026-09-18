@@ -18,7 +18,7 @@ const DEFAULT_MINER_DATA = {
   committedYears: 0,
   committedAllocation: 0,
   preStakingBoost: 0,
-  effectiveHashrate: 16.0,
+  effectiveHashrate: 8.0,
   tier1Active: 0,
   tier1Total: 0,
   tier2Active: 0,
@@ -145,7 +145,7 @@ router.get('/admin/overview', verifyAdmin, async (req, res) => {
       const startTime = Number(d.sessionStartTime) || 0;
       const duration = Number(d.sessionDurationMs) || (12 * 60 * 60 * 1000);
       const isSessionLive = d.isMiningActive && (now - startTime < duration);
-      const hashrate = Number(d.effectiveHashrate) || 16.0;
+      const hashrate = Number(d.effectiveHashrate) || 8.0;
       const mined = Number(d.minedTflx) || 0;
 
       totalMinedTflx += mined;
@@ -190,7 +190,7 @@ router.get('/admin/overview', verifyAdmin, async (req, res) => {
             isMiningActive: false,
             isSessionLive: false,
             minedTflx: 0,
-            effectiveHashrate: 16.0,
+            effectiveHashrate: 8.0,
             sessionStartTime: 0,
             sessionDurationMs: 12 * 60 * 60 * 1000,
             timeLeftMs: 0,

@@ -143,7 +143,7 @@ export default function MinerPreStaking({
           <div className="text-right">
             <span className="text-[#7a8c94] dark:text-[#94a3b8] font-medium">New Hashrate:</span>
             <p className="font-extrabold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5">
-              +{(16 * (1 + currentCalculatedBoost / 100)).toFixed(1)} TFLX/h
+              +{(8 * (1 + currentCalculatedBoost / 100)).toFixed(1)} TFLX/h
             </p>
           </div>
         </div>

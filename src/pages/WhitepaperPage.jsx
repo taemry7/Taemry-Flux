@@ -138,7 +138,7 @@ export default function WhitepaperPage({ onNavigate }) {
       },
       {
         q: 'Q13. What is the TAEMRY FLUX Cloud Miner and how does it work?',
-        a: 'The TAEMRY FLUX Cloud Miner is a decentralized tap-to-mine hashrate engine operating on a 12-hour continuous cycle. Members activate a 12h session by tapping the miner core, generating TFLX tokens at a base speed of 16.0 TFLX/hour without consuming phone battery or device hardware.'
+        a: 'The TAEMRY FLUX Cloud Miner is a decentralized tap-to-mine hashrate engine operating on a 12-hour continuous cycle. Members activate a 12h session by tapping the miner core, generating TFLX tokens at a base speed of 8.0 TFLX/hour without consuming phone battery or device hardware.'
       },
       {
         q: 'Q14. What are the prerequisites to activate Cloud Mining?',
@@ -146,7 +146,7 @@ export default function WhitepaperPage({ onNavigate }) {
       },
       {
         q: 'Q15. How does Pre-Staking & Guild Boosting increase mining speed?',
-        a: 'Members can lock future TFLX tokens (up to 5 years and 100% allocation) to unlock up to a +250% Pre-Staking hashrate boost. Additionally, active downline members in your 2-Tier Guild add extra hashrate: +4.0 TFLX/h per Tier 1 active miner and +0.8 TFLX/h per Tier 2 active miner.'
+        a: 'Members can lock future TFLX tokens (up to 5 years and 100% allocation) to unlock up to a +250% Pre-Staking hashrate boost. Additionally, active downline members in your 2-Tier Guild add extra hashrate: +2.0 TFLX/h per Tier 1 active miner and +0.4 TFLX/h per Tier 2 active miner.'
       },
       {
         q: 'Q16. What are Day-Offs and the Slashing mechanism in Cloud Mining?',
@@ -467,11 +467,11 @@ export default function WhitepaperPage({ onNavigate }) {
                 <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-1.5">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs uppercase tracking-wider">
                     <Zap className="w-4 h-4" />
-                    <span>16.0 TFLX/h Base Rate</span>
+                    <span>8.0 TFLX/h Base Rate</span>
                   </div>
                   <div className="font-bold text-[#093e4a] dark:text-white text-sm">Verified Yield Stream</div>
                   <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
-                    Base yield starts at 16.0 TFLX per hour (192 TFLX/day). Active advertising package contracts are required to activate and maintain mining eligibility.
+                    Base yield starts at 8.0 TFLX per hour (96 TFLX/day). Active advertising package contracts are required to activate and maintain mining eligibility.
                   </p>
                 </div>
 

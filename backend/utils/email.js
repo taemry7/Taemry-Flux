@@ -35,11 +35,9 @@ const getTransporter = async () => {
           user,
           pass,
         },
-        pool: true,
-        maxConnections: 3,
-        connectionTimeout: 5000,
-        greetingTimeout: 5000,
-        socketTimeout: 8000,
+        connectionTimeout: 15000,
+        greetingTimeout: 15000,
+        socketTimeout: 20000,
       });
       console.log('[EmailService] SMTP transporter initialized successfully for:', user);
       return transporter;
@@ -364,7 +362,21 @@ export async function sendCustomOtpEmail({ userEmail, otpCode }) {
     if (!userEmail || !otpCode) return null;
     const client = await getTransporter();
 
-    const subject = `Your TAEMRY FLUX Verification Code: ${otpCode}`;
+    const subject = `${otpCode} is your TAEMRY FLUX verification code`;
+    const textContent = `Hello,
+
+Your TAEMRY FLUX verification code is:
+
+${otpCode}
+
+This code will expire in 10 minutes. Enter this 6-digit code on the verification screen to securely access your account.
+
+If you did not request this verification code, you can safely ignore this email. Never share this code with anyone.
+
+Best regards,
+Team TAEMRY FLUX
+support.taemryflux@gmail.com`;
+
     const html = `
       <div style="background-color: #f0f5f4; padding: 40px 14px; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif; margin: 0;">
         <div style="max-width: 490px; margin: 0 auto; background: #ffffff; border-radius: 22px; overflow: hidden; border: 1px solid #d4e5e1; box-shadow: 0 12px 32px rgba(12, 89, 99, 0.08);">
@@ -399,7 +411,7 @@ export async function sendCustomOtpEmail({ userEmail, otpCode }) {
             <div style="margin-top: 24px; padding-top: 18px; border-top: 1px solid #e8f0ee; font-size: 12px; color: #64748b; line-height: 1.6;">
               Best regards,<br>
               <strong style="color: #0c5963; font-size: 13px;">Team TAEMRY FLUX</strong><br>
-              <span style="font-size: 11px; color: #94a3b8;">Please do not reply directly to this email</span>
+              <span style="font-size: 11px; color: #94a3b8;">support.taemryflux@gmail.com</span>
             </div>
           </div>
 
@@ -407,33 +419,34 @@ export async function sendCustomOtpEmail({ userEmail, otpCode }) {
       </div>
     `;
 
-    const sendPromise = client.sendMail({
+    const mailOptions = {
       from: FROM_ADDRESS,
       to: userEmail,
+      replyTo: 'support.taemryflux@gmail.com',
       subject,
+      text: textContent,
       html,
-    });
+      priority: 'high',
+      headers: {
+        'X-Priority': '1',
+        'Importance': 'high',
+        'X-Mailer': 'TAEMRY-FLUX-Auth',
+      },
+    };
 
-    sendPromise
-      .then((info) => {
-        console.log(`[EmailService] OTP email successfully delivered to ${userEmail}. MsgID: ${info?.messageId || 'ok'}`);
-      })
-      .catch((err) => {
-        console.error(`[EmailService] Background SMTP delivery failed for ${userEmail}:`, err.message);
-      });
-
-    // Fast race so mobile user moves to OTP stage smoothly without waiting
-    const timeoutPromise = new Promise((resolve) =>
-      setTimeout(() => resolve({ background: true }), 2000)
-    );
-
-    const result = await Promise.race([sendPromise, timeoutPromise]);
-    if (result && result.background) {
-      console.log('[EmailService] SMTP email dispatch in progress in background for:', userEmail);
+    let info = null;
+    try {
+      info = await client.sendMail(mailOptions);
+    } catch (firstErr) {
+      console.warn(`[EmailService] First delivery attempt failed for ${userEmail}: ${firstErr.message}. Retrying once...`);
+      const freshClient = await getTransporter();
+      info = await freshClient.sendMail(mailOptions);
     }
-    return result;
+
+    console.log(`[EmailService] OTP email successfully delivered to ${userEmail}. MsgID: ${info?.messageId || 'ok'}`);
+    return { success: true, messageId: info?.messageId };
   } catch (err) {
-    console.error('[EmailService] Failed to send OTP email:', err.message);
-    return null;
+    console.error('[EmailService] Failed to send OTP email to', userEmail, ':', err.message);
+    return { error: err.message };
   }
 }

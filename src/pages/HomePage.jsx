@@ -56,7 +56,7 @@ export default function HomePage({ onNavigate }) {
       isMiningActive: false,
       sessionStartTime: 0,
       sessionDurationMs: 12 * 60 * 60 * 1000,
-      effectiveHashrate: 16.0,
+      effectiveHashrate: 8.0,
     };
   });
 
@@ -115,7 +115,7 @@ export default function HomePage({ onNavigate }) {
         const now = Date.now();
         const sessionDuration = prev.sessionDurationMs || (12 * 60 * 60 * 1000);
         const sessionElapsed = now - (prev.sessionStartTime || now);
-        const effectiveRate = Number(prev.effectiveHashrate) || 16.0;
+        const effectiveRate = Number(prev.effectiveHashrate) || 8.0;
 
         if (prev.isMiningActive && sessionElapsed < sessionDuration) {
           const tflxPerSec = effectiveRate / 3600;
@@ -180,7 +180,7 @@ export default function HomePage({ onNavigate }) {
     },
     {
       q: 'Q2. What is TAEMRY Cloud Mining and how does it generate crypto yield?',
-      a: 'TAEMRY Cloud Mining is an automated, server-authoritative 12-hour session mining protocol. With a single tap, your cloud mining session activates for 12 hours. It consumes 0% of your mobile battery, requires no hardware maintenance, and hashes native TFLX tokens continuously at a base rate of +16 TFLX/h.'
+      a: 'TAEMRY Cloud Mining is an automated, server-authoritative 12-hour session mining protocol. With a single tap, your cloud mining session activates for 12 hours. It consumes 0% of your mobile battery, requires no hardware maintenance, and hashes native TFLX tokens continuously at a base rate of +8 TFLX/h.'
     },
     {
       q: 'Q3. How does Watch Ads differ from Cloud Mining?',
@@ -738,7 +738,7 @@ export default function HomePage({ onNavigate }) {
                           Hashrate Power
                         </p>
                         <div className="text-2xl sm:text-3xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
-                          <span>16.0</span>
+                          <span>8.0</span>
                           <span className="text-sm sm:text-base font-bold text-[#d97706] dark:text-[#f59e0b] ml-1">
                             MH/s
                           </span>
@@ -800,7 +800,7 @@ export default function HomePage({ onNavigate }) {
                           Base Hashrate
                         </div>
                         <div className="reward-amount text-[15px] font-extrabold text-[#d97706] dark:text-[#f59e0b] text-right block leading-tight">
-                          +{Number(liveMinerData?.effectiveHashrate || 16.0).toFixed(0)} TFLX/h
+                          +{Number(liveMinerData?.effectiveHashrate || 8.0).toFixed(0)} TFLX/h
                         </div>
                       </div>
                     </div>
@@ -1216,7 +1216,7 @@ export default function HomePage({ onNavigate }) {
                             Base Hashrate
                           </p>
                           <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
-                            <span>+{Number(liveMinerData?.effectiveHashrate || 16.0).toFixed(0)}</span>
+                            <span>+{Number(liveMinerData?.effectiveHashrate || 8.0).toFixed(0)}</span>
                             <span className="text-xs font-bold text-[#d97706] dark:text-[#f59e0b] ml-1">
                               TFLX/h
                             </span>
@@ -1266,7 +1266,7 @@ export default function HomePage({ onNavigate }) {
                             Base Hashrate
                           </div>
                           <div className="reward-amount text-[15px] font-extrabold text-[#d97706] dark:text-[#f59e0b] text-right block leading-tight">
-                            +{Number(liveMinerData?.effectiveHashrate || 16.0).toFixed(0)} TFLX/h
+                            +{Number(liveMinerData?.effectiveHashrate || 8.0).toFixed(0)} TFLX/h
                           </div>
                         </div>
                       </div>
@@ -1276,7 +1276,7 @@ export default function HomePage({ onNavigate }) {
                         <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
                           <CheckCircle2 className="w-4 h-4 text-[#ea580c] shrink-0 mt-0.5" />
                           <div>
-                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">12-Hour Session Rhythm:</strong> Tap once and let the cloud mine +16 TFLX/h passively in the background.
+                            <strong className="font-bold text-[#ea580c] dark:text-[#fb923c]">12-Hour Session Rhythm:</strong> Tap once and let the cloud mine +8 TFLX/h passively in the background.
                           </div>
                         </div>
                         <div className="flex items-start gap-2.5 text-xs text-[#09353e] dark:text-[#e2e8f0]">
@@ -1427,7 +1427,7 @@ export default function HomePage({ onNavigate }) {
                   <span>12H Tap Cycles</span>
                 </div>
                 <p className="text-[11px] text-[#9a3412] leading-relaxed">
-                  One tap powers 12 hours of hashing at +16 TFLX/h. The app does not need to remain open.
+                  One tap powers 12 hours of hashing at +8 TFLX/h. The app does not need to remain open.
                 </p>
               </div>
 
