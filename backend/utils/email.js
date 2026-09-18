@@ -35,6 +35,11 @@ const getTransporter = async () => {
           user,
           pass,
         },
+        pool: true,
+        maxConnections: 3,
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 8000,
       });
       console.log('[EmailService] SMTP transporter initialized successfully for:', user);
       return transporter;
@@ -402,12 +407,31 @@ export async function sendCustomOtpEmail({ userEmail, otpCode }) {
       </div>
     `;
 
-    return await client.sendMail({
+    const sendPromise = client.sendMail({
       from: FROM_ADDRESS,
       to: userEmail,
       subject,
       html,
     });
+
+    sendPromise
+      .then((info) => {
+        console.log(`[EmailService] OTP email successfully delivered to ${userEmail}. MsgID: ${info?.messageId || 'ok'}`);
+      })
+      .catch((err) => {
+        console.error(`[EmailService] Background SMTP delivery failed for ${userEmail}:`, err.message);
+      });
+
+    // Fast race so mobile user moves to OTP stage smoothly without waiting
+    const timeoutPromise = new Promise((resolve) =>
+      setTimeout(() => resolve({ background: true }), 2000)
+    );
+
+    const result = await Promise.race([sendPromise, timeoutPromise]);
+    if (result && result.background) {
+      console.log('[EmailService] SMTP email dispatch in progress in background for:', userEmail);
+    }
+    return result;
   } catch (err) {
     console.error('[EmailService] Failed to send OTP email:', err.message);
     return null;

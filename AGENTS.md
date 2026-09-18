@@ -356,4 +356,38 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - All dedicated `.fade-trigger` links and buttons.
 - **Permanent Freeze**: This transition system is 100% completed and permanently locked against any changes or removal.
 
+## STRICT INVARIANT: Login Brand Header Layout & Stack Order (PERMANENT & LOCKED)
+- **Vertical Stack Structure (`#brand-header-display`)**:
+  - In `src/pages/LoginPage.jsx`, the brand header above the main auth card is permanently stacked vertically (`flex flex-col items-center gap-2 sm:gap-2.5`):
+    1. **Logo on Top (Upar)**: `<Logo size="lg" showText={false} />` sits at the top of the header.
+    2. **Brand Name Below (Nichy)**: The brand name `TAEMRY` and badge `FLUX` sit directly below the logo.
+  - Preserves clean visual balance, high contrast, and responsive centering across all mobile and desktop screens.
+  - DO NOT change this order or revert to horizontal alignment.
+
+## STRICT INVARIANT: Custom SMTP Fast OTP Delivery & Zero Autofill (PERMANENT & LOCKED)
+- **Zero Autofill UI**:
+  - No autofill buttons, hints, or shortcuts (`btn-autofill-otp` and `serverOtpHint` are permanently forbidden and removed). Users receive their authentic one-time code directly via custom SMTP in their Gmail inbox.
+- **Fast Non-Blocking Continue Button Dispatch**:
+  - `sendCustomOtpEmail` in `backend/utils/email.js` uses pooled SMTP connections (`pool: true, maxConnections: 3`), active connection timeouts (`5000ms`, `socketTimeout: 8000ms`), and a fast race timeout to guarantee the mobile user never gets stuck loading on the Continue button (`#btn-auth-submit`).
+  - Client-side `src/api/client.js` bypasses the 800ms `authStateReady` wait for `/auth/send-otp` and `/auth/verify-otp`, making Continue button execution near-instant.
+  - In `backend/routes/auth.js`, Firestore lookups are guarded by a 1200ms timeout race.
+- **Active Code Smooth Reuse (Zero 429 Lockouts)**:
+  - If a user requests a code again within 15s cooldown and already has an active valid OTP, the system smoothly reuses the active OTP and returns `success: true` to advance the user directly to the OTP screen instead of blocking them with a 429 error.
+- **Snappy 15-Second Mobile Resend Countdown**:
+  - The OTP resend countdown in `LoginPage.jsx` is locked to 15 seconds (replacing 30s) for rapid mobile interaction.
+
+## STRICT INVARIANT: New User Separate Welcome Page & Profile Setup Order (PERMANENT & LOCKED)
+- **Separate Welcome Page (`authStage === 'welcome'`)**:
+  - When a new user completes OTP verification, they are taken to a dedicated **Welcome Page** (`#auth-welcome-page`).
+  - Displays:
+    1. Email verified confirmation badge (`#badge-email-verified`): `Email Verified: {email}`.
+    2. Welcome ecosystem card highlighting verified ad rewards, 12h cloud mining, 5-level referral commissions, and secure decentralized wallet.
+    3. Primary action button (`#btn-welcome-next`): "Next: Set Up Profile" with an `ArrowRight` icon to move to the next page.
+- **Next Page: Profile Setup (`authStage === 'profile'`)**:
+  - Displays the profile setup form strictly in the user's requested order:
+    1. **Full Name Input** (`#input-onboarding-fullname`): Required, accepts user's full name.
+    2. **Username Input** (`#input-onboarding-username`): Required, unique member handle with `@` icon.
+    3. **Nichy Referral (Below Username)** (`#input-onboarding-referral`): Positioned directly below the username. If joined via link, shows verified connected sponsor badge (`@{sponsor}`); if no link, allows entering an optional sponsor handle.
+    4. **Action Button** (`#btn-complete-onboarding`): "Complete & Enter TAEMRY FLUX" saving full name, username, and referral code, establishing the session and redirecting cleanly to the Homepage (`home`).
+    5. **Back Button** (`#btn-back-to-welcome`): Returns to the welcome page if needed.
 

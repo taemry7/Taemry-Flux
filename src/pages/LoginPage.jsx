@@ -10,24 +10,28 @@ import {
   Mail,
   X,
   Loader2,
-  Sparkles,
   User,
   RefreshCw,
   TrendingUp,
   Coins,
+  AtSign,
+  Users,
+  Sparkles,
+  Check,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 
 export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
-  // Authentication stage: 'email' -> 'otp' -> 'welcome' (for new users)
+  // Authentication stage: 'email' -> 'otp' -> 'welcome' -> 'profile'
   const [authStage, setAuthStage] = useState('email');
   const [email, setEmail] = useState('');
   const [otpCode, setOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [isNewUser, setIsNewUser] = useState(false);
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
@@ -131,7 +135,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       if (res.data?.success) {
         setIsNewUser(Boolean(res.data.isNewUser));
         setAuthStage('otp');
-        setOtpCountdown(30);
+        setOtpCountdown(15);
         setOtpCode('');
       } else {
         setError(res.data?.message || 'Failed to send OTP code.');
@@ -153,7 +157,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       const cleanEmail = (email || '').toLowerCase().trim();
       const res = await apiClient.post('/auth/send-otp', { email: cleanEmail });
       if (res.data?.success) {
-        setOtpCountdown(30);
+        setOtpCountdown(15);
         setResendNotice('New verification code sent! Please check your inbox.');
         setTimeout(() => setResendNotice(''), 4000);
       } else {
@@ -190,10 +194,14 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
       if (res.data?.success) {
         if (res.data.isNewUser) {
-          // New user -> Move to Welcome & Profile setup
+          // New user -> Move to dedicated Welcome page first
           setIsNewUser(true);
           setAuthStage('welcome');
-          setDisplayName(cleanEmail.split('@')[0] || '');
+          const basePart = (cleanEmail.split('@')[0] || '').replace(/[^a-zA-Z0-9]/g, ' ');
+          const formattedName = basePart ? basePart.charAt(0).toUpperCase() + basePart.slice(1) : '';
+          const formattedUsername = cleanEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '');
+          setDisplayName(formattedName);
+          setUsername(formattedUsername);
         } else {
           // Existing user -> Instant login and redirect to homepage
           const loggedUser = res.data.user || { email: cleanEmail };
@@ -216,15 +224,21 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
   };
 
-  // 4. Complete Welcome Onboarding (New User) -> Homepage
+  // 4. Complete Profile Setup (New User) -> Homepage
   const handleCompleteOnboarding = async (e) => {
     if (e) e.preventDefault();
     setError('');
     const cleanEmail = (email || '').toLowerCase().trim();
-    const cleanName = (displayName || '').trim();
+    const cleanFullName = (displayName || '').trim();
+    const cleanUsername = (username || '').replace(/^@+/, '').trim();
 
-    if (!cleanName || cleanName.length < 2) {
-      setError('Please enter your full name or member handle.');
+    if (!cleanFullName || cleanFullName.length < 2) {
+      setError('Please enter your full name.');
+      return;
+    }
+
+    if (!cleanUsername || cleanUsername.length < 3) {
+      setError('Please enter a username (at least 3 characters).');
       return;
     }
 
@@ -232,7 +246,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     try {
       const res = await apiClient.post('/auth/complete-otp-signup', {
         email: cleanEmail,
-        name: cleanName,
+        fullName: cleanFullName,
+        name: cleanFullName,
+        username: cleanUsername,
         referralCode: referredBy?.trim() || null,
       });
 
@@ -313,8 +329,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       }}
     >
       {/* 1st Child: Brand Icon Header */}
-      <div className="mb-2.5 sm:mb-3 flex flex-col items-center select-none pointer-events-none">
-        <div id="brand-header-display" className="flex items-center gap-3 cursor-default">
+      <div className="mb-3 sm:mb-4 flex flex-col items-center select-none pointer-events-none">
+        <div id="brand-header-display" className="flex flex-col items-center gap-2 sm:gap-2.5 cursor-default">
           <Logo size="lg" showText={false} />
           <div className="flex items-center gap-2">
             <span className="font-display font-extrabold tracking-[0.25em] text-[#0a3a46] dark:text-[#ecf3f4] text-xl sm:text-2xl uppercase">
@@ -337,6 +353,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           <h2 className="text-2xl font-bold text-[#09353e] dark:text-white">
             {authStage === 'welcome'
               ? 'Welcome to TAEMRY FLUX'
+              : authStage === 'profile'
+              ? 'Complete Your Profile'
               : authStage === 'otp'
               ? 'Verify Your Email'
               : 'Welcome back'}
@@ -345,7 +363,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           {/* Matches div#loginPageContainer > div:nth-of-type(2) > div:nth-of-type(1) > p:nth-of-type(1) */}
           <p className="text-xs sm:text-sm text-[#61777b] dark:text-[#94a3b8] mt-1 leading-relaxed">
             {authStage === 'welcome' ? (
-              'Set up your personal member details'
+              'Your email is verified! Welcome to our ecosystem'
+            ) : authStage === 'profile' ? (
+              'Enter your full name, username, and sponsor referral'
             ) : authStage === 'otp' ? (
               <>
                 Enter the 6-digit code sent to{' '}
@@ -587,51 +607,76 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         )}
 
         {/* ========================================================================= */}
-        {/* STAGE 3: NEW USER WELCOME, REFERRAL & FULL NAME ONBOARDING                */}
+        {/* STAGE 3: NEW USER WELCOME PAGE (DEDICATED SEPARATE SCREEN)                */}
         {/* ========================================================================= */}
         {authStage === 'welcome' && (
-          <form id="auth-welcome-form" onSubmit={handleCompleteOnboarding} className="space-y-4">
-            {/* Automatic Referral Link Banner (If user joined via link) */}
-            {isReferralLocked || (referredBy && referredBy.trim()) ? (
-              <div
-                id="badge-auto-referral"
-                className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center gap-2.5 text-xs text-emerald-800 dark:text-emerald-300"
-              >
-                <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                <div className="flex-1">
-                  <span className="block font-bold">Referral link connected automatically!</span>
-                  <span>
-                    Invited by sponsor{' '}
-                    <strong className="font-mono font-bold text-emerald-900 dark:text-emerald-100">
-                      @{referredBy.replace(/^@+/, '')}
-                    </strong>
-                  </span>
+          <div id="auth-welcome-page" className="space-y-4">
+            {/* Email Verified Confirmation Badge */}
+            <div
+              id="badge-email-verified"
+              className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl flex items-center justify-center gap-2 text-xs font-semibold text-emerald-800 dark:text-emerald-300"
+            >
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>
+                Email Verified:{' '}
+                <strong className="font-mono font-bold text-emerald-900 dark:text-emerald-200">
+                  {email}
+                </strong>
+              </span>
+            </div>
+
+            {/* Welcome Ecosystem Card */}
+            <div className="p-4 bg-[#fbfaf8] dark:bg-[#081a20] border border-[#e4ded2] dark:border-[#163842] rounded-2xl space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-[#0c5963]/10 dark:bg-[#2dd4bf]/15 text-[#0c5963] dark:text-[#2dd4bf] flex items-center justify-center shrink-0">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#09353e] dark:text-white">Welcome Aboard!</h3>
+                  <p className="text-xs text-[#61777b] dark:text-[#94a3b8] leading-snug">
+                    Your account is verified. Complete your profile to activate your decentralized space.
+                  </p>
                 </div>
               </div>
-            ) : (
-              /* If user joined WITHOUT link -> Ask for Referral Code (Optional) */
-              <div>
-                <label
-                  htmlFor="input-onboarding-referral"
-                  className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5"
-                >
-                  Referral Code (Optional)
-                </label>
-                <input
-                  id="input-onboarding-referral"
-                  type="text"
-                  value={referredBy}
-                  onChange={(e) => setReferredBy(e.target.value)}
-                  placeholder="Enter sponsor username or leave blank"
-                  className="w-full px-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none text-[#09353e] dark:text-white placeholder-[#9caea7]"
-                />
-                <p className="text-[11px] text-[#61777b] dark:text-[#94a3b8] mt-1">
-                  If invited by a friend, enter their sponsor handle. Otherwise leave empty.
-                </p>
-              </div>
-            )}
 
-            {/* Full Name Input (Required) */}
+              <div className="pt-2 border-t border-[#ede7dc] dark:border-[#143039] space-y-2 text-xs text-[#324f55] dark:text-[#cbd5e1]">
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Verified Ad Rewards & 12h Cloud Miner</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>5-Level Guild Network Referral Commissions</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Secure Member Identity & Decentralized Wallet</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Button -> Moves to Profile Setup Screen */}
+            <button
+              id="btn-welcome-next"
+              type="button"
+              onClick={() => {
+                setError('');
+                setAuthStage('profile');
+              }}
+              className="w-full mt-2 py-3.5 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+            >
+              <span>Next: Set Up Profile</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* STAGE 4: PROFILE SETUP PAGE (FULL NAME, USERNAME & NICHY REFERRAL)        */}
+        {/* ========================================================================= */}
+        {authStage === 'profile' && (
+          <form id="auth-profile-form" onSubmit={handleCompleteOnboarding} className="space-y-4">
+            {/* 1. Full Name Input (Required) */}
             <div>
               <label
                 htmlFor="input-onboarding-fullname"
@@ -654,22 +699,109 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               </div>
             </div>
 
-            {/* Complete Setup and Enter Homepage Button */}
-            <button
-              id="btn-complete-onboarding"
-              type="submit"
-              disabled={loading}
-              className="w-full mt-2 py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            {/* 2. Username Input (Required) */}
+            <div>
+              <label
+                htmlFor="input-onboarding-username"
+                className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5"
+              >
+                Username <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  id="input-onboarding-username"
+                  type="text"
+                  required
+                  value={username}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
+                    setUsername(val);
+                  }}
+                  placeholder="Choose unique username (e.g. alex99)"
+                  className="w-full pl-10 pr-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7] font-medium font-mono"
+                />
+                <AtSign className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+              </div>
+              <p className="text-[11px] text-[#61777b] dark:text-[#94a3b8] mt-1">
+                Your unique handle for login and referral link sharing.
+              </p>
+            </div>
+
+            {/* 3. Nichy Referral (Below Username) */}
+            <div>
+              <label
+                htmlFor="input-onboarding-referral"
+                className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5"
+              >
+                Referral Code (Optional)
+              </label>
+              {isReferralLocked && referredBy ? (
+                <div
+                  id="badge-auto-referral"
+                  className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300"
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>
+                      Sponsor:{' '}
+                      <strong className="font-mono font-bold text-emerald-900 dark:text-emerald-100">
+                        @{referredBy.replace(/^@+/, '')}
+                      </strong>
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/60 rounded text-emerald-700 dark:text-emerald-300">
+                    Connected
+                  </span>
+                </div>
               ) : (
-                <>
-                  <span>Complete & Enter TAEMRY FLUX</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
+                <div className="relative">
+                  <input
+                    id="input-onboarding-referral"
+                    type="text"
+                    value={referredBy}
+                    onChange={(e) => setReferredBy(e.target.value)}
+                    placeholder="Enter sponsor username (e.g. sponsor99) or leave blank"
+                    className="w-full pl-10 pr-4 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none text-[#09353e] dark:text-white placeholder-[#9caea7] font-medium"
+                  />
+                  <Users className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                </div>
               )}
-            </button>
+              <p className="text-[11px] text-[#61777b] dark:text-[#94a3b8] mt-1">
+                If invited by a member, enter their username. Otherwise leave blank.
+              </p>
+            </div>
+
+            {/* Action Buttons: Submit & Back */}
+            <div className="pt-1 space-y-2">
+              <button
+                id="btn-complete-onboarding"
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
+              >
+                {loading ? (
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span>Complete & Enter TAEMRY FLUX</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                id="btn-back-to-welcome"
+                onClick={() => {
+                  setError('');
+                  setAuthStage('welcome');
+                }}
+                className="w-full py-2 text-xs font-semibold text-[#61777b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-[#2dd4bf] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Welcome</span>
+              </button>
+            </div>
           </form>
         )}
 

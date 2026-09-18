@@ -150,5 +150,80 @@
       "lastLoginAt": "2026-09-16T21:00:00.000Z",
       "photoURL": null
     }
+  ],
+  [
+    "users/user_mu6ayyndp3m4",
+    {
+      "uid": "user_mu6ayyndp3m4",
+      "email": "mistrtaimur7@gmail.com",
+      "name": "@Taimur Khsn",
+      "displayName": "@Taimur Khsn",
+      "photoURL": null,
+      "currentPackage": "None",
+      "walletBalance": 0,
+      "referralCount": 0,
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "referredBy": null,
+      "createdAt": "2026-09-18T01:51:44.617Z",
+      "lastLoginAt": "2026-09-18T01:51:44.617Z",
+      "emailVerified": true,
+      "isAdmin": true
+    }
+  ],
+  [
+    "users/user_mu6b5n2anpy9",
+    {
+      "uid": "user_mu6b5n2anpy9",
+      "email": "testuser99@gmail.com",
+      "name": "@testuser99",
+      "displayName": "@testuser99",
+      "photoURL": null,
+      "currentPackage": "None",
+      "walletBalance": 0,
+      "referralCount": 0,
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "referredBy": "admin",
+      "createdAt": "2026-09-18T01:56:56.194Z",
+      "lastLoginAt": "2026-09-18T01:56:56.194Z",
+      "emailVerified": true,
+      "isAdmin": false
+    }
+  ],
+  [
+    "users/user_mu6b636dun6s",
+    {
+      "uid": "user_mu6b636dun6s",
+      "email": "newmember@gmail.com",
+      "fullName": "Muhammad Taimoor",
+      "name": "Muhammad Taimoor",
+      "displayName": "Muhammad Taimoor",
+      "username": "taimoor99",
+      "referralCode": "taimoor99",
+      "photoURL": null,
+      "currentPackage": "None",
+      "walletBalance": 0,
+      "referralCount": 0,
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "referredBy": "admin",
+      "createdAt": "2026-09-18T01:57:17.077Z",
+      "lastLoginAt": "2026-09-18T01:57:17.077Z",
+      "emailVerified": true,
+      "isAdmin": false
+    }
   ]
 ]

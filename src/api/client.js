@@ -51,7 +51,9 @@ apiClient.interceptors.request.use(
       let token = null;
 
       // 1. Ensure Firebase Auth session is restored on page refresh/cold load
-      if (isFirebaseConfigured && auth) {
+      // Bypass authStateReady check for unauthenticated auth endpoints (send-otp, verify-otp) for instant response
+      const isPublicAuthRoute = config.url && (config.url.includes('/auth/send-otp') || config.url.includes('/auth/verify-otp'));
+      if (!isPublicAuthRoute && isFirebaseConfigured && auth) {
         try {
           if (!auth.currentUser && typeof auth.authStateReady === 'function') {
             await Promise.race([

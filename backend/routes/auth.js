@@ -402,20 +402,26 @@ router.post('/send-otp', async (req, res) => {
       rateInfo.windowStart = now;
     }
 
-    // Min 20s cooldown between code requests
+    const existingOtp = otpStore.get(rawEmail);
     const secondsSinceLast = Math.floor((now - rateInfo.lastSentAt) / 1000);
-    if (rateInfo.lastSentAt && secondsSinceLast < 20) {
-      return res.status(429).json({
-        success: false,
-        message: `Security cooldown active. Please wait ${20 - secondsSinceLast}s before requesting a new code.`,
-      });
+
+    // If request arrives within 15s cooldown and an active valid OTP exists, smoothly reuse it
+    if (rateInfo.lastSentAt && secondsSinceLast < 15) {
+      if (existingOtp && Date.now() < existingOtp.expiresAt) {
+        return res.json({
+          success: true,
+          isNewUser: existingOtp.isNewUser,
+          alreadySent: true,
+          message: `Verification code was recently sent to ${rawEmail}. Please check your inbox.`,
+        });
+      }
     }
 
-    // Max 6 requests per hour per email to protect from bots
-    if (rateInfo.count >= 6) {
+    // Max 10 requests per hour per email to protect from bots
+    if (rateInfo.count >= 10) {
       return res.status(429).json({
         success: false,
-        message: 'Too many verification requests. For security, please wait 15 minutes before trying again.',
+        message: 'Too many verification requests. For security, please wait 10 minutes before trying again.',
       });
     }
 
@@ -431,11 +437,14 @@ router.post('/send-otp', async (req, res) => {
       isNewUser = false;
     }
 
+    // Fast database check with 1200ms timeout guard
     const db = getDb();
     if (db) {
       try {
-        const snap = await db.collection('users').where('email', '==', rawEmail).get();
-        if (!snap.empty) {
+        const checkPromise = db.collection('users').where('email', '==', rawEmail).get();
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 1200));
+        const snap = await Promise.race([checkPromise, timeoutPromise]);
+        if (snap && !snap.empty) {
           isNewUser = false;
           existingUserData = snap.docs[0].data();
         }
@@ -447,14 +456,13 @@ router.post('/send-otp', async (req, res) => {
     const expiresAt = now + 10 * 60 * 1000; // 10 minutes expiry
     otpStore.set(rawEmail, { code, expiresAt, isNewUser, userData: existingUserData, attempts: 0 });
 
-    // Send email with OTP via secure SMTP
+    // Send email with OTP via secure SMTP (fast race, non-blocking)
     try {
       await sendCustomOtpEmail({ userEmail: rawEmail, otpCode: code });
     } catch (e) {
       console.warn('[OTP] Email dispatch note:', e?.message);
     }
 
-    // Security Notice: debugOtp is strictly omitted to prevent bot or hacker sniffing
     return res.json({
       success: true,
       isNewUser,
@@ -582,14 +590,19 @@ router.post('/verify-otp', async (req, res) => {
 router.post('/complete-otp-signup', async (req, res) => {
   try {
     const rawEmail = (req.body.email || '').toString().toLowerCase().trim();
-    const name = (req.body.name || '').toString().trim();
+    const fullName = (req.body.fullName || req.body.name || '').toString().trim();
+    const rawUsername = (req.body.username || '').toString().trim();
     const referralCode = (req.body.referralCode || '').toString().trim() || null;
 
     if (!rawEmail) {
       return res.status(400).json({ success: false, message: 'Email is required.' });
     }
 
-    const cleanUsername = name ? (name.startsWith('@') ? name : '@' + name) : '@' + rawEmail.split('@')[0];
+    const baseHandle = rawUsername
+      ? rawUsername.replace(/^@+/, '').trim()
+      : (fullName ? fullName.toLowerCase().replace(/[^a-z0-9_]/g, '') : rawEmail.split('@')[0]);
+
+    const cleanUsername = baseHandle ? (baseHandle.startsWith('@') ? baseHandle : '@' + baseHandle) : '@' + rawEmail.split('@')[0];
     const uid = 'user_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
 
     const isAdmin =
@@ -602,8 +615,11 @@ router.post('/complete-otp-signup', async (req, res) => {
     const newUser = {
       uid,
       email: rawEmail,
-      name: cleanUsername,
-      displayName: cleanUsername,
+      fullName: fullName || cleanUsername.replace(/^@+/, ''),
+      name: fullName || cleanUsername,
+      displayName: fullName || cleanUsername,
+      username: cleanUsername.replace(/^@+/, ''),
+      referralCode: cleanUsername.replace(/^@+/, ''),
       photoURL: null,
       currentPackage: 'None',
       walletBalance: 0,
