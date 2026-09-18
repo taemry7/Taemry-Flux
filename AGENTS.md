@@ -438,8 +438,15 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - **Official Script**: `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2033676745337447" crossorigin="anonymous"></script>` mounted in `index.html`.
   - **Ads.txt**: `public/ads.txt` contains `google.com, pub-2033676745337447, DIRECT, f08c47fec0942fa0` and is served directly by `server.ts` via `/ads.txt` with `text/plain` headers.
   - **Ad Placements**:
-    - `src/components/GoogleAdSense.jsx` reusable component with safe push queuing.
-    - Prominently integrated into `src/pages/WatchAds.jsx` (top sponsored banner above the 400 ads directory, and bottom sponsored banner below directory).
-    - Integrated into `src/components/SponsorAdModal.jsx` to render active AdSense display units whenever any ad is watched.
+    - `src/components/GoogleAdSense.jsx` reusable component with safe push queuing and responsive styling.
+    - **Active on All Pages**:
+      - **Home Page** (`src/pages/HomePage.jsx`): Sponsor network unit above footer.
+      - **Dashboard Overview** (`src/pages/DashboardPage.jsx`): Overview tab sponsor unit.
+      - **Watch Ads** (`src/pages/WatchAds.jsx`): Top and bottom sponsor units in the ad directory.
+      - **Watch Ads Click Modal** (`src/components/SponsorAdModal.jsx`): Clicking "Watch Now" on any ad immediately displays the active Google AdSense sponsored display unit front and center with real-time countdown timer before claiming reward.
+      - **Deposit Page** (`src/pages/DepositPage.jsx`): Bottom sponsor unit.
+      - **Withdraw Page** (`src/pages/WithdrawPage.jsx`): Bottom sponsor unit.
+      - **Whitepaper Page** (`src/pages/WhitepaperPage.jsx`): Official protocol sponsor unit.
+      - **Support Page** (`src/pages/SupportPage.jsx`): Support desk sponsor unit.
 
 

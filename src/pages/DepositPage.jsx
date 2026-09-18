@@ -27,6 +27,7 @@ import {
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import GoogleAdSense from '../components/GoogleAdSense';
 import { formatCurrency } from '../config/milestones.config';
 
 export default function DepositPage({ onSelectTab, onNavigate }) {
@@ -938,6 +939,9 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
           </div>
         )}
       </div>
+
+      {/* GOOGLE ADSENSE DEPOSIT PAGE BANNER */}
+      <GoogleAdSense label="Official Sponsor Network" format="auto" className="mt-4" />
     </div>
   );
 }

@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import apiClient, { apiGet, apiPost } from '../api/client';
+import GoogleAdSense from '../components/GoogleAdSense';
 
 export default function SupportPage({ onNavigate }) {
   const { currentUser } = useAuth();
@@ -588,6 +589,9 @@ export default function SupportPage({ onNavigate }) {
             </div>
           </div>
         </div>
+
+        {/* GOOGLE ADSENSE SUPPORT PAGE BANNER */}
+        <GoogleAdSense label="Official Sponsor Network" format="auto" className="mt-8" />
       </div>
     </div>
   );

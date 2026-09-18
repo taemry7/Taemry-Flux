@@ -188,75 +188,56 @@ export default function SponsorAdModal({
         </div>
 
         {/* AD DISPLAY CANVAS */}
-        <div className="px-5 py-4 flex-1 flex flex-col justify-center items-center min-h-[260px] bg-linear-to-b from-slate-50 to-slate-100 dark:from-[#05171b] dark:to-[#082228] mx-5 my-2 rounded-2xl border border-slate-200 dark:border-[#134e5a]/60 overflow-hidden relative text-center">
+        <div className="px-5 py-4 flex-1 flex flex-col justify-center items-center min-h-[280px] bg-linear-to-b from-slate-50 to-slate-100 dark:from-[#05171b] dark:to-[#082228] mx-5 my-2 rounded-2xl border border-slate-200 dark:border-[#134e5a]/60 overflow-hidden relative text-center">
+          {/* PRIMARY GOOGLE ADSENSE SPONSORED AD UNIT */}
+          <div className="w-full">
+            <GoogleAdSense
+              adKey={`modal-ad-${ad?.adNumber || 'active'}`}
+              label={`Official Sponsor Ad #${ad?.adNumber || 1}`}
+              format="auto"
+              minHeight="140px"
+              className="my-1"
+            />
+          </div>
+
           {isDirectLink ? (
             /* DIRECT LINK AD EXPERIENCE */
-            <div className="w-full flex flex-col items-center justify-center p-2 space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
-                <Globe className="w-7 h-7" />
-              </div>
-              <div>
-                <h4 className="text-base font-black text-[#09353e] dark:text-white">
+            <div className="w-full flex flex-col items-center justify-center p-2 space-y-2 mt-2">
+              <div className="flex items-center gap-2">
+                <Globe className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                <h4 className="text-sm font-black text-[#09353e] dark:text-white">
                   {currentAdConfig.shortName}
                 </h4>
-                <p className="text-xs text-[#526d72] dark:text-slate-400 mt-1 max-w-sm">
-                  {currentAdConfig.description}
-                </p>
               </div>
 
               {/* Direct Link Click Action Button */}
               <button
                 type="button"
                 onClick={handleOpenDirectLink}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0c5963] hover:bg-[#09424a] active:scale-95 text-white text-xs font-bold shadow-md shadow-[#0c5963]/25 transition-all cursor-pointer"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#0c5963] hover:bg-[#09424a] active:scale-95 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
               >
-                <span>Open Partner Ad in New Tab</span>
+                <span>Visit Sponsor Portal</span>
                 <ExternalLink className="w-3.5 h-3.5" />
               </button>
-
-              <div className="text-[11px] text-[#627d83] dark:text-slate-400 font-mono bg-white/70 dark:bg-black/30 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-800 truncate max-w-xs">
-                {currentAdConfig.url}
-              </div>
             </div>
           ) : (
-            /* SCRIPT / VIGNETTE ZONE AD EXPERIENCE */
-            <div className="w-full flex flex-col items-center justify-center p-2 space-y-3">
-              <div className="w-14 h-14 rounded-2xl bg-[#0c5963]/10 dark:bg-[#2dd4bf]/10 text-[#0c5963] dark:text-[#2dd4bf] flex items-center justify-center">
-                <Radio className="w-7 h-7 animate-pulse" />
+            /* SCRIPT / COMMERCIAL ZONE AD EXPERIENCE */
+            <div className="w-full flex items-center justify-between px-3 py-1.5 rounded-xl bg-white/80 dark:bg-[#0c262e]/80 border border-slate-200/80 dark:border-[#173740] text-[11px] text-[#0c5963] dark:text-[#38bdf8] mt-2">
+              <div className="flex items-center gap-1.5 font-bold">
+                <Radio className="w-3.5 h-3.5 text-emerald-500 animate-pulse" />
+                <span>{currentAdConfig?.shortName || sponsorName}</span>
               </div>
-
-              <div>
-                <h4 className="text-base font-black text-[#09353e] dark:text-white">
-                  {currentAdConfig?.shortName || sponsorName}
-                </h4>
-                <p className="text-xs text-[#526d72] dark:text-slate-400 mt-1 max-w-sm">
-                  {currentAdConfig?.description || 'Active Monetag verified commercial ad tag stream'}
-                </p>
-              </div>
-
-              {currentAdConfig?.zone && (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#0c262e] border border-slate-200 dark:border-[#173740] text-xs font-bold text-[#0c5963] dark:text-[#38bdf8]">
-                  <Tag className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Monetag Zone: {currentAdConfig.zone}</span>
-                </div>
-              )}
-
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 text-[11px] font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                <span>Script Zone Active & Streaming</span>
+              <div className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                <span>Streaming Verified Ad</span>
               </div>
             </div>
           )}
 
-          <div className="w-full pt-3 flex items-center justify-between text-[10px] text-[#718589] dark:text-slate-500 border-t border-slate-200/60 dark:border-slate-800 mt-4">
-            <span>Powered by Monetag & Google AdSense</span>
+          <div className="w-full pt-2 flex items-center justify-between text-[10px] text-[#718589] dark:text-slate-500 border-t border-slate-200/60 dark:border-slate-800 mt-3">
+            <span>Powered by Google AdSense & Partner Network</span>
             <span>Family-safe • Verified Commercial Ad</span>
           </div>
-        </div>
-
-        {/* GOOGLE ADSENSE MODAL DISPLAY UNIT */}
-        <div className="px-5 py-1">
-          <GoogleAdSense label="Sponsored Network" format="auto" className="my-1" />
         </div>
 
         {/* EXIT CONFIRMATION OVERLAY */}

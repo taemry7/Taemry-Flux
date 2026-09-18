@@ -43,6 +43,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../api/client';
 import Logo from '../components/Logo';
+import GoogleAdSense from '../components/GoogleAdSense';
 
 export default function WhitepaperPage({ onNavigate }) {
   const [copied, setCopied] = useState(false);
@@ -844,6 +845,9 @@ export default function WhitepaperPage({ onNavigate }) {
               </div>
             </section>
           )}
+
+          {/* GOOGLE ADSENSE WHITEPAPER SPONSOR BANNER */}
+          <GoogleAdSense label="Official Protocol Sponsor" format="auto" className="my-6" />
 
           {/* Document Footer Signature */}
           <div className="mt-8 pt-6 border-t border-[#ece5d8] dark:border-[#173740] text-center text-xs text-[#718286] dark:text-[#94a3b8]">

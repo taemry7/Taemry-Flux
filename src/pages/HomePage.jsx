@@ -27,6 +27,7 @@ import {
 import { AnimatePresence, motion } from 'motion/react';
 import Logo from '../components/Logo';
 import LiveLeaderboard from '../components/LiveLeaderboard';
+import GoogleAdSense from '../components/GoogleAdSense';
 import { useAuth } from '../context/AuthContext';
 import { apiGet } from '../api/client';
 import { db, isFirebaseConfigured } from '../firebase/firebase.config';
@@ -1539,6 +1540,11 @@ export default function HomePage({ onNavigate }) {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* GOOGLE ADSENSE HOMEPAGE SPONSOR UNIT */}
+      <section className="py-4 px-4 sm:px-6 max-w-5xl mx-auto">
+        <GoogleAdSense label="Official Sponsor Network" format="auto" />
       </section>
 
       {/* Pre-Footer Call to Action */}

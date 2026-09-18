@@ -43,6 +43,7 @@ import WithdrawPage from './WithdrawPage';
 import TransactionHistory from './TransactionHistory';
 import AccountSettings from './AccountSettings';
 import LiveLeaderboard from '../components/LiveLeaderboard';
+import GoogleAdSense from '../components/GoogleAdSense';
 import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
 import { triggerPageTransition } from '../utils/pageTransitions';
 
@@ -641,6 +642,9 @@ export default function DashboardPage({
                   </button>
                 </div>
               </div>
+
+              {/* GOOGLE ADSENSE DASHBOARD OVERVIEW UNIT */}
+              <GoogleAdSense label="Sponsored Network" format="auto" className="mt-4" />
             </div>
           )}
 
