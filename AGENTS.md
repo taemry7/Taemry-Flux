@@ -315,11 +315,21 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
 ## STRICT INVARIANT: Login & Sign Up Page & Authentication Engine Lock (PERMANENT & LOCKED)
 - **Zero Unsolicited Modifications**:
   - `src/pages/LoginPage.jsx`, `src/context/AuthContext.jsx`, `backend/routes/auth.js`, and `src/utils/googleAuth.js` are 100% permanently finalized and locked against any auto-reverting, restructuring, refactoring, or speculative edits.
+- **New User Flow (Create Password & 6-Digit Email Code)**:
+  - When a new user enters a new email:
+    1. The screen transitions to "Verify Your Email".
+    2. The first step prompts "Create your password" (minimum 6 characters).
+    3. Upon saving the password, the user proceeds to enter the 6-digit verification code sent to their email to complete registration.
+- **Old User Flow (Existing Password & OTP Login)**:
+  - When an existing user enters their email:
+    1. They enter their existing password to continue.
+    2. If the password entered is wrong, "Incorrect password. Please verify your password and try again, or reset it via Forgot Password." is displayed.
+    3. They can also seamlessly sign in using the 6-digit OTP email code.
 - **Accurate Error Messaging & Account Existence Discrimination**:
   - When an unregistered email attempts to sign in, the system accurately displays:
     `"No account found with this email. Please sign up to create your account first."` along with the direct trigger to switch to Sign Up.
   - When a registered account enters an incorrect password, the system displays:
-    `"Incorrect password. If you forgot your password, please click 'Forgot password?' to reset it."` along with the direct trigger to open Forgot Password.
+    `"Incorrect password. Please verify your password and try again, or reset it via Forgot Password."`
   - No instant password reset modal; standard email reset link workflow is preserved cleanly.
 - **Console Notice Cleanliness**:
   - Routine user auth validation rejections (unregistered emails, wrong passwords, user-canceled popups) use clean console notifications (`console.warn`) rather than `console.error` to keep preview logs pristine.
@@ -417,5 +427,19 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   9. Medium Rectangle (300x250): Key `348bec7e11d69dd8e00ad7abcfda220e`
   10. Full Banner (468x60): Key `f8a64be7a0f9f117ae6527aef89422ce`
 - **Zero Adult Content Invariant**: All ad categories, tags, labels, and configurations strictly exclude 18+ and adult content. Only clean, verified commercial sponsor categories are permitted.
+
+## STRICT INVARIANT: Google AdSense Setup & Instead Button Removal (PERMANENT & LOCKED)
+- **Instead Button Removal (PERMANENT)**:
+  - Per user explicit directive ("ye is button instead ko mukammal khatam karo ok"):
+  - The button `#btn-switch-to-otp` ("Or sign in with 6-digit email code instead") has been completely removed from `LoginPage.jsx`.
+- **Google AdSense Integration (PERMANENT)**:
+  - **Account Publisher ID**: `ca-pub-2033676745337447`
+  - **Meta Tag**: `<meta name="google-adsense-account" content="ca-pub-2033676745337447">` synchronized in `index.html`.
+  - **Official Script**: `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2033676745337447" crossorigin="anonymous"></script>` mounted in `index.html`.
+  - **Ads.txt**: `public/ads.txt` contains `google.com, pub-2033676745337447, DIRECT, f08c47fec0942fa0` and is served directly by `server.ts` via `/ads.txt` with `text/plain` headers.
+  - **Ad Placements**:
+    - `src/components/GoogleAdSense.jsx` reusable component with safe push queuing.
+    - Prominently integrated into `src/pages/WatchAds.jsx` (top sponsored banner above the 400 ads directory, and bottom sponsored banner below directory).
+    - Integrated into `src/components/SponsorAdModal.jsx` to render active AdSense display units whenever any ad is watched.
 
 

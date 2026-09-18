@@ -178,6 +178,13 @@ async function startServer() {
     res.sendFile(robotsPath);
   });
 
+  app.get('/ads.txt', (req, res) => {
+    const adsTxtPath = path.join(process.cwd(), 'public', 'ads.txt');
+    res.setHeader('Content-Type', 'text/plain');
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.sendFile(adsTxtPath);
+  });
+
   app.get('/sitemap.xml', (req, res) => {
     const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
     res.setHeader('Content-Type', 'application/xml');

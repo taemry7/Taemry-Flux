@@ -18,6 +18,7 @@ import {
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import SponsorAdModal from '../components/SponsorAdModal';
+import GoogleAdSense from '../components/GoogleAdSense';
 import { MONETAG_ADS, getMonetagAdForNumber } from '../config/monetagAds';
 
 const WATCH_ADS_PACKAGES = [
@@ -375,6 +376,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       )}
 
+      {/* TOP GOOGLE ADSENSE SPONSOR BANNER */}
+      <GoogleAdSense label="Sponsored Network" format="auto" className="my-3" />
+
       {/* 400 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f0ebe0] pb-4 gap-2">
@@ -489,6 +493,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           })}
         </div>
       </div>
+
+      {/* BOTTOM GOOGLE ADSENSE SPONSOR BANNER */}
+      <GoogleAdSense label="Sponsored Network" format="auto" className="mt-4" />
 
       {/* SPONSOR AD VIEWER & REWARD CLAIM MODAL */}
       <SponsorAdModal

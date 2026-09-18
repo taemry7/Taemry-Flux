@@ -430,9 +430,17 @@ router.post('/send-otp', async (req, res) => {
     rateInfo.count += 1;
     otpRateLimit.set(rawEmail, rateInfo);
 
-    // Check if user exists
+    // Check if user exists accurately across all registries
     let isNewUser = true;
     let existingUserData = null;
+
+    try {
+      const exists = await checkUserExists(rawEmail);
+      if (exists) {
+        isNewUser = false;
+      }
+    } catch (e) {}
+
     const persistentList = getPersistentRegisteredEmails();
     if (persistentList.includes(rawEmail)) {
       isNewUser = false;
@@ -679,6 +687,33 @@ router.post('/complete-otp-signup', async (req, res) => {
         }
       } catch (dbErr) {
         console.warn('[OTP Complete Signup] User save notice:', dbErr.message);
+      }
+    }
+
+    // Register or update password in Firebase Auth if provided
+    const rawPassword = (req.body.password || '').toString().trim();
+    if (rawPassword && rawPassword.length >= 6) {
+      try {
+        if (admin && typeof admin.auth === 'function') {
+          try {
+            await admin.auth().createUser({
+              uid,
+              email: rawEmail,
+              password: rawPassword,
+              displayName: fullName || cleanUsername,
+              emailVerified: true,
+            });
+          } catch (createAuthErr) {
+            try {
+              const existingAuthUser = await admin.auth().getUserByEmail(rawEmail);
+              if (existingAuthUser) {
+                await admin.auth().updateUser(existingAuthUser.uid, { password: rawPassword });
+              }
+            } catch (updateAuthErr) {}
+          }
+        }
+      } catch (authErr) {
+        console.warn('[OTP Complete Signup] Firebase Auth password notice:', authErr.message);
       }
     }
 

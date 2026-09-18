@@ -155,16 +155,19 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       if (res.data?.success) {
         setIsNewUser(Boolean(res.data.isNewUser));
         setAuthStage('otp');
+        setVerifyMode('password');
         setOtpCountdown(15);
         setOtpCode('');
       } else {
         setAuthStage('otp');
+        setVerifyMode('password');
         setOtpCountdown(15);
       }
     } catch {
       clearTimeout(loadingTimer);
       setLoading(false);
       setAuthStage('otp');
+      setVerifyMode('password');
       setOtpCountdown(15);
     }
   };
@@ -181,10 +184,28 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     const cleanPassword = (password || '').trim();
 
     if (!cleanPassword) {
-      setError('Please enter your password.');
+      setError(isNewUser ? 'Please create a password for your account.' : 'Please enter your password.');
       return;
     }
 
+    if (cleanPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+
+    // NEW USER: User creates password on this div, then proceeds to 6-digit code verification
+    if (isNewUser) {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+        setVerifyMode('otp');
+        setResendNotice('Password created! Now enter the 6-digit verification code sent to your email.');
+        setTimeout(() => setResendNotice(''), 6000);
+      }, 400);
+      return;
+    }
+
+    // EXISTING USER: Authenticate with existing password
     setLoading(true);
     // Strict 2-second max duration per user instruction ("2 sec time karo")
     const loadingTimer = setTimeout(() => {
@@ -205,34 +226,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     } catch (err) {
       clearTimeout(loadingTimer);
       setLoading(false);
-      const msg = (err?.message || '').toLowerCase();
-      if (
-        msg.includes('password') ||
-        msg.includes('wrong') ||
-        msg.includes('invalid-credential') ||
-        err?.code === 'auth/wrong-password' ||
-        err?.code === 'auth/invalid-credential'
-      ) {
-        setIsIncorrectPassword(true);
-        setError('Incorrect password. Please verify your password and try again, or reset it via Forgot Password.');
-      } else if (msg.includes('user-not-found') || msg.includes('no account found') || isNewUser) {
-        try {
-          await signup(cleanEmail, cleanPassword, displayName || cleanEmail.split('@')[0]);
-          try {
-            if (localStorage.getItem('taemry_selected_package')) {
-              onNavigate('dashboard', 'buy-package');
-              return;
-            }
-          } catch {}
-          onNavigate('home');
-        } catch (signupErr) {
-          setIsIncorrectPassword(true);
-          setError(signupErr?.message || 'Incorrect password or credentials. Please try again.');
-        }
-      } else {
-        setIsIncorrectPassword(true);
-        setError(err?.message || 'Incorrect password. Please try again.');
-      }
+      setIsIncorrectPassword(true);
+      setError('Incorrect password. Please verify your password and try again, or reset it via Forgot Password.');
     }
   };
 
@@ -381,11 +376,13 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }, 2000);
 
     try {
+      const cleanPass = (password || '').trim();
       const res = await apiClient.post('/auth/complete-otp-signup', {
         email: cleanEmail,
         fullName: cleanFullName,
         name: cleanFullName,
         username: cleanUsername,
+        password: cleanPass,
         referralCode: referredBy?.trim() || null,
       });
       clearTimeout(loadingTimer);
@@ -394,6 +391,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       if (res.data?.success) {
         const createdUser = res.data.user;
         establishOtpSession(createdUser);
+        if (cleanPass) {
+          try {
+            await signup(cleanEmail, cleanPass, cleanFullName);
+          } catch {}
+        }
         try {
           localStorage.removeItem('referralCode');
           localStorage.removeItem('taemry_referral_sponsor');
@@ -503,7 +505,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               : authStage === 'profile'
               ? 'Complete Your Profile'
               : authStage === 'otp'
-              ? 'Verify Your Email'
+              ? (isNewUser ? 'Verify Your Email' : 'Account Verification')
               : 'Welcome back'}
           </h2>
 
@@ -515,7 +517,15 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               'Enter your full name, username, and sponsor referral'
             ) : authStage === 'otp' ? (
               <>
-                {verifyMode === 'password' ? 'Enter your password to verify your account for ' : 'Enter the 6-digit code sent to '}
+                {isNewUser ? (
+                  verifyMode === 'password'
+                    ? 'Create your password to set up your account for '
+                    : 'Enter the 6-digit code sent to '
+                ) : (
+                  verifyMode === 'password'
+                    ? 'Enter your password to verify your account for '
+                    : 'Enter the 6-digit code sent to '
+                )}
                 <strong className="text-[#0c5963] dark:text-[#2dd4bf] font-semibold">{email}</strong>
               </>
             ) : (
@@ -746,7 +756,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                 }`}
               >
                 <Lock className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf]" />
-                <span>Password</span>
+                <span>{isNewUser ? 'Create Password' : 'Password'}</span>
               </button>
 
               <button
@@ -776,17 +786,23 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       htmlFor="input-password"
                       className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8]"
                     >
-                      Enter your password
+                      {isNewUser ? 'Create your password' : 'Enter your password'}
                     </label>
-                    <button
-                      id="btn-forgot-password"
-                      type="button"
-                      disabled={forgotLoading || loading}
-                      onClick={handleForgotPassword}
-                      className="text-xs font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline disabled:opacity-50 cursor-pointer"
-                    >
-                      {forgotLoading ? 'Sending link...' : 'Forgot password?'}
-                    </button>
+                    {isNewUser ? (
+                      <span className="text-[11px] font-semibold text-[#0c5963] dark:text-[#2dd4bf] bg-[#0c5963]/10 dark:bg-[#2dd4bf]/10 px-2 py-0.5 rounded-md">
+                        New Account
+                      </span>
+                    ) : (
+                      <button
+                        id="btn-forgot-password"
+                        type="button"
+                        disabled={forgotLoading || loading}
+                        onClick={handleForgotPassword}
+                        className="text-xs font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline disabled:opacity-50 cursor-pointer"
+                      >
+                        {forgotLoading ? 'Sending link...' : 'Forgot password?'}
+                      </button>
+                    )}
                   </div>
                   <div className="relative">
                     <input
@@ -799,7 +815,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                         setPassword(e.target.value);
                         if (error) setError('');
                       }}
-                      placeholder="Enter your password"
+                      placeholder={isNewUser ? 'Create your password (min 6 characters)' : 'Enter your password'}
                       className="w-full pl-10 pr-10 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
                     />
                     <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -812,6 +828,12 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {isNewUser && (
+                    <p className="text-[11px] text-[#657d82] dark:text-[#94a3b8] mt-1.5 flex items-center gap-1.5">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf] flex-shrink-0" />
+                      <span>Create your password, then verify with your 6-digit email code.</span>
+                    </p>
+                  )}
                 </div>
 
                 {/* Submit Password Button (with 2-sec max loading) */}
@@ -824,11 +846,11 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
                   {loading ? (
                     <div className="flex items-center justify-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>Verifying Credentials...</span>
+                      <span>{isNewUser ? 'Saving Password...' : 'Verifying Password...'}</span>
                     </div>
                   ) : (
                     <>
-                      <span>Verify Password & Sign In</span>
+                      <span>{isNewUser ? 'Save Password & Continue to 6-Digit Code' : 'Verify Password & Sign In'}</span>
                       <ArrowRight className="w-4 h-4" />
                     </>
                   )}

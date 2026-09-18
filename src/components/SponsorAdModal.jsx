@@ -21,6 +21,7 @@ import {
   Tag,
 } from 'lucide-react';
 import { getMonetagAdForNumber, triggerAdScript } from '../config/monetagAds';
+import GoogleAdSense from './GoogleAdSense';
 
 const AD_WATCH_DURATION = 6; // 6 seconds active viewing requirement
 
@@ -248,9 +249,14 @@ export default function SponsorAdModal({
           )}
 
           <div className="w-full pt-3 flex items-center justify-between text-[10px] text-[#718589] dark:text-slate-500 border-t border-slate-200/60 dark:border-slate-800 mt-4">
-            <span>Powered by Monetag Ad Network</span>
+            <span>Powered by Monetag & Google AdSense</span>
             <span>Family-safe • Verified Commercial Ad</span>
           </div>
+        </div>
+
+        {/* GOOGLE ADSENSE MODAL DISPLAY UNIT */}
+        <div className="px-5 py-1">
+          <GoogleAdSense label="Sponsored Network" format="auto" className="my-1" />
         </div>
 
         {/* EXIT CONFIRMATION OVERLAY */}
