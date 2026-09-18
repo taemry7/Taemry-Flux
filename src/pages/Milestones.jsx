@@ -324,8 +324,8 @@ export default function Milestones({ onSelectTab }) {
                 : 'text-[#657d82] dark:text-[#94a3b8] hover:text-[#09353e]'
             }`}
           >
-            <Users className="w-3.5 h-3.5 text-[#d97706]" />
-            <span>Team Ads Ladder</span>
+            <Lock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+            <span>Team Ads (Locked)</span>
           </button>
         </div>
       </div>
@@ -819,30 +819,31 @@ export default function Milestones({ onSelectTab }) {
                 </div>
 
                 <p className="text-[11px] text-[#546b70] dark:text-[#94a3b8] pt-1">
-                  Target Bonus: <strong>${milestoneStatus.team?.nextMilestone?.bonusAmount?.toFixed(2)}</strong> unlocked when your organization reaches {formatNumber(milestoneStatus.team?.nextMilestone?.adsRequired)} team ads.
+                  Target Bonus: <strong>${milestoneStatus.team?.nextMilestone?.bonusAmount?.toFixed(2)}</strong> (Locked) when your organization reaches {formatNumber(milestoneStatus.team?.nextMilestone?.adsRequired)} team ads.
                 </p>
+              </div>
+
+              {/* LOCKED TEAM ADS NOTIFICATION */}
+              <div className="mt-4 p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                    Team Ads Milestone Rewards Locked
+                  </h4>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                    Team Ads milestone reward distribution is currently locked by system administration. Team ad views continue to be tracked in your team ledger.
+                  </p>
+                </div>
               </div>
             </div>
 
             <div>
-              {milestoneStatus.team?.claimableMilestone ? (
-                <button
-                  id="btn-claim-team"
-                  onClick={() => handleClaimTeamAds(milestoneStatus.team.claimableMilestone.adsRequired)}
-                  disabled={claimLoading}
-                  className="w-full py-3.5 px-4 bg-linear-to-r from-[#d97706] to-[#b45309] hover:from-[#b45309] hover:to-[#92400e] text-white text-xs font-extrabold rounded-2xl shadow-sm shadow-[#d97706]/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
-                >
-                  <Award className="w-4 h-4" />
-                  <span>
-                    Claim ${milestoneStatus.team.claimableMilestone.bonusAmount?.toFixed(2)} Team Ads Bonus! ({formatNumber(milestoneStatus.team.claimableMilestone.adsRequired)} Ads)
-                  </span>
-                </button>
-              ) : (
-                <div className="w-full py-3 px-4 bg-[#f2ede4] dark:bg-[#081a20] text-[#718589] dark:text-[#627a7f] text-xs font-bold rounded-2xl border border-[#e4ded2] dark:border-[#173740] flex items-center justify-center gap-2">
-                  <Lock className="w-3.5 h-3.5" />
-                  <span>Next Team Ads Bonus at {formatNumber(milestoneStatus.team?.nextMilestone?.adsRequired)} Ads</span>
-                </div>
-              )}
+              <div className="w-full py-3.5 px-4 bg-[#f2ede4] dark:bg-[#081a20] text-[#718589] dark:text-[#94a3b8] text-xs font-bold rounded-2xl border border-[#e4ded2] dark:border-[#173740] flex items-center justify-center gap-2 cursor-not-allowed">
+                <Lock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                <span>Team Ads Milestone Rewards Locked by Administration</span>
+              </div>
             </div>
           </div>
         </div>

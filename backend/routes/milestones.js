@@ -236,67 +236,11 @@ router.post('/claim', verifyToken, async (req, res) => {
       });
     }
 
-    // 2. Legacy Team Ads Milestone support
+    // 2. Team Ads Milestone support - LOCKED per user instruction
     if (type === 'team') {
-      const currentAds = Number(user.teamAdsCount) || 0;
-      const claimedArray = Array.isArray(user.claimedTeamMilestones) ? [...user.claimedTeamMilestones] : [];
-      const claimedSet = new Set(claimedArray.map(Number));
-
-      let targetMilestone = milestoneAds
-        ? activeMilestones.find((m) => m.ads === Number(milestoneAds))
-        : activeMilestones.find((m) => currentAds >= m.ads && !claimedSet.has(m.ads));
-
-      if (!targetMilestone) {
-        return res.status(400).json({
-          error: 'No Unclaimed Milestone',
-          message: 'You do not have any unclaimed team milestones at this time.',
-        });
-      }
-
-      if (currentAds < targetMilestone.ads) {
-        return res.status(400).json({
-          error: 'Milestone Not Reached',
-          message: `You need ${targetMilestone.ads.toLocaleString()} team ads. Current: ${currentAds.toLocaleString()}.`,
-        });
-      }
-
-      if (claimedSet.has(targetMilestone.ads)) {
-        return res.status(400).json({
-          error: 'Already Claimed',
-          message: `Already claimed ${targetMilestone.ads.toLocaleString()} team ads milestone.`,
-        });
-      }
-
-      const bonus = Number(targetMilestone.bonus);
-      const newBalance = +((Number(user.walletBalance) || 0) + bonus).toFixed(4);
-      const newTotalEarned = +((Number(user.totalEarned) || 0) + bonus).toFixed(4);
-      const updatedClaimed = [...claimedArray, targetMilestone.ads];
-
-      await userRef.update({
-        walletBalance: newBalance,
-        totalEarned: newTotalEarned,
-        claimedTeamMilestones: updatedClaimed,
-      });
-
-      await db.collection('transactions').add({
-        uid,
-        type: 'milestone_claim',
-        milestoneType: 'team',
-        milestoneAds: targetMilestone.ads,
-        bonusAmount: bonus,
-        previousBalance: user.walletBalance,
-        newBalance,
-        createdAt: new Date().toISOString(),
-        description: `Claimed team ads milestone (${targetMilestone.ads.toLocaleString()} ads) for $${bonus.toFixed(2)} bonus`,
-      });
-
-      return res.json({
-        success: true,
-        bonus,
-        newBalance,
-        claimedMilestone: targetMilestone.ads,
-        claimedArray: updatedClaimed,
-        message: `Successfully claimed $${bonus.toFixed(2)} bonus for ${targetMilestone.ads.toLocaleString()} team ads!`,
+      return res.status(403).json({
+        error: 'Team Ads Rewards Locked',
+        message: 'Team ads milestone rewards are currently locked by administration.',
       });
     }
 

@@ -479,7 +479,7 @@ export default function DashboardPage({
                       <div className="w-full bg-[#e8e2d5] dark:bg-[#15343d] h-2 rounded-full overflow-hidden">
                         <div
                           className="bg-linear-to-r from-[#7c3aed] to-[#0c5963] h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, Math.round(((stats.dailyAdCount ?? 0) / 200) * 100))}%` }}
+                          style={{ width: `${Math.min(100, Math.round(((stats.dailyAdCount ?? 0) / 400) * 100))}%` }}
                         />
                       </div>
                     </div>

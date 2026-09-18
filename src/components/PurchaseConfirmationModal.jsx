@@ -52,7 +52,7 @@ export default function PurchaseConfirmationModal({
   const canAfford = currentBal >= pkgPrice;
   const balanceAfter = currentBal - pkgPrice;
   const dailyYieldPercent = packageData.rewardRate || '20%';
-  const dailyLimit = Number(packageData.dailyLimit || 200);
+  const dailyLimit = Number(packageData.dailyLimit || 400);
   const estimatedDailyYield = (pkgPrice * 0.20).toFixed(2);
   const tierDisplayName = packageData.tierName || packageData.name || 'Package';
 

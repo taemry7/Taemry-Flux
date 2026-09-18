@@ -31,9 +31,9 @@ export const DEFAULT_SETTINGS = {
   withdrawalCooldownMinutes: 0,
   referralRequired: 1,
   // Ads Engine Configuration
-  dailyAdLimit: 200,
+  dailyAdLimit: 400,
   adTimerSeconds: 60,
-  adRewardPercentage: 0.1, // 0.1% of package price
+  adRewardPercentage: 0.05, // 0.05% of package price
   adCooldownSeconds: 0, // 0s = disabled / consecutive watching allowed
   uplineCommissionPercentage: 50, // 50% distributed to uplines
   requirePackageForAds: true,

@@ -82,16 +82,14 @@ export const calculateMilestoneStatus = (currentVal = 0, milestonesList = [], cl
 
   return {
     currentAds: Number(currentVal),
+    isLocked: true,
     nextMilestone: {
       adsRequired: targetAds,
       bonusAmount: nextMilestone ? nextMilestone.bonus : 0,
+      isLocked: true,
     },
     progressPercentage,
-    claimableMilestone: nextClaimable ? {
-      adsRequired: nextClaimable.ads,
-      bonusAmount: nextClaimable.bonus,
-      label: nextClaimable.label,
-    } : null,
+    claimableMilestone: null, // Locked per administration directive
   };
 };
 

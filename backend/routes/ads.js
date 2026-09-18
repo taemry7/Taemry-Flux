@@ -53,10 +53,10 @@ router.get('/status', verifyToken, async (req, res) => {
     const hasActivePackage = user.currentPackage && user.currentPackage !== 'None';
     const isEligible = Boolean(user.isEligible && hasActivePackage);
 
-    const dailyLimit = Number(settings.dailyAdLimit || 200);
+    const dailyLimit = Number(settings.dailyAdLimit || 400);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    // 20% daily return distributed across 200 ads = 0.10% per ad (20% / 200)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.1;
+    // 20% daily return distributed across 400 ads = 0.05% per ad (20% / 400)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.05;
     const rewardRate = rewardPercentage / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
@@ -108,26 +108,26 @@ router.get('/listing', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
-    const dailyLimit = Number(settings.dailyAdLimit || 200);
+    const dailyLimit = Number(settings.dailyAdLimit || 400);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    const rewardRate = (Number(settings.adRewardPercentage) || 0.1) / 100;
+    const rewardRate = (Number(settings.adRewardPercentage) || 0.05) / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
     const rewardPerAd = +(packagePrice * rewardRate).toFixed(4);
 
-    // 10 Clean (Non-Adult) Adsterra Sponsors rotation per publisher specification
+    // 10 Clean Verified Digital Sponsors rotation per publisher specification
     const sponsorTemplates = [
-      { name: 'Adsterra Social Push & Display', category: 'Cloud & Digital Services', tag: 'Adsterra Unit #1' },
-      { name: 'Adsterra Native Recommendation', category: 'Tech Innovations & AI', tag: 'Adsterra Unit #2' },
-      { name: 'Adsterra Interstitial & Display', category: 'Global Web Solutions', tag: 'Adsterra Unit #3' },
-      { name: 'Adsterra Verified SmartLink', category: 'Featured Sponsor Portal', tag: 'Adsterra Unit #4' },
-      { name: 'Adsterra Vertical Display (160x300)', category: 'Financial Analytics', tag: 'Adsterra Unit #5' },
-      { name: 'Adsterra Skyscraper Display (160x600)', category: 'Cybersecurity & Infrastructure', tag: 'Adsterra Unit #6' },
-      { name: 'Adsterra Leaderboard Display (728x90)', category: 'E-Commerce & Digital Marketplace', tag: 'Adsterra Unit #7' },
-      { name: 'Adsterra Mobile Compact (320x50)', category: 'Mobile Utilities & Apps', tag: 'Adsterra Unit #8' },
-      { name: 'Adsterra Medium Rectangle (300x250)', category: 'Decentralized Networks', tag: 'Adsterra Unit #9' },
-      { name: 'Adsterra Full Banner Display (468x60)', category: 'Smart Web Systems', tag: 'Adsterra Unit #10' },
+      { name: 'Sponsored Push & Display', category: 'Cloud & Digital Services', tag: 'Unit #1' },
+      { name: 'Native Recommendation', category: 'Tech Innovations & AI', tag: 'Unit #2' },
+      { name: 'Global Media & Display', category: 'Global Web Solutions', tag: 'Unit #3' },
+      { name: 'Verified Partner Portal', category: 'Featured Sponsor Portal', tag: 'Unit #4' },
+      { name: 'Financial Analytics', category: 'Financial Analytics', tag: 'Unit #5' },
+      { name: 'Cybersecurity & Infrastructure', category: 'Cybersecurity & Infrastructure', tag: 'Unit #6' },
+      { name: 'E-Commerce & Digital Marketplace', category: 'E-Commerce & Digital Marketplace', tag: 'Unit #7' },
+      { name: 'Mobile Utilities & Apps', category: 'Mobile Utilities & Apps', tag: 'Unit #8' },
+      { name: 'Decentralized Networks', category: 'Decentralized Networks', tag: 'Unit #9' },
+      { name: 'Smart Web Systems', category: 'Smart Web Systems', tag: 'Unit #10' },
     ];
 
     // Generate ads based on dynamic dailyLimit
@@ -202,9 +202,9 @@ router.post('/watch', verifyToken, async (req, res) => {
     }
 
     const settings = await getSystemSettings();
-    const dailyLimit = Number(settings.dailyAdLimit || 200);
-    // 20% daily return distributed across 200 ads = 0.10% per ad (20% / 200)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.1;
+    const dailyLimit = Number(settings.dailyAdLimit || 400);
+    // 20% daily return distributed across 400 ads = 0.05% per ad (20% / 400)
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.05;
     const rewardRate = rewardPercentage / 100;
 
     // 1. Strict eligibility: new accounts only eligible for deposit and buying a package
@@ -279,7 +279,7 @@ router.post('/watch', verifyToken, async (req, res) => {
       balanceAfter: newBalance,
       timestamp: currentTimestamp,
       createdAt: currentTimestamp,
-      description: `Daily Ad View Reward (#${newDailyAdCount} / 200 - ${user.currentPackage || 'Bronze'} tier)`,
+      description: `Daily Ad View Reward (#${newDailyAdCount} / 400 - ${user.currentPackage || 'Bronze'} tier)`,
     });
 
     // 8. Upline Ad Commission (50% Rule) & Unlimited Depth Team Ads Counting

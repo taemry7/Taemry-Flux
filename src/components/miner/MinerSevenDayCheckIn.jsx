@@ -31,15 +31,15 @@ export default function MinerSevenDayCheckIn({
 
   return (
     <div className="w-full mt-5 bg-[#faf8f5] dark:bg-[#07151a] border border-[#ece6d9] dark:border-[#173740] rounded-2xl p-3.5 sm:p-4 shadow-2xs">
-      {/* Compact Header */}
-      <div className="flex items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#ece6d9] dark:border-[#173740]">
+      {/* Compact Header (Hidden per user request: "upar h3 or div ko bi hidden kardo") */}
+      <div className="hidden items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#ece6d9] dark:border-[#173740]">
         <div className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-amber-500/15 text-[#d97706] flex items-center justify-center shrink-0">
             <Flame className="w-3.5 h-3.5" />
           </div>
           <div>
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h3 className="text-xs sm:text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
+              <h3 className="hidden text-xs sm:text-sm font-extrabold text-[#09353e] dark:text-[#f1f5f9]">
                 7-Day Check-In Yield
               </h3>
               <span className="text-[10px] font-black px-1.5 py-0.2 rounded-full bg-amber-500/15 text-[#d97706]">
@@ -105,13 +105,32 @@ export default function MinerSevenDayCheckIn({
                     : 'bg-white dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] opacity-85'
                 }`}
               >
-                {/* Day Header */}
+                {/* Top Action / Claim / Claimed / Locked Button (Moved up per user directive) */}
                 <div className="w-full flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[10px] font-black text-[#7a8c94] dark:text-[#94a3b8] uppercase">
-                    Day {item.day}
-                  </span>
+                  {isPast ? (
+                    <span className="w-full text-center text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block py-0.5">
+                      Claimed
+                    </span>
+                  ) : isCurrent ? (
+                    <button
+                      type="button"
+                      onClick={() => onClaimDay(item.day, item.reward)}
+                      disabled={isClaimed}
+                      className={`w-full py-0.5 px-1.5 rounded-md text-[9px] font-black transition-all cursor-pointer ${
+                        isClaimed
+                          ? 'bg-emerald-500/20 text-emerald-600 cursor-default'
+                          : 'bg-[#d97706] hover:bg-[#b45309] text-white shadow-2xs'
+                      }`}
+                    >
+                      {isClaimed ? 'Claimed' : 'Claim'}
+                    </button>
+                  ) : (
+                    <span className="w-full text-center text-[9px] text-[#7a8c94] dark:text-[#64748b] block py-0.5">
+                      Locked
+                    </span>
+                  )}
                   {item.isSpecial && (
-                    <span className="text-[8px] font-black px-1 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 uppercase">
+                    <span className="text-[8px] font-black px-1 rounded bg-purple-500/20 text-purple-700 dark:text-purple-300 uppercase shrink-0">
                       Bonus
                     </span>
                   )}
@@ -143,8 +162,8 @@ export default function MinerSevenDayCheckIn({
                   {item.label}
                 </span>
 
-                {/* Compact Action Button */}
-                <div className="mt-1.5 w-full">
+                {/* Compact Action Button (Hidden per user directive: "or is div ko yahn sy hidden kardy") */}
+                <div className="hidden mt-1.5 w-full">
                   {isPast ? (
                     <span className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 block py-0.5">
                       Collected

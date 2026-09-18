@@ -1,8 +1,8 @@
 /**
  * TAEMRY FLUX - Watch Ads Module (Phase 4 Streamlined Update)
- * - Clean 1 to 200 Ads Directory with individual watch action buttons
+ * - Clean 1 to 400 Ads Directory with individual watch action buttons
  * - Direct watch reward claiming with instant credit and celebratory toast
- * - Prepared for future Monetag / Adsterra integration per user specification
+ * - 0.05% daily return per ad across 400 ads (20% total daily package yield)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -13,16 +13,11 @@ import {
   AlertCircle,
   Sparkles,
   Loader2,
-  ChevronDown,
-  ChevronUp,
   ShieldCheck,
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import PurchaseConfirmationModal from '../components/PurchaseConfirmationModal';
-import AdsterraAdModal from '../components/AdsterraAdModal';
-import AdsterraBanner from '../components/AdsterraBanner';
-import { getAdsterraConfig } from '../config/adsterraAds';
+import SponsorAdModal from '../components/SponsorAdModal';
 
 const WATCH_ADS_PACKAGES = [
   {
@@ -31,7 +26,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Bronze',
     price: 1.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'STARTER',
     circleColor: 'bg-[#b45309]',
     color: '#b45309',
@@ -44,7 +39,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Silver',
     price: 5.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'POPULAR',
     circleColor: 'bg-[#0f766e]',
     color: '#0f766e',
@@ -57,7 +52,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Gold',
     price: 10.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'RECOMMENDED',
     circleColor: 'bg-[#ca8a04]',
     color: '#ca8a04',
@@ -70,7 +65,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Premium',
     price: 50.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'HIGH DEMAND',
     circleColor: 'bg-[#0284c7]',
     color: '#0284c7',
@@ -83,7 +78,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Elite',
     price: 100.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'HIGH CAPACITY',
     circleColor: 'bg-[#7c3aed]',
     color: '#7c3aed',
@@ -96,7 +91,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Master',
     price: 500.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'MASTER VIP',
     circleColor: 'bg-[#db2777]',
     color: '#db2777',
@@ -109,7 +104,7 @@ const WATCH_ADS_PACKAGES = [
     tierName: 'Apex',
     price: 1000.00,
     rewardRate: '20%',
-    dailyLimit: 200,
+    dailyLimit: 400,
     badge: 'APEX MASTER',
     circleColor: 'bg-[#dc2626]',
     color: '#dc2626',
@@ -128,14 +123,27 @@ const PACKAGE_PRICES = {
   apex: 1000.00,
 };
 
+const VERIFIED_SPONSORS = [
+  { name: 'Sponsored Push & Display', category: 'Cloud & Digital Services' },
+  { name: 'Native Recommendation', category: 'Tech Innovations & AI' },
+  { name: 'Global Media & Display', category: 'Global Web Solutions' },
+  { name: 'Verified Partner Portal', category: 'Featured Sponsor Portal' },
+  { name: 'Financial Analytics Hub', category: 'Financial Analytics' },
+  { name: 'Cybersecurity Network', category: 'Cybersecurity & Infrastructure' },
+  { name: 'Digital Marketplace', category: 'E-Commerce & Digital Marketplace' },
+  { name: 'Mobile Utilities Cloud', category: 'Mobile Utilities & Apps' },
+  { name: 'Decentralized Networks', category: 'Decentralized Networks' },
+  { name: 'Smart Web Systems', category: 'Smart Web Systems' },
+];
+
 export default function WatchAds({ onSelectTab, onNavigate }) {
   const { userStats, updateLocalStats, fetchUserStats } = useAuth();
 
   const hasActivePkg = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
   const pkgKey = (userStats?.currentPackage || 'None').toLowerCase();
   const pkgPrice = PACKAGE_PRICES[pkgKey] || 0.00;
-  // 20% daily return across 200 ads = 0.10% per ad (pkgPrice * 0.20 / 200)
-  const computedReward = hasActivePkg ? +(pkgPrice * 0.001).toFixed(4) : 0;
+  // 20% daily return across 400 ads = 0.05% per ad (pkgPrice * 0.20 / 400)
+  const computedReward = hasActivePkg ? +(pkgPrice * 0.0005).toFixed(4) : 0;
 
   // Component state
   const [adStatus, setAdStatus] = useState({
@@ -144,7 +152,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     packagePrice: pkgPrice,
     rewardPerAd: computedReward,
     dailyAdCount: userStats?.dailyAdCount ?? 0,
-    dailyLimit: 200,
+    dailyLimit: 400,
     lifetimeAds: userStats?.lifetimeAds ?? 0,
   });
 
@@ -153,46 +161,26 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [adsCatalog, setAdsCatalog] = useState([]);
   const [watchingAdNum, setWatchingAdNum] = useState(null);
 
-  // Adsterra Ad Player Modal State
+  // Sponsor Ad Player Modal State
   const [activeModalAd, setActiveModalAd] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
 
-  // Mount Adsterra Social Bar Script (Unit #1) on Watch Ads page
-  useEffect(() => {
-    const scriptId = 'adsterra-social-bar-unit1';
-    if (!document.getElementById(scriptId)) {
-      const script = document.createElement('script');
-      script.id = scriptId;
-      script.src = 'https://furydonkeypharmacy.com/50/ee/2b/50ee2b17435ac4365aaf09d8b78e37fc.js';
-      script.async = true;
-      document.body.appendChild(script);
-    }
-    return () => {
-      const existing = document.getElementById(scriptId);
-      if (existing) {
-        existing.remove();
-      }
-    };
-  }, []);
-
-  // Generate 1 to N Ads mapped cleanly to 10 verified Adsterra ad units (zero adult content)
-  const generate200Ads = (watchedCount, rewardRate, limit = 200) => {
+  // Generate 1 to N Ads mapped to verified sponsors rotation
+  const generate400Ads = (watchedCount, rewardRate, limit = 400) => {
     const list = [];
-    const totalCount = limit || 200;
+    const totalCount = limit || 400;
     for (let i = 1; i <= totalCount; i++) {
-      const adConfig = getAdsterraConfig(i);
+      const sponsorTemplate = VERIFIED_SPONSORS[(i - 1) % VERIFIED_SPONSORS.length];
       const isCompleted = i <= watchedCount;
       const isAvailable = i === watchedCount + 1;
 
       list.push({
         adNumber: i,
         id: `ad_${i}`,
-        title: `${adConfig.name} #${i}`,
-        sponsor: adConfig.name,
-        category: adConfig.category,
-        unitNumber: adConfig.unitNumber,
-        adConfig,
+        title: `${sponsorTemplate.name} #${i}`,
+        sponsor: sponsorTemplate.name,
+        category: sponsorTemplate.category,
         reward: rewardRate,
         isWatched: isCompleted,
         isAvailable,
@@ -208,16 +196,16 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       if (res.data?.success) {
         setAdStatus(res.data);
         const watched = res.data.dailyAdCount || 0;
-        const limit = res.data.dailyLimit || 200;
-        setAdsCatalog(generate200Ads(watched, res.data.rewardPerAd || computedReward, limit));
+        const limit = res.data.dailyLimit || 400;
+        setAdsCatalog(generate400Ads(watched, res.data.rewardPerAd || computedReward, limit));
       } else {
         const fallbackCount = userStats?.dailyAdCount || 0;
-        setAdsCatalog(generate200Ads(fallbackCount, computedReward, 200));
+        setAdsCatalog(generate400Ads(fallbackCount, computedReward, 400));
       }
     } catch (err) {
       console.error('Error fetching ad status:', err);
       const fallbackCount = userStats?.dailyAdCount || 0;
-      setAdsCatalog(generate200Ads(fallbackCount, computedReward, 200));
+      setAdsCatalog(generate400Ads(fallbackCount, computedReward, 400));
     }
   };
 
@@ -225,9 +213,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     fetchAdStatus();
   }, []);
 
-  // Open Adsterra Ad Player modal to watch ad before reward claim
+  // Open Sponsor Ad Player modal to watch ad before reward claim
   const handleOpenAdModal = (ad) => {
-    const limit = adStatus.dailyLimit || 200;
+    const limit = adStatus.dailyLimit || 400;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
@@ -242,9 +230,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     setIsModalOpen(true);
   };
 
-  // Submit ad watch reward to server after user finishes watching Adsterra ad
+  // Submit ad watch reward to server after user finishes watching ad
   const handleClaimReward = async (adNumber) => {
-    const limit = adStatus.dailyLimit || 200;
+    const limit = adStatus.dailyLimit || 400;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       setIsModalOpen(false);
@@ -258,7 +246,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
       // Submit ad watch reward to server
       const res = await apiClient.post('/ads/watch', {
-        adId: `adsterra_ad_${adNumber}_${Date.now()}`,
+        adId: `ad_${adNumber}_${Date.now()}`,
       });
 
       if (res.data?.success) {
@@ -297,8 +285,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           lifetimeAds: newLifetimeAds,
         }));
 
-        const lim = adStatus.dailyLimit || 200;
-        setAdsCatalog(generate200Ads(newDailyCount, adStatus.rewardPerAd, lim));
+        const lim = adStatus.dailyLimit || 400;
+        setAdsCatalog(generate400Ads(newDailyCount, adStatus.rewardPerAd, lim));
 
         // Background refetch user stats
         fetchUserStats();
@@ -327,7 +315,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                 Package Activation Required
               </h3>
               <p className="text-xs text-[#92400e] mt-0.5">
-                New accounts are only eligible for deposit and buying a package. Once you activate a package, 200 daily ads and guaranteed daily returns will be unlocked immediately!
+                New accounts are only eligible for deposit and buying a package. Once you activate a package, 400 daily ads and guaranteed daily returns will be unlocked immediately!
               </p>
             </div>
           </div>
@@ -371,7 +359,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                 Ad #{recentReward.adNumber} Completed! +${Number(recentReward.amount).toFixed(4)} USD Credited
               </h3>
               <p className="text-xs text-[#047857]">
-                Progress: <strong>{recentReward.dailyCount} of 200</strong> completed today. Ready for Ad #{Math.min(200, recentReward.dailyCount + 1)}!
+                Progress: <strong>{recentReward.dailyCount} of 400</strong> completed today. Ready for Ad #{Math.min(400, recentReward.dailyCount + 1)}!
               </p>
             </div>
           </div>
@@ -384,30 +372,27 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       )}
 
-      {/* 200 ADS LISTING CATALOG */}
+      {/* 400 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f0ebe0] pb-4 gap-2">
           <div className="flex items-center gap-2">
             <ListOrdered className="w-5 h-5 text-[#0c5963]" />
             <h2 className="text-lg sm:text-xl font-black text-[#09353e]">
-              Daily Ad Directory (1 to 200)
+              Daily Ad Directory (1 to 400)
             </h2>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] font-bold text-[#0c5963] bg-[#e6f4f1] px-2.5 py-1 rounded-full border border-[#b8dfd7] flex items-center gap-1">
               <ShieldCheck className="w-3.5 h-3.5" />
-              <span>Adsterra Verified Network</span>
+              <span>Verified Sponsor Network</span>
             </span>
             <div className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full border border-[#b8dfd7]">
-              {adStatus.dailyAdCount} / {adStatus.dailyLimit || 200} Completed
+              {adStatus.dailyAdCount} / {adStatus.dailyLimit || 400} Completed
             </div>
           </div>
         </div>
 
-        {/* Live Adsterra In-Page Display Banner */}
-        <AdsterraBanner unitId={7} className="my-2" />
-
-        {/* 200 Ads Grid */}
+        {/* 400 Ads Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {adsCatalog.map((ad) => {
             const isCompleted = ad.isWatched;
@@ -465,7 +450,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
                   <button
                     type="button"
-                    disabled={isCompleted || isBusy || adStatus.dailyAdCount >= 200}
+                    disabled={isCompleted || isBusy || adStatus.dailyAdCount >= (adStatus.dailyLimit || 400)}
                     onClick={() => handleOpenAdModal(ad)}
                     className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       isCompleted
@@ -495,19 +480,20 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         </div>
       </div>
 
-      {/* ADSTERRA AD VIEWER & REWARD CLAIM MODAL */}
-      <AdsterraAdModal
+      {/* SPONSOR AD VIEWER & REWARD CLAIM MODAL */}
+      <SponsorAdModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setActiveModalAd(null);
         }}
         ad={activeModalAd}
-        adConfig={activeModalAd?.adConfig || (activeModalAd ? getAdsterraConfig(activeModalAd.adNumber) : null)}
         rewardAmount={adStatus.rewardPerAd || computedReward}
         onClaimReward={handleClaimReward}
         isClaiming={isClaiming}
+        totalAdsLimit={adStatus.dailyLimit || 400}
       />
     </div>
   );
 }
+

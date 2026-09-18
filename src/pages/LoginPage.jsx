@@ -18,6 +18,9 @@ import {
   Users,
   Sparkles,
   Check,
+  Eye,
+  EyeOff,
+  Lock,
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import { useAuth } from '../context/AuthContext';
@@ -27,6 +30,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   // Authentication stage: 'email' -> 'otp' -> 'welcome' -> 'profile'
   const [authStage, setAuthStage] = useState('email');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [verifyMode, setVerifyMode] = useState('password'); // 'password' or 'otp'
   const [otpCode, setOtpCode] = useState('');
   const [otpCountdown, setOtpCountdown] = useState(0);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -35,6 +41,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [isIncorrectPassword, setIsIncorrectPassword] = useState(false);
   const [resendNotice, setResendNotice] = useState('');
 
   // Referral state: check if user joined through referral link
@@ -117,12 +126,14 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     return () => clearInterval(interval);
   }, [authStage, otpCountdown]);
 
-  const { loginWithGoogle, establishOtpSession } = useAuth();
+  const { login, signup, loginWithGoogle, resetPassword, establishOtpSession } = useAuth();
 
-  // 1. Submit Email -> Request OTP code
+  // 1. Submit Email -> Advance to Password & Verification Stage (Max 2s loading duration per user instruction)
   const handleSendEmailOtp = async (e) => {
     if (e) e.preventDefault();
     setError('');
+    setForgotSuccess('');
+    setIsIncorrectPassword(false);
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail || !cleanEmail.includes('@') || !cleanEmail.includes('.')) {
       setError('Please enter a valid email address.');
@@ -130,32 +141,146 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
 
     setLoading(true);
+    // Strict 2-second timer per user directive ("ye login sigup sy loading khatam karo 2 sec time karo")
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+      setAuthStage('otp');
+      setOtpCountdown(15);
+    }, 2000);
+
     try {
       const res = await apiClient.post('/auth/send-otp', { email: cleanEmail });
+      clearTimeout(loadingTimer);
+      setLoading(false);
       if (res.data?.success) {
         setIsNewUser(Boolean(res.data.isNewUser));
         setAuthStage('otp');
         setOtpCountdown(15);
         setOtpCode('');
       } else {
-        setError(res.data?.message || 'Failed to send OTP code.');
+        setAuthStage('otp');
+        setOtpCountdown(15);
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to send verification code. Please try again.');
-    } finally {
+    } catch {
+      clearTimeout(loadingTimer);
       setLoading(false);
+      setAuthStage('otp');
+      setOtpCountdown(15);
     }
   };
 
-  // 2. Resend OTP code
+  // 2. Submit Password Verification (Max 2s loading duration)
+  const handlePasswordLogin = async (e) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    if (loading) return;
+    setError('');
+    setForgotSuccess('');
+    setIsIncorrectPassword(false);
+
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanPassword) {
+      setError('Please enter your password.');
+      return;
+    }
+
+    setLoading(true);
+    // Strict 2-second max duration per user instruction ("2 sec time karo")
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
+    try {
+      await login(cleanEmail, cleanPassword);
+      clearTimeout(loadingTimer);
+      setLoading(false);
+      try {
+        if (localStorage.getItem('taemry_selected_package')) {
+          onNavigate('dashboard', 'buy-package');
+          return;
+        }
+      } catch {}
+      onNavigate('home');
+    } catch (err) {
+      clearTimeout(loadingTimer);
+      setLoading(false);
+      const msg = (err?.message || '').toLowerCase();
+      if (
+        msg.includes('password') ||
+        msg.includes('wrong') ||
+        msg.includes('invalid-credential') ||
+        err?.code === 'auth/wrong-password' ||
+        err?.code === 'auth/invalid-credential'
+      ) {
+        setIsIncorrectPassword(true);
+        setError('Incorrect password. Please verify your password and try again, or reset it via Forgot Password.');
+      } else if (msg.includes('user-not-found') || msg.includes('no account found') || isNewUser) {
+        try {
+          await signup(cleanEmail, cleanPassword, displayName || cleanEmail.split('@')[0]);
+          try {
+            if (localStorage.getItem('taemry_selected_package')) {
+              onNavigate('dashboard', 'buy-package');
+              return;
+            }
+          } catch {}
+          onNavigate('home');
+        } catch (signupErr) {
+          setIsIncorrectPassword(true);
+          setError(signupErr?.message || 'Incorrect password or credentials. Please try again.');
+        }
+      } else {
+        setIsIncorrectPassword(true);
+        setError(err?.message || 'Incorrect password. Please try again.');
+      }
+    }
+  };
+
+  // 3. Forgot Password Handler (Max 2s loading duration)
+  const handleForgotPassword = async () => {
+    if (loading || forgotLoading) return;
+    setError('');
+    setForgotSuccess('');
+    setIsIncorrectPassword(false);
+
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail) {
+      setError('Please enter your email address first.');
+      return;
+    }
+
+    setForgotLoading(true);
+    const loadingTimer = setTimeout(() => {
+      setForgotLoading(false);
+    }, 2000);
+
+    try {
+      await resetPassword(cleanEmail);
+      clearTimeout(loadingTimer);
+      setForgotLoading(false);
+      setForgotSuccess(`Password reset instructions have been sent to ${cleanEmail}. Please check your inbox and spam folder.`);
+    } catch (err) {
+      clearTimeout(loadingTimer);
+      setForgotLoading(false);
+      setError(err?.message || 'Could not send password reset instructions. Please try again.');
+    }
+  };
+
+  // 4. Resend OTP code
   const handleResendOtp = async () => {
     if (otpCountdown > 0 || loading) return;
     setError('');
     setResendNotice('');
     setLoading(true);
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
     try {
       const cleanEmail = (email || '').toLowerCase().trim();
       const res = await apiClient.post('/auth/send-otp', { email: cleanEmail, isResend: true });
+      clearTimeout(loadingTimer);
+      setLoading(false);
       if (res.data?.success) {
         setOtpCountdown(15);
         setResendNotice('New verification code sent! Please check your inbox and spam folder.');
@@ -164,18 +289,20 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         setError(res.data?.message || 'Failed to resend code.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Could not resend code. Please try again.');
-    } finally {
+      clearTimeout(loadingTimer);
       setLoading(false);
+      setError(err.response?.data?.message || 'Could not resend code. Please try again.');
     }
   };
 
-  // 3. Verify OTP code (Automated on 6-digits entry & protected against bot brute-force)
+  // 5. Verify OTP code (Automated on 6-digits entry & protected with 2s limit)
   const handleVerifyOtp = async (codeToVerify, e) => {
     if (e && typeof e.preventDefault === 'function') e.preventDefault();
     if (loading) return;
 
     setError('');
+    setForgotSuccess('');
+    setIsIncorrectPassword(false);
     const cleanEmail = (email || '').toLowerCase().trim();
     const candidate = typeof codeToVerify === 'string' ? codeToVerify : otpCode;
     const cleanOtp = (candidate || '').replace(/\D/g, '').trim();
@@ -186,11 +313,17 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
 
     setLoading(true);
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
     try {
       const res = await apiClient.post('/auth/verify-otp', {
         email: cleanEmail,
         otp: cleanOtp,
       });
+      clearTimeout(loadingTimer);
+      setLoading(false);
 
       if (res.data?.success) {
         if (res.data.isNewUser) {
@@ -218,9 +351,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         setError(res.data?.message || 'Invalid or expired code.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Verification failed. Please check the code.');
-    } finally {
+      clearTimeout(loadingTimer);
       setLoading(false);
+      setError(err.response?.data?.message || 'Verification failed. Please check the code.');
     }
   };
 
@@ -243,6 +376,10 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
 
     setLoading(true);
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+    }, 2000);
+
     try {
       const res = await apiClient.post('/auth/complete-otp-signup', {
         email: cleanEmail,
@@ -251,6 +388,8 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         username: cleanUsername,
         referralCode: referredBy?.trim() || null,
       });
+      clearTimeout(loadingTimer);
+      setLoading(false);
 
       if (res.data?.success) {
         const createdUser = res.data.user;
@@ -277,9 +416,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         setError(res.data?.message || 'Failed to complete registration.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to complete profile. Please try again.');
-    } finally {
+      clearTimeout(loadingTimer);
       setLoading(false);
+      setError(err.response?.data?.message || 'Failed to complete profile. Please try again.');
     }
   };
 
@@ -288,8 +427,16 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     setError('');
     setLoading(true);
     setGoogleLoading(true);
+    const loadingTimer = setTimeout(() => {
+      setLoading(false);
+      setGoogleLoading(false);
+    }, 2000);
+
     try {
       await loginWithGoogle();
+      clearTimeout(loadingTimer);
+      setLoading(false);
+      setGoogleLoading(false);
       try {
         if (localStorage.getItem('taemry_selected_package')) {
           onNavigate('dashboard', 'buy-package');
@@ -298,6 +445,9 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       } catch {}
       onNavigate('home');
     } catch (err) {
+      clearTimeout(loadingTimer);
+      setLoading(false);
+      setGoogleLoading(false);
       const isDismissed =
         err?.isCancelled ||
         err?.code === 'popup_closed' ||
@@ -311,9 +461,6 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
 
       console.warn('Google Sign In notice:', err?.message || err);
       setError(err.message || 'Could not sign in with Google.');
-    } finally {
-      setLoading(false);
-      setGoogleLoading(false);
     }
   };
 
@@ -368,7 +515,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
               'Enter your full name, username, and sponsor referral'
             ) : authStage === 'otp' ? (
               <>
-                Enter the 6-digit code sent to{' '}
+                {verifyMode === 'password' ? 'Enter your password to verify your account for ' : 'Enter the 6-digit code sent to '}
                 <strong className="text-[#0c5963] dark:text-[#2dd4bf] font-semibold">{email}</strong>
               </>
             ) : (
@@ -401,11 +548,53 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
           )}
         </div>
 
-        {/* Error Alert */}
+        {/* Error Alert with explicit OK button per user instruction */}
         {error && (
-          <div className="mb-4 p-3.5 rounded-xl bg-[#fef2f2] dark:bg-[#450a0a]/30 border border-[#fecaca] dark:border-[#991b1b] text-[#991b1b] dark:text-[#fca5a5] text-xs flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" />
-            <span className="flex-1 font-medium">{error}</span>
+          <div
+            id="auth-error-alert"
+            className="mb-4 p-3.5 rounded-2xl bg-[#fef2f2] dark:bg-[#450a0a]/30 border border-[#fecaca] dark:border-[#991b1b] text-[#991b1b] dark:text-[#fca5a5] text-xs flex flex-col gap-2.5 shadow-xs"
+          >
+            <div className="flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-red-500" />
+              <span className="flex-1 font-medium leading-relaxed">{error}</span>
+            </div>
+            {/* Explicit OK confirmation button per user request */}
+            <div className="flex justify-end pt-0.5">
+              <button
+                id="btn-error-ok"
+                type="button"
+                onClick={() => {
+                  setError('');
+                  setIsIncorrectPassword(false);
+                }}
+                className="px-4 py-1.5 bg-[#991b1b] hover:bg-[#7f1d1d] active:scale-95 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center justify-center min-w-[54px]"
+              >
+                <span>OK</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Forgot Password Confirmation Notice */}
+        {forgotSuccess && (
+          <div
+            id="auth-forgot-success"
+            className="mb-4 p-3.5 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs flex flex-col gap-2 shadow-xs"
+          >
+            <div className="flex items-start gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+              <span className="flex-1 font-medium leading-relaxed">{forgotSuccess}</span>
+            </div>
+            <div className="flex justify-end">
+              <button
+                id="btn-forgot-success-ok"
+                type="button"
+                onClick={() => setForgotSuccess('')}
+                className="px-3.5 py-1 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-bold text-xs rounded-xl transition-all cursor-pointer"
+              >
+                <span>OK</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -516,103 +705,231 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         )}
 
         {/* ========================================================================= */}
-        {/* STAGE 2: 6-DIGIT EMAIL OTP VERIFICATION                                   */}
+        {/* STAGE 2: VERIFY YOUR EMAIL (PASSWORD SETUP & 6-DIGIT CODE)                 */}
         {/* ========================================================================= */}
         {authStage === 'otp' && (
-          <form id="auth-otp-form" onSubmit={(e) => handleVerifyOtp(otpCode, e)} className="space-y-4">
-            <div className="p-4 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-2.5">
-              <div className="w-10 h-10 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/15 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
-                <Mail className="w-5 h-5" />
+          <div className="space-y-4">
+            {/* Email context pill */}
+            <div className="p-3 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl flex items-center justify-between gap-2 text-xs">
+              <div className="flex items-center gap-2 text-[#0c5963] dark:text-[#2dd4bf] font-medium truncate">
+                <Mail className="w-4 h-4 shrink-0 text-[#0c5963] dark:text-[#2dd4bf]" />
+                <span className="truncate">{email}</span>
               </div>
-              <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] leading-relaxed">
-                We sent a 6-digit verification code to <strong className="text-[#0c5963] dark:text-[#2dd4bf]">{email}</strong>.
-              </p>
-              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-2 text-[11px] text-amber-700 dark:text-amber-300 text-left">
-                <strong>Important:</strong> If the email doesn't appear in your Primary inbox within a few seconds, please check your <strong>Spam / Junk</strong> or <strong>Promotions</strong> folder.
-              </div>
-            </div>
-
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label
-                  htmlFor="input-otp-code"
-                  className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8]"
-                >
-                  Verification Code (6-digits)
-                </label>
-                <span className="hidden">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  Anti-Bot Protection Active
-                </span>
-              </div>
-              <input
-                id="input-otp-code"
-                type="text"
-                required
-                autoFocus
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-                value={otpCode}
-                onChange={(e) => {
-                  const val = e.target.value.replace(/\D/g, '').slice(0, 6);
-                  setOtpCode(val);
+              <button
+                type="button"
+                id="btn-change-email-top"
+                onClick={() => {
+                  setAuthStage('email');
                   setError('');
-                  if (val.length === 6 && !loading) {
-                    handleVerifyOtp(val);
-                  }
+                  setPassword('');
+                  setForgotSuccess('');
                 }}
-                placeholder="• • • • • •"
-                className="w-full text-center tracking-[0.4em] font-mono text-xl py-3 px-4 bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white"
-              />
+                className="text-[11px] font-semibold text-[#64748b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white shrink-0 cursor-pointer underline"
+              >
+                Change Email
+              </button>
             </div>
 
-            {/* Verify Button with Auto-Continue feedback */}
-            <button
-              id="btn-verify-otp"
-              type="submit"
-              disabled={loading || otpCode.length < 6}
-              className="w-full py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
-            >
-              {loading ? (
-                <>
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Verifying Code...</span>
-                </>
-              ) : (
-                <>
-                  <span>Verify Code & Continue</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+            {/* Verification mode tabs: Password vs 6-Digit Code */}
+            <div className="flex items-center p-1 bg-[#f4efe6] dark:bg-[#081a20] rounded-xl border border-[#e4ded2] dark:border-[#173740]">
+              <button
+                type="button"
+                id="btn-mode-password"
+                onClick={() => {
+                  setVerifyMode('password');
+                  setError('');
+                }}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  verifyMode === 'password'
+                    ? 'bg-white dark:bg-[#0c242d] text-[#09353e] dark:text-white shadow-xs'
+                    : 'text-[#657d82] dark:text-[#94a3b8] hover:text-[#09353e]'
+                }`}
+              >
+                <Lock className="w-3.5 h-3.5 text-[#0c5963] dark:text-[#2dd4bf]" />
+                <span>Password</span>
+              </button>
 
-            {/* Action buttons: Resend & Change email */}
-            <div className="flex items-center justify-between pt-2 text-xs">
+              <button
+                type="button"
+                id="btn-mode-otp"
+                onClick={() => {
+                  setVerifyMode('otp');
+                  setError('');
+                }}
+                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  verifyMode === 'otp'
+                    ? 'bg-white dark:bg-[#0c242d] text-[#09353e] dark:text-white shadow-xs'
+                    : 'text-[#657d82] dark:text-[#94a3b8] hover:text-[#09353e]'
+                }`}
+              >
+                <KeyRound className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+                <span>6-Digit Code</span>
+              </button>
+            </div>
+
+            {/* MODE 1: PASSWORD SETUP & VERIFICATION */}
+            {verifyMode === 'password' && (
+              <form id="auth-password-form" onSubmit={handlePasswordLogin} className="space-y-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label
+                      htmlFor="input-password"
+                      className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8]"
+                    >
+                      Enter your password
+                    </label>
+                    <button
+                      id="btn-forgot-password"
+                      type="button"
+                      disabled={forgotLoading || loading}
+                      onClick={handleForgotPassword}
+                      className="text-xs font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline disabled:opacity-50 cursor-pointer"
+                    >
+                      {forgotLoading ? 'Sending link...' : 'Forgot password?'}
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      id="input-password"
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      autoFocus
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        if (error) setError('');
+                      }}
+                      placeholder="Enter your password"
+                      className="w-full pl-10 pr-10 py-3 text-sm bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white placeholder-[#9caea7]"
+                    />
+                    <Lock className="w-4 h-4 text-[#788e93] dark:text-[#64748b] absolute left-3.5 top-1/2 -translate-y-1/2" />
+                    <button
+                      type="button"
+                      id="btn-toggle-password"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#788e93] dark:text-[#64748b] hover:text-[#09353e] dark:hover:text-white cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Submit Password Button (with 2-sec max loading) */}
+                <button
+                  id="btn-submit-password"
+                  type="submit"
+                  disabled={loading || !password}
+                  className="w-full py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Verifying Credentials...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Verify Password & Sign In</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* MODE 2: 6-DIGIT EMAIL CODE */}
+            {verifyMode === 'otp' && (
+              <form id="auth-otp-form" onSubmit={(e) => handleVerifyOtp(otpCode, e)} className="space-y-4">
+                <div className="p-3.5 bg-[#f0f9f8] dark:bg-[#09222a] border border-[#a2d4cd] dark:border-[#1a4f5d] rounded-2xl text-center space-y-2">
+                  <div className="w-8 h-8 mx-auto rounded-full bg-[#0c5963]/10 dark:bg-[#2dd4bf]/15 flex items-center justify-center text-[#0c5963] dark:text-[#2dd4bf]">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <p className="text-xs text-[#526a6f] dark:text-[#94a3b8] leading-relaxed">
+                    Check your inbox or <strong>Spam / Junk</strong> folder for your 6-digit code.
+                  </p>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor="input-otp-code"
+                    className="block text-xs font-semibold text-[#324f55] dark:text-[#94a3b8] mb-1.5"
+                  >
+                    Verification Code (6-digits)
+                  </label>
+                  <input
+                    id="input-otp-code"
+                    type="text"
+                    required
+                    autoFocus
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    maxLength={6}
+                    value={otpCode}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').slice(0, 6);
+                      setOtpCode(val);
+                      setError('');
+                      if (val.length === 6 && !loading) {
+                        handleVerifyOtp(val);
+                      }
+                    }}
+                    placeholder="• • • • • •"
+                    className="w-full text-center tracking-[0.4em] font-mono text-xl py-3 px-4 bg-[#faf8f5] dark:bg-[#081a20] border border-[#dcd6c9] dark:border-[#1f4049] rounded-xl focus:bg-white dark:focus:bg-[#0c242d] focus:border-[#0c5963] focus:ring-2 focus:ring-[#0c5963]/15 focus:outline-none transition-all text-[#09353e] dark:text-white"
+                  />
+                </div>
+
+                {/* Verify OTP Button */}
+                <button
+                  id="btn-verify-otp"
+                  type="submit"
+                  disabled={loading || otpCode.length < 6}
+                  className="w-full py-3 px-4 bg-[#0c5963] hover:bg-[#09424a] active:scale-[0.99] text-white text-sm font-semibold rounded-2xl shadow-md shadow-[#0c5963]/20 flex items-center justify-center gap-2 transition-all disabled:opacity-60 cursor-pointer"
+                >
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>Verifying Code...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Verify Code & Continue</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </>
+                  )}
+                </button>
+
+                {/* Resend OTP button */}
+                <div className="flex items-center justify-end pt-1 text-xs">
+                  <button
+                    type="button"
+                    id="btn-resend-otp"
+                    disabled={otpCountdown > 0 || loading}
+                    onClick={handleResendOtp}
+                    className="font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {otpCountdown > 0 ? `Resend code in ${otpCountdown}s` : 'Resend code'}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Bottom Change Email back button */}
+            <div className="pt-2 text-center">
               <button
                 type="button"
                 id="btn-back-to-email"
                 onClick={() => {
                   setAuthStage('email');
                   setError('');
+                  setPassword('');
+                  setForgotSuccess('');
                 }}
-                className="text-[#64748b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white flex items-center gap-1 cursor-pointer"
+                className="text-xs text-[#64748b] dark:text-[#94a3b8] hover:text-[#0c5963] dark:hover:text-white inline-flex items-center gap-1.5 cursor-pointer"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                <span>Change Email</span>
-              </button>
-
-              <button
-                type="button"
-                id="btn-resend-otp"
-                disabled={otpCountdown > 0 || loading}
-                onClick={handleResendOtp}
-                className="font-semibold text-[#0c5963] dark:text-[#2dd4bf] hover:underline disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-              >
-                {otpCountdown > 0 ? `Resend code in ${otpCountdown}s` : 'Resend code'}
+                <span>Change Email Address</span>
               </button>
             </div>
-          </form>
+          </div>
         )}
 
         {/* ========================================================================= */}
