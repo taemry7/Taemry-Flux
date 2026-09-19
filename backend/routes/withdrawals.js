@@ -12,6 +12,7 @@ import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 import { getSystemSettings } from './settings.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -78,23 +79,14 @@ router.post('/request', verifyToken, async (req, res) => {
 
     const parsedAmount = parseFloat(amountUSD);
 
-    // 1. Fetch user document from Firestore
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    // 1. Fetch user document from Firestore safely without washing account
+    const { ref: userRef, doc: userDoc, data: resolvedData } = await resolveUserRecord(db, {
+      uid,
+      email: req.user.email,
+      name: req.user.name,
+    });
 
-    let userData = userDoc.exists ? userDoc.data() : null;
-
-    if (!userData) {
-      // Fallback default initialization if user profile has not been saved yet
-      userData = {
-        uid,
-        walletBalance: 0,
-        referralCount: 0,
-        lastWithdrawalDate: null,
-        lastWithdrawalRequestTime: null,
-      };
-      await userRef.set(userData, { merge: true });
-    }
+    let userData = resolvedData || {};
 
     const isUserAdmin = userData.role === 'admin' || userData.isAdmin;
 
@@ -180,11 +172,13 @@ router.post('/request', verifyToken, async (req, res) => {
       });
     }
 
-    // 5. Strict Rule: Minimum Earned Check ($1.00 required)
+    // 5. Strict Rule: Minimum Earned Check ($1.00 required) and 1 Referral Check
     const totalEarned = Number(userData.totalEarned) || 0;
+    const referralCount = Number(userData.referralCount) || 0;
     const minEarnedRequired = 1.00;
     const hasEarnedMinimum = totalEarned >= minEarnedRequired;
-    const isWithdrawalEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum);
+    const hasRequiredReferrals = referralCount >= 1 || Boolean(userData.hasUnlockedWithdrawal);
+    const isWithdrawalEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum && hasRequiredReferrals);
 
     if (!isWithdrawalEligible) {
       if (!hasActivePackage) {
@@ -193,18 +187,30 @@ router.post('/request', verifyToken, async (req, res) => {
           message: 'Ineligible: An active package is required to unlock withdrawals. Please buy a package first.',
           totalEarned,
           minEarnedRequired,
+          referralCount,
         });
       }
-      return res.status(400).json({
-        error: 'Ineligible',
-        message: `Ineligible: You must earn at least $1.00 to unlock withdrawals. Even with an active package, withdrawals remain locked until you have earned $1.00. Currently earned: $${totalEarned.toFixed(2)} / $${minEarnedRequired.toFixed(2)}.`,
-        totalEarned,
-        minEarnedRequired,
-      });
+      if (!hasEarnedMinimum) {
+        return res.status(400).json({
+          error: 'Ineligible',
+          message: `Ineligible: You must earn at least $1.00 to unlock withdrawals. Currently earned: $${totalEarned.toFixed(2)} / $${minEarnedRequired.toFixed(2)}. Please watch ads to earn!`,
+          totalEarned,
+          minEarnedRequired,
+          referralCount,
+        });
+      }
+      if (!hasRequiredReferrals) {
+        return res.status(400).json({
+          error: 'Ineligible',
+          message: 'Ineligible: You need at least 1 active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible forever!',
+          totalEarned,
+          referralCount,
+        });
+      }
     }
 
-    // Lock in permanent unlocked status for the user in database once minimum earned
-    if (!userData.hasUnlockedWithdrawal && (hasEarnedMinimum || isUserAdmin)) {
+    // Lock in permanent unlocked status for the user in database once minimum earned and 1 referral achieved
+    if (!userData.hasUnlockedWithdrawal && ((hasEarnedMinimum && hasRequiredReferrals) || isUserAdmin)) {
       try {
         await userRef.set({ hasUnlockedWithdrawal: true }, { merge: true });
       } catch (saveErr) {

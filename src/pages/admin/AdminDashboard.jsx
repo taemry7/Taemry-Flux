@@ -89,7 +89,22 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
             fsList.forEach((u) => {
               const key = (u.email || '').toLowerCase().trim() || u.uid;
               if (map.has(key)) {
-                map.set(key, { ...map.get(key), ...u });
+                const existing = map.get(key);
+                const activePkg = (u.currentPackage && u.currentPackage !== 'None')
+                  ? u.currentPackage
+                  : (existing.currentPackage && existing.currentPackage !== 'None')
+                    ? existing.currentPackage
+                    : 'None';
+                map.set(key, {
+                  ...existing,
+                  ...u,
+                  currentPackage: activePkg,
+                  walletBalance: Math.max(Number(existing.walletBalance || 0), Number(u.walletBalance || 0)),
+                  isEligible: Boolean(existing.isEligible || u.isEligible || (activePkg !== 'None')),
+                  referralCount: Math.max(Number(existing.referralCount || 0), Number(u.referralCount || 0)),
+                  lifetimeAds: Math.max(Number(existing.lifetimeAds || 0), Number(u.lifetimeAds || 0)),
+                  totalEarned: Math.max(Number(existing.totalEarned || 0), Number(u.totalEarned || 0)),
+                });
               } else {
                 map.set(key, u);
               }

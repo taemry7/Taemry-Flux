@@ -117,10 +117,12 @@ Any future assistant, turn, or task MUST keep these configurations strictly inta
   - **Approval Time Frame**: Updated deposit processing instruction to "~1 minute" (replacing 15 minutes).
   - **Active Methods**: JazzCash, UPaisa, and SadaPay are active with instant PKR conversion and receiver details.
   - **Locked Methods**: Bank Transfer and Crypto (USDT) are permanently locked to "Not Available for Now" with warning alerts advising users to use JazzCash, UPaisa, or SadaPay.
-- **Withdrawal Referral Ineligibility & Permanent Eligibility Invariant (PERMANENT & LOCKED)**:
-  - When a user without referrals (0 referrals) clicks the "Request Withdrawal" button, the system triggers the Ineligible warning: *"Ineligible: You need at least 1 active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible forever!"*.
-  - The submit button remains interactive and validates input fields and referral requirements upon click.
-  - **1 Referral = Permanent Eligibility**: First time 1 referral is required; once a user refers at least 1 member, their account becomes permanently eligible for withdrawals forever (`hasUnlockedWithdrawal: true`), never requiring additional referrals.
+- **Withdrawal Referral & Minimum $1.00 Earnings Ineligibility & Permanent Eligibility Invariant (PERMANENT & LOCKED)**:
+  - **Locked Requirements Screen Exclusively Shown**: Users who have not earned at least $1.00 AND referred at least 1 member will ONLY see the dedicated locked requirements screen. The withdrawal system (payment method selection, account fields, amount input, submit button) remains completely hidden until both milestones are completed.
+  - **Milestone 1**: Minimum $1.00 Earned (from watching sponsored ads or team matching rewards).
+  - **Milestone 2**: Minimum 1 Active Referral (1 referral unlocks permanent eligibility forever via `hasUnlockedWithdrawal: true`).
+  - Both frontend (`WithdrawPage.jsx`) and backend (`/api/withdrawals/request` in `backend/routes/withdrawals.js`) enforce these rules strictly.
+  - The submit button and backend validate both requirements and block unauthorized payouts.
 - **Mandatory Form Validation (Zero Empty Submissions)**:
   - In `WithdrawPage.jsx`: Both Account Holder Name and Account Number (or USDT Address) are strictly required before submission. Submitting empty inputs is blocked with instant toast and notification warnings.
   - In `DepositPage.jsx`: TID and receipt proof screenshot are mandatory before submission.

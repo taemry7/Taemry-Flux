@@ -26,60 +26,18 @@ import { getDb } from './firebaseAdmin.js';
 // Load environment variables
 dotenv.config();
 
-// Auto-purge pre-seeded test accounts, dummy deposits, withdrawals, and cloudMiner on boot
-function purgePreSeededData() {
+// Permanent data preservation: Never purge user accounts, deposits, packages or balances
+function ensureDataPreserved() {
   try {
     const db = getDb();
-    if (db && db.data && typeof db.data.delete === 'function') {
-      const keysToDelete = [];
-      for (const [key, val] of db.data.entries()) {
-        if (
-          key.startsWith('deposits/') ||
-          key.startsWith('withdrawals/') ||
-          key.startsWith('auditLogs/') ||
-          key.startsWith('supportTickets/') ||
-          key.startsWith('transactions/') ||
-          key.startsWith('cloudMiner/') ||
-          (key.startsWith('users/') && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && (val?.email !== 'mistrtaimoor@gmail.com'))
-        ) {
-          keysToDelete.push(key);
-        }
-      }
-      keysToDelete.forEach((k) => db.data.delete(k));
-
-      // Also ensure any non-mistrtaimoor@gmail.com user document is removed
-      for (const [key, val] of db.data.entries()) {
-        if (key.startsWith('users/') && val?.email && val.email.toLowerCase() !== 'mistrtaimoor@gmail.com') {
-          db.data.delete(key);
-        }
-      }
-
-      // Reset mistrtaimoor user balance and counters to clean state if exists
-      for (const [key, val] of db.data.entries()) {
-        if (key.startsWith('users/') && (val?.email === 'mistrtaimoor@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')) {
-          db.data.set(key, {
-            ...val,
-            walletBalance: 0,
-            currentPackage: 'None',
-            lifetimeAds: 0,
-            dailyAdCount: 0,
-            teamAdsCount: 0,
-            referralCount: 0,
-            totalEarned: 0,
-            isEligible: false,
-          });
-        }
-      }
-
-      if (typeof db._persist === 'function') {
-        db._persist();
-      }
+    if (db && typeof db._persist === 'function') {
+      db._persist();
     }
   } catch (err) {
-    console.warn('[Data Purge Notice]:', err.message);
+    console.warn('[Data Preservation Notice]:', err.message);
   }
 }
-purgePreSeededData();
+ensureDataPreserved();
 
 const app = express();
 const PORT = process.env.PORT || 5000;

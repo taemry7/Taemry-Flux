@@ -24,7 +24,11 @@ import {
   ChevronDown,
   Share2,
   Sparkles,
-  AtSign
+  AtSign,
+  Lock,
+  ShieldCheck,
+  PlaySquare,
+  UserPlus
 } from 'lucide-react';
 import apiClient from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -133,11 +137,14 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
   const isUserAdmin = userStats?.role === 'admin' || userStats?.isAdmin;
 
   // STRICT INVARIANT (UPDATED): Ineligible by default. Even when package is bought,
-  // user remains Ineligible until they have earned at least $1.00.
-  // Once $1.00 is earned, account becomes Eligible and can withdraw.
+  // user remains Ineligible until:
+  // 1. They have earned at least $1.00 (from watching ads or team matching yield)
+  // 2. They have referred at least 1 member (1 referral = permanent eligibility unlocked forever)
+  // Once $1.00 is earned AND 1 referral is achieved, the full withdrawal system is shown and unlocked.
   const minEarnedRequired = 1.00;
   const hasEarnedMinimum = totalEarned >= minEarnedRequired;
-  const isEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum);
+  const hasRequiredReferral = referralCount >= 1 || Boolean(userStats?.hasUnlockedWithdrawal);
+  const isEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum && hasRequiredReferral);
 
   // Ultra-Short Direct @Username Link
   const cleanUsername = (
@@ -192,14 +199,19 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
     // Ineligible check triggered on button click
     if (!isEligible) {
-      const msg = !hasActivePackage
-        ? 'Ineligible: An active package is required to unlock withdrawals. Please buy a package first.'
-        : `Ineligible: You must earn at least $1.00 to unlock withdrawals. Currently earned: $${totalEarned.toFixed(2)} / $1.00. Please watch ads to earn!`;
+      let msg = '';
+      if (!hasActivePackage) {
+        msg = 'Ineligible: An active package is required to unlock withdrawals. Please buy a package first.';
+      } else if (!hasEarnedMinimum) {
+        msg = `Ineligible: You must earn at least $1.00 to unlock withdrawals. Currently earned: $${totalEarned.toFixed(2)} / $1.00. Please watch ads to earn!`;
+      } else if (!hasRequiredReferral) {
+        msg = 'Ineligible: You need at least 1 active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible forever!';
+      }
       setNotification({
         type: 'error',
         message: msg,
       });
-      toast.error(!hasActivePackage ? 'Ineligible: Active package required.' : `Ineligible: Earn at least $1.00 to withdraw ($${totalEarned.toFixed(2)}/$1.00).`);
+      toast.error(msg);
       return;
     }
 
@@ -350,82 +362,302 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
         </div>
       )}
 
-      {/* ⚠️ STRICT ELIGIBILITY ALERT: Ineligible until $1.00 is earned */}
-      {!isEligible && (
-        <div className="p-6 rounded-3xl bg-[#fef2f2] border-2 border-[#fca5a5] text-[#991b1b] shadow-xs space-y-4">
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#fee2e2] text-[#dc2626] flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-6 h-6" />
-            </div>
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-base font-extrabold text-[#7f1d1d]">
-                  ⚠️ Withdrawal Ineligible — Minimum $1.00 Earnings Required
-                </h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]">
-                  Earn $1.00 = Unlocks Withdrawals
+      {/* ⚠️ STRICT REQUIREMENT SCREEN: Rendered ONLY when user is not eligible */}
+      {!isEligible ? (
+        <div className="space-y-6">
+          {/* Main Locked Hero Card */}
+          <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#f0ebe0]">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-[#fee2e2] text-[#dc2626] flex items-center justify-center shrink-0 shadow-2xs">
+                  <Lock className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-xl sm:text-2xl font-black text-[#09353e] tracking-tight">
+                      Withdrawal Gateway Locked
+                    </h2>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]">
+                      2 Requirements Required
+                    </span>
+                  </div>
+                  <p className="text-xs text-[#526d72] mt-1">
+                    To unlock the withdrawal system, your account must meet two simple milestones: earn at least $1.00 and refer 1 member.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 self-start sm:self-auto">
+                <span className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-3 py-1.5 rounded-xl border border-[#b8dfd7]">
+                  Available: {formatCurrency(walletBalance)}
                 </span>
               </div>
-              <p className="text-xs text-[#991b1b] leading-relaxed max-w-2xl">
-                {!hasActivePackage ? (
-                  <>As a new member, your account is currently <strong>Ineligible</strong>. You must first activate an advertising package and earn at least <strong>$1.00</strong> to unlock the withdrawal gateway.</>
-                ) : (
-                  <>Your package is active, but your account remains <strong>Ineligible</strong> until you have earned at least <strong>$1.00</strong> from viewing daily ads or team commissions. Once you earn $1.00, your account becomes eligible for withdrawals! Current earnings: <strong>${totalEarned.toFixed(2)} / $1.00</strong>.</>
+            </div>
+
+            {/* 2 Requirement Milestones Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {/* REQUIREMENT 1: MINIMUM $1.00 EARNED */}
+              <div className={`rounded-2xl p-5 border transition-all flex flex-col justify-between space-y-4 ${
+                hasEarnedMinimum
+                  ? 'bg-[#f0fdf4] border-[#86efac]'
+                  : 'bg-[#faf8f5] border-[#e4ded2]'
+              }`}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        hasEarnedMinimum
+                          ? 'bg-[#dcfce7] text-[#15803d]'
+                          : 'bg-[#e6f4f1] text-[#0c5963]'
+                      }`}>
+                        <Coins className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
+                          Requirement 1
+                        </span>
+                        <h3 className="text-sm font-extrabold text-[#09353e]">
+                          Earn Minimum $1.00
+                        </h3>
+                      </div>
+                    </div>
+
+                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${
+                      hasEarnedMinimum
+                        ? 'bg-[#dcfce7] text-[#15803d] border-[#86efac]'
+                        : 'bg-[#fef3c7] text-[#b45309] border-[#fde68a]'
+                    }`}>
+                      {hasEarnedMinimum ? 'Completed ✅' : 'Incomplete ⏳'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#526d72] leading-relaxed">
+                    Watch daily sponsored ads or earn team matching commissions to reach at least <strong>$1.00</strong> in earnings.
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#09353e]">
+                      <span>Earnings Progress</span>
+                      <span>${totalEarned.toFixed(2)} / $1.00 ({Math.min(100, Math.round((totalEarned / 1.00) * 100))}%)</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-[#e8e2d5] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-teal-500 to-emerald-500 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, (totalEarned / 1.00) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {onSelectTab && (
+                  <button
+                    type="button"
+                    onClick={() => onSelectTab(hasActivePackage ? 'watch-ads' : 'buy-package')}
+                    className={`w-full py-2.5 px-4 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shadow-2xs ${
+                      hasEarnedMinimum
+                        ? 'bg-white text-[#15803d] border border-[#86efac] hover:bg-[#f0fdf4]'
+                        : 'bg-[#0c5963] hover:bg-[#08424b] text-white'
+                    }`}
+                  >
+                    <PlaySquare className="w-4 h-4" />
+                    <span>{hasActivePackage ? 'Go to Watch Ads & Earn ($1.00)' : 'Activate Package to Start'}</span>
+                  </button>
                 )}
-              </p>
+              </div>
+
+              {/* REQUIREMENT 2: 1 ACTIVE REFERRAL */}
+              <div className={`rounded-2xl p-5 border transition-all flex flex-col justify-between space-y-4 ${
+                hasRequiredReferral
+                  ? 'bg-[#f0fdf4] border-[#86efac]'
+                  : 'bg-[#faf8f5] border-[#e4ded2]'
+              }`}>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        hasRequiredReferral
+                          ? 'bg-[#dcfce7] text-[#15803d]'
+                          : 'bg-[#f3e8ff] text-[#7e22ce]'
+                      }`}>
+                        <Users className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] uppercase font-bold tracking-wider text-[#718589] block">
+                          Requirement 2
+                        </span>
+                        <h3 className="text-sm font-extrabold text-[#09353e]">
+                          1 Active Referral Required
+                        </h3>
+                      </div>
+                    </div>
+
+                    <span className={`text-[10px] font-extrabold px-2.5 py-1 rounded-full border ${
+                      hasRequiredReferral
+                        ? 'bg-[#dcfce7] text-[#15803d] border-[#86efac]'
+                        : 'bg-[#fef3c7] text-[#b45309] border-[#fde68a]'
+                    }`}>
+                      {hasRequiredReferral ? 'Completed ✅' : '1 Needed ⏳'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#526d72] leading-relaxed">
+                    Invite at least 1 friend or member using your personal referral link. <strong>1 referral unlocks withdrawals permanently forever!</strong>
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="space-y-1.5 pt-1">
+                    <div className="flex items-center justify-between text-xs font-bold text-[#09353e]">
+                      <span>Referral Progress</span>
+                      <span>{referralCount} / 1 Referral ({referralCount >= 1 ? 100 : 0}%)</span>
+                    </div>
+                    <div className="w-full h-2.5 bg-[#e8e2d5] rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, referralCount * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Referral Link & Share Tools */}
+                <div className="space-y-2 pt-1 border-t border-[#f0ebe0]">
+                  <div className="p-2.5 bg-white rounded-xl border border-[#ece6d9] font-mono text-[11px] font-bold text-[#09353e] truncate select-all">
+                    {ultraShortLink}
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="py-2 px-2 bg-[#0c5963] hover:bg-[#08424b] text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleShareLink}
+                      className="py-2 px-2 bg-[#112d35] hover:bg-[#091b20] text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                      <span>Share</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleWhatsAppShare}
+                      className="py-2 px-2 bg-[#16a34a] hover:bg-[#15803d] text-white text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer shadow-2xs"
+                    >
+                      <span>WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Permanent Eligibility Guarantee Box */}
+            <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] flex items-start gap-3">
+              <ShieldCheck className="w-5 h-5 text-[#16a34a] shrink-0 mt-0.5" />
+              <div className="text-xs leading-relaxed">
+                <strong className="block font-black text-[#14532d]">
+                  Permanent Lifetime Eligibility Rule:
+                </strong>
+                You only need to satisfy these requirements once. Once you reach <strong>$1.00 in earnings</strong> and <strong>1 active referral</strong>, the full withdrawal system (JazzCash, UPaisa, Easypaisa) will unlock automatically and stay unlocked permanently forever!
+              </div>
             </div>
           </div>
 
-          {/* Earnings Progress Bar */}
-          <div className="space-y-1.5 pt-2 border-t border-[#fecaca]">
-            <div className="flex items-center justify-between text-xs font-bold text-[#7f1d1d]">
-              <span>Earnings Progress to Unlock</span>
-              <span>${totalEarned.toFixed(2)} / $1.00 ({Math.min(100, Math.round((totalEarned / 1.00) * 100))}%)</span>
-            </div>
-            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-[#fca5a5]">
-              <div
-                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, (totalEarned / 1.00) * 100)}%` }}
-              />
-            </div>
-          </div>
+          {/* Historical Table if previous withdrawals exist */}
+          {withdrawals.length > 0 && (
+            <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base sm:text-lg font-black text-[#09353e]">
+                    Previous Withdrawal Requests
+                  </h3>
+                  <p className="text-xs text-[#718589]">
+                    Track your last 5 withdrawal submissions and payout statuses
+                  </p>
+                </div>
+                <span className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-2.5 py-1 rounded-full border border-[#b8dfd7]">
+                  {withdrawals.length} entries
+                </span>
+              </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            {onSelectTab && (
-              <button
-                type="button"
-                onClick={() => onSelectTab(hasActivePackage ? 'watch-ads' : 'buy-package')}
-                className="px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                {hasActivePackage ? 'Go to Watch Ads & Earn' : 'Buy Package to Start'}
-              </button>
-            )}
-          </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[#f0ebe0] text-[#718589] uppercase tracking-wider text-[10px]">
+                      <th className="py-3 px-3">Date</th>
+                      <th className="py-3 px-3">Method</th>
+                      <th className="py-3 px-3">Account / Address</th>
+                      <th className="py-3 px-3">Amount USD</th>
+                      <th className="py-3 px-3">Amount PKR</th>
+                      <th className="py-3 px-3">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f5f1e8]">
+                    {withdrawals.slice(0, 5).map((w) => (
+                      <tr key={w.id} className="hover:bg-[#faf8f5]">
+                        <td className="py-3 px-3 text-[#526d72] font-mono whitespace-nowrap">
+                          {w.createdAt ? new Date(w.createdAt).toLocaleDateString() : 'Recent'}
+                        </td>
+                        <td className="py-3 px-3 font-bold text-[#09353e] uppercase">
+                          {w.method}
+                        </td>
+                        <td className="py-3 px-3 font-mono text-[#526d72]">
+                          {w.accountNumber || w.walletAddress || '—'}
+                        </td>
+                        <td className="py-3 px-3 font-bold text-[#b91c1c]">
+                          ${Number(w.amountUSD).toFixed(2)}
+                        </td>
+                        <td className="py-3 px-3 text-[#526d72]">
+                          {w.amountPKR ? `₨ ${w.amountPKR.toLocaleString()}` : '—'}
+                        </td>
+                        <td className="py-3 px-3">
+                          <span
+                            className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider ${
+                              w.status === 'paid'
+                                ? 'bg-[#dcfce7] text-[#15803d]'
+                                : w.status === 'rejected'
+                                ? 'bg-[#fee2e2] text-[#b91c1c]'
+                                : 'bg-[#fef3c7] text-[#b45309]'
+                            }`}
+                          >
+                            {w.status === 'pending' && <Clock className="w-3 h-3 animate-pulse" />}
+                            {w.status || 'pending'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-      {/* ✅ ELIGIBLE SUCCESS BADGE BANNER */}
-      {isEligible && (
-        <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] flex items-center justify-between flex-wrap gap-2 shadow-xs">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#dcfce7] text-[#15803d] flex items-center justify-center shrink-0">
-              <Check className="w-4 h-4" />
+      ) : (
+        /* ✅ ELIGIBLE: Full Withdrawal System */
+        <div className="space-y-6">
+          {/* ✅ ELIGIBLE SUCCESS BADGE BANNER */}
+          <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] flex items-center justify-between flex-wrap gap-2 shadow-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#dcfce7] text-[#15803d] flex items-center justify-center shrink-0">
+                <Check className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-[#14532d]">Withdrawals 100% Eligible</p>
+                <p className="text-[11px] text-[#166534]">
+                  You have met all requirements ($1.00 Earned & 1 Referral Verified). You can request payouts anytime.
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-bold text-[#14532d]">Withdrawals 100% Eligible</p>
-              <p className="text-[11px] text-[#166534]">
-                You have met the $1.00 earnings threshold (Total Earned: ${totalEarned.toFixed(2)}). You can request payouts anytime.
-              </p>
-            </div>
+            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac]">
+              Eligible • Unlocked
+            </span>
           </div>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac]">
-            Eligible • Unlocked
-          </span>
-        </div>
-      )}
 
-      {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Main Grid */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: Withdrawal Form */}
         <div className="lg:col-span-7 bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-6">
           <div className="flex items-center justify-between border-b border-[#f0ebe0] pb-4">
@@ -871,6 +1103,8 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
           </div>
         )}
       </div>
+        </div>
+      )}
 
       {/* GOOGLE ADSENSE WITHDRAWAL PAGE BANNER */}
       <GoogleAdSense label="Official Sponsor Network" format="auto" className="mt-4" />

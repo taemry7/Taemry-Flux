@@ -204,5 +204,26 @@
       "updatedAt": "2026-09-19T18:06:39.727Z",
       "isAdmin": true
     }
+  ],
+  [
+    "users/user_7065727369",
+    {
+      "uid": "user_7065727369",
+      "email": "persisted_user@example.com",
+      "name": "persisted_user",
+      "displayName": "persisted_user",
+      "username": "persisted_user",
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "createdAt": "2026-09-19T18:39:13.495Z",
+      "updatedAt": "2026-09-19T18:39:13.495Z"
+    }
   ]
 ]

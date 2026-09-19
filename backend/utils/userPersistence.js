@@ -72,46 +72,135 @@ export async function getApprovedDepositsTotal(db, uid, email) {
 
 /**
  * Resolves or initializes user document without ever washing active balances or packages.
+ * Guarantees that any purchased package is preserved permanently (lifetime package) and never reset to 'None'.
  */
 export async function resolveUserRecord(db, { uid, email, name, username }) {
   const cleanEmail = (email || '').toLowerCase().trim();
-  let userRef = db.collection('users').doc(uid);
+  const safeUid = uid || (cleanEmail ? ('usr_' + Buffer.from(cleanEmail).toString('hex').slice(0, 12)) : 'user_anonymous');
+  let userRef = db.collection('users').doc(safeUid);
   let doc = await userRef.get();
 
-  // 1. If doc exists by UID, return it safely
+  // Collect all candidate documents matching either safeUid or cleanEmail
+  const candidateDocs = [];
   if (doc && doc.exists) {
-    const data = doc.data() || {};
-    persistRegisteredUserEmail(cleanEmail || data.email);
-    return { ref: userRef, doc, data, isNew: false };
+    candidateDocs.push({ ref: userRef, id: userRef.id, data: doc.data() || {} });
   }
 
-  // 2. If not found by UID, search by email to prevent duplicate / washed accounts
   if (cleanEmail) {
     try {
-      const emailSnap = await db.collection('users')
-        .where('email', '==', cleanEmail)
-        .limit(1)
-        .get();
-
-      if (emailSnap && !emailSnap.empty) {
-        const existingDoc = emailSnap.docs[0];
-        const existingData = existingDoc.data() || {};
-        // Alias UID document to existing document data so subsequent lookups are instant
-        await userRef.set({
-          ...existingData,
-          uid,
-          updatedAt: new Date().toISOString(),
-        }, { merge: true });
-
-        const reDoc = await userRef.get();
-        persistRegisteredUserEmail(cleanEmail);
-        return { ref: userRef, doc: reDoc, data: reDoc.data(), isNew: false };
-      }
+      const snap = await db.collection('users').where('email', '==', cleanEmail).get();
+      snap.docs.forEach((d) => {
+        if (!candidateDocs.some((c) => c.id === d.id)) {
+          candidateDocs.push({ ref: d.ref, id: d.id, data: d.data() || {} });
+        }
+      });
     } catch (e) {}
   }
 
+  // Also check direct entries in MockFirestore in-memory data
+  if (db && db.data && typeof db.data.entries === 'function' && cleanEmail) {
+    for (const [key, val] of db.data.entries()) {
+      if (key.startsWith('users/') && (val?.email || '').toLowerCase().trim() === cleanEmail) {
+        const docId = key.replace('users/', '');
+        if (!candidateDocs.some((c) => c.id === docId)) {
+          candidateDocs.push({ ref: db.collection('users').doc(docId), id: docId, data: val || {} });
+        }
+      }
+    }
+  }
+
+  // If candidate documents exist, merge them smartly to guarantee lifetime package and balance persistence
+  if (candidateDocs.length > 0) {
+    let bestPackage = 'None';
+    let maxBalance = 0;
+    let maxReferrals = 0;
+    let maxLifetimeAds = 0;
+    let maxDailyAds = 0;
+    let maxTeamAds = 0;
+    let maxTotalEarned = 0;
+    let isEligible = false;
+    let hasLifetimePackage = false;
+    let mergedData = {};
+
+    candidateDocs.forEach(({ data }) => {
+      mergedData = { ...mergedData, ...data };
+      if (data.currentPackage && data.currentPackage !== 'None') {
+        bestPackage = data.currentPackage;
+        hasLifetimePackage = true;
+      }
+      if (Number(data.walletBalance || 0) > maxBalance) {
+        maxBalance = Number(data.walletBalance);
+      }
+      if (Number(data.referralCount || 0) > maxReferrals) {
+        maxReferrals = Number(data.referralCount);
+      }
+      if (Number(data.lifetimeAds || 0) > maxLifetimeAds) {
+        maxLifetimeAds = Number(data.lifetimeAds);
+      }
+      if (Number(data.dailyAdCount || 0) > maxDailyAds) {
+        maxDailyAds = Number(data.dailyAdCount);
+      }
+      if (Number(data.teamAdsCount || 0) > maxTeamAds) {
+        maxTeamAds = Number(data.teamAdsCount);
+      }
+      if (Number(data.totalEarned || 0) > maxTotalEarned) {
+        maxTotalEarned = Number(data.totalEarned);
+      }
+      if (data.isEligible) {
+        isEligible = true;
+      }
+    });
+
+    // Check if any approved deposits were credited in deposits collection
+    const approvedDeposits = await getApprovedDepositsTotal(db, safeUid, cleanEmail);
+    if (approvedDeposits > maxBalance && bestPackage === 'None') {
+      maxBalance = approvedDeposits;
+    }
+
+    const rawUserVal = username || name || mergedData.username || mergedData.name || cleanEmail.split('@')[0] || 'member';
+    const cleanUsername = rawUserVal.startsWith('@') ? rawUserVal : `@${rawUserVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+
+    const finalData = {
+      ...mergedData,
+      uid: safeUid,
+      email: cleanEmail || mergedData.email || 'member@taemryflux.com',
+      name: name || mergedData.name || mergedData.displayName || (cleanEmail ? cleanEmail.split('@')[0] : 'TAEMRY Member'),
+      username: cleanUsername,
+      currentPackage: bestPackage,
+      walletBalance: +maxBalance.toFixed(2),
+      referralCount: maxReferrals,
+      lifetimeAds: maxLifetimeAds,
+      dailyAdCount: maxDailyAds,
+      teamAdsCount: maxTeamAds,
+      totalEarned: +maxTotalEarned.toFixed(2),
+      isEligible: Boolean(isEligible || (bestPackage && bestPackage !== 'None')),
+      hasLifetimePackage: Boolean(hasLifetimePackage || (bestPackage && bestPackage !== 'None')),
+      isBlocked: Boolean(mergedData.isBlocked),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // Synchronize both userRef and all candidate alias documents so lookups never diverge
+    await userRef.set(finalData, { merge: true });
+    for (const cand of candidateDocs) {
+      if (cand.id !== safeUid) {
+        const targetRef = cand.ref || db.collection('users').doc(cand.id);
+        await targetRef.set(finalData, { merge: true });
+      }
+    }
+
+    if (typeof db._persist === 'function') {
+      db._persist();
+    }
+    if (cleanEmail) {
+      persistRegisteredUserEmail(cleanEmail);
+    }
+
+    const finalDoc = await userRef.get();
+    return { ref: userRef, doc: finalDoc, data: finalData, isNew: false, uid: safeUid };
+  }
+
   // 3. New user account creation — check if any approved deposits exist for this email/uid
-  const approvedDeposits = await getApprovedDepositsTotal(db, uid, cleanEmail);
+  const approvedDeposits = await getApprovedDepositsTotal(db, safeUid, cleanEmail);
 
   const rawUserVal = username || name || cleanEmail.split('@')[0] || 'member';
   const defaultUsername = rawUserVal.startsWith('@')
@@ -119,26 +208,32 @@ export async function resolveUserRecord(db, { uid, email, name, username }) {
     : `@${rawUserVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
 
   const newUserData = {
-    uid,
+    uid: safeUid,
     email: cleanEmail || 'member@taemryflux.com',
     name: name || cleanEmail.split('@')[0] || 'TAEMRY Member',
     username: defaultUsername,
     walletBalance: approvedDeposits,
     currentPackage: 'None',
     isEligible: false,
+    hasLifetimePackage: false,
     lifetimeAds: 0,
     dailyAdCount: 0,
     teamAdsCount: 0,
     referralCount: 0,
     totalEarned: 0,
+    isBlocked: false,
     createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 
   await userRef.set(newUserData);
   const createdDoc = await userRef.get();
+  if (typeof db._persist === 'function') {
+    db._persist();
+  }
   persistRegisteredUserEmail(cleanEmail);
 
-  return { ref: userRef, doc: createdDoc, data: newUserData, isNew: true };
+  return { ref: userRef, doc: createdDoc, data: newUserData, isNew: true, uid: safeUid };
 }
 
 /**
@@ -152,16 +247,21 @@ export async function findAdminUserRef(db, identifier) {
   let ref = db.collection('users').doc(cleanId);
   let doc = await ref.get();
   if (doc && doc.exists) {
-    return { ref, doc, data: doc.data(), uid: doc.id };
+    const data = doc.data() || {};
+    // If the document has an email, resolve across aliases to ensure active package is preserved
+    if (data.email) {
+      const resolved = await resolveUserRecord(db, { uid: doc.id, email: data.email });
+      return { ref: resolved.ref, doc: resolved.doc, data: resolved.data, uid: resolved.uid };
+    }
+    return { ref, doc, data, uid: doc.id };
   }
 
   // 2. Query by email
   const isEmail = cleanId.includes('@');
   if (isEmail) {
-    const snap = await db.collection('users').where('email', '==', cleanId.toLowerCase()).limit(1).get();
-    if (snap && !snap.empty) {
-      const foundDoc = snap.docs[0];
-      return { ref: foundDoc.ref, doc: foundDoc, data: foundDoc.data(), uid: foundDoc.id };
+    const resolved = await resolveUserRecord(db, { email: cleanId.toLowerCase() });
+    if (resolved && resolved.doc && resolved.doc.exists) {
+      return { ref: resolved.ref, doc: resolved.doc, data: resolved.data, uid: resolved.uid };
     }
   }
 
@@ -181,7 +281,8 @@ export async function findAdminUserRef(db, identifier) {
         dUsername === cleanTarget ||
         hexId === cleanId
       ) {
-        return { ref: d.ref, doc: d, data, uid: d.id };
+        const resolved = await resolveUserRecord(db, { uid: d.id, email: dEmail });
+        return { ref: resolved.ref, doc: resolved.doc, data: resolved.data, uid: resolved.uid };
       }
     }
   } catch (e) {}
@@ -198,28 +299,8 @@ export async function findAdminUserRef(db, identifier) {
     });
 
     if (matched) {
-      const newUid = 'usr_' + Buffer.from(matched).toString('hex').slice(0, 12);
-      const newRef = db.collection('users').doc(newUid);
-      const approvedDeposits = await getApprovedDepositsTotal(db, newUid, matched);
-      const initialData = {
-        uid: newUid,
-        email: matched.toLowerCase(),
-        name: matched.split('@')[0],
-        username: `@${matched.split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '')}`,
-        walletBalance: approvedDeposits,
-        currentPackage: 'None',
-        lifetimeAds: 0,
-        dailyAdCount: 0,
-        teamAdsCount: 0,
-        referralCount: 0,
-        totalEarned: 0,
-        isEligible: false,
-        isBlocked: false,
-        createdAt: new Date().toISOString(),
-      };
-      await newRef.set(initialData);
-      const newDoc = await newRef.get();
-      return { ref: newRef, doc: newDoc, data: initialData, uid: newUid };
+      const resolved = await resolveUserRecord(db, { email: matched });
+      return { ref: resolved.ref, doc: resolved.doc, data: resolved.data, uid: resolved.uid };
     }
   } catch (e) {}
 

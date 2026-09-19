@@ -8,6 +8,7 @@ import fs from 'fs';
 import path from 'path';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -352,29 +353,15 @@ router.post('/buy', verifyToken, async (req, res) => {
 
     const packagePrice = Number(packageInfo.price);
 
-    // 2. Fetch current user document
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
+    // 2. Fetch current user document safely without washing existing balances or packages
+    const { ref: userRef, doc: userDoc, data: resolvedUserData } = await resolveUserRecord(db, {
+      uid,
+      email: req.user.email,
+      name: req.user.name,
+    });
 
-    let currentBalance = 0; // Clean initial zero balance
-    let userData = {};
-
-    if (userDoc.exists) {
-      userData = userDoc.data();
-      currentBalance = Number(userData.walletBalance !== undefined ? userData.walletBalance : 0);
-    } else {
-      userData = {
-        uid,
-        email: req.user.email || 'member@taemryflux.com',
-        name: req.user.name || 'TAEMRY Member',
-        currentPackage: 'None',
-        isEligible: false,
-        lifetimeAds: 0,
-        teamAdsCount: 0,
-        referralCount: 0,
-        totalEarned: 0,
-      };
-    }
+    let userData = resolvedUserData || {};
+    let currentBalance = Number(userData.walletBalance !== undefined ? userData.walletBalance : 0);
 
     // 3. Check if user's walletBalance >= package price
     if (currentBalance < packagePrice) {
@@ -391,16 +378,35 @@ router.post('/buy', verifyToken, async (req, res) => {
     const newBalance = Number((currentBalance - packagePrice).toFixed(2));
     const assignedPackageName = packageInfo.tierName || packageInfo.name || packageInfo.id;
 
-    // 5. Update user's currentPackage and eligibility
+    // 5. Update user's currentPackage and eligibility (Permanent Lifetime Package Lock)
     const updatedUserData = {
       ...userData,
       walletBalance: newBalance,
       currentPackage: assignedPackageName,
       isEligible: true,
+      hasLifetimePackage: true,
       lastPackagePurchase: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     };
 
     await userRef.set(updatedUserData, { merge: true });
+
+    // Also update any alias email documents so account is never washed
+    const userCleanEmail = (req.user.email || userData.email || '').toLowerCase().trim();
+    if (userCleanEmail) {
+      try {
+        const snap = await db.collection('users').where('email', '==', userCleanEmail).get();
+        for (const d of snap.docs) {
+          if (d.id !== userRef.id) {
+            await d.ref.set(updatedUserData, { merge: true });
+          }
+        }
+      } catch (e) {}
+    }
+
+    if (typeof db._persist === 'function') {
+      db._persist();
+    }
 
     // 6. Create transaction record
     const transactionData = {

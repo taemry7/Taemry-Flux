@@ -267,6 +267,7 @@ class MockFirestore {
             if (matches) {
               matchingDocs.push({
                 id: docId,
+                ref: self.collection(name).doc(docId),
                 exists: true,
                 data: () => ({ ...value }),
               });

@@ -10,6 +10,7 @@ import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 import { getSystemSettings } from './settings.js';
 import { adBotGuard } from '../middleware/antiBot.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -33,17 +34,18 @@ router.get('/status', verifyToken, async (req, res) => {
     const uid = req.user.uid;
     const db = getDb();
     const settings = await getSystemSettings();
-    const userRef = db.collection('users').doc(uid);
-    const doc = await userRef.get();
+    const { doc, data: user } = await resolveUserRecord(db, {
+      uid,
+      email: req.user.email,
+      name: req.user.name,
+    });
 
-    if (!doc.exists) {
+    if (!user) {
       return res.status(404).json({
         error: 'User not found',
         message: 'No user profile found for this account.',
       });
     }
-
-    const user = doc.data();
     const todayStr = new Date().toISOString().split('T')[0];
 
     let dailyAdCount = user.dailyAdCount !== undefined ? Number(user.dailyAdCount) : 0;
@@ -178,29 +180,11 @@ router.post('/watch', verifyToken, adBotGuard, async (req, res) => {
     const { adId = 'sample' } = req.body || {};
     const uid = req.user.uid;
     const db = getDb();
-    const userRef = db.collection('users').doc(uid);
-    const doc = await userRef.get();
-
-    let user = doc.exists ? doc.data() : null;
-
-    // If user record doesn't exist yet, initialize default clean user
-    if (!user) {
-      user = {
-        uid,
-        email: req.user.email || 'member@taemryflux.com',
-        name: req.user.name || 'TAEMRY Member',
-        walletBalance: 0,
-        currentPackage: 'None',
-        isEligible: false,
-        lifetimeAds: 0,
-        dailyAdCount: 0,
-        teamAdsCount: 0,
-        referralCount: 0,
-        totalEarned: 0,
-        createdAt: new Date().toISOString(),
-      };
-      await userRef.set(user);
-    }
+    const { ref: userRef, doc, data: user } = await resolveUserRecord(db, {
+      uid,
+      email: req.user.email,
+      name: req.user.name,
+    });
 
     const settings = await getSystemSettings();
     const dailyLimit = Number(settings.dailyAdLimit || 20);
