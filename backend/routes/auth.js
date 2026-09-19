@@ -43,6 +43,7 @@ export const getPersistentRegisteredEmails = () => {
   } catch (e) {}
   return [
     'mistrtaimoor@gmail.com',
+    'mistrtaemry@gmail.com',
   ];
 };
 
@@ -113,6 +114,7 @@ const checkUserExists = async (cleanEmail) => {
   const isAdminEmail =
     target === 'mistrtaimur7@gmail.com' ||
     target === 'mistrtaimoor@gmail.com' ||
+    target === 'mistrtaemry@gmail.com' ||
     target.startsWith('admin@') ||
     target.includes('taimri') ||
     target.includes('taemryadmin');
@@ -670,6 +672,7 @@ router.post('/complete-otp-signup', async (req, res) => {
     const isAdmin =
       rawEmail === 'mistrtaimur7@gmail.com' ||
       rawEmail === 'mistrtaimoor@gmail.com' ||
+      rawEmail === 'mistrtaemry@gmail.com' ||
       rawEmail.startsWith('admin@') ||
       rawEmail.includes('taimri') ||
       rawEmail.includes('taemryadmin');
@@ -842,6 +845,7 @@ router.post('/google', async (req, res) => {
     const isAdmin =
       cleanEmail === 'mistrtaimur7@gmail.com' ||
       cleanEmail === 'mistrtaimoor@gmail.com' ||
+      cleanEmail === 'mistrtaemry@gmail.com' ||
       cleanEmail.startsWith('admin@') ||
       cleanEmail.includes('taimri') ||
       cleanEmail.includes('taemryadmin');

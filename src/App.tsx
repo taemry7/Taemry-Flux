@@ -94,7 +94,7 @@ function AppContent() {
     // Verify persisted session in storage before allowing member pages (home/dashboard)
     let hasPersistedSession = false;
     try {
-      const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+      const rawUser = localStorage.getItem('taemry_persisted_user');
       if (rawUser) {
         hasPersistedSession = true;
       }
@@ -258,7 +258,7 @@ function AppContent() {
         } else if (effectiveRoute.startsWith('dashboard')) {
           let hasPersistedUser = false;
           try {
-            const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+            const rawUser = localStorage.getItem('taemry_persisted_user');
             if (rawUser) hasPersistedUser = true;
           } catch {}
           if (!hasPersistedUser) {
@@ -278,7 +278,7 @@ function AppContent() {
         } else if (effectiveRoute === 'home') {
           let hasPersistedUser = false;
           try {
-            const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+            const rawUser = localStorage.getItem('taemry_persisted_user');
             if (rawUser) hasPersistedUser = true;
           } catch {}
           if (!hasPersistedUser) {
@@ -300,7 +300,7 @@ function AppContent() {
         // External page change, back/forward button, or popstate
         triggerPageTransition(() => {
           runSync();
-        }, 200);
+        }, 70);
       } else {
         runSync();
       }
@@ -315,7 +315,7 @@ function AppContent() {
     };
   }, []);
 
-  // Update hash when navigating with 200ms blur splash animate transition
+  // Update hash when navigating with snappy blur splash animate transition
   const navigateTo = (page: string, tab: string | null = null, fromMenu: boolean = false) => {
     // If navigating to the exact same page and tab, scroll to top
     if (currentPage === page && (!tab || activeTab === tab)) {
@@ -343,9 +343,8 @@ function AppContent() {
         setActiveTab('overview');
       }
       window.location.hash = tab ? `#/${page}/${tab}` : `#/${page}`;
-      setTimeout(() => setInternalNavigationFlag(false), 300);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, 200);
+      setTimeout(() => setInternalNavigationFlag(false), 200);
+    }, 70);
   };
 
   // Track previous user reference to instantly detect logout
@@ -398,7 +397,7 @@ function AppContent() {
     if (!currentUser && (currentPage === 'home' || currentPage === 'dashboard')) {
       let hasPersistedUser = false;
       try {
-        const rawUser = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+        const rawUser = localStorage.getItem('taemry_persisted_user');
         if (rawUser) hasPersistedUser = true;
       } catch {}
       if (!hasPersistedUser) {
@@ -515,10 +514,10 @@ function AppContent() {
           <AnimatePresence mode="wait">
             <motion.div
               key={currentPage}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.14, ease: 'easeOut' }}
               className="w-full flex-1"
             >
               {currentPage === 'home' && (

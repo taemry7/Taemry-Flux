@@ -60,12 +60,12 @@ export async function getSystemSettings() {
     const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error('Settings fetch timeout')), 2000));
     const doc = await Promise.race([fetchDoc, timeout]);
     if (doc && doc.exists && doc.data()) {
-      return { ...DEFAULT_SETTINGS, ...doc.data() };
+      return { ...DEFAULT_SETTINGS, ...doc.data(), testMode: false };
     }
   } catch (error) {
     console.warn('Could not read systemSettings from Firestore, using default values:', error.message);
   }
-  return { ...DEFAULT_SETTINGS };
+  return { ...DEFAULT_SETTINGS, testMode: false };
 }
 
 /**

@@ -208,22 +208,18 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
 
     setLoading(true);
-    // Strict 2-second max timer per user invariant
-    const loadingTimer = setTimeout(() => {
+    // 5-second graceful safety timer so button never hangs or freezes
+    const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 5000);
 
     try {
       await login(cleanEmail, cleanPassword);
-      clearTimeout(loadingTimer);
+      clearTimeout(safetyTimer);
       setLoading(false);
 
-      // Save/record user in backend
-      try {
-        await apiClient.post('/auth/save-registered-user', {
-          email: cleanEmail,
-        });
-      } catch (e) {}
+      // Non-blocking persistent user record in backend
+      apiClient.post('/auth/save-registered-user', { email: cleanEmail }).catch(() => {});
 
       // Clear legacy OTP flags completely per user directive
       try {
@@ -244,7 +240,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       // Navigate directly to the "Put your wallet in motion" page
       onNavigate('home');
     } catch (err) {
-      clearTimeout(loadingTimer);
+      clearTimeout(safetyTimer);
       setLoading(false);
 
       const errMsg = err?.message || '';
@@ -348,26 +344,19 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
     }
 
     setLoading(true);
-    // Strict 2-second max duration per user invariant
-    const loadingTimer = setTimeout(() => {
+    // 5-second graceful safety timer so signup button never hangs or freezes
+    const safetyTimer = setTimeout(() => {
       setLoading(false);
-    }, 2000);
+    }, 5000);
 
     try {
-      // 1. Verify if account already exists before creating
+      // 1. Fast client-side duplicate checks
       let emailAlreadyExists = false;
       try {
-        const checkRes = await apiClient.post('/auth/check-email', { email: cleanEmail });
-        if (checkRes.data?.exists) emailAlreadyExists = true;
+        const rawReg = localStorage.getItem('taemry_registered_emails');
+        const list = rawReg ? JSON.parse(rawReg) : [];
+        if (Array.isArray(list) && list.includes(cleanEmail)) emailAlreadyExists = true;
       } catch {}
-
-      if (!emailAlreadyExists) {
-        try {
-          const rawReg = localStorage.getItem('taemry_registered_emails');
-          const list = rawReg ? JSON.parse(rawReg) : [];
-          if (Array.isArray(list) && list.includes(cleanEmail)) emailAlreadyExists = true;
-        } catch {}
-      }
       if (!emailAlreadyExists) {
         try {
           const rawAcc = localStorage.getItem('taemry_registered_accounts');
@@ -377,24 +366,22 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       }
 
       if (emailAlreadyExists) {
-        clearTimeout(loadingTimer);
+        clearTimeout(safetyTimer);
         setLoading(false);
         setError('Account already exists! An account with this email address already exists. Please Sign In instead.');
         return;
       }
 
-      // Record in backend persistent store
-      try {
-        await apiClient.post('/auth/save-registered-user', {
-          email: cleanEmail,
-          name: cleanFullName,
-          username: cleanUsername,
-        });
-      } catch (e) {}
+      // Non-blocking persistent user record in backend
+      apiClient.post('/auth/save-registered-user', {
+        email: cleanEmail,
+        name: cleanFullName,
+        username: cleanUsername,
+      }).catch(() => {});
 
-      // 2. Perform authentication signup
+      // 2. Perform authentication signup directly
       await signup(cleanEmail, cleanPassword, cleanFullName, cleanReferral || '');
-      clearTimeout(loadingTimer);
+      clearTimeout(safetyTimer);
       setLoading(false);
 
       try {
@@ -416,7 +403,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
       // Navigate directly to home where the 3D Welcome Splash immediately appears
       onNavigate('home');
     } catch (err) {
-      clearTimeout(loadingTimer);
+      clearTimeout(safetyTimer);
       setLoading(false);
       const errMsg = err?.message || '';
       const lowerMsg = errMsg.toLowerCase();
@@ -504,15 +491,15 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
             {tabSplash && (
               <motion.span
                 key={tabSplash.id}
-                initial={{ scale: 0, opacity: 0.8, filter: 'blur(0px)' }}
-                animate={{ scale: 4.5, opacity: 0, filter: 'blur(14px)' }}
+                initial={{ scale: 0, opacity: 0.7 }}
+                animate={{ scale: 3.5, opacity: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ duration: 0.55, ease: 'easeOut' }}
+                transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
                 style={{
                   left: tabSplash.x,
                   top: tabSplash.y,
                 }}
-                className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full w-24 h-24 bg-gradient-to-r from-[#0c5963]/30 via-[#0f766e]/25 to-[#38bdf8]/25"
+                className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full w-20 h-20 bg-radial from-[#0c5963]/30 via-[#0f766e]/20 to-transparent will-change-transform"
               />
             )}
           </AnimatePresence>

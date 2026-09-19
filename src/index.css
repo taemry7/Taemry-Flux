@@ -380,76 +380,79 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
   position: absolute;
   border-radius: 9999px;
   pointer-events: none;
-  transform: translate(-50%, -50%) scale(0);
-  background: radial-gradient(circle, rgba(15, 118, 110, 0.45) 0%, rgba(12, 89, 99, 0.28) 45%, rgba(56, 189, 248, 0.12) 65%, transparent 75%);
-  animation: fluid-button-splash 0.65s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
-  will-change: transform, opacity, filter;
+  transform: translate3d(-50%, -50%, 0) scale(0);
+  background: radial-gradient(circle, rgba(15, 118, 110, 0.4) 0%, rgba(12, 89, 99, 0.22) 40%, rgba(56, 189, 248, 0.1) 65%, transparent 75%);
+  animation: fluid-button-splash 0.38s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
   z-index: 40;
 }
 
 .dark .fluid-splash-wave {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.55) 0%, rgba(45, 212, 191, 0.35) 45%, rgba(56, 189, 248, 0.15) 65%, transparent 75%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.45) 0%, rgba(45, 212, 191, 0.28) 40%, rgba(56, 189, 248, 0.1) 65%, transparent 75%);
 }
 
 .fluid-splash-ring {
   position: absolute;
   border-radius: 9999px;
   pointer-events: none;
-  border: 1.5px solid rgba(15, 118, 110, 0.5);
-  transform: translate(-50%, -50%) scale(0.1);
-  animation: fluid-splash-ring 0.6s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  border: 1.5px solid rgba(15, 118, 110, 0.4);
+  transform: translate3d(-50%, -50%, 0) scale(0.1);
+  animation: fluid-splash-ring 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity;
+  backface-visibility: hidden;
   z-index: 41;
 }
 
 .dark .fluid-splash-ring {
-  border-color: rgba(56, 189, 248, 0.6);
+  border-color: rgba(56, 189, 248, 0.45);
 }
 
 @keyframes fluid-button-splash {
   0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.75;
+    transform: translate3d(-50%, -50%, 0) scale(0);
+    opacity: 0.8;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.8);
+    transform: translate3d(-50%, -50%, 0) scale(2.4);
     opacity: 0;
   }
 }
 
 @keyframes fluid-splash {
   0% {
-    transform: translate(-50%, -50%) scale(0);
-    opacity: 0.75;
+    transform: translate3d(-50%, -50%, 0) scale(0);
+    opacity: 0.8;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.6);
+    transform: translate3d(-50%, -50%, 0) scale(2.4);
     opacity: 0;
   }
 }
 
 @keyframes fluid-splash-ring {
   0% {
-    transform: translate(-50%, -50%) scale(0.1);
-    opacity: 0.8;
+    transform: translate3d(-50%, -50%, 0) scale(0.1);
+    opacity: 0.7;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.2);
+    transform: translate3d(-50%, -50%, 0) scale(2);
     opacity: 0;
   }
 }
 
 .animate-fluid-splash {
-  animation: fluid-splash 0.5s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
+  animation: fluid-splash 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fluid-splash-ring {
-  animation: fluid-splash-ring 0.5s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
+  animation: fluid-splash-ring 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ========================================================================= */
 /* FULL SCREEN BLUR SPLASH ANIMATE OVERLAY (FADE IN / FADE OUT)              */
 /* STRICTLY NO SOLID BLACK: PURE BACKDROP BLUR & FLUID RADIAL SPLASH PULSE   */
+/* NEVER CAPTURES POINTER EVENTS TO PREVENT ANY APP HANGING OR FROZEN UI     */
 /* ========================================================================= */
 .fade-overlay {
   position: fixed !important;
@@ -462,14 +465,16 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
   height: 100dvh !important;
   z-index: 99999 !important;
   opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.18s ease;
-  background: radial-gradient(circle at 50% 50%, rgba(15, 118, 110, 0.08) 0%, rgba(12, 89, 99, 0.04) 40%, rgba(250, 248, 245, 0.4) 100%);
+  pointer-events: none !important;
+  transition: opacity 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+  background: radial-gradient(circle at 50% 50%, rgba(15, 118, 110, 0.08) 0%, rgba(12, 89, 99, 0.04) 40%, rgba(250, 248, 245, 0.35) 100%);
   overflow: hidden;
+  will-change: opacity;
+  backface-visibility: hidden;
 }
 
 .dark .fade-overlay {
-  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.09) 0%, rgba(14, 165, 233, 0.05) 40%, rgba(7, 21, 26, 0.4) 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.08) 0%, rgba(14, 165, 233, 0.04) 40%, rgba(7, 21, 26, 0.35) 100%);
 }
 
 /* Jab page load ho chuka ho, tab overlay gayab (Fade In) ho jaye */
@@ -478,10 +483,10 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
   pointer-events: none !important;
 }
 
-/* Jab user click kare / page change / back ho, tab overlay wapas aa jaye (Smooth 60+ FPS overlay) */
+/* Smooth non-blocking overlay on navigation */
 .fade-overlay.show {
   opacity: 1 !important;
-  pointer-events: auto !important;
+  pointer-events: none !important;
 }
 
 /* Center fluid splash wave inside overlay */
@@ -489,31 +494,33 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.1);
+  transform: translate3d(-50%, -50%, 0) scale(0.1);
   width: 240px;
   height: 240px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(12, 89, 99, 0.28) 0%, rgba(15, 118, 110, 0.14) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(12, 89, 99, 0.25) 0%, rgba(15, 118, 110, 0.12) 45%, transparent 70%);
   opacity: 0;
   pointer-events: none;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 .dark .fade-overlay-splash {
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.35) 0%, rgba(56, 189, 248, 0.18) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.28) 0%, rgba(56, 189, 248, 0.15) 45%, transparent 70%);
 }
 
 .fade-overlay.show .fade-overlay-splash,
 .fade-overlay-splash.animate-active {
-  animation: splash-blur-pulse 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: splash-blur-pulse 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes splash-blur-pulse {
   0% {
-    transform: translate(-50%, -50%) scale(0.1);
-    opacity: 0.9;
+    transform: translate3d(-50%, -50%, 0) scale(0.2);
+    opacity: 0.8;
   }
   100% {
-    transform: translate(-50%, -50%) scale(4.5);
+    transform: translate3d(-50%, -50%, 0) scale(3.5);
     opacity: 0;
   }
 }

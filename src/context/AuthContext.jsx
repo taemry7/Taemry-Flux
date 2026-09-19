@@ -110,11 +110,20 @@ if (isFirebaseConfigured && auth) {
   }
 }
 
+// Purge any stale demo/fake user data from browser storage
+if (typeof window !== 'undefined') {
+  try {
+    localStorage.removeItem('taemry_demo_user');
+    localStorage.removeItem('taemry_demo_mode');
+    localStorage.removeItem('taemry_test_mode');
+  } catch {}
+}
+
 // Helper to retrieve any persisted session on cold start
 const getInitialPersistedUser = () => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+    const raw = localStorage.getItem('taemry_persisted_user');
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -137,11 +146,13 @@ const checkIsAdminEmailStatic = (email) => {
   return (
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
+    em === 'mistrtaemry@gmail.com' ||
     em.startsWith('admin@') ||
     em.includes('taimri') ||
     em.includes('taemryadmin') ||
     em.includes('mistrtaimur') ||
-    em.includes('mistrtaimoor')
+    em.includes('mistrtaimoor') ||
+    em.includes('mistrtaemry')
   );
 };
 
@@ -294,11 +305,13 @@ export const AuthProvider = ({ children }) => {
       const isKnownAdminEmail =
         email === 'mistrtaimur7@gmail.com' ||
         email === 'mistrtaimoor@gmail.com' ||
+        email === 'mistrtaemry@gmail.com' ||
         email.startsWith('admin@') ||
         email.includes('taimri') ||
         email.includes('taemryadmin') ||
         email.includes('mistrtaimur') ||
-        email.includes('mistrtaimoor');
+        email.includes('mistrtaimoor') ||
+        email.includes('mistrtaemry');
 
       // 1. Check custom claim on token
       if (typeof currentUser.getIdTokenResult === 'function') {
@@ -332,11 +345,13 @@ export const AuthProvider = ({ children }) => {
     return (
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
+      em === 'mistrtaemry@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taimri') ||
       em.includes('taemryadmin') ||
       em.includes('mistrtaimur') ||
-      em.includes('mistrtaimoor')
+      em.includes('mistrtaimoor') ||
+      em.includes('mistrtaemry')
     );
   };
 

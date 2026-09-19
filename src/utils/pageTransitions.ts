@@ -20,10 +20,10 @@ export function getInternalNavigationFlag(): boolean {
 
 /**
  * Triggers full-screen blur splash animate overlay (pure blur splash, strictly no solid black).
- * @param callback Action to execute after 200ms blur splash (e.g. switch page, change tab)
- * @param delayMs Duration in milliseconds (defaults to 200ms matching CSS transition)
+ * @param callback Action to execute after smooth transition (e.g. switch page, change tab)
+ * @param delayMs Duration in milliseconds (defaults to 70ms for instant, fluid navigation)
  */
-export function triggerPageTransition(callback?: () => void, delayMs: number = 200): void {
+export function triggerPageTransition(callback?: () => void, delayMs: number = 70): void {
   if (typeof document === 'undefined') {
     if (callback) callback();
     return;
@@ -48,7 +48,7 @@ export function triggerPageTransition(callback?: () => void, delayMs: number = 2
     });
   }
 
-  // 2. Snappy 60+ FPS navigation transition
+  // 2. Snappy 120 FPS navigation transition without hanging or lag
   setTimeout(() => {
     if (callback) {
       try {
@@ -60,12 +60,10 @@ export function triggerPageTransition(callback?: () => void, delayMs: number = 2
 
     // 3. Page / Option load hote hi Fade In effect (overlay gayab ho jana)
     requestAnimationFrame(() => {
-      setTimeout(() => {
-        overlay.classList.remove('show');
-        overlay.classList.add('loaded');
-      }, 30);
+      overlay.classList.remove('show');
+      overlay.classList.add('loaded');
     });
-  }, Math.min(delayMs, 100));
+  }, Math.min(delayMs, 70));
 }
 
 /**
@@ -87,25 +85,20 @@ export function initGlobalPageTransitions(): () => void {
     if (target.hasAttribute('disabled') || target.getAttribute('aria-disabled') === 'true') return;
 
     const el = target as HTMLElement;
+    // Fast check to avoid interrupting form submissions or password toggles
+    if (el.id === 'btn-toggle-password' || el.id === 'btn-toggle-signup-password') return;
+
     const rect = el.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) return;
 
     const isPointer = e.clientX > 0 || e.clientY > 0;
     const x = isPointer ? e.clientX - rect.left : rect.width / 2;
     const y = isPointer ? e.clientY - rect.top : rect.height / 2;
-    const size = Math.max(rect.width, rect.height) * 2.2;
+    const size = Math.max(rect.width, rect.height) * 2;
 
-    // Fast non-blocking position setup without synchronous layout reflow
-    if (!el.style.position || el.style.position === 'static') {
-      el.style.position = 'relative';
-    }
-    el.style.overflow = 'hidden';
-
-    // Remove old waves if user clicks repeatedly
-    const prevWaves = el.querySelectorAll('.fluid-splash-wave, .fluid-splash-ring');
-    if (prevWaves.length > 2) {
-      prevWaves[0].remove();
-    }
+    // Remove any previous wave if clicked rapidly to prevent memory leaks
+    const prevWaves = el.querySelectorAll('.fluid-splash-wave');
+    prevWaves.forEach((w) => w.remove());
 
     const splash = document.createElement('span');
     splash.className = 'fluid-splash-wave';
@@ -114,20 +107,11 @@ export function initGlobalPageTransitions(): () => void {
     splash.style.left = `${x}px`;
     splash.style.top = `${y}px`;
 
-    const ring = document.createElement('span');
-    ring.className = 'fluid-splash-ring';
-    ring.style.width = `${size * 0.85}px`;
-    ring.style.height = `${size * 0.85}px`;
-    ring.style.left = `${x}px`;
-    ring.style.top = `${y}px`;
-
     el.appendChild(splash);
-    el.appendChild(ring);
 
     setTimeout(() => {
       splash.remove();
-      ring.remove();
-    }, 500);
+    }, 380);
   };
 
   // 2. Delegate click for any element with .fade-trigger class

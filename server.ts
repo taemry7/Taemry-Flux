@@ -26,12 +26,17 @@ async function startServer() {
   initFirebaseAdmin();
 
   // Auto-purge pre-seeded test accounts, bots, and dummy ledgers on boot
-  // Preserving ONLY mistrtaimoor@gmail.com with clean 0 balance
+  // Preserving ONLY verified owner accounts (mistrtaimoor@gmail.com, mistrtaemry@gmail.com) with clean 0 balance
   try {
     const db = getDb() as any;
     if (db && db.data && typeof db.data.delete === 'function') {
       const keysToDelete: string[] = [];
       for (const [key, val] of db.data.entries()) {
+        const isOwnerAccount =
+          val?.email === 'mistrtaimoor@gmail.com' ||
+          val?.email === 'mistrtaemry@gmail.com' ||
+          key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2';
+
         if (
           key.startsWith('deposits/') ||
           key.startsWith('withdrawals/') ||
@@ -39,22 +44,21 @@ async function startServer() {
           key.startsWith('supportTickets/') ||
           key.startsWith('transactions/') ||
           key.startsWith('cloudMiner/') ||
-          (key.startsWith('users/') && key !== 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2' && val?.email !== 'mistrtaimoor@gmail.com')
+          (key.startsWith('users/') && !isOwnerAccount)
         ) {
           keysToDelete.push(key);
         }
       }
       keysToDelete.forEach((k) => db.data.delete(k));
 
-      // Reset mistrtaimoor@gmail.com to 0 balance & pristine clean live state
+      // Reset owner accounts to 0 balance & pristine clean live state
       for (const [key, val] of db.data.entries()) {
-        if (key.startsWith('users/') && (val?.email === 'mistrtaimoor@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')) {
+        if (
+          key.startsWith('users/') &&
+          (val?.email === 'mistrtaimoor@gmail.com' || val?.email === 'mistrtaemry@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')
+        ) {
           db.data.set(key, {
             ...val,
-            uid: 'RNva69V1XoMwaxGgVaKtJ4jXfYY2',
-            email: 'mistrtaimoor@gmail.com',
-            name: 'Taimoor',
-            displayName: 'Taimoor',
             walletBalance: 0,
             currentPackage: 'None',
             lifetimeAds: 0,

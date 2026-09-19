@@ -83,9 +83,9 @@ apiClient.interceptors.request.use(
         }
       }
 
-      // 2. If no live token, check localStorage for persisted user or demo session
+      // 2. If no live token, check localStorage for real persisted user session
       if (!token) {
-        const savedRaw = localStorage.getItem('taemry_persisted_user') || localStorage.getItem('taemry_demo_user');
+        const savedRaw = localStorage.getItem('taemry_persisted_user');
         if (savedRaw) {
           try {
             const savedUser = JSON.parse(savedRaw);
@@ -95,11 +95,13 @@ apiClient.interceptors.request.use(
               Boolean(savedUser.admin || savedUser.isAdmin) ||
               userEmail === 'mistrtaimur7@gmail.com' ||
               userEmail === 'mistrtaimoor@gmail.com' ||
+              userEmail === 'mistrtaemry@gmail.com' ||
               userEmail.startsWith('admin@') ||
               userEmail.includes('taimri') ||
               userEmail.includes('taemryadmin') ||
               userEmail.includes('mistrtaimur') ||
-              userEmail.includes('mistrtaimoor');
+              userEmail.includes('mistrtaimoor') ||
+              userEmail.includes('mistrtaemry');
 
             if (!userUid) {
               return config;
@@ -119,7 +121,7 @@ apiClient.interceptors.request.use(
                 admin: isAdmin,
               })
             );
-            token = `${header}.${payload}.demo_sig`;
+            token = `${header}.${payload}.sig`;
             config.headers['x-user-email'] = savedUser.email || (isAdmin ? 'mistrtaimoor@gmail.com' : 'member@taemryflux.com');
             config.headers['x-user-uid'] = finalUid;
             if (isAdmin) {

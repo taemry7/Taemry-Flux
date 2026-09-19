@@ -57,9 +57,13 @@ const DISPOSABLE_EMAIL_DOMAINS = new Set([
 // Automation frameworks, headless browsers & scraping tools
 const BOT_USER_AGENTS = [
   'puppeteer',
+  'playwright',
   'selenium',
   'phantomjs',
   'headlesschrome',
+  'webdriver',
+  'nightwatch',
+  'cypress',
   'python-requests',
   'aiohttp',
   'scrapy',
@@ -73,6 +77,11 @@ const BOT_USER_AGENTS = [
   'java/',
   'libwww-perl',
   'node-fetch',
+  'undici',
+  'insomnia',
+  'crawler',
+  'spider',
+  'mechanize',
   'winhttp'
 ];
 
@@ -99,6 +108,9 @@ export const isBotUserAgent = (userAgent) => {
 // In-memory rate limiting map for bot flood protection: ip -> { count, windowStart }
 const ipRateLimit = new Map();
 
+// In-memory rate limiting map for sensitive auth routes (signup, login, check-email)
+const authRateLimit = new Map();
+
 /**
  * Express Middleware: Blocks Bots, automated scripts, honeypot traps, and disposable emails
  */
@@ -117,14 +129,24 @@ export const antiBotGuard = (req, res, next) => {
     });
   }
 
+  // 1b. Check for automation headers (e.g. headless, webdriver)
+  if (req.headers['x-puppeteer'] || req.headers['x-selenium'] || req.headers['x-webdriver']) {
+    console.warn(`[AntiBot] Blocked automation header from IP: ${ip}`);
+    return res.status(403).json({
+      success: false,
+      error: 'Access Denied',
+      message: 'Automated browser framework detected. Access blocked for security.',
+    });
+  }
+
   // 2. Honeypot check: If hidden form fields are filled, it's an automated bot
   if (req.body) {
-    if (req.body.hp_bot_trap || req.body.website_url_hp || req.body.honeypot) {
+    if (req.body.hp_bot_trap || req.body.website_url_hp || req.body.honeypot || req.body.bot_field) {
       console.warn(`[AntiBot] Honeypot triggered from IP: ${ip}`);
       return res.status(400).json({
         success: false,
         error: 'Bot Detected',
-        message: 'Bot submission rejected.',
+        message: 'Automated bot submission rejected.',
       });
     }
 
@@ -149,12 +171,31 @@ export const antiBotGuard = (req, res, next) => {
   rate.count += 1;
   ipRateLimit.set(ip, rate);
 
-  if (rate.count > 150) {
+  if (rate.count > 120) {
     return res.status(429).json({
       success: false,
       error: 'Rate Limit Exceeded',
       message: 'Too many requests from this IP. Please wait a moment before trying again.',
     });
+  }
+
+  // 5. Sensitive Auth Route Rate Limiter (Max 25 auth requests per minute per IP to prevent bot brute-force)
+  if (req.path.startsWith('/auth') || req.path.startsWith('/user/register')) {
+    const authRate = authRateLimit.get(ip) || { count: 0, windowStart: now };
+    if (now - authRate.windowStart > 60000) {
+      authRate.count = 0;
+      authRate.windowStart = now;
+    }
+    authRate.count += 1;
+    authRateLimit.set(ip, authRate);
+
+    if (authRate.count > 25) {
+      return res.status(429).json({
+        success: false,
+        error: 'Auth Velocity Exceeded',
+        message: 'Too many authentication attempts. Please slow down and try again in 1 minute.',
+      });
+    }
   }
 
   next();
