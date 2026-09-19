@@ -3,7 +3,7 @@
  * Global announcements dispatch to all active platform members with live preview card.
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Bell,
   Send,
@@ -24,20 +24,22 @@ export default function AdminBroadcast() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState({ type: '', message: '' });
-  const [history, setHistory] = useState([
-    {
-      title: 'Package APEX & Master Yield Adjustment',
-      message: 'New high-yield daily reward parameters have been activated for all Master and Apex members. Payouts process instantaneously.',
-      author: currentUser?.email || 'admin@taemryflux.com',
-      date: new Date(Date.now() - 3600000 * 24).toLocaleDateString(),
-    },
-    {
-      title: 'Scheduled Core Maintenance Notice',
-      message: 'Withdrawal settlement gateways will undergo routine server verification tonight from 02:00 AM to 03:00 AM UTC. Ad streams remain active without interruption.',
-      author: currentUser?.email || 'admin@taemryflux.com',
-      date: new Date(Date.now() - 3600000 * 72).toLocaleDateString(),
-    }
-  ]);
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    let mounted = true;
+    apiClient.get('/admin/notifications/broadcast').then((res) => {
+      if (mounted && res.data?.notifications?.length > 0) {
+        setHistory(res.data.notifications.map((n) => ({
+          title: n.title,
+          message: n.message,
+          author: n.author || 'Admin',
+          date: n.createdAt ? new Date(n.createdAt).toLocaleDateString() : 'Recent',
+        })));
+      }
+    }).catch(() => {});
+    return () => { mounted = false; };
+  }, []);
 
   const handleBroadcast = async (e) => {
     e.preventDefault();

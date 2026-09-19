@@ -5,6 +5,8 @@
  */
 
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 import {
@@ -16,22 +18,61 @@ import {
 
 const router = express.Router();
 
+const milestonesFilePath = path.resolve(process.cwd(), 'backend', 'systemSettings.initial.json');
+
+function readDiskMilestones() {
+  try {
+    if (fs.existsSync(milestonesFilePath)) {
+      const raw = fs.readFileSync(milestonesFilePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed?.systemSettings?.milestones) {
+        return parsed.systemSettings.milestones;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+export function saveMilestonesToDisk(milestonesData) {
+  try {
+    let fullData = { systemSettings: {} };
+    if (fs.existsSync(milestonesFilePath)) {
+      try {
+        fullData = JSON.parse(fs.readFileSync(milestonesFilePath, 'utf-8')) || { systemSettings: {} };
+      } catch (e) {}
+    }
+    if (!fullData.systemSettings) fullData.systemSettings = {};
+    fullData.systemSettings.milestones = milestonesData;
+    fs.writeFileSync(milestonesFilePath, JSON.stringify(fullData, null, 2), 'utf-8');
+  } catch (e) {}
+}
+
 /**
- * Helper to get live configurable milestones from Firestore systemSettings
+ * Helper to get live configurable milestones from Firestore systemSettings or disk
  */
 export async function getLiveMilestonesConfig(db) {
   try {
     const doc = await db.collection('systemSettings').doc('milestones').get();
     if (doc && doc.exists && doc.data()) {
       const data = doc.data();
+      saveMilestonesToDisk(data);
       return {
         teamRewards: Array.isArray(data.teamRewards) && data.teamRewards.length > 0 ? data.teamRewards : TEAM_REWARDS,
         teamMilestones: Array.isArray(data.teamMilestones) && data.teamMilestones.length > 0 ? data.teamMilestones : TEAM_MILESTONES,
       };
     }
   } catch (err) {
-    console.warn('Failed to load systemSettings/milestones:', err.message);
+    console.warn('Failed to load systemSettings/milestones from db, checking disk:', err.message);
   }
+
+  const diskData = readDiskMilestones();
+  if (diskData) {
+    return {
+      teamRewards: Array.isArray(diskData.teamRewards) && diskData.teamRewards.length > 0 ? diskData.teamRewards : TEAM_REWARDS,
+      teamMilestones: Array.isArray(diskData.teamMilestones) && diskData.teamMilestones.length > 0 ? diskData.teamMilestones : TEAM_MILESTONES,
+    };
+  }
+
   return { teamRewards: TEAM_REWARDS, teamMilestones: TEAM_MILESTONES };
 }
 

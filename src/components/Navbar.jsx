@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle, Sparkles, ArrowRight } from 'lucide-react';
+import { Menu, LogOut, Wallet, ShieldCheck, User, Sun, Moon, Settings, Bell, X, CheckCheck, MoreVertical, LayoutDashboard, ArrowDownCircle, Sparkles, ArrowRight, Radio } from 'lucide-react';
 import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
+import apiClient from '../api/client';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode: externalAuthMode, isDrawerOpen }) {
   const { currentUser, isAdmin, logout, userStats, checkIsAdminEmail } = useAuth();
@@ -87,23 +88,45 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
     return () => window.removeEventListener('taemry-theme-change', handleThemeChange);
   }, []);
 
+  const [broadcasts, setBroadcasts] = useState([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    apiClient.get('/settings/broadcasts').then((res) => {
+      if (isMounted && res.data?.broadcasts?.length > 0) {
+        setBroadcasts(res.data.broadcasts);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
+
+  const dynamicBroadcasts = broadcasts.map((b, idx) => ({
+    id: `bc_${b.id || idx}`,
+    title: b.title,
+    desc: b.message,
+    time: b.createdAt ? new Date(b.createdAt).toLocaleDateString() : 'Official',
+    isNew: true,
+    isBroadcast: true,
+  }));
+
   const notificationUpdates = [
+    ...dynamicBroadcasts,
     {
-      id: 1,
+      id: 'default_1',
       title: 'Daily Ads Rhythm Active',
       desc: 'Daily ads allocation unlocked for active contract packages.',
       time: 'Live',
       isNew: true
     },
     {
-      id: 2,
+      id: 'default_2',
       title: 'Instant Withdrawal Channels',
       desc: 'Local Bank, Easypaisa, JazzCash & Crypto payouts running 24/7.',
       time: '2h ago',
       isNew: false
     },
     {
-      id: 3,
+      id: 'default_3',
       title: 'Team Milestone Rewards',
       desc: 'Reach referral milestones to claim up to $600 directly to your balance.',
       time: '1d ago',
@@ -331,9 +354,16 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
                           />
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between gap-1">
-                              <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] truncate">
-                                {item.title}
-                              </p>
+                              <div className="flex items-center gap-1.5 truncate">
+                                {item.isBroadcast && (
+                                  <span className="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-amber-500/20 text-amber-500 border border-amber-500/30">
+                                    Official
+                                  </span>
+                                )}
+                                <p className="text-xs font-bold text-[#09353e] dark:text-[#f1f5f9] truncate">
+                                  {item.title}
+                                </p>
+                              </div>
                               <span className="text-[10px] text-[#768c91] dark:text-[#64748b] shrink-0 font-medium">
                                 {item.time}
                               </span>

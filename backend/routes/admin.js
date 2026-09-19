@@ -18,21 +18,28 @@ import { verifyAdmin } from '../middleware/admin.js';
 import { sendDailyReportEmail, sendAdminErrorAlert } from '../utils/email.js';
 import { exportFirestoreBackup } from '../scripts/backupFirestore.js';
 import { TEAM_REWARDS, TEAM_MILESTONES } from '../milestoneLogic.js';
-import { DEFAULT_PACKAGES, normalizePackages } from './package.js';
+import { DEFAULT_PACKAGES, normalizePackages, savePackagesToDisk } from './package.js';
 import { getPersistentRegisteredEmails } from './auth.js';
 import { upload, uploadScreenshotToStorage } from '../middleware/upload.js';
+import { updateSystemSettings } from './settings.js';
+import { saveMilestonesToDisk } from './milestones.js';
+import {
+  findAdminUserRef,
+  recordPermanentAuditLog,
+  getCombinedAuditLogs,
+  savePermanentBroadcast,
+  getCombinedBroadcasts,
+  persistRegisteredUserEmail,
+} from '../utils/userPersistence.js';
 
 const router = express.Router();
 
 /**
- * Helper to record immutable audit log entry
+ * Helper to record immutable audit log entry permanently to Firestore and disk
  */
 async function recordAuditLog(db, entry) {
   try {
-    await db.collection('auditLogs').add({
-      ...entry,
-      timestamp: entry.timestamp || new Date().toISOString(),
-    });
+    await recordPermanentAuditLog(db, entry);
   } catch (err) {
     console.warn('Failed to record audit log:', err.message);
   }
@@ -688,40 +695,44 @@ router.get('/users/:uid', verifyAdmin, async (req, res) => {
     const { uid } = req.params;
     const db = getDb();
 
-    // 1. User doc
-    const userDoc = await db.collection('users').doc(uid).get();
-    if (!userDoc.exists) {
+    // 1. User doc lookup with comprehensive fallback (UID, email, username, synthetic ID)
+    const { ref: userRef, doc: userDoc, data: userData, uid: resolvedUid } = await findAdminUserRef(db, uid);
+    if (!userDoc || !userData) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
-    const user = userDoc.data();
+
+    const actualUid = resolvedUid || uid;
 
     // 2. Transactions
     let transactions = [];
     try {
-      const txSnap = await db.collection(`users/${uid}/transactions`).orderBy('timestamp', 'desc').get();
+      const txSnap = await db.collection(`users/${actualUid}/transactions`).orderBy('timestamp', 'desc').get();
       transactions = txSnap.docs.map((d) => d.data());
     } catch (e) {
       // Fallback
     }
 
     // 3. Downline Level 1
-    const allUsersSnap = await db.collection('users').get();
-    const downline = allUsersSnap.docs
-      .map((d) => ({ uid: d.id, ...d.data() }))
-      .filter((u) => u.referrerUid === uid || u.referredBy === uid || u.sponsorUid === uid)
-      .map((u) => ({
-        uid: u.uid,
-        name: u.name || 'Member',
-        email: u.email,
-        currentPackage: u.currentPackage || 'Bronze',
-        createdAt: u.createdAt,
-      }));
+    let downline = [];
+    try {
+      const allUsersSnap = await db.collection('users').get();
+      downline = allUsersSnap.docs
+        .map((d) => ({ uid: d.id, ...d.data() }))
+        .filter((u) => u.referrerUid === actualUid || u.referredBy === actualUid || u.sponsorUid === actualUid || u.referrerUid === uid || u.referredBy === uid)
+        .map((u) => ({
+          uid: u.uid || u.id,
+          name: u.name || 'Member',
+          email: u.email,
+          currentPackage: u.currentPackage || 'None',
+          createdAt: u.createdAt,
+        }));
+    } catch (e) {}
 
     return res.json({
       success: true,
       user: {
-        uid,
-        ...user,
+        uid: actualUid,
+        ...userData,
       },
       transactions,
       downline,
@@ -755,15 +766,13 @@ router.put('/users/:uid/wallet', verifyAdmin, async (req, res) => {
     }
 
     const db = getDb();
-    const userRef = db.collection('users').doc(uid);
-    const doc = await userRef.get();
+    const { ref: userRef, doc: userDoc, data: userData, uid: actualUid } = await findAdminUserRef(db, uid);
 
-    if (!doc.exists) {
+    if (!userRef || !userDoc) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const userData = doc.data();
-    const currentBalance = Number(userData.walletBalance || 0);
+    const currentBalance = Number(userData?.walletBalance || 0);
 
     let newBalance = currentBalance;
     if (action === 'add') {
@@ -779,27 +788,29 @@ router.put('/users/:uid/wallet', verifyAdmin, async (req, res) => {
     }
 
     // Update user balance
-    await userRef.update({
+    await userRef.set({
       walletBalance: newBalance,
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
     // Create user transaction entry
     const deltaAmount = action === 'add' ? numAmount : -numAmount;
-    await db.collection(`users/${uid}/transactions`).add({
-      type: 'admin_adjustment',
-      amount: deltaAmount,
-      balanceAfter: newBalance,
-      description: reason || `Admin adjustment (${action}): $${numAmount.toFixed(2)}`,
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      await db.collection(`users/${actualUid}/transactions`).add({
+        type: 'admin_adjustment',
+        amount: deltaAmount,
+        balanceAfter: newBalance,
+        description: reason || `Admin adjustment (${action}): $${numAmount.toFixed(2)}`,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (e) {}
 
     // Record audit log
     await recordAuditLog(db, {
       adminEmail: req.user.email,
       action: 'wallet_adjustment',
-      targetUid: uid,
-      targetEmail: userData.email || 'N/A',
+      targetUid: actualUid,
+      targetEmail: userData?.email || 'N/A',
       amountUSD: deltaAmount,
       details: `${action === 'add' ? 'Added' : 'Subtracted'} $${numAmount.toFixed(2)}. Reason: ${reason || 'Manual correction'}. Balance: $${currentBalance} -> $${newBalance}`,
       timestamp: new Date().toISOString(),
@@ -821,6 +832,90 @@ router.put('/users/:uid/wallet', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * e0) POST /api/admin/users/send-reward
+ * Directly sends bonuses/rewards (milestone, referral, special bonus, compensation) to any user.
+ */
+router.post('/users/send-reward', verifyAdmin, async (req, res) => {
+  try {
+    const { target, uid, amount, rewardType, reason, note } = req.body;
+    const identifier = uid || target;
+    if (!identifier) {
+      return res.status(400).json({ success: false, message: 'Target user (UID, email, or username) is required.' });
+    }
+
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return res.status(400).json({ success: false, message: 'Reward amount must be a positive number.' });
+    }
+
+    const db = getDb();
+    const { ref: userRef, doc: userDoc, data: userData, uid: actualUid } = await findAdminUserRef(db, identifier);
+
+    if (!userRef || !userDoc) {
+      return res.status(404).json({ success: false, message: `User "${identifier}" not found.` });
+    }
+
+    const currentBalance = Number(userData?.walletBalance || 0);
+    const currentTotalEarned = Number(userData?.totalEarned || 0);
+    const newBalance = +(currentBalance + numAmount).toFixed(2);
+    const newTotalEarned = +(currentTotalEarned + numAmount).toFixed(2);
+
+    const typeLabel = rewardType || 'milestone_reward';
+    const desc = reason || note || `Admin Reward (${typeLabel}): +$${numAmount.toFixed(2)}`;
+
+    // Credit user balance and total earned
+    await userRef.set({
+      walletBalance: newBalance,
+      totalEarned: newTotalEarned,
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    // Ledger entry
+    try {
+      await db.collection(`users/${actualUid}/transactions`).add({
+        type: 'reward',
+        rewardType: typeLabel,
+        amount: +numAmount.toFixed(2),
+        balanceAfter: newBalance,
+        description: desc,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (e) {}
+
+    // Audit log
+    await recordAuditLog(db, {
+      adminEmail: req.user.email,
+      action: 'send_reward',
+      targetUid: actualUid,
+      targetEmail: userData?.email || 'N/A',
+      amountUSD: numAmount,
+      rewardType: typeLabel,
+      details: `Sent reward +$${numAmount.toFixed(2)} (${typeLabel}) to ${userData?.email || actualUid}. Reason: ${desc}`,
+      timestamp: new Date().toISOString(),
+    });
+
+    return res.json({
+      success: true,
+      message: `Successfully sent reward of $${numAmount.toFixed(2)} to ${userData?.email || actualUid}.`,
+      newBalance,
+      user: {
+        uid: actualUid,
+        email: userData?.email,
+        walletBalance: newBalance,
+        totalEarned: newTotalEarned,
+      },
+    });
+  } catch (error) {
+    console.error('Error in POST /api/admin/users/send-reward:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to send reward',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * e1) PUT /api/admin/users/:uid/package
  * Manually update or assign a user's advertising package tier.
  */
@@ -833,28 +928,26 @@ router.put('/users/:uid/package', verifyAdmin, async (req, res) => {
     const allowedPackages = ['None', 'Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond', 'Apex'];
     const selectedPkg = packageTier || 'None';
 
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
+    const { ref: userRef, doc: userDoc, data: userData, uid: actualUid } = await findAdminUserRef(db, uid);
+    if (!userRef || !userDoc) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const userData = userDoc.data();
-    const oldPackage = userData.currentPackage || 'None';
+    const oldPackage = userData?.currentPackage || 'None';
     const isEligible = selectedPkg !== 'None';
 
-    await userRef.update({
+    await userRef.set({
       currentPackage: selectedPkg,
       isEligible,
-      packagePurchasedAt: selectedPkg !== 'None' ? (userData.packagePurchasedAt || new Date().toISOString()) : null,
+      packagePurchasedAt: selectedPkg !== 'None' ? (userData?.packagePurchasedAt || new Date().toISOString()) : null,
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,
       action: 'update_user_package',
-      targetUid: uid,
-      targetEmail: userData.email || 'N/A',
+      targetUid: actualUid,
+      targetEmail: userData?.email || 'N/A',
       details: `Admin changed package tier from ${oldPackage} to ${selectedPkg}. Reason: ${reason || 'Admin manual update'}`,
       timestamp: new Date().toISOString(),
     });
@@ -885,25 +978,23 @@ router.put('/users/:uid/eligibility', verifyAdmin, async (req, res) => {
     const { isEligible, reason } = req.body;
     const db = getDb();
 
-    const userRef = db.collection('users').doc(uid);
-    const userDoc = await userRef.get();
-    if (!userDoc.exists) {
+    const { ref: userRef, doc: userDoc, data: userData, uid: actualUid } = await findAdminUserRef(db, uid);
+    if (!userRef || !userDoc) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const userData = userDoc.data();
-    const newStatus = typeof isEligible === 'boolean' ? isEligible : !userData.isEligible;
+    const newStatus = typeof isEligible === 'boolean' ? isEligible : !userData?.isEligible;
 
-    await userRef.update({
+    await userRef.set({
       isEligible: newStatus,
       updatedAt: new Date().toISOString(),
-    });
+    }, { merge: true });
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,
       action: 'toggle_user_eligibility',
-      targetUid: uid,
-      targetEmail: userData.email || 'N/A',
+      targetUid: actualUid,
+      targetEmail: userData?.email || 'N/A',
       details: `Admin set user eligibility to ${newStatus}. Reason: ${reason || 'Admin manual toggle'}`,
       timestamp: new Date().toISOString(),
     });
@@ -1066,32 +1157,34 @@ router.put('/deposits/:depositId/approve', verifyAdmin, async (req, res) => {
     const amountUSD = Number(deposit.amountUSD || 0);
     const userId = deposit.userId;
 
-    // Credit user's wallet
+    // Credit user's wallet safely finding user by userId OR userEmail
+    const { ref: userRef, doc: userDoc, data: userData, uid: actualUid } = await findAdminUserRef(db, userId || deposit.userEmail);
     let newBalance = amountUSD;
-    if (userId) {
-      const userRef = db.collection('users').doc(userId);
-      const userDoc = await userRef.get();
-      if (userDoc.exists) {
-        const currentBalance = Number(userDoc.data().walletBalance || 0);
-        newBalance = +(currentBalance + amountUSD).toFixed(2);
-      } else {
-        newBalance = +amountUSD.toFixed(2);
-      }
+    if (userRef) {
+      const currentBalance = Number(userData?.walletBalance || 0);
+      newBalance = +(currentBalance + amountUSD).toFixed(2);
       await userRef.set({
         walletBalance: newBalance,
-        email: deposit.userEmail || '',
+        totalDeposits: Number(userData?.totalDeposits || 0) + amountUSD,
+        email: deposit.userEmail || userData?.email || '',
         updatedAt: new Date().toISOString(),
       }, { merge: true });
 
+      if (deposit.userEmail) {
+        persistRegisteredUserEmail(deposit.userEmail);
+      }
+
       // Add transaction entry
-      await db.collection(`users/${userId}/transactions`).add({
-        type: 'deposit',
-        amount: +amountUSD,
-        balanceAfter: newBalance,
-        description: `Deposit approved (${deposit.method})`,
-        depositId,
-        timestamp: new Date().toISOString(),
-      });
+      try {
+        await db.collection(`users/${actualUid || userId}/transactions`).add({
+          type: 'deposit',
+          amount: +amountUSD,
+          balanceAfter: newBalance,
+          description: `Deposit approved (${deposit.method})`,
+          depositId,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (e) {}
     }
 
     // Update deposit status
@@ -1463,19 +1556,12 @@ router.put('/withdrawals/:withdrawalId/reject', verifyAdmin, async (req, res) =>
 
 /**
  * l) GET /api/admin/audit-logs
- * Fetch auditLogs collection sorted by timestamp desc.
+ * Fetch auditLogs collection merged with disk logs, sorted by timestamp desc.
  */
 router.get('/audit-logs', verifyAdmin, async (req, res) => {
   try {
     const db = getDb();
-    const logsSnap = await db.collection('auditLogs').get();
-
-    const logs = logsSnap.docs.map((d) => ({
-      id: d.id,
-      ...d.data(),
-    }));
-
-    logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const logs = await getCombinedAuditLogs(db);
 
     return res.json({
       success: true,
@@ -1494,25 +1580,15 @@ router.get('/audit-logs', verifyAdmin, async (req, res) => {
 
 /**
  * m) PUT /api/admin/settings
- * Updates systemSettings document and writes audit log.
+ * Updates systemSettings document, memory cache, and persistent disk file.
  */
 router.put('/settings', verifyAdmin, async (req, res) => {
   try {
-    const db = getDb();
     const updates = req.body || {};
+    const db = getDb();
 
-    const settingsRef = db.collection('systemSettings').doc('general');
-    const existingDoc = await settingsRef.get();
-    const existing = existingDoc.exists ? existingDoc.data() : {};
-
-    const newSettings = {
-      ...existing,
-      ...updates,
-      updatedAt: new Date().toISOString(),
-      updatedBy: req.user.email,
-    };
-
-    await settingsRef.set(newSettings, { merge: true });
+    // Updates in-memory cache, persistent disk file, and Firestore
+    const newSettings = await updateSystemSettings(updates, req.user.email);
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,
@@ -1526,7 +1602,7 @@ router.put('/settings', verifyAdmin, async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'System settings saved successfully.',
+      message: 'System settings saved and applied live across the platform.',
       settings: newSettings,
     });
   } catch (error) {
@@ -1579,7 +1655,7 @@ router.get('/milestones', verifyAdmin, async (req, res) => {
 
 /**
  * m3) PUT /api/admin/milestones
- * Updates configurable team rewards ladder and team ads milestones live in Firestore.
+ * Updates configurable team rewards ladder and team ads milestones live in Firestore and disk.
  */
 router.put('/milestones', verifyAdmin, async (req, res) => {
   try {
@@ -1607,6 +1683,9 @@ router.put('/milestones', verifyAdmin, async (req, res) => {
 
     await milestonesRef.set(updatedData, { merge: true });
 
+    // Persist to disk snapshot so it survives cold boots
+    saveMilestonesToDisk(updatedData);
+
     await recordAuditLog(db, {
       adminEmail: req.user.email,
       action: 'update_milestones',
@@ -1619,7 +1698,7 @@ router.put('/milestones', verifyAdmin, async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'Milestones and Team Rewards updated live in database!',
+      message: 'Milestones and Team Rewards updated live in database and disk!',
       milestones: updatedData,
     });
   } catch (error) {
@@ -1633,8 +1712,31 @@ router.put('/milestones', verifyAdmin, async (req, res) => {
 });
 
 /**
+ * n0) GET /api/admin/notifications/broadcast
+ * Returns all past broadcast announcements.
+ */
+router.get('/notifications/broadcast', verifyAdmin, async (req, res) => {
+  try {
+    const db = getDb();
+    const list = await getCombinedBroadcasts(db);
+    return res.json({
+      success: true,
+      count: list.length,
+      notifications: list,
+    });
+  } catch (error) {
+    console.error('Error in GET /api/admin/notifications/broadcast:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Failed to fetch broadcasts',
+      message: error.message,
+    });
+  }
+});
+
+/**
  * n) POST /api/admin/notifications/broadcast
- * Broadcast notification to all members.
+ * Broadcast notification to all members with persistent Firestore & disk storage.
  */
 router.post('/notifications/broadcast', verifyAdmin, async (req, res) => {
   try {
@@ -1651,7 +1753,7 @@ router.post('/notifications/broadcast', verifyAdmin, async (req, res) => {
       createdAt: new Date().toISOString(),
     };
 
-    const docRef = await db.collection('notifications').add(notifRecord);
+    const saved = await savePermanentBroadcast(db, notifRecord);
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,
@@ -1666,10 +1768,7 @@ router.post('/notifications/broadcast', verifyAdmin, async (req, res) => {
     return res.json({
       success: true,
       message: 'Broadcast notification published successfully.',
-      notification: {
-        id: docRef.id,
-        ...notifRecord,
-      },
+      notification: saved,
     });
   } catch (error) {
     console.error('Error in POST /api/admin/notifications/broadcast:', error);
@@ -2064,6 +2163,9 @@ router.put('/packages', verifyAdmin, async (req, res) => {
     };
 
     await packagesDocRef.set(updatePayload);
+
+    // Save to disk backup so it persists across restarts
+    savePackagesToDisk(cleanPackages);
 
     await recordAuditLog(db, {
       adminEmail: req.user.email,

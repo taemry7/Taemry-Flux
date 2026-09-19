@@ -6,6 +6,7 @@
 import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -44,54 +45,28 @@ router.get('/stats', verifyToken, async (req, res) => {
     const uid = req.user.uid;
     const email = (req.user.email || '').toLowerCase().trim();
     const db = getDb();
-    const userRef = db.collection('users').doc(uid);
-    let doc = await userRef.get();
 
-    let data;
+    // Safely resolve or retrieve user record without washing balances or packages
+    const { doc, data: resolvedData } = await resolveUserRecord(db, {
+      uid,
+      email,
+      name: req.user.name,
+      username: req.user.username,
+    });
 
-    if (!doc.exists) {
-      // Check if user has existing approved deposits
-      let initialBalance = 0;
-      try {
-        const depSnap = await db.collection('deposits').where('userId', '==', uid).where('status', '==', 'approved').get();
-        depSnap.docs.forEach((d) => {
-          initialBalance += Number(d.data().amountUSD || 0);
-        });
-      } catch (e) {}
+    const userDocData = (doc && doc.exists ? doc.data() : resolvedData) || resolvedData;
 
-      // Default clean initial record for new user (0 balance if new, or approved deposits)
-      data = {
-        walletBalance: initialBalance,
-        currentPackage: 'None',
-        lifetimeAds: 0,
-        dailyAdCount: 0,
-        teamAdsCount: 0,
-        referralCount: 0,
-        totalEarned: 0,
-        isEligible: false,
-      };
-      await userRef.set({
-        ...data,
-        uid,
-        email: req.user.email || 'member@taemryflux.com',
-        name: req.user.name || 'TAEMRY Member',
-        createdAt: new Date().toISOString(),
-      });
-    } else {
-      const userDocData = doc.data() || {};
-
-      data = {
-        walletBalance: userDocData.walletBalance !== undefined ? Number(userDocData.walletBalance) : 0,
-        currentPackage: userDocData.currentPackage || 'None',
-        lifetimeAds: userDocData.lifetimeAds !== undefined ? Number(userDocData.lifetimeAds) : 0,
-        dailyAdCount: userDocData.dailyAdCount !== undefined ? Number(userDocData.dailyAdCount) : 0,
-        teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 0,
-        referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 0,
-        totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 0,
-        username: userDocData.username || (userDocData.name && userDocData.name.startsWith('@') ? userDocData.name : `@${(userDocData.name || userDocData.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_]/g, '')}`),
-        isEligible: userDocData.isEligible !== undefined ? Boolean(userDocData.isEligible) : Boolean(userDocData.currentPackage && userDocData.currentPackage !== 'None'),
-      };
-    }
+    const data = {
+      walletBalance: userDocData.walletBalance !== undefined ? Number(userDocData.walletBalance) : 0,
+      currentPackage: userDocData.currentPackage || 'None',
+      lifetimeAds: userDocData.lifetimeAds !== undefined ? Number(userDocData.lifetimeAds) : 0,
+      dailyAdCount: userDocData.dailyAdCount !== undefined ? Number(userDocData.dailyAdCount) : 0,
+      teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 0,
+      referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 0,
+      totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 0,
+      username: userDocData.username || (userDocData.name && userDocData.name.startsWith('@') ? userDocData.name : `@${(userDocData.name || userDocData.email?.split('@')[0] || 'member').toLowerCase().replace(/[^a-z0-9_]/g, '')}`),
+      isEligible: userDocData.isEligible !== undefined ? Boolean(userDocData.isEligible) : Boolean(userDocData.currentPackage && userDocData.currentPackage !== 'None'),
+    };
 
     const adsCount = Number(data.lifetimeAds || 0);
     let worldRank = '# 1000+';

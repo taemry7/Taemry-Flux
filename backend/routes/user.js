@@ -6,6 +6,7 @@
 import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -16,54 +17,36 @@ const router = express.Router();
 router.get('/me', verifyToken, async (req, res) => {
   try {
     const uid = req.user.uid;
+    const email = (req.user.email || '').toLowerCase().trim();
     const db = getDb();
-    const userRef = db.collection('users').doc(uid);
-    const doc = await userRef.get();
 
-    let userData;
+    // Safely resolve or retrieve user document without overwriting or washing
+    const { doc, data: resolvedData } = await resolveUserRecord(db, {
+      uid,
+      email,
+      name: req.user.name,
+      username: req.user.username,
+    });
 
-    if (!doc.exists) {
-      let initialBalance = 0;
-      try {
-        const depSnap = await db.collection('deposits').where('userId', '==', uid).where('status', '==', 'approved').get();
-        depSnap.docs.forEach((d) => {
-          initialBalance += Number(d.data().amountUSD || 0);
-        });
-      } catch (e) {}
+    const userDocData = (doc && doc.exists ? doc.data() : resolvedData) || resolvedData;
 
-      // Initialize default user document if newly registered (Clean zeroed account, or approved deposits)
-      const rawUserVal = req.user.username || req.user.name || req.user.email?.split('@')[0] || 'member';
-      const defaultUsername = rawUserVal.startsWith('@') ? rawUserVal : `@${rawUserVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
+    // Ensure all required fields exist cleanly
+    const rawVal = userDocData.username || userDocData.name || email.split('@')[0] || 'member';
+    const cleanUsername = rawVal.startsWith('@') ? rawVal : `@${rawVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
 
-      userData = {
-        uid,
-        email: req.user.email || 'member@taemryflux.com',
-        name: req.user.name || req.user.email?.split('@')[0] || 'TAEMRY Member',
-        username: defaultUsername,
-        walletBalance: initialBalance,
-        currentPackage: 'None',
-        isEligible: false,
-        lifetimeAds: 0,
-        teamAdsCount: 0,
-        referralCount: 0,
-        totalEarned: 0,
-        createdAt: new Date().toISOString(),
-      };
-      await userRef.set(userData);
-    } else {
-      userData = doc.data();
-      // Ensure all required fields exist
-      if (!userData.username) {
-        const rawVal = userData.name || userData.email?.split('@')[0] || 'member';
-        userData.username = rawVal.startsWith('@') ? rawVal : `@${rawVal.toLowerCase().replace(/[^a-z0-9_]/g, '')}`;
-      }
-      if (userData.walletBalance === undefined) userData.walletBalance = 0;
-      if (!userData.currentPackage) userData.currentPackage = 'None';
-      if (userData.lifetimeAds === undefined) userData.lifetimeAds = 0;
-      if (userData.teamAdsCount === undefined) userData.teamAdsCount = 0;
-      if (userData.referralCount === undefined) userData.referralCount = 0;
-      if (userData.totalEarned === undefined) userData.totalEarned = 0;
-    }
+    const userData = {
+      ...userDocData,
+      uid,
+      email: userDocData.email || email || 'member@taemryflux.com',
+      username: cleanUsername,
+      walletBalance: userDocData.walletBalance !== undefined ? Number(userDocData.walletBalance) : 0,
+      currentPackage: userDocData.currentPackage || 'None',
+      lifetimeAds: userDocData.lifetimeAds !== undefined ? Number(userDocData.lifetimeAds) : 0,
+      teamAdsCount: userDocData.teamAdsCount !== undefined ? Number(userDocData.teamAdsCount) : 0,
+      referralCount: userDocData.referralCount !== undefined ? Number(userDocData.referralCount) : 0,
+      totalEarned: userDocData.totalEarned !== undefined ? Number(userDocData.totalEarned) : 0,
+      isEligible: Boolean(userDocData.isEligible || (userDocData.currentPackage && userDocData.currentPackage !== 'None')),
+    };
 
     return res.json({
       success: true,

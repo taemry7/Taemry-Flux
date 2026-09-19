@@ -4,10 +4,47 @@
  */
 
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
+
+const packagesFilePath = path.resolve(process.cwd(), 'backend', 'systemSettings.initial.json');
+
+// Helper to read initial disk packages
+function readDiskPackages() {
+  try {
+    if (fs.existsSync(packagesFilePath)) {
+      const raw = fs.readFileSync(packagesFilePath, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed?.systemSettings?.packages) {
+        return parsed.systemSettings.packages;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read packages from disk:', e.message);
+  }
+  return null;
+}
+
+// Helper to save packages to disk snapshot
+export function savePackagesToDisk(packagesData) {
+  try {
+    let fullData = { systemSettings: {} };
+    if (fs.existsSync(packagesFilePath)) {
+      try {
+        fullData = JSON.parse(fs.readFileSync(packagesFilePath, 'utf-8')) || { systemSettings: {} };
+      } catch (e) {}
+    }
+    if (!fullData.systemSettings) fullData.systemSettings = {};
+    fullData.systemSettings.packages = packagesData;
+    fs.writeFileSync(packagesFilePath, JSON.stringify(fullData, null, 2), 'utf-8');
+  } catch (e) {
+    console.warn('Could not persist packages to disk:', e.message);
+  }
+}
 
 // Fallback catalog of packages with user-specified specifications
 export const DEFAULT_PACKAGES = [
@@ -188,7 +225,15 @@ router.get('/', async (req, res) => {
     const settingsRef = db.collection('systemSettings').doc('packages');
     const doc = await settingsRef.get();
 
-    const allPackages = normalizePackages(doc.exists ? doc.data() : null);
+    let packageData = null;
+    if (doc && doc.exists) {
+      packageData = doc.data();
+      savePackagesToDisk(packageData);
+    } else {
+      packageData = readDiskPackages();
+    }
+
+    const allPackages = normalizePackages(packageData);
     const activePackages = allPackages.filter((p) => p.isActive !== false);
 
     return res.json({
@@ -196,10 +241,13 @@ router.get('/', async (req, res) => {
       packages: activePackages,
     });
   } catch (error) {
-    console.error('Error fetching packages:', error);
+    console.error('Error fetching packages, checking disk fallback:', error);
+    const diskData = readDiskPackages();
+    const allPackages = normalizePackages(diskData || DEFAULT_PACKAGES);
+    const activePackages = allPackages.filter((p) => p.isActive !== false);
     return res.json({
       success: true,
-      packages: DEFAULT_PACKAGES,
+      packages: activePackages,
     });
   }
 });

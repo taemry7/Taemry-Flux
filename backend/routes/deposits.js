@@ -9,6 +9,7 @@ import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
 import { upload, uploadScreenshotToStorage } from '../middleware/upload.js';
 import { getSystemSettings } from './settings.js';
+import { resolveUserRecord } from '../utils/userPersistence.js';
 
 const router = express.Router();
 
@@ -83,21 +84,19 @@ export function parsePaymentSms(rawText = '', sender = '') {
  */
 async function autoApproveDeposit(db, depositId, depositData, uid, matchedSms = null) {
   const amountUSD = Number(depositData.amountUSD || 0);
-  const userRef = db.collection('users').doc(uid);
-  const userDoc = await userRef.get();
+  const { ref: userRef, data: userDocData } = await resolveUserRecord(db, {
+    uid,
+    email: depositData.userEmail,
+    name: depositData.userName,
+  });
 
-  let newBalance = amountUSD;
-  if (userDoc.exists) {
-    const currentBalance = Number(userDoc.data().walletBalance || 0);
-    newBalance = +(currentBalance + amountUSD).toFixed(2);
-  } else {
-    newBalance = +amountUSD.toFixed(2);
-  }
+  const currentBalance = Number(userDocData?.walletBalance || 0);
+  const newBalance = +(currentBalance + amountUSD).toFixed(2);
 
   // Credit user wallet
   await userRef.set({
     walletBalance: newBalance,
-    totalDeposits: (userDoc.exists ? Number(userDoc.data().totalDeposits || 0) : 0) + amountUSD,
+    totalDeposits: Number(userDocData?.totalDeposits || 0) + amountUSD,
     updatedAt: new Date().toISOString(),
   }, { merge: true });
 
