@@ -1025,7 +1025,6 @@ export default function HomePage({ onNavigate }) {
                             Daily Ad Quota
                           </p>
                           <div className="text-xl sm:text-2xl font-extrabold text-[#09353e] dark:text-[#f1f5f9] tracking-tight flex items-baseline">
-                            <span className="hidden">200</span>
                             <span className="text-sm font-bold text-[#0c5963] dark:text-[#38bdf8]">Daily Ads</span>
                           </div>
                         </div>

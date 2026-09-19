@@ -144,7 +144,7 @@ export async function getWhitepaperContent() {
         .map((p) => ({
           name: p.tierName || p.name,
           price: `$${Number(p.price || 0).toFixed(2)}`,
-          dailyLimit: `${p.dailyLimit || 200} ads/day`,
+          dailyLimit: `${p.dailyLimit || 20} ads/day`,
           dailyReturn: `${p.rewardRate || '20%'} Daily Return`,
           badge: p.badge || 'ACTIVE',
         }));

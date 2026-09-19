@@ -29,6 +29,7 @@ export default function AdsterraAdModal({
   rewardAmount,
   onClaimReward,
   isClaiming,
+  totalAdsLimit = 20,
 }) {
   const [countdown, setCountdown] = useState(AD_WATCH_DURATION);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -93,7 +94,7 @@ export default function AdsterraAdModal({
               <span>Adsterra Verified Sponsor</span>
             </span>
             <span className="text-xs font-bold text-[#627d83] dark:text-slate-400">
-              Ad #{ad.adNumber} of 200
+              Ad #{ad.adNumber} of {totalAdsLimit}
             </span>
           </div>
 

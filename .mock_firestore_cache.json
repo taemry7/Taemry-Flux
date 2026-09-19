@@ -1,1 +1,155 @@
-{}
+[
+  [
+    "systemSettings/general",
+    {
+      "exchangeRate": 300,
+      "bankAccountName": "TAEMRY FLUX HOLDINGS LTD",
+      "bankAccountNumber": "PK76MEZN0000123456789012",
+      "bankName": "Meezan Bank Ltd",
+      "easypaisaNumber": "03451234567",
+      "easypaisaName": "TAEMRY OFFICIAL",
+      "jazzcashNumber": "03009876543",
+      "jazzcashName": "TAEMRY OFFICIAL",
+      "cryptoAddresses": {
+        "USDT": "0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d",
+        "BTC": "1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+      },
+      "minWithdrawal": 1,
+      "maxWithdrawal": 1000,
+      "withdrawalCooldownMinutes": 5,
+      "referralRequired": true,
+      "updatedAt": "2026-09-19T08:42:49.893Z"
+    }
+  ],
+  [
+    "systemSettings/packages",
+    {
+      "packages": [
+        {
+          "id": "bronze",
+          "tierName": "Bronze",
+          "name": "Bronze",
+          "price": 1,
+          "minWallet": 0.1,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "STARTER",
+          "color": "#0284c7",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "🌱 Take your first step into daily advertising earnings with minimal capital.",
+          "isActive": true,
+          "order": 1
+        },
+        {
+          "id": "silver",
+          "tierName": "Silver",
+          "name": "Silver",
+          "price": 5,
+          "minWallet": 0.5,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "POPULAR",
+          "color": "#0f766e",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "⚡ Amplify your daily revenue with an optimized Silver contract allocation.",
+          "isActive": true,
+          "order": 2
+        },
+        {
+          "id": "gold",
+          "tierName": "Gold",
+          "name": "Gold",
+          "price": 10,
+          "minWallet": 1,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "RECOMMENDED",
+          "color": "#ca8a04",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "🌟 Accelerate your growth and unlock higher advertising rewards every single day.",
+          "isActive": true,
+          "order": 3
+        },
+        {
+          "id": "premium",
+          "tierName": "Premium",
+          "name": "Premium",
+          "price": 50,
+          "minWallet": 5,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "PRO",
+          "color": "#0284c7",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "💎 Experience pro-grade earning power with enhanced daily reward allocations.",
+          "isActive": true,
+          "order": 4
+        },
+        {
+          "id": "elite",
+          "tierName": "Elite",
+          "name": "Elite",
+          "price": 100,
+          "minWallet": 10,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "HIGH CAPACITY",
+          "color": "#7c3aed",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "🚀 High-velocity contract tier crafted for dedicated digital earners.",
+          "isActive": true,
+          "order": 5
+        },
+        {
+          "id": "master",
+          "tierName": "Master",
+          "name": "Master",
+          "price": 500,
+          "minWallet": 50,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "ENTERPRISE",
+          "color": "#db2777",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "👑 Command the network with enterprise-level rewards and maximum earning capacity.",
+          "isActive": true,
+          "order": 6
+        },
+        {
+          "id": "apex",
+          "tierName": "Apex",
+          "name": "Apex",
+          "price": 1000,
+          "minWallet": 100,
+          "rewardRate": "20%",
+          "dailyLimit": 20,
+          "badge": "Apex Master",
+          "color": "#ea580c",
+          "description": "Active contract tier generating guaranteed daily returns.",
+          "motivationText": "🔥 The absolute pinnacle of earning power — unbounded potential and supreme rewards.",
+          "isActive": true,
+          "order": 7
+        }
+      ],
+      "updatedAt": "2026-09-19T08:52:22.374Z",
+      "updatedBy": "system"
+    }
+  ],
+  [
+    "users/eGq9IYfy0LUv23eJRS0QrpgGh402",
+    {
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 0,
+      "totalEarned": 0,
+      "isEligible": false,
+      "uid": "eGq9IYfy0LUv23eJRS0QrpgGh402",
+      "email": "mistrtaimur7@gmail.com",
+      "name": "The Hustler",
+      "createdAt": "2026-09-19T08:48:22.243Z"
+    }
+  ]
+]
