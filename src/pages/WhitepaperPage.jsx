@@ -103,15 +103,15 @@ export default function WhitepaperPage({ onNavigate }) {
       },
       {
         q: 'Q4. How do Team Rewards work?',
-        a: 'Team Rewards are direct referral cash bonuses credited straight to your balance when you invite members from your link: 5 referrals = $1, 15 referrals = $5, 40 referrals = $10, 90 referrals = $25, 190 referrals = $50, 250 referrals = $100, 500 referrals = $250, and 1,000 referrals = $600 ($500 + $100 Mega Bonus)!'
+        a: 'Team Rewards are direct referral cash bonuses credited straight to your balance when you invite members from your link: 5 referrals = $1.00, 15 referrals = $3.00, 25 referrals = $5.00, 50 referrals = $10.00, 100 referrals = $20.00, 250 referrals = $40.00, 500 referrals = $100.00, 1,000 referrals = $250.00, 1,500 referrals = $500.00, and 2,500 referrals = $750.00!'
       },
       {
         q: 'Q5. How deep is the referral network for commissions?',
-        a: 'Downline commissions are paid 5 Levels deep (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%) whenever direct downlines purchase advertising packages.'
+        a: 'Downline commissions are paid 5 Levels deep across two streams: 1) Daily Ads Matching Commissions (Level 1: 25%, Level 2: 20%, Level 3: 15%, Level 4: 10%, Level 5: 5%) whenever downlines watch ads, and 2) Direct Package Referral Commissions (Level 1: 20%, Level 2: 10%, Level 3: 5%, Level 4: 3%, Level 5: 2%) on package purchases.'
       },
       {
-        q: 'Q6. How are member withdrawals processed?',
-        a: 'Withdrawals are processed directly to your preferred payment method (Bank, Easypaisa, JazzCash, or USDT/BTC) with a low $1.00 minimum threshold, reviewed within 1 to 24 hours.'
+        q: 'Q6. How are member withdrawals processed and what are the requirements?',
+        a: 'Withdrawals require a low $1.00 minimum threshold. To ensure platform integrity and genuine human engagement, accounts unlock and become 100% Eligible once the member has earned at least $1.00 from viewing daily ads or team matching bonuses. Once $1.00 is earned, withdrawals are permanently unlocked and processed to your JazzCash, UPaisa, or Easypaisa account within ~1 minute to 5 hours.'
       },
       {
         q: 'Q7. What happens if I do not watch ads for a few days?',
@@ -119,7 +119,7 @@ export default function WhitepaperPage({ onNavigate }) {
       },
       {
         q: 'Q8. What deposit and withdrawal methods are supported?',
-        a: '1. Local Bank Transfer, 2. Easypaisa / JazzCash (Pegged exchange rate: 1 USD = 300 PKR), 3. Cryptocurrency (USDT TRC20 / BEP20 and Bitcoin).'
+        a: '1. Local Mobile Wallets (JazzCash, UPaisa, Easypaisa with pegged exchange rate: 1 USD = 300 PKR), 2. Local Bank Transfer, 3. Cryptocurrency (USDT TRC20 / BEP20 and Bitcoin).'
       },
       {
         q: 'Q9. What are the minimum and maximum withdrawal thresholds?',
@@ -130,8 +130,8 @@ export default function WhitepaperPage({ onNavigate }) {
         a: 'Members may submit one withdrawal request per calendar day, processed within 1 to 5 hours after approval.'
       },
       {
-        q: 'Q11. Is TAEMRY FLUX a get-rich-quick scheme?',
-        a: 'No. TAEMRY FLUX distributes real corporate advertising revenue generated through high-engagement sponsor impressions.'
+        q: 'Q11. Is TAEMRY FLUX a real and legitimate platform?',
+        a: 'Yes, 100% real and verified. TAEMRY FLUX distributes genuine corporate advertising revenue generated through verified sponsor campaigns and user attention impressions. We do not use simulated or fake algorithms. Real money payouts in PKR (1 USD = 300 PKR) are disbursed directly to official mobile accounts (JazzCash, EasyPaisa, UPaisa) with instant confirmation (~1 minute). User balances are fully secured and never deducted involuntarily.'
       },
       {
         q: 'Q12. What are the consequences of using VPNs or multiple accounts?',
@@ -199,16 +199,13 @@ export default function WhitepaperPage({ onNavigate }) {
   };
 
   const teamMilestones = [
-     { ads: 2500, bonus: 5.00, label: '2,500 Team Ads' },
-  { ads: 5000, bonus: 10.00, label: '5,000 Team Ads' },
-  { ads: 10000, bonus: 20.00, label: '10,000 Team Ads' },
-  { ads: 20000, bonus: 40.00, label: '20,000 Team Ads' },
-  { ads: 40000, bonus: 80.00, label: '40,000 Team Ads' },
-  { ads: 80000, bonus: 160.00, label: '80,000 Team Ads' },
-  { ads: 160000, bonus: 320.00, label: '160,000 Team Ads' },
-  { ads: 320000, bonus: 640.00, label: '320,000 Team Ads' },
-  { ads: 640000, bonus: 1280.00, label: '640,000 Team Ads' },
-  { ads: 1280000, bonus: 2560.00, label: '1,280,000 Team Ads' },
+    { ads: 2500, bonus: 10.00, label: '2,500 Team Ads' },
+    { ads: 5000, bonus: 25.00, label: '5,000 Team Ads' },
+    { ads: 10000, bonus: 60.00, label: '10,000 Team Ads' },
+    { ads: 20000, bonus: 140.00, label: '20,000 Team Ads' },
+    { ads: 40000, bonus: 300.00, label: '40,000 Team Ads' },
+    { ads: 80000, bonus: 650.00, label: '80,000 Team Ads' },
+    { ads: 160000, bonus: 1400.00, label: '160,000 Team Ads' },
   ];
 
   return (
@@ -332,6 +329,32 @@ export default function WhitepaperPage({ onNavigate }) {
               <p>
                 {data.executiveSummary}
               </p>
+
+              {/* Genuine Platform & Corporate Ad Revenue Proof */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 space-y-2">
+                <div className="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-black text-xs uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                  <span>Real Platform Guarantee & Verified Revenue Architecture</span>
+                </div>
+                <p className="text-xs text-[#374151] dark:text-[#cbd5e1] leading-relaxed">
+                  TAEMRY FLUX is a 100% verified, authentic corporate advertising network. Earnings are not artificial algorithms—they are funded by verified sponsor impressions, brand advertising budgets, and human-verified ad engagements. Our multi-layer integrity protocol strictly forbids bots, ensuring our advertising partners receive genuine impressions while users receive guaranteed daily ad returns and real cash payouts directly to mobile accounts (JazzCash, EasyPaisa, UPaisa) without hidden deductions.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1 text-[11px] text-[#093e4a] dark:text-[#e2e8f0]">
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>Real Corporate Ad Revenue</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>Real JazzCash & EasyPaisa Payouts</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 font-bold">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <span>100% Protected Wallet Balances</span>
+                  </div>
+                </div>
+              </div>
+
               <div className="p-4 rounded-2xl bg-[#0c5963]/5 dark:bg-[#0c2e38] border border-[#0c5963]/20 dark:border-[#174653] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                 <span className="text-xs font-semibold text-[#093e4a] dark:text-[#e2e8f0]">
                   Protocol Architecture & Community Stewardship:
@@ -666,11 +689,12 @@ export default function WhitepaperPage({ onNavigate }) {
             <div className="pl-9 space-y-3 text-sm text-[#374151] dark:text-[#cbd5e1]">
               <div className="space-y-2">
                 {[
-                  { title: '1. Minimum Withdrawal', desc: '$1.00 USD threshold for easy accessibility.' },
-                  { title: '2. Permanent Referral Eligibility', desc: '1 active referral is required to unlock your withdrawal gateway. Once referred, your account is permanently eligible forever.' },
-                  { title: '3. Maximum Withdrawal', desc: '$1,000.00 USD per single request.' },
-                  { title: '4. Fast Processing Time', desc: 'Withdrawals are audited and transferred within 1 to 5 hours.' },
-                  { title: '5. Anti-VPN & Integrity Policy', desc: 'Operating proxies, VPN tunnels, or headless automation bots is strictly prohibited and results in immediate forfeiture.' },
+                  { title: '1. Minimum Withdrawal Threshold', desc: '$1.00 USD low minimum threshold for fast, accessible payouts.' },
+                  { title: '2. $1.00 Minimum Earnings Rule to Unlock', desc: 'Even after purchasing an advertising package, accounts remain Ineligible until the user earns at least $1.00 from viewing daily ads or team matching bonuses. Once $1.00 is earned, your account unlocks and becomes 100% Eligible forever for instant withdrawal requests.' },
+                  { title: '3. Maximum Withdrawal Limit', desc: '$1,000.00 USD maximum allowance per single withdrawal request.' },
+                  { title: '4. Fast Processing Time', desc: 'Withdrawal payouts are audited and transferred within ~1 minute to 5 hours directly to your mobile wallet (JazzCash, EasyPaisa, UPaisa).' },
+                  { title: '5. Fixed Exchange Rate Peg', desc: 'All local mobile wallet transactions operate on a fixed official peg of 1 USD = 300 PKR.' },
+                  { title: '6. Anti-Bot & Balance Security Mandate', desc: 'Operating proxies, VPNs, or headless automation bots is strictly prohibited. User deposited and earned wallet balances are strictly safeguarded and never deducted involuntarily.' },
                 ].map((rule) => (
                   <div key={rule.title} className="p-3 rounded-xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] flex items-start gap-3">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />

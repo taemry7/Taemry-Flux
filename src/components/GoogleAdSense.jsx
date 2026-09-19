@@ -57,7 +57,6 @@ export default function GoogleAdSense({
           data-ad-slot={slot || undefined}
           data-ad-format={format}
           data-full-width-responsive={responsive ? 'true' : 'false'}
-          data-adtest="on"
         />
 
         {/* Verified AdSense Active Indicator */}

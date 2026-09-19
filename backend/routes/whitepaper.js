@@ -61,15 +61,15 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q4. How do Team Rewards work?',
-      a: 'Team Rewards are direct referral cash bonuses credited straight to your balance when you invite members from your link: 5 referrals = $1, 15 referrals = $5, 40 referrals = $10, 90 referrals = $25, 190 referrals = $50, 250 referrals = $100, 500 referrals = $250, and 1,000 referrals = $600 ($500 + $100 Mega Bonus)!'
+      a: 'Team Rewards are direct referral cash bonuses credited straight to your balance when you invite members from your link: 5 referrals = $1.00, 15 referrals = $3.00, 25 referrals = $5.00, 50 referrals = $10.00, 100 referrals = $20.00, 250 referrals = $40.00, 500 referrals = $100.00, 1,000 referrals = $250.00, 1,500 referrals = $500.00, and 2,500 referrals = $750.00!'
     },
     {
       q: 'Q5. How deep is the referral network for commissions?',
-      a: 'Downline commissions are distributed 5 Levels deep: Daily Ads Matching Commissions (L1: 25%, L2: 20%, L3: 15%, L4: 10%, L5: 5%) and Package Activation Referral Commissions (L1: 20%, L2: 10%, L3: 5%, L4: 3%, L5: 2%).'
+      a: 'Downline commissions are distributed 5 Levels deep: 1) Daily Ads Matching Commissions (Level 1: 25%, Level 2: 20%, Level 3: 15%, Level 4: 10%, Level 5: 5%) and 2) Direct Package Referral Commissions (Level 1: 20%, Level 2: 10%, Level 3: 5%, Level 4: 3%, Level 5: 2%).'
     },
     {
       q: 'Q6. How are member withdrawals processed and what are the requirements?',
-      a: 'Withdrawals require a low $1.00 minimum threshold and 1 active direct referral to unlock lifetime permanent eligibility. Once unlocked, requests are processed to your mobile account or IBAN within 1 to 5 hours.'
+      a: 'Withdrawals have a low $1.00 minimum threshold. To ensure platform integrity and genuine participation, an account unlocks and becomes 100% Eligible once the user has earned at least $1.00 from viewing daily ads or team matching bonuses. Once $1.00 is earned, withdrawals are permanently unlocked and processed directly to your JazzCash, UPaisa, or Easypaisa account within ~1 minute to 5 hours.'
     },
     {
       q: 'Q7. What happens if I do not watch ads for a few days?',
@@ -88,8 +88,8 @@ export const DEFAULT_WHITEPAPER = {
       a: 'Members may submit one withdrawal request per calendar day, processed within 1 to 24 hours after admin approval.'
     },
     {
-      q: 'Q11. Is TAEMRY FLUX a get-rich-quick scheme?',
-      a: 'No. TAEMRY FLUX distributes real corporate advertising revenue generated through high-engagement sponsor impressions.'
+      q: 'Q11. Is TAEMRY FLUX a real and legitimate platform?',
+      a: 'Yes, 100%. TAEMRY FLUX is a verified real advertising and cloud mining ecosystem. Real corporate advertising revenue generated through high-engagement sponsor impressions is distributed directly to active viewers. Payouts are real cash disbursed to official mobile accounts (JazzCash, EasyPaisa, UPaisa) with instant confirmation (~1 minute). Your wallet balance is strictly protected, never expires, and is never deducted involuntarily.'
     },
     {
       q: 'Q12. What are the consequences of using VPNs or multiple accounts?',
