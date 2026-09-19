@@ -245,8 +245,14 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
 
     setIsPurchasing(true);
     try {
+      const sponsorRef =
+        userStats?.referredBy ||
+        currentUser?.referredBy ||
+        (typeof window !== 'undefined' ? (localStorage.getItem('referralCode') || localStorage.getItem('taemry_referral_sponsor') || '') : '');
+
       const response = await apiClient.post('/packages/buy', {
         packageId: selectedPkg.id,
+        referredBy: sponsorRef || undefined,
       });
 
       const data = response.data;

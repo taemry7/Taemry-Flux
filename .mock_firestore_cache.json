@@ -136,8 +136,61 @@
     }
   ],
   [
-    "users/eGq9IYfy0LUv23eJRS0QrpgGh402",
+    "users/user_6d6973747274",
     {
+      "uid": "user_6d6973747274",
+      "email": "mistrtaimoor@gmail.com",
+      "name": "mistrtaimoor",
+      "displayName": "mistrtaimoor",
+      "username": "mistrtaimoor",
+      "emailVerified": false,
+      "isOtpVerified": false,
+      "updatedAt": "2026-09-19T18:06:39.727Z",
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 1,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "isAdmin": true
+    }
+  ],
+  [
+    "users/RNva69V1XoMwaxGgVaKtJ4jXfYY2",
+    {
+      "uid": "RNva69V1XoMwaxGgVaKtJ4jXfYY2",
+      "email": "mistrtaimoor@gmail.com",
+      "name": "mistrtaimoor",
+      "displayName": "mistrtaimoor",
+      "username": "mistrtaimoor",
+      "emailVerified": false,
+      "isOtpVerified": false,
+      "updatedAt": "2026-09-19T18:06:39.727Z",
+      "walletBalance": 0,
+      "currentPackage": "None",
+      "lifetimeAds": 0,
+      "dailyAdCount": 0,
+      "teamAdsCount": 0,
+      "referralCount": 1,
+      "totalEarned": 0,
+      "isEligible": false,
+      "isBlocked": false,
+      "isAdmin": true
+    }
+  ],
+  [
+    "users/user_6d69737472",
+    {
+      "uid": "user_6d69737472",
+      "email": "mistrtaemry@gmail.com",
+      "name": "mistrtaemry",
+      "displayName": "mistrtaemry",
+      "username": "mistrtaemry",
+      "referredBy": "RNva69V1XoMwaxGgVaKtJ4jXfYY2",
+      "referrerUsername": "mistrtaimoor",
       "walletBalance": 0,
       "currentPackage": "None",
       "lifetimeAds": 0,
@@ -146,10 +199,10 @@
       "referralCount": 0,
       "totalEarned": 0,
       "isEligible": false,
-      "uid": "eGq9IYfy0LUv23eJRS0QrpgGh402",
-      "email": "mistrtaimur7@gmail.com",
-      "name": "The Hustler",
-      "createdAt": "2026-09-19T08:48:22.243Z"
+      "isBlocked": false,
+      "createdAt": "2026-09-19T18:02:30.122Z",
+      "updatedAt": "2026-09-19T18:06:39.727Z",
+      "isAdmin": true
     }
   ]
 ]

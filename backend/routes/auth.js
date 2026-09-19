@@ -388,6 +388,7 @@ router.post('/save-registered-user', async (req, res) => {
     const name = (req.body.name || req.body.displayName || '').toString().trim();
     const username = (req.body.username || '').toString().replace(/^@+/, '').trim();
     const uid = (req.body.uid || '').toString().trim();
+    const rawReferredBy = (req.body.referredBy || req.body.referralCode || req.body.sponsor || '').toString().trim();
 
     if (!rawEmail || !rawEmail.includes('@')) {
       return res.status(400).json({ success: false, message: 'Valid email required' });
@@ -399,13 +400,69 @@ router.post('/save-registered-user', async (req, res) => {
     if (db) {
       try {
         const userDocId = uid || ('user_' + Buffer.from(rawEmail).toString('hex').slice(0, 12));
-        await db.collection('users').doc(userDocId).set(
+        const userRef = db.collection('users').doc(userDocId);
+        const existingDoc = await userRef.get();
+        const existingData = existingDoc.exists ? existingDoc.data() : {};
+
+        let referredByClean = existingData.referredBy || null;
+
+        // If a referral code was passed and user has no referredBy yet, link them!
+        if (!referredByClean && rawReferredBy) {
+          const cleanRef = rawReferredBy.replace(/^@/, '');
+          let referrerDoc = null;
+
+          // 1. Direct doc match
+          const dDoc = await db.collection('users').doc(cleanRef).get();
+          if (dDoc.exists) referrerDoc = dDoc;
+
+          // 2. Username match
+          if (!referrerDoc) {
+            const uSnap = await db.collection('users').where('username', '==', cleanRef).limit(1).get();
+            if (!uSnap.empty) referrerDoc = uSnap.docs[0];
+          }
+          if (!referrerDoc) {
+            const uSnapAt = await db.collection('users').where('username', '==', `@${cleanRef}`).limit(1).get();
+            if (!uSnapAt.empty) referrerDoc = uSnapAt.docs[0];
+          }
+
+          // 3. ReferralCode match
+          if (!referrerDoc) {
+            const rSnap = await db.collection('users').where('referralCode', '==', cleanRef).limit(1).get();
+            if (!rSnap.empty) referrerDoc = rSnap.docs[0];
+          }
+
+          // 4. Email match
+          if (!referrerDoc) {
+            const eSnap = await db.collection('users').where('email', '==', cleanRef.toLowerCase()).limit(1).get();
+            if (!eSnap.empty) referrerDoc = eSnap.docs[0];
+          }
+
+          if (referrerDoc && referrerDoc.exists && referrerDoc.id !== userDocId) {
+            referredByClean = referrerDoc.id;
+            const refData = referrerDoc.data() || {};
+            const newRefCount = (Number(refData.referralCount) || 0) + 1;
+            await referrerDoc.ref.set({ referralCount: newRefCount }, { merge: true });
+          } else {
+            referredByClean = cleanRef;
+          }
+        }
+
+        await userRef.set(
           {
             uid: userDocId,
             email: rawEmail,
-            name: name || rawEmail.split('@')[0],
-            displayName: name || rawEmail.split('@')[0],
-            username: username || rawEmail.split('@')[0],
+            name: name || existingData.name || rawEmail.split('@')[0],
+            displayName: name || existingData.displayName || rawEmail.split('@')[0],
+            username: username || existingData.username || rawEmail.split('@')[0],
+            referredBy: referredByClean,
+            walletBalance: existingData.walletBalance !== undefined ? existingData.walletBalance : 0,
+            currentPackage: existingData.currentPackage || 'None',
+            isEligible: Boolean(existingData.isEligible),
+            lifetimeAds: Number(existingData.lifetimeAds || 0),
+            dailyAdCount: Number(existingData.dailyAdCount || 0),
+            teamAdsCount: Number(existingData.teamAdsCount || 0),
+            referralCount: Number(existingData.referralCount || 0),
+            totalEarned: Number(existingData.totalEarned || 0),
             emailVerified: false,
             isOtpVerified: false,
             updatedAt: new Date().toISOString(),

@@ -37,6 +37,7 @@ export const verifyToken = async (req, res, next) => {
       em === 'mistrtaimur7@gmail.com' ||
       em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
+      em === 'kk3083702@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taimri') ||
       em.includes('taemryadmin') ||

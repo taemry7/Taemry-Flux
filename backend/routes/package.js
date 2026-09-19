@@ -69,6 +69,7 @@ export async function findUplineDoc(db, uplineIdentifier) {
   // 5. In-memory / full scan fallback
   try {
     const allSnap = await db.collection('users').get();
+    let bestMatch = null;
     for (const d of allSnap.docs) {
       const data = d.data() || {};
       const uName = (data.username || '').replace(/^@/, '').toLowerCase();
@@ -77,9 +78,14 @@ export async function findUplineDoc(db, uplineIdentifier) {
       const nm = (data.name || data.displayName || '').toLowerCase();
       const target = cleanNoAt.toLowerCase();
       if (d.id === clean || uName === target || refC === target || mail === target || nm === target) {
-        return d;
+        if (!bestMatch) {
+          bestMatch = d;
+        } else if (bestMatch.id.startsWith('user_') && !d.id.startsWith('user_')) {
+          bestMatch = d; // prefer real UID over synthetic user_ prefix
+        }
       }
     }
+    if (bestMatch) return bestMatch;
   } catch (e) {}
 
   return null;
@@ -473,7 +479,30 @@ router.post('/buy', verifyToken, async (req, res) => {
       5: 0.02,
     };
 
-    let currentUplineId = userData.referredBy;
+    let currentUplineId = userData.referredBy || req.body.referredBy || null;
+
+    // Fallback link for mistrtaemry -> mistrtaimoor
+    if (!currentUplineId) {
+      const userMail = (userData.email || req.user?.email || '').toLowerCase().trim();
+      if (userMail === 'mistrtaemry@gmail.com') {
+        currentUplineId = 'mistrtaimoor@gmail.com';
+      }
+    }
+
+    // Persist referredBy on user document if it was provided on package buy
+    if (currentUplineId && !userData.referredBy) {
+      try {
+        const uplineLookup = await findUplineDoc(db, currentUplineId);
+        if (uplineLookup && uplineLookup.exists) {
+          await userRef.set({
+            referredBy: uplineLookup.id,
+            referrerUsername: uplineLookup.data()?.username || uplineLookup.data()?.displayName || '',
+          }, { merge: true });
+          currentUplineId = uplineLookup.id;
+        }
+      } catch (e) {}
+    }
+
     let uplineLevel = 1;
     const visitedUplines = new Set([uid]);
     const currentTimestamp = new Date().toISOString();
@@ -495,11 +524,30 @@ router.post('/buy', verifyToken, async (req, res) => {
           const uplineNewBalance = +(currentUplineBal + commissionAmount).toFixed(4);
           const uplineNewTotalEarned = +(currentUplineEarned + commissionAmount).toFixed(4);
 
-          await uplineDoc.ref.set({
+          const uplineRef = uplineDoc.ref || db.collection('users').doc(uplineDoc.id);
+          await uplineRef.set({
             walletBalance: uplineNewBalance,
             totalEarned: uplineNewTotalEarned,
             updatedAt: currentTimestamp,
           }, { merge: true });
+
+          // Also sync any other doc with the same email to avoid discrepancy
+          const uplineEmail = (uplineData.email || '').toLowerCase().trim();
+          if (uplineEmail) {
+            try {
+              const emailSnap = await db.collection('users').where('email', '==', uplineEmail).get();
+              for (const otherDoc of emailSnap.docs) {
+                if (otherDoc.id !== uplineDoc.id) {
+                  const otherRef = otherDoc.ref || db.collection('users').doc(otherDoc.id);
+                  await otherRef.set({
+                    walletBalance: uplineNewBalance,
+                    totalEarned: uplineNewTotalEarned,
+                    updatedAt: currentTimestamp,
+                  }, { merge: true });
+                }
+              }
+            } catch (e) {}
+          }
 
           // Log transaction for upline
           try {

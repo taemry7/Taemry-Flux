@@ -377,6 +377,7 @@ export default function LoginPage({ onNavigate, initialMode = 'signin' }) {
         email: cleanEmail,
         name: cleanFullName,
         username: cleanUsername,
+        referredBy: cleanReferral || '',
       }).catch(() => {});
 
       // 2. Perform authentication signup directly

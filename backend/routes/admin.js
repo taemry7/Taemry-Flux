@@ -296,9 +296,8 @@ router.get('/users', verifyAdmin, async (req, res) => {
     // Merge persistent registered accounts so users are never missing
     try {
       const persistentEmails = getPersistentRegisteredEmails();
-      const existingEmails = new Set(allUsers.map((u) => (u.email || '').toLowerCase().trim()));
       persistentEmails.forEach((email) => {
-        if (email && !existingEmails.has(email)) {
+        if (email) {
           allUsers.push({
             uid: 'user_' + Buffer.from(email).toString('hex').slice(0, 10),
             email,
@@ -313,6 +312,32 @@ router.get('/users', verifyAdmin, async (req, res) => {
         }
       });
     } catch (e) {}
+
+    // Deduplicate allUsers by lowercase email, merging properties
+    const userByEmail = new Map();
+    allUsers.forEach((u) => {
+      const emailKey = (u.email || '').toLowerCase().trim();
+      if (!emailKey || emailKey === 'n/a') {
+        userByEmail.set(u.uid, u);
+      } else if (!userByEmail.has(emailKey)) {
+        userByEmail.set(emailKey, u);
+      } else {
+        const existing = userByEmail.get(emailKey);
+        // Prefer non-zero / active data
+        const merged = {
+          ...existing,
+          ...u,
+          uid: existing.uid.startsWith('user_') && !u.uid.startsWith('user_') ? u.uid : existing.uid,
+          walletBalance: Math.max(existing.walletBalance || 0, u.walletBalance || 0),
+          referralCount: Math.max(existing.referralCount || 0, u.referralCount || 0),
+          currentPackage: existing.currentPackage !== 'None' ? existing.currentPackage : u.currentPackage,
+          isEligible: existing.isEligible || u.isEligible,
+          isBlocked: existing.isBlocked || u.isBlocked,
+        };
+        userByEmail.set(emailKey, merged);
+      }
+    });
+    allUsers = Array.from(userByEmail.values());
 
     // Apply search filter if provided
     if (search) {

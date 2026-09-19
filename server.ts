@@ -20,66 +20,57 @@ import minerRoutes from './backend/routes/miner.js';
 import { initFirebaseAdmin, getDb } from './backend/firebaseAdmin.js';
 import { sendAdminErrorAlert } from './backend/utils/email.js';
 import { antiBotGuard } from './backend/middleware/antiBot.js';
+import { getPersistentRegisteredEmails } from './backend/routes/auth.js';
 
 async function startServer() {
   // Initialize Firebase Admin SDK (lazy fallback if keys not in env)
   initFirebaseAdmin();
 
-  // Auto-purge pre-seeded test accounts, bots, and dummy ledgers on boot
-  // Preserving ONLY verified owner accounts (mistrtaimoor@gmail.com, mistrtaemry@gmail.com) with clean 0 balance
+  // Ensure persistent registered user accounts are initialized without wiping balances or referral counts
   try {
     const db = getDb() as any;
-    if (db && db.data && typeof db.data.delete === 'function') {
-      const keysToDelete: string[] = [];
-      for (const [key, val] of db.data.entries()) {
-        const isOwnerAccount =
-          val?.email === 'mistrtaimoor@gmail.com' ||
-          val?.email === 'mistrtaemry@gmail.com' ||
-          key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2';
-
-        if (
-          key.startsWith('deposits/') ||
-          key.startsWith('withdrawals/') ||
-          key.startsWith('auditLogs/') ||
-          key.startsWith('supportTickets/') ||
-          key.startsWith('transactions/') ||
-          key.startsWith('cloudMiner/') ||
-          (key.startsWith('users/') && !isOwnerAccount)
-        ) {
-          keysToDelete.push(key);
+    if (db && db.data) {
+      const persistentEmails = getPersistentRegisteredEmails();
+      persistentEmails.forEach((email) => {
+        if (email) {
+          const emailLower = email.toLowerCase().trim();
+          let foundKey: string | null = null;
+          for (const [key, val] of db.data.entries()) {
+            if (key.startsWith('users/') && (val?.email || '').toLowerCase().trim() === emailLower) {
+              foundKey = key;
+              break;
+            }
+          }
+          if (!foundKey) {
+            const uid = 'user_' + Buffer.from(emailLower).toString('hex').slice(0, 10);
+            db.data.set(`users/${uid}`, {
+              uid,
+              email: emailLower,
+              name: emailLower.split('@')[0],
+              displayName: emailLower.split('@')[0],
+              username: emailLower.split('@')[0],
+              walletBalance: 0,
+              currentPackage: 'None',
+              lifetimeAds: 0,
+              dailyAdCount: 0,
+              teamAdsCount: 0,
+              referralCount: 0,
+              totalEarned: 0,
+              isEligible: false,
+              isBlocked: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            });
+          }
         }
-      }
-      keysToDelete.forEach((k) => db.data.delete(k));
-
-      // Reset owner accounts to 0 balance & pristine clean live state
-      for (const [key, val] of db.data.entries()) {
-        if (
-          key.startsWith('users/') &&
-          (val?.email === 'mistrtaimoor@gmail.com' || val?.email === 'mistrtaemry@gmail.com' || key === 'users/RNva69V1XoMwaxGgVaKtJ4jXfYY2')
-        ) {
-          db.data.set(key, {
-            ...val,
-            walletBalance: 0,
-            currentPackage: 'None',
-            lifetimeAds: 0,
-            dailyAdCount: 0,
-            teamAdsCount: 0,
-            referralCount: 0,
-            totalEarned: 0,
-            isEligible: false,
-            isBlocked: false,
-            isAdmin: true,
-            updatedAt: new Date().toISOString(),
-          });
-        }
-      }
+      });
 
       if (typeof db._persist === 'function') {
         db._persist();
       }
     }
   } catch (err: any) {
-    console.warn('[Data Purge Notice]:', err.message);
+    console.warn('[User Initialization Notice]:', err.message);
   }
 
   const app = express();

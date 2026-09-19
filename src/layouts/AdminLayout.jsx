@@ -40,7 +40,7 @@ import { useAuth } from '../context/AuthContext';
 import apiClient from '../api/client';
 import Logo from '../components/Logo';
 import { db, isFirebaseConfigured } from '../firebase/firebase.config.js';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, onSnapshot } from 'firebase/firestore';
 
 // Sub-page components
 import AdminDashboard from '../pages/admin/AdminDashboard';
@@ -207,7 +207,22 @@ export default function AdminLayout({ onNavigate }) {
       fetchStats();
     };
     window.addEventListener('taemry_admin_stats_refresh', handleGlobalRefresh);
-    return () => window.removeEventListener('taemry_admin_stats_refresh', handleGlobalRefresh);
+
+    let unsubUsers = null;
+    if (isAdmin && isFirebaseConfigured && db) {
+      try {
+        unsubUsers = onSnapshot(collection(db, 'users'), () => {
+          fetchStats();
+        }, (err) => {
+          console.warn('Live users onSnapshot notice:', err.message);
+        });
+      } catch (e) {}
+    }
+
+    return () => {
+      window.removeEventListener('taemry_admin_stats_refresh', handleGlobalRefresh);
+      if (unsubUsers) unsubUsers();
+    };
   }, [isAdmin, activeTab]);
 
   // 1. Loading state: Avoid brief flashes while Firebase credentials verify

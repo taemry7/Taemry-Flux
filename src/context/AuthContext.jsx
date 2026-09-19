@@ -40,11 +40,29 @@ export const incrementReferrerCount = async (referralCode, newUserId = null) => 
   // 1. Direct Firestore increment (client-side)
   if (db) {
     try {
+      const cleanNoAt = cleanCode.replace(/^@/, '');
       // A: Try lookup by user document ID directly
       let referrerRef = doc(db, 'users', cleanCode);
       let referrerSnap = await getDoc(referrerRef);
 
-      // B: Try lookup by referralCode field (e.g. FLUX-ABC123)
+      // B: Try lookup by username field (e.g. mistrtaimoor, @mistrtaimoor)
+      if (!referrerSnap.exists()) {
+        const qUser = query(collection(db, 'users'), where('username', '==', cleanNoAt));
+        const qUserSnap = await getDocs(qUser);
+        if (!qUserSnap.empty) {
+          referrerRef = qUserSnap.docs[0].ref;
+          referrerSnap = qUserSnap.docs[0];
+        } else {
+          const qUserAt = query(collection(db, 'users'), where('username', '==', `@${cleanNoAt}`));
+          const qUserAtSnap = await getDocs(qUserAt);
+          if (!qUserAtSnap.empty) {
+            referrerRef = qUserAtSnap.docs[0].ref;
+            referrerSnap = qUserAtSnap.docs[0];
+          }
+        }
+      }
+
+      // C: Try lookup by referralCode field (e.g. FLUX-ABC123)
       if (!referrerSnap.exists()) {
         const q = query(collection(db, 'users'), where('referralCode', '==', cleanCode));
         const qSnap = await getDocs(q);
@@ -62,11 +80,33 @@ export const incrementReferrerCount = async (referralCode, newUserId = null) => 
         }
       }
 
+      // D: Try lookup by email field
+      if (!referrerSnap.exists()) {
+        const qMail = query(collection(db, 'users'), where('email', '==', cleanCode.toLowerCase()));
+        const qMailSnap = await getDocs(qMail);
+        if (!qMailSnap.empty) {
+          referrerRef = qMailSnap.docs[0].ref;
+          referrerSnap = qMailSnap.docs[0];
+        }
+      }
+
       if (referrerSnap.exists()) {
         await updateDoc(referrerRef, {
           referralCount: increment(1),
         });
         console.log('[Referral] Incremented referralCount for referrer:', referrerRef.id);
+
+        // Ensure newly registered user document has referredBy populated
+        if (newUserId && newUserId !== referrerRef.id) {
+          try {
+            await setDoc(doc(db, 'users', newUserId), {
+              referredBy: referrerRef.id,
+              referrerUsername: cleanNoAt,
+            }, { merge: true });
+          } catch (linkErr) {
+            console.warn('[Referral] Link newUserId notice:', linkErr?.message);
+          }
+        }
       }
     } catch (fsErr) {
       console.warn('[Referral] Client Firestore update notice:', fsErr.message);
@@ -147,6 +187,7 @@ const checkIsAdminEmailStatic = (email) => {
     em === 'mistrtaimur7@gmail.com' ||
     em === 'mistrtaimoor@gmail.com' ||
     em === 'mistrtaemry@gmail.com' ||
+    em === 'kk3083702@gmail.com' ||
     em.startsWith('admin@') ||
     em.includes('taimri') ||
     em.includes('taemryadmin') ||

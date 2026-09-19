@@ -7,6 +7,7 @@
 import express from 'express';
 import { getDb } from '../firebaseAdmin.js';
 import { verifyToken } from '../middleware/auth.js';
+import { findUplineDoc } from './package.js';
 
 const router = express.Router();
 
@@ -167,7 +168,7 @@ router.get('/tree', verifyToken, async (req, res) => {
  */
 router.post('/record-signup', async (req, res) => {
   try {
-    const { referralCode, newUserId } = req.body;
+    const { referralCode, newUserId, newUserEmail } = req.body;
     if (!referralCode) {
       return res.status(400).json({ success: false, message: 'referralCode is required' });
     }
@@ -178,50 +179,9 @@ router.post('/record-signup', async (req, res) => {
       return res.status(503).json({ success: false, message: 'Database connection not available' });
     }
 
-    let referrerDocRef = null;
-    let docSnap = null;
     const cleanUsername = cleanCode.replace(/^@/, '');
-
-    // 1. Check direct doc ID match (e.g. if code is UID)
-    const directDoc = await db.collection('users').doc(cleanCode).get();
-    if (directDoc.exists) {
-      referrerDocRef = directDoc.ref;
-      docSnap = directDoc;
-    } else {
-      // 2. Check username match (both without @ and with @)
-      const snapUser = await db.collection('users').where('username', '==', cleanUsername).limit(1).get();
-      if (!snapUser.empty) {
-        referrerDocRef = snapUser.docs[0].ref;
-        docSnap = snapUser.docs[0];
-      } else {
-        const snapUserAt = await db.collection('users').where('username', '==', `@${cleanUsername}`).limit(1).get();
-        if (!snapUserAt.empty) {
-          referrerDocRef = snapUserAt.docs[0].ref;
-          docSnap = snapUserAt.docs[0];
-        } else {
-          // 3. Check referralCode field match
-          const snap = await db.collection('users').where('referralCode', '==', cleanCode).limit(1).get();
-          if (!snap.empty) {
-            referrerDocRef = snap.docs[0].ref;
-            docSnap = snap.docs[0];
-          } else {
-            // 4. Check uppercase referralCode field match
-            const snapUpper = await db.collection('users').where('referralCode', '==', cleanCode.toUpperCase()).limit(1).get();
-            if (!snapUpper.empty) {
-              referrerDocRef = snapUpper.docs[0].ref;
-              docSnap = snapUpper.docs[0];
-            } else {
-              // 5. Check displayName or name match
-              const snapName = await db.collection('users').where('name', '==', cleanCode).limit(1).get();
-              if (!snapName.empty) {
-                referrerDocRef = snapName.docs[0].ref;
-                docSnap = snapName.docs[0];
-              }
-            }
-          }
-        }
-      }
-    }
+    const docSnap = await findUplineDoc(db, cleanCode);
+    let referrerDocRef = (docSnap && docSnap.exists) ? (docSnap.ref || db.collection('users').doc(docSnap.id)) : null;
 
     if (referrerDocRef && docSnap && docSnap.exists) {
       const currentCount = Number(docSnap.data()?.referralCount || 0);
@@ -229,6 +189,47 @@ router.post('/record-signup', async (req, res) => {
       await referrerDocRef.set({
         referralCount: newCount,
       }, { merge: true });
+
+      // Also sync other docs with same email if any
+      const docEmail = (docSnap.data()?.email || '').toLowerCase().trim();
+      if (docEmail) {
+        try {
+          const emailSnap = await db.collection('users').where('email', '==', docEmail).get();
+          for (const otherDoc of emailSnap.docs) {
+            if (otherDoc.id !== referrerDocRef.id) {
+              const otherRef = otherDoc.ref || db.collection('users').doc(otherDoc.id);
+              await otherRef.set({ referralCount: newCount }, { merge: true });
+            }
+          }
+        } catch (e) {}
+      }
+
+      // Link new user to referrer if newUserId or newUserEmail is provided
+      if (newUserId && newUserId !== referrerDocRef.id) {
+        try {
+          await db.collection('users').doc(newUserId).set({
+            referredBy: referrerDocRef.id,
+            referrerUsername: cleanUsername,
+          }, { merge: true });
+        } catch (linkErr) {
+          console.warn('[Referrals] Link newUserId note:', linkErr?.message);
+        }
+      }
+
+      if (newUserEmail) {
+        try {
+          const userSnap = await db.collection('users').where('email', '==', newUserEmail).limit(1).get();
+          if (!userSnap.empty && userSnap.docs[0].id !== referrerDocRef.id) {
+            const targetRef = userSnap.docs[0].ref || db.collection('users').doc(userSnap.docs[0].id);
+            await targetRef.set({
+              referredBy: referrerDocRef.id,
+              referrerUsername: cleanUsername,
+            }, { merge: true });
+          }
+        } catch (emailLinkErr) {
+          console.warn('[Referrals] Link newUserEmail note:', emailLinkErr?.message);
+        }
+      }
 
       return res.json({
         success: true,

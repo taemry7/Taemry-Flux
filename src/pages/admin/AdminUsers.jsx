@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../../api/client';
 import { db, isFirebaseConfigured } from '../../firebase/firebase.config';
-import { collection, getDocs, doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc, setDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
@@ -110,16 +110,45 @@ export default function AdminUsers() {
         }
       }
 
-      // Merge backend and firestore users
+      // Merge backend and firestore users by email to avoid duplicates
       const userMap = new Map();
-      backendUsers.forEach((u) => userMap.set(u.uid, u));
+      backendUsers.forEach((u) => {
+        const key = (u.email || '').toLowerCase().trim() || u.uid;
+        userMap.set(key, u);
+      });
       firestoreUsers.forEach((u) => {
-        if (userMap.has(u.uid)) {
-          userMap.set(u.uid, { ...userMap.get(u.uid), ...u });
+        const key = (u.email || '').toLowerCase().trim() || u.uid;
+        if (userMap.has(key)) {
+          userMap.set(key, { ...userMap.get(key), ...u });
         } else {
-          userMap.set(u.uid, u);
+          userMap.set(key, u);
         }
       });
+
+      // Also ensure client registered accounts are included
+      try {
+        const rawEmails = localStorage.getItem('taemry_registered_emails');
+        const rawAccounts = localStorage.getItem('taemry_registered_accounts');
+        const emails = rawEmails ? JSON.parse(rawEmails) : [];
+        const accounts = rawAccounts ? JSON.parse(rawAccounts) : {};
+        emails.forEach((em) => {
+          const cleanEm = (em || '').toLowerCase().trim();
+          if (cleanEm && !userMap.has(cleanEm)) {
+            const acc = accounts[cleanEm] || {};
+            userMap.set(cleanEm, {
+              uid: acc.uid || 'user_' + cleanEm.split('@')[0],
+              email: cleanEm,
+              name: acc.displayName || cleanEm.split('@')[0],
+              currentPackage: 'None',
+              walletBalance: 0,
+              referralCount: 0,
+              isEligible: false,
+              isBlocked: false,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        });
+      } catch (e) {}
 
       let allMerged = Array.from(userMap.values());
       if (searchQuery) {
@@ -132,8 +161,8 @@ export default function AdminUsers() {
         );
       }
 
-      setTotalUsers(Math.max(backendTotal, allMerged.length));
-      setTotalPages(Math.max(backendPages, Math.ceil(allMerged.length / 10) || 1));
+      setTotalUsers(allMerged.length);
+      setTotalPages(Math.ceil(allMerged.length / 10) || 1);
       setCurrentPage(page);
       setUsers(allMerged.slice((page - 1) * 10, page * 10));
     } catch (err) {
@@ -146,6 +175,16 @@ export default function AdminUsers() {
 
   useEffect(() => {
     fetchUsers(1, search);
+
+    if (!isFirebaseConfigured || !db) return;
+    try {
+      const unsub = onSnapshot(collection(db, 'users'), () => {
+        fetchUsers(currentPage, search);
+      }, (err) => {
+        console.warn('Real-time users onSnapshot notice:', err.message);
+      });
+      return () => unsub();
+    } catch (e) {}
   }, []);
 
   const handleSearchSubmit = (e) => {
@@ -723,16 +762,6 @@ export default function AdminUsers() {
             >
               <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
-            </button>
-            <button
-              type="button"
-              onClick={handlePurgeAllExceptAdmin}
-              disabled={actionLoading}
-              className="px-3 py-2 bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/50 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1.5 shadow-sm"
-              title="Purge all fake, bot, and test accounts"
-            >
-              <Trash2 className="w-3.5 h-3.5 text-rose-400" />
-              <span>Purge Fake Accounts</span>
             </button>
           </div>
         </div>
