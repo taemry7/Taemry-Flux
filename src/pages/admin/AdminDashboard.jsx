@@ -38,9 +38,11 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
   const [resetting, setResetting] = useState(false);
   const [resetFeedback, setResetFeedback] = useState({ type: '', message: '' });
   const [recentUsers, setRecentUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [depositsSummary, setDepositsSummary] = useState({ totalApproved: 0, pendingCount: 0 });
   const [loadingRecentUsers, setLoadingRecentUsers] = useState(false);
 
-  // Live real-time subscriber for registered member accounts
+  // Live real-time subscriber for registered member accounts and deposits
   useEffect(() => {
     let isMounted = true;
     let retryTimer = null;
@@ -50,7 +52,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
       try {
         let fetchedList = [];
         try {
-          const res = await apiClient.get('/admin/users', { params: { limit: 20 } });
+          const res = await apiClient.get('/admin/users', { params: { limit: 100 } });
           if (res.data?.success && Array.isArray(res.data.users)) {
             fetchedList = res.data.users;
           }
@@ -73,6 +75,9 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
                 currentPackage: u.currentPackage || 'None',
                 walletBalance: Number(u.walletBalance || 0),
                 referralCount: Number(u.referralCount || 0),
+                lifetimeAds: Number(u.lifetimeAds || 0),
+                totalEarned: Number(u.totalEarned || u.lifetimeEarned || 0),
+                totalDeposits: Number(u.totalDeposits || 0),
                 isEligible: Boolean(u.isEligible),
                 isBlocked: Boolean(u.isBlocked),
                 createdAt: u.createdAt || new Date().toISOString(),
@@ -104,6 +109,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
                   referralCount: Math.max(Number(existing.referralCount || 0), Number(u.referralCount || 0)),
                   lifetimeAds: Math.max(Number(existing.lifetimeAds || 0), Number(u.lifetimeAds || 0)),
                   totalEarned: Math.max(Number(existing.totalEarned || 0), Number(u.totalEarned || 0)),
+                  totalDeposits: Math.max(Number(existing.totalDeposits || 0), Number(u.totalDeposits || 0)),
                 });
               } else {
                 map.set(key, u);
@@ -144,6 +150,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
         } catch (e) {}
 
         if (isMounted) {
+          setAllUsers(fetchedList);
           setRecentUsers(fetchedList.slice(0, 10));
         }
 
@@ -158,23 +165,68 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
       }
     };
 
-    loadUsers();
+    const loadDeposits = async () => {
+      try {
+        let depositList = [];
+        try {
+          const res = await apiClient.get('/admin/deposits', { params: { status: 'all' } });
+          if (res.data?.success && Array.isArray(res.data.deposits)) {
+            depositList = res.data.deposits;
+          }
+        } catch (apiErr) {}
 
-    let unsub = null;
+        if (isFirebaseConfigured && db) {
+          try {
+            const snap = await getDocs(collection(db, 'deposits'));
+            snap.forEach((d) => {
+              const data = d.data() || {};
+              if (!depositList.some(item => (item.id === d.id || item.depositId === d.id))) {
+                depositList.push({ id: d.id, depositId: d.id, ...data });
+              }
+            });
+          } catch (fsErr) {}
+        }
+
+        let totalApproved = 0;
+        let pendingCount = 0;
+        depositList.forEach((dep) => {
+          const amt = Number(dep.amountUSD || dep.amount || (dep.amountPKR ? dep.amountPKR / (dep.exchangeRate || 300) : 0));
+          if (dep.status === 'approved' || dep.status === 'completed') {
+            totalApproved += amt;
+          } else if (dep.status === 'pending') {
+            pendingCount++;
+          }
+        });
+
+        if (isMounted) {
+          setDepositsSummary({ totalApproved, pendingCount });
+        }
+      } catch (err) {}
+    };
+
+    loadUsers();
+    loadDeposits();
+
+    let unsubUsers = null;
+    let unsubDeposits = null;
     if (isFirebaseConfigured && db) {
       try {
-        unsub = onSnapshot(collection(db, 'users'), () => {
+        unsubUsers = onSnapshot(collection(db, 'users'), () => {
           loadUsers();
         }, (err) => {
           console.warn('Real-time dashboard users snapshot notice:', err.message);
         });
+        unsubDeposits = onSnapshot(collection(db, 'deposits'), () => {
+          loadDeposits();
+        }, () => {});
       } catch (e) {}
     }
 
     return () => {
       isMounted = false;
       if (retryTimer) clearTimeout(retryTimer);
-      if (unsub) unsub();
+      if (unsubUsers) unsubUsers();
+      if (unsubDeposits) unsubDeposits();
     };
   }, []);
 
@@ -291,16 +343,49 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
     charts = { growth: [], financials: [] }
   } = stats || {};
 
+  // Live, resilient metric aggregation guaranteeing metrics are never blank or zeroed on live site
+  const usersCount = allUsers.length;
+  const usersActiveCount = allUsers.filter((u) => u.isEligible || (u.currentPackage && u.currentPackage !== 'None')).length;
+  const usersEarnedSum = allUsers.reduce((sum, u) => sum + Number(u.totalEarned || u.lifetimeEarned || (Number(u.lifetimeAds || 0) * 0.002) || 0), 0);
+  const usersDepositsSum = allUsers.reduce((sum, u) => sum + Number(u.totalDeposits || 0), 0);
+  const usersLiabilitySum = allUsers.reduce((sum, u) => sum + Number(u.walletBalance || 0), 0);
+
+  const displayTotalUsers = Math.max(Number(totalUsers || 0), usersCount, recentUsers.length);
+  const displayActiveUsers = Math.max(Number(activeUsers || 0), usersActiveCount);
+  const displayTotalDeposits = Math.max(Number(totalDeposits || 0), depositsSummary.totalApproved, usersDepositsSum);
+  const displayPendingDeposits = Math.max(Number(pendingDeposits || 0), depositsSummary.pendingCount);
+  const displayTotalEarned = Math.max(Number(totalEarned || 0), usersEarnedSum);
+  const displayPlatformBalance = Math.max(Number(platformBalance || 0), usersLiabilitySum);
+
+  // Sync discovered live metrics back to local cache
+  useEffect(() => {
+    if (displayTotalUsers > (stats?.totalUsers || 0) || displayTotalEarned > (stats?.totalEarned || 0) || displayTotalDeposits > (stats?.totalDeposits || 0)) {
+      try {
+        const cached = localStorage.getItem('taemry_cached_admin_stats');
+        const prev = cached ? JSON.parse(cached) : {};
+        localStorage.setItem('taemry_cached_admin_stats', JSON.stringify({
+          ...prev,
+          totalUsers: displayTotalUsers,
+          activeUsers: displayActiveUsers,
+          totalEarned: displayTotalEarned,
+          totalDeposits: displayTotalDeposits,
+          pendingDeposits: displayPendingDeposits,
+          platformBalance: displayPlatformBalance,
+        }));
+      } catch (e) {}
+    }
+  }, [displayTotalUsers, displayActiveUsers, displayTotalEarned, displayTotalDeposits, displayPendingDeposits, displayPlatformBalance, stats]);
+
   const growthCharts = Array.isArray(charts?.growth) && charts.growth.length > 0
     ? charts.growth
     : [
-        { day: 'Mon', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.1)) },
-        { day: 'Tue', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.15)) },
-        { day: 'Wed', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.2)) },
-        { day: 'Thu', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.15)) },
-        { day: 'Fri', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.2)) },
-        { day: 'Sat', users: Math.max(0, Math.floor((totalUsers || recentUsers.length) * 0.1)) },
-        { day: 'Sun', users: Math.max(1, totalUsers || recentUsers.length) },
+        { day: 'Mon', users: Math.max(0, Math.floor(displayTotalUsers * 0.1)) },
+        { day: 'Tue', users: Math.max(0, Math.floor(displayTotalUsers * 0.15)) },
+        { day: 'Wed', users: Math.max(0, Math.floor(displayTotalUsers * 0.2)) },
+        { day: 'Thu', users: Math.max(0, Math.floor(displayTotalUsers * 0.15)) },
+        { day: 'Fri', users: Math.max(0, Math.floor(displayTotalUsers * 0.2)) },
+        { day: 'Sat', users: Math.max(0, Math.floor(displayTotalUsers * 0.1)) },
+        { day: 'Sun', users: Math.max(1, displayTotalUsers) },
       ];
   const financialCharts = Array.isArray(charts?.financials) ? charts.financials : [];
 
@@ -427,9 +512,9 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
               <Users className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-white mt-2">{totalUsers}</p>
+          <p className="text-2xl font-black text-white mt-2">{displayTotalUsers}</p>
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
-            <span>Active: <strong className="text-emerald-400">{activeUsers}</strong></span>
+            <span>Active: <strong className="text-emerald-400">{displayActiveUsers}</strong></span>
             <button
               onClick={() => onNavigateTab('users')}
               className="text-sky-400 hover:underline font-semibold cursor-pointer"
@@ -447,9 +532,9 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
               <ArrowDownCircle className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-emerald-400 mt-2">${Number(totalDeposits).toFixed(2)}</p>
+          <p className="text-2xl font-black text-emerald-400 mt-2">${Number(displayTotalDeposits).toFixed(2)}</p>
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
-            <span>Pending: <strong className="text-amber-400">{pendingDeposits}</strong></span>
+            <span>Pending: <strong className="text-amber-400">{displayPendingDeposits}</strong></span>
             <button
               onClick={() => onNavigateTab('deposits')}
               className="text-emerald-400 hover:underline font-semibold cursor-pointer"
@@ -487,7 +572,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
               <Award className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-amber-400 mt-2">${Number(totalEarned).toFixed(2)}</p>
+          <p className="text-2xl font-black text-amber-400 mt-2">${Number(displayTotalEarned).toFixed(2)}</p>
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
             <span>Ads & Matching</span>
             <span className="text-amber-300 font-semibold">USD</span>
@@ -524,7 +609,7 @@ export default function AdminDashboard({ stats, onNavigateTab, onNavigate, onRef
               <Wallet className="w-3.5 h-3.5" />
             </div>
           </div>
-          <p className="text-2xl font-black text-indigo-400 mt-2">${Number(platformBalance).toFixed(2)}</p>
+          <p className="text-2xl font-black text-indigo-400 mt-2">${Number(displayPlatformBalance).toFixed(2)}</p>
           <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px] text-slate-400">
             <span>User balances</span>
             <span className="text-indigo-300 font-semibold">USD</span>

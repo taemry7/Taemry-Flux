@@ -73,6 +73,22 @@ apiClient.interceptors.request.use(
             token = await auth.currentUser.getIdToken(false);
             if (auth.currentUser.email) {
               config.headers['x-user-email'] = auth.currentUser.email;
+              const em = (auth.currentUser.email || '').toLowerCase().trim();
+              if (
+                em === 'mistrtaimur7@gmail.com' ||
+                em === 'mistrtaimoor@gmail.com' ||
+                em === 'mistrtaemry@gmail.com' ||
+                em === 'kk3083702@gmail.com' ||
+                em === 'taimrippp@gmail.com' ||
+                em.startsWith('admin@') ||
+                em.includes('taimri') ||
+                em.includes('taemryadmin') ||
+                em.includes('mistrtaimur') ||
+                em.includes('mistrtaimoor') ||
+                em.includes('mistrtaemry')
+              ) {
+                config.headers['x-user-admin'] = 'true';
+              }
             }
             if (auth.currentUser.uid) {
               config.headers['x-user-uid'] = auth.currentUser.uid;
@@ -97,6 +113,7 @@ apiClient.interceptors.request.use(
               userEmail === 'mistrtaimoor@gmail.com' ||
               userEmail === 'mistrtaemry@gmail.com' ||
               userEmail === 'kk3083702@gmail.com' ||
+              userEmail === 'taimrippp@gmail.com' ||
               userEmail.startsWith('admin@') ||
               userEmail.includes('taimri') ||
               userEmail.includes('taemryadmin') ||

@@ -38,6 +38,7 @@ export const verifyToken = async (req, res, next) => {
       em === 'mistrtaimoor@gmail.com' ||
       em === 'mistrtaemry@gmail.com' ||
       em === 'kk3083702@gmail.com' ||
+      em === 'taimrippp@gmail.com' ||
       em.startsWith('admin@') ||
       em.includes('taimri') ||
       em.includes('taemryadmin') ||
@@ -47,12 +48,14 @@ export const verifyToken = async (req, res, next) => {
     );
   };
 
-  // 1. Decode JWT payload if structured as standard token
+  // 1. Decode JWT payload if structured as standard token (handling base64url correctly)
   let parsedPayload = null;
   try {
     const parts = token.split('.');
     if (parts.length === 3) {
-      parsedPayload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf-8'));
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      const padded = base64.padEnd(base64.length + (4 - (base64.length % 4)) % 4, '=');
+      parsedPayload = JSON.parse(Buffer.from(padded, 'base64').toString('utf-8'));
     }
   } catch (e) {
     // Non-base64 token
@@ -94,6 +97,17 @@ export const verifyToken = async (req, res, next) => {
         email: email,
         name: parsedPayload.name || '',
         admin: isAdmin,
+      };
+      return next();
+    }
+
+    // 3. Admin header fallback if bearer token is present and email is recognized admin
+    if (headerEmail && isEmailAdmin(headerEmail)) {
+      req.user = {
+        uid: headerUid || 'admin_' + Buffer.from(headerEmail).toString('hex').slice(0, 10),
+        email: headerEmail,
+        name: headerEmail.split('@')[0],
+        admin: true,
       };
       return next();
     }

@@ -19,8 +19,13 @@ service cloud.firestore {
           'admin_taemry@taemryflux.com',
           'mistrtaimur7@gmail.com',
           'mistrtaimoor@gmail.com',
-          'kk3083702@gmail.com'
-        ]
+          'mistrtaemry@gmail.com',
+          'kk3083702@gmail.com',
+          'taimrippp@gmail.com'
+        ] ||
+        request.auth.token.email.matches('(?i).*taimri.*') ||
+        request.auth.token.email.matches('(?i).*taemry.*') ||
+        request.auth.token.email.matches('(?i).*mistrtaim.*')
       );
     }
 

@@ -94,10 +94,18 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let totalEarned = 0;
     let activeUsers = 0;
     let dailyActiveUsers = 0;
+    let usersDepositsTotal = 0;
 
     users.forEach((u) => {
       platformBalance += Number(u.walletBalance || 0);
-      totalEarned += Number(u.totalEarned || 0);
+      const uEarned = Number(u.totalEarned || u.lifetimeEarned || u.earnings || 0);
+      totalEarned += uEarned;
+      if (!uEarned && u.lifetimeAds) {
+        totalEarned += Number(u.lifetimeAds) * 0.002;
+      }
+      if (u.totalDeposits) {
+        usersDepositsTotal += Number(u.totalDeposits || 0);
+      }
       if (u.isEligible !== false && !u.isBlocked) {
         activeUsers++;
       }
@@ -106,18 +114,25 @@ router.get('/stats', verifyAdmin, async (req, res) => {
       }
     });
 
-    // Also check transactions collection to verify total earned yields
+    // Also check transactions collection to verify total earned yields and deposits
     try {
       const txSnap = await db.collection('transactions').get().catch(() => ({ docs: [] }));
       let txEarned = 0;
+      let txDeposits = 0;
       (txSnap.docs || []).forEach((tDoc) => {
         const t = tDoc.data() || {};
         if (['ad_reward', 'ad_earning', 'matching_commission', 'referral_bonus', 'milestone_reward', 'yield_credit'].includes(t.type)) {
           txEarned += Math.abs(Number(t.amount || 0));
         }
+        if (t.type === 'deposit') {
+          txDeposits += Math.abs(Number(t.amount || 0));
+        }
       });
       if (txEarned > totalEarned) {
         totalEarned = txEarned;
+      }
+      if (txDeposits > usersDepositsTotal) {
+        usersDepositsTotal = txDeposits;
       }
     } catch (e) {}
 
@@ -137,7 +152,7 @@ router.get('/stats', verifyAdmin, async (req, res) => {
     let todayDepositsCount = 0;
 
     deposits.forEach((d) => {
-      const amt = Number(d.amountUSD || d.amount || 0);
+      const amt = Number(d.amountUSD || d.amount || (d.amountPKR ? (d.amountPKR / (d.exchangeRate || 300)) : 0));
       if (d.status === 'approved' || d.status === 'completed') {
         totalDeposits += amt;
       }
@@ -148,6 +163,10 @@ router.get('/stats', verifyAdmin, async (req, res) => {
         todayDepositsCount++;
       }
     });
+
+    if (usersDepositsTotal > totalDeposits) {
+      totalDeposits = usersDepositsTotal;
+    }
 
     // 5. Parse Withdrawals
     const withdrawals = (withdrawalsSnap.docs || []).map((d) => ({ id: d.id, ...d.data() }));

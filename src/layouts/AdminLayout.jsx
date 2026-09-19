@@ -109,7 +109,19 @@ export default function AdminLayout({ onNavigate }) {
           getDocs(collection(db, 'cloudMiner')).catch(() => ({ docs: [] })),
         ]);
 
-        let fsUsers = uSnap.docs?.length || 0;
+        let localAccountsCount = 0;
+        try {
+          const rawReg = localStorage.getItem('taemry_registered_emails');
+          const rawAcc = localStorage.getItem('taemry_registered_accounts');
+          const arrReg = rawReg ? JSON.parse(rawReg) : [];
+          const objAcc = rawAcc ? JSON.parse(rawAcc) : {};
+          localAccountsCount = Math.max(
+            Array.isArray(arrReg) ? arrReg.length : 0,
+            objAcc ? Object.keys(objAcc).length : 0
+          );
+        } catch (e) {}
+
+        let fsUsers = Math.max(uSnap.docs?.length || 0, localAccountsCount);
         let fsDeposits = 0;
         let fsPendingDeposits = 0;
         let fsWithdrawals = 0;
@@ -118,17 +130,29 @@ export default function AdminLayout({ onNavigate }) {
         let fsLiability = 0;
         let fsTotalMined = 0;
         let fsActiveMiners = 0;
+        let userDepositsSum = 0;
+        let activeUsersCount = 0;
 
         (uSnap.docs || []).forEach((d) => {
-          const u = d.data();
+          const u = d.data() || {};
           fsLiability += Number(u.walletBalance || 0);
-          fsTotalEarned += Number(u.totalEarned || 0);
+          const uEarned = Number(u.totalEarned || u.lifetimeEarned || u.earnings || 0);
+          fsTotalEarned += uEarned;
+          if (!uEarned && u.lifetimeAds) {
+            fsTotalEarned += Number(u.lifetimeAds) * 0.002;
+          }
+          if (u.totalDeposits) {
+            userDepositsSum += Number(u.totalDeposits || 0);
+          }
+          if (u.isEligible || (u.currentPackage && u.currentPackage !== 'None')) {
+            activeUsersCount++;
+          }
           if (u.minedTflx) fsTotalMined += Number(u.minedTflx);
         });
 
         (dSnap.docs || []).forEach((d) => {
-          const dep = d.data();
-          const amt = Number(dep.amountUSD || dep.amount || 0);
+          const dep = d.data() || {};
+          const amt = Number(dep.amountUSD || dep.amount || (dep.amountPKR ? dep.amountPKR / (dep.exchangeRate || 300) : 0));
           if (dep.status === 'approved' || dep.status === 'completed') {
             fsDeposits += amt;
           } else if (dep.status === 'pending') {
@@ -136,8 +160,12 @@ export default function AdminLayout({ onNavigate }) {
           }
         });
 
+        if (userDepositsSum > fsDeposits) {
+          fsDeposits = userDepositsSum;
+        }
+
         (wSnap.docs || []).forEach((d) => {
-          const wd = d.data();
+          const wd = d.data() || {};
           const amt = Number(wd.amountUSD || wd.amount || 0);
           if (wd.status === 'paid' || wd.status === 'approved' || wd.status === 'completed') {
             fsWithdrawals += amt;
@@ -147,13 +175,14 @@ export default function AdminLayout({ onNavigate }) {
         });
 
         (mSnap.docs || []).forEach((d) => {
-          const m = d.data();
+          const m = d.data() || {};
           fsTotalMined += Number(m.minedTflx || 0);
           if (m.isMiningActive) fsActiveMiners++;
         });
 
         fsStats = {
           totalUsers: fsUsers,
+          activeUsers: activeUsersCount,
           totalDeposits: fsDeposits,
           pendingDeposits: fsPendingDeposits,
           totalWithdrawals: fsWithdrawals,
@@ -173,7 +202,7 @@ export default function AdminLayout({ onNavigate }) {
     // Merge highest accurate values between API and Firestore
     const merged = {
       totalUsers: Math.max(backendStats?.totalUsers || 0, fsStats?.totalUsers || 0),
-      activeUsers: Math.max(backendStats?.activeUsers || 0, fsStats?.totalUsers || 0),
+      activeUsers: Math.max(backendStats?.activeUsers || 0, fsStats?.activeUsers || 0),
       totalDeposits: Math.max(backendStats?.totalDeposits || 0, fsStats?.totalDeposits || 0),
       pendingDeposits: Math.max(backendStats?.pendingDeposits || 0, fsStats?.pendingDeposits || 0),
       totalWithdrawals: Math.max(backendStats?.totalWithdrawals || 0, fsStats?.totalWithdrawals || 0),
