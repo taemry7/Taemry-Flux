@@ -116,39 +116,55 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
     },
   ];
 
-  // Fetch package catalog from backend API
+  // Fetch package catalog from backend API with live update listener
   useEffect(() => {
     let isMounted = true;
+
+    function sanitizeList(rawList) {
+      if (!Array.isArray(rawList)) return fallbackPackages;
+      return rawList
+        .filter((pkg) => pkg.isActive !== false)
+        .map((pkg) => {
+          const fallback = fallbackPackages.find((f) => f.id === pkg.id) || {};
+          const resolvedTierName =
+            pkg.tierName ||
+            (pkg.name && pkg.name !== 'PACKAGE' ? pkg.name : null) ||
+            fallback.tierName ||
+            (pkg.id ? pkg.id.charAt(0).toUpperCase() + pkg.id.slice(1) : 'Package');
+          return {
+            ...fallback,
+            ...pkg,
+            id: pkg.id || fallback.id,
+            tierName: resolvedTierName,
+            name: resolvedTierName,
+            price: Number(pkg.price !== undefined ? pkg.price : fallback.price || 0),
+            dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : fallback.dailyLimit || 200),
+            rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
+            badge: (pkg.id === 'apex' || fallback.id === 'apex') ? 'Apex Master' : (pkg.badge !== undefined ? pkg.badge : fallback.badge),
+            color: pkg.color || fallback.color || '#0284c7',
+            description: pkg.description || fallback.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily returns.',
+            motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
+          };
+        });
+    }
+
     async function loadPackages() {
       try {
         setLoadingPackages(true);
+        // Try local storage cache first
+        try {
+          const cached = localStorage.getItem('taemry_packages_catalog');
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0 && isMounted) {
+              setPackages(sanitizeList(parsed));
+            }
+          }
+        } catch (e) {}
+
         const res = await apiClient.get('/packages');
         if (isMounted && res.data?.packages?.length > 0) {
-          const sanitized = res.data.packages
-            .filter((pkg) => pkg.isActive !== false)
-            .map((pkg) => {
-              const fallback = fallbackPackages.find((f) => f.id === pkg.id) || {};
-              const resolvedTierName =
-                pkg.tierName ||
-                (pkg.name && pkg.name !== 'PACKAGE' ? pkg.name : null) ||
-                fallback.tierName ||
-                (pkg.id ? pkg.id.charAt(0).toUpperCase() + pkg.id.slice(1) : 'Package');
-              return {
-                ...fallback,
-                ...pkg,
-                id: pkg.id || fallback.id,
-                tierName: resolvedTierName,
-                name: resolvedTierName,
-                price: Number(pkg.price !== undefined ? pkg.price : fallback.price || 0),
-                dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : fallback.dailyLimit || 20),
-                rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
-                badge: (pkg.id === 'apex' || fallback.id === 'apex') ? 'Apex Master' : (pkg.badge !== undefined ? pkg.badge : fallback.badge),
-                color: pkg.color || fallback.color || '#0284c7',
-                description: pkg.description || fallback.description || 'Active contract tier with guaranteed daily returns upon activation.',
-                motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
-              };
-            });
-          setPackages(sanitized);
+          setPackages(sanitizeList(res.data.packages));
         } else if (isMounted) {
           setPackages(fallbackPackages);
         }
@@ -160,8 +176,21 @@ export default function BuyPackage({ walletBalance = 0, currentPackage = 'None',
       }
     }
 
+    const handlePackageUpdate = (e) => {
+      if (e.detail?.packages && isMounted) {
+        setPackages(sanitizeList(e.detail.packages));
+      } else {
+        loadPackages();
+      }
+    };
+
+    window.addEventListener('taemry_packages_updated', handlePackageUpdate);
     loadPackages();
-    return () => { isMounted = false; };
+
+    return () => {
+      isMounted = false;
+      window.removeEventListener('taemry_packages_updated', handlePackageUpdate);
+    };
   }, []);
 
   // Auto-focus and open modal if user selected a specific package from Homepage

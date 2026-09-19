@@ -196,6 +196,10 @@ export default function AdminPackages() {
 
       if (res.data?.success) {
         setPackages(res.data.packages);
+        try {
+          localStorage.setItem('taemry_packages_catalog', JSON.stringify(res.data.packages));
+          window.dispatchEvent(new CustomEvent('taemry_packages_updated', { detail: { packages: res.data.packages } }));
+        } catch (e) {}
         setSuccessMsg('✅ Packages successfully updated and published live to the User Panel!');
         setLastSaved(new Date().toISOString());
         setTimeout(() => setSuccessMsg(null), 4500);
