@@ -108,27 +108,30 @@ export default function HomePage({ onNavigate }) {
     };
   }, [currentUser?.uid]);
 
-  // Real-time live mining tick
+  // Real-time live mining tick (optimized for 60+ FPS responsiveness)
   useEffect(() => {
+    let lastTick = Date.now();
     const tickInterval = setInterval(() => {
       setLiveMinerData((prev) => {
-        if (!prev) return prev;
+        if (!prev || !prev.isMiningActive) return prev;
         const now = Date.now();
+        const deltaSeconds = Math.max(0.5, (now - lastTick) / 1000);
+        lastTick = now;
         const sessionDuration = prev.sessionDurationMs || (12 * 60 * 60 * 1000);
         const sessionElapsed = now - (prev.sessionStartTime || now);
         const effectiveRate = Number(prev.effectiveHashrate) || 8.0;
 
-        if (prev.isMiningActive && sessionElapsed < sessionDuration) {
-          const tflxPerSec = effectiveRate / 3600;
+        if (sessionElapsed < sessionDuration) {
+          const tflxEarned = (effectiveRate / 3600) * deltaSeconds;
           return {
             ...prev,
-            minedTflx: Number((Number(prev.minedTflx || 0) + tflxPerSec).toFixed(4)),
+            minedTflx: Number((Number(prev.minedTflx || 0) + tflxEarned).toFixed(4)),
             lastSyncTime: now,
           };
         }
         return prev;
       });
-    }, 1000);
+    }, 3000);
 
     return () => clearInterval(tickInterval);
   }, []);

@@ -234,14 +234,13 @@
 }
 
 /* ==========================================================================
-   120 FPS Ultra-Smooth Hardware Acceleration & 4K Ultra-High-Resolution (UHD)
+   60+ FPS Ultra-Smooth Hardware Acceleration & 4K Clarity
    ========================================================================== */
 
 html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
@@ -250,11 +249,9 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
-  overscroll-behavior-y: none;
   min-height: 100vh;
 }
 
-/* 120 FPS / 120Hz Hardware-Accelerated GPU Compositing Layers */
 .app-viewport,
 #appViewport,
 #root {
@@ -266,32 +263,22 @@ section {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 4K (3840x2160) & Ultra-High-Resolution Retina Clarity for Images & Icons */
+/* Crisp rendering without forced compositing layers */
 img, svg, canvas {
   image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-  image-rendering: high-quality;
   shape-rendering: geometricPrecision;
-  transform: translateZ(0);
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
 }
 
-/* 120 FPS Instant Touch & Click Response on all Interactive Elements */
+/* Fast Touch & Click Response on all Interactive Elements */
 button, a, input, select, textarea, [role="button"] {
   -webkit-tap-highlight-color: transparent;
-  transform: translateZ(0);
   touch-action: manipulation;
 }
 
-/* Smooth 120Hz Fluid Transitions for Cards, Drawers, and Modals */
+/* CSS containment on cards to isolate repaints and prevent full-page layout recalculations */
 .card,
-.dashboard-card,
-[class*="rounded-"],
-nav,
-aside {
-  -webkit-font-smoothing: antialiased;
-  transform: translateZ(0);
+.dashboard-card {
+  contain: layout style;
 }
 
 /* 4K Ultra-HD & High-DPI Screen Media Query Optimization */
@@ -299,10 +286,6 @@ aside {
   html {
     text-rendering: geometricPrecision;
     -webkit-font-smoothing: subpixel-antialiased;
-  }
-  
-  img, svg {
-    filter: drop-shadow(0 0 0.01px transparent);
   }
 }
 
@@ -426,34 +409,22 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
 @keyframes fluid-button-splash {
   0% {
     transform: translate(-50%, -50%) scale(0);
-    opacity: 0.85;
-    filter: blur(0px);
-  }
-  40% {
-    opacity: 0.65;
-    filter: blur(0.5px);
+    opacity: 0.75;
   }
   100% {
-    transform: translate(-50%, -50%) scale(3.2);
+    transform: translate(-50%, -50%) scale(2.8);
     opacity: 0;
-    filter: blur(2.5px);
   }
 }
 
 @keyframes fluid-splash {
   0% {
     transform: translate(-50%, -50%) scale(0);
-    opacity: 0.85;
-    filter: blur(0px);
-  }
-  45% {
-    opacity: 0.6;
-    filter: blur(0.5px);
+    opacity: 0.75;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.8);
+    transform: translate(-50%, -50%) scale(2.6);
     opacity: 0;
-    filter: blur(2px);
   }
 }
 
@@ -463,19 +434,17 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
     opacity: 0.8;
   }
   100% {
-    transform: translate(-50%, -50%) scale(2.3);
+    transform: translate(-50%, -50%) scale(2.2);
     opacity: 0;
   }
 }
 
 .animate-fluid-splash {
-  animation: fluid-splash 0.65s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
-  will-change: transform, opacity;
+  animation: fluid-splash 0.5s cubic-bezier(0.16, 0.84, 0.44, 1) forwards;
 }
 
 .animate-fluid-splash-ring {
-  animation: fluid-splash-ring 0.6s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
-  will-change: transform, opacity;
+  animation: fluid-splash-ring 0.5s cubic-bezier(0.2, 0.8, 0.25, 1) forwards;
 }
 
 /* ========================================================================= */
@@ -494,72 +463,58 @@ button:not(#btn-toggle-password):not(#btn-toggle-signup-password),
   z-index: 99999 !important;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.2s cubic-bezier(0.4, 0, 0.2, 1), -webkit-backdrop-filter 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(0px);
-  -webkit-backdrop-filter: blur(0px);
-  background: radial-gradient(circle at 50% 50%, rgba(15, 118, 110, 0.08) 0%, rgba(12, 89, 99, 0.04) 40%, rgba(250, 248, 245, 0.35) 100%);
+  transition: opacity 0.18s ease;
+  background: radial-gradient(circle at 50% 50%, rgba(15, 118, 110, 0.08) 0%, rgba(12, 89, 99, 0.04) 40%, rgba(250, 248, 245, 0.4) 100%);
   overflow: hidden;
 }
 
 .dark .fade-overlay {
-  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.09) 0%, rgba(14, 165, 233, 0.05) 40%, rgba(7, 21, 26, 0.35) 100%);
+  background: radial-gradient(circle at 50% 50%, rgba(45, 212, 191, 0.09) 0%, rgba(14, 165, 233, 0.05) 40%, rgba(7, 21, 26, 0.4) 100%);
 }
 
 /* Jab page load ho chuka ho, tab overlay gayab (Fade In) ho jaye */
 .fade-overlay.loaded {
   opacity: 0 !important;
   pointer-events: none !important;
-  backdrop-filter: blur(0px) !important;
-  -webkit-backdrop-filter: blur(0px) !important;
 }
 
-/* Jab user click kare / page change / back ho, tab overlay wapas aa jaye (Fade Out blur splash - 50% blur capacity) */
+/* Jab user click kare / page change / back ho, tab overlay wapas aa jaye (Smooth 60+ FPS overlay) */
 .fade-overlay.show {
   opacity: 1 !important;
   pointer-events: auto !important;
-  backdrop-filter: blur(7px) !important;
-  -webkit-backdrop-filter: blur(7px) !important;
 }
 
-/* Center fluid splash blur wave inside overlay (50% blur capacity) */
+/* Center fluid splash wave inside overlay */
 .fade-overlay-splash {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%) scale(0.1);
-  width: 220px;
-  height: 220px;
+  width: 240px;
+  height: 240px;
   border-radius: 9999px;
-  background: radial-gradient(circle, rgba(12, 89, 99, 0.3) 0%, rgba(15, 118, 110, 0.16) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(12, 89, 99, 0.28) 0%, rgba(15, 118, 110, 0.14) 45%, transparent 70%);
   opacity: 0;
   pointer-events: none;
-  filter: blur(5px);
-  will-change: transform, opacity, filter;
 }
 
 .dark .fade-overlay-splash {
-  background: radial-gradient(circle, rgba(45, 212, 191, 0.38) 0%, rgba(56, 189, 248, 0.2) 45%, transparent 70%);
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.35) 0%, rgba(56, 189, 248, 0.18) 45%, transparent 70%);
 }
 
 .fade-overlay.show .fade-overlay-splash,
 .fade-overlay-splash.animate-active {
-  animation: splash-blur-pulse 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: splash-blur-pulse 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @keyframes splash-blur-pulse {
   0% {
     transform: translate(-50%, -50%) scale(0.1);
-    opacity: 0.95;
-    filter: blur(2px);
-  }
-  40% {
-    opacity: 0.75;
-    filter: blur(5px);
+    opacity: 0.9;
   }
   100% {
-    transform: translate(-50%, -50%) scale(5.5);
+    transform: translate(-50%, -50%) scale(4.5);
     opacity: 0;
-    filter: blur(12px);
   }
 }
 

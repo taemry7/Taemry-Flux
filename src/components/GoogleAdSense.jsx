@@ -5,7 +5,7 @@ import React, { useEffect, useRef } from 'react';
  * Client ID: ca-pub-2033676745337447
  * Compliant with Google AdSense Publisher Policies
  */
-export default function GoogleAdSense({
+function GoogleAdSense({
   slot = '',
   format = 'auto',
   responsive = true,
@@ -68,3 +68,5 @@ export default function GoogleAdSense({
     </div>
   );
 }
+
+export default React.memo(GoogleAdSense);

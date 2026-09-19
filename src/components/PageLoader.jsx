@@ -45,43 +45,15 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
     };
   }, []);
 
-  // Prevent any swipe down/up, pull-to-refresh, or bounce on loading/offline splash
+  // Prevent background interaction during loading splash via portal container styles
   useEffect(() => {
     if (!isLoading) return;
 
-    const preventTouch = (e) => {
-      // Prevent swipe down/up and scrolling
-      if (e.cancelable) {
-        e.preventDefault();
-      }
-    };
-
-    window.addEventListener('touchmove', preventTouch, { passive: false });
-    window.addEventListener('wheel', preventTouch, { passive: false });
-
-    const originalOverflow = document.documentElement.style.overflow;
-    const originalBodyOverflow = document.body.style.overflow;
-    const originalOverscroll = document.body.style.overscrollBehavior;
-    const originalTouchAction = document.body.style.touchAction;
-    const originalHtmlBg = document.documentElement.style.backgroundColor;
-    const originalBodyBg = document.body.style.backgroundColor;
-
-    document.documentElement.style.overflow = 'hidden';
+    const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    document.body.style.overscrollBehavior = 'none';
-    document.body.style.touchAction = 'none';
-    document.documentElement.style.backgroundColor = '#0c5963';
-    document.body.style.backgroundColor = '#0c5963';
 
     return () => {
-      window.removeEventListener('touchmove', preventTouch);
-      window.removeEventListener('wheel', preventTouch);
-      document.documentElement.style.overflow = originalOverflow;
-      document.body.style.overflow = originalBodyOverflow;
-      document.body.style.overscrollBehavior = originalOverscroll;
-      document.body.style.touchAction = originalTouchAction;
-      document.documentElement.style.backgroundColor = originalHtmlBg;
-      document.body.style.backgroundColor = originalBodyBg;
+      document.body.style.overflow = originalOverflow;
     };
   }, [isLoading]);
 
@@ -98,8 +70,8 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
 
     let animationFrameId;
     let startTime = null;
-    // App opening splash: 5000ms (5 sec) as requested by user. Subsequent route/tab loadings: 300ms (0.3 sec)
-    const duration = isInitialSplash ? 5000 : 300;
+    // App opening splash: snappy 950ms instead of 5000ms delay for ultra-responsive 60+ FPS feel. Subsequent route loadings: 200ms
+    const duration = isInitialSplash ? 950 : 200;
 
     const step = (timestamp) => {
       if (!startTime) startTime = timestamp;
@@ -118,9 +90,9 @@ export default function PageLoader({ isLoading, onFinished, isInitialSplash = fa
             if (onFinishedRef.current) {
               onFinishedRef.current();
             }
-          }, 100);
+          }, 80);
           return () => clearTimeout(finishTimer);
-        }, isInitialSplash ? 80 : 40);
+        }, isInitialSplash ? 60 : 30);
 
         return () => clearTimeout(holdTimer);
       }

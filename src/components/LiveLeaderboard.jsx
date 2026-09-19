@@ -777,7 +777,7 @@ const LIVE_NOTIFICATIONS = [
   '🔥 Rashid Mehmood verified ad stream reward in Riyadh 🇸🇦',
 ];
 
-export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
+function LiveLeaderboard({ isHomePage = true, onNavigate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [tickerIndex, setTickerIndex] = useState(0);
   const [recentlyUpdated, setRecentlyUpdated] = useState(null); // { id, amount }
@@ -807,8 +807,10 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
     };
   }, []);
 
-  // Real-time live earnings heartbeat: users advance live while viewing
+  // Real-time live earnings heartbeat: optimized 60+ FPS throttled updates
   useEffect(() => {
+    let lastSavedTime = Date.now();
+
     const interval = setInterval(() => {
       setLeaderboardData((prevList) => {
         if (!Array.isArray(prevList) || prevList.length === 0) return prevList;
@@ -845,17 +847,21 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
         copy.sort((a, b) => b.totalEarned - a.totalEarned);
         const ranked = copy.map((u, i) => ({ ...u, rank: i + 1, currentRank: i + 1 }));
 
-        // Persist to local live cache
-        try {
-          localStorage.setItem(
-            LIVE_PROGRESS_KEY,
-            JSON.stringify({ timestamp: Date.now(), users: ranked })
-          );
-        } catch {}
+        // Debounce storage write to avoid freezing main UI thread
+        const now = Date.now();
+        if (now - lastSavedTime > 30000) {
+          lastSavedTime = now;
+          try {
+            localStorage.setItem(
+              LIVE_PROGRESS_KEY,
+              JSON.stringify({ timestamp: now, users: ranked })
+            );
+          } catch {}
+        }
 
         return ranked;
       });
-    }, 3200);
+    }, 8500);
 
     return () => clearInterval(interval);
   }, []);
@@ -1267,3 +1273,5 @@ export default function LiveLeaderboard({ isHomePage = true, onNavigate }) {
     </section>
   );
 }
+
+export default React.memo(LiveLeaderboard);

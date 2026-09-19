@@ -39,16 +39,16 @@ export function triggerPageTransition(callback?: () => void, delayMs: number = 2
   overlay.classList.remove('loaded');
   overlay.classList.add('show');
 
-  // Reset internal splash wave animation so it replays smoothly
+  // Reset internal splash wave animation smoothly without forced layout reflow
   const splashEl = overlay.querySelector('.fade-overlay-splash');
   if (splashEl) {
     splashEl.classList.remove('animate-active');
-    // Force reflow
-    void (splashEl as HTMLElement).offsetWidth;
-    splashEl.classList.add('animate-active');
+    requestAnimationFrame(() => {
+      splashEl.classList.add('animate-active');
+    });
   }
 
-  // 2. 0.2 second (200ms) baad naye page / option par jana
+  // 2. Snappy 60+ FPS navigation transition
   setTimeout(() => {
     if (callback) {
       try {
@@ -63,9 +63,9 @@ export function triggerPageTransition(callback?: () => void, delayMs: number = 2
       setTimeout(() => {
         overlay.classList.remove('show');
         overlay.classList.add('loaded');
-      }, 50);
+      }, 30);
     });
-  }, delayMs);
+  }, Math.min(delayMs, 100));
 }
 
 /**
@@ -95,15 +95,15 @@ export function initGlobalPageTransitions(): () => void {
     const y = isPointer ? e.clientY - rect.top : rect.height / 2;
     const size = Math.max(rect.width, rect.height) * 2.2;
 
-    const computedStyle = window.getComputedStyle(el);
-    if (computedStyle.position === 'static') {
+    // Fast non-blocking position setup without synchronous layout reflow
+    if (!el.style.position || el.style.position === 'static') {
       el.style.position = 'relative';
     }
     el.style.overflow = 'hidden';
 
     // Remove old waves if user clicks repeatedly
     const prevWaves = el.querySelectorAll('.fluid-splash-wave, .fluid-splash-ring');
-    if (prevWaves.length > 4) {
+    if (prevWaves.length > 2) {
       prevWaves[0].remove();
     }
 
@@ -127,7 +127,7 @@ export function initGlobalPageTransitions(): () => void {
     setTimeout(() => {
       splash.remove();
       ring.remove();
-    }, 700);
+    }, 500);
   };
 
   // 2. Delegate click for any element with .fade-trigger class
