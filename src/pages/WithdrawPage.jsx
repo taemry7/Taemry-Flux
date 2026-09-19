@@ -61,8 +61,8 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
       isAvailable: true,
     },
     {
-      id: 'sadapay',
-      name: 'SadaPay',
+      id: 'easypaisa',
+      name: 'Easypaisa',
       badge: 'Active • Instant',
       description: 'Official Account Transfer',
       isAvailable: true,
@@ -128,29 +128,16 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
   const referralCount = Number(userStats?.referralCount) || 0;
   const walletBalance = Number(userStats?.walletBalance) || 0;
-  const requiredReferrals = (typeof settings.referralRequired === 'number' && settings.referralRequired > 0)
-    ? settings.referralRequired
-    : 1;
+  const totalEarned = Number(userStats?.totalEarned) || 0;
+  const hasActivePackage = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None' && userStats?.currentPackage !== 'No Package');
   const isUserAdmin = userStats?.role === 'admin' || userStats?.isAdmin;
 
-  // STRICT INVARIANT: 1 Referral = Permanent Eligibility forever
-  const hasStoredUnlock = typeof window !== 'undefined' && userStats?.uid && localStorage.getItem(`taemry_withdrawal_unlocked_${userStats.uid}`) === 'true';
-  const isPermanentlyUnlocked = Boolean(
-    userStats?.hasUnlockedWithdrawal || 
-    userStats?.isWithdrawalUnlocked || 
-    hasStoredUnlock || 
-    referralCount >= requiredReferrals
-  );
-  const isEligible = isPermanentlyUnlocked || isUserAdmin;
-
-  // Lock in permanent unlock in localStorage whenever requirement is met
-  useEffect(() => {
-    if (referralCount >= requiredReferrals && userStats?.uid) {
-      try {
-        localStorage.setItem(`taemry_withdrawal_unlocked_${userStats.uid}`, 'true');
-      } catch (e) {}
-    }
-  }, [referralCount, requiredReferrals, userStats?.uid]);
+  // STRICT INVARIANT (UPDATED): Ineligible by default. Even when package is bought,
+  // user remains Ineligible until they have earned at least $1.00.
+  // Once $1.00 is earned, account becomes Eligible and can withdraw.
+  const minEarnedRequired = 1.00;
+  const hasEarnedMinimum = totalEarned >= minEarnedRequired;
+  const isEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum);
 
   // Ultra-Short Direct @Username Link
   const cleanUsername = (
@@ -195,7 +182,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
   // Calculated conversions
   const exchangeRate = settings.exchangeRate || 300;
   const numUSD = parseFloat(amountUSD) || 0;
-  const isLocal = ['bank', 'jazzcash', 'upaisa', 'sadapay'].includes(method);
+  const isLocal = ['bank', 'jazzcash', 'upaisa', 'easypaisa'].includes(method);
   const calculatedPKR = Math.round(numUSD * exchangeRate);
 
   // Submit withdrawal
@@ -205,19 +192,21 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
 
     // Ineligible check triggered on button click
     if (!isEligible) {
-      const msg = `Ineligible: You need at least ${requiredReferrals} active referral to unlock withdrawals. Once you refer 1 member, your account is permanently eligible for withdrawals forever!`;
+      const msg = !hasActivePackage
+        ? 'Ineligible: An active package is required to unlock withdrawals. Please buy a package first.'
+        : `Ineligible: You must earn at least $1.00 to unlock withdrawals. Currently earned: $${totalEarned.toFixed(2)} / $1.00. Please watch ads to earn!`;
       setNotification({
         type: 'error',
         message: msg,
       });
-      toast.error('Ineligible: At least 1 active referral is required to unlock withdrawals.');
+      toast.error(!hasActivePackage ? 'Ineligible: Active package required.' : `Ineligible: Earn at least $1.00 to withdraw ($${totalEarned.toFixed(2)}/$1.00).`);
       return;
     }
 
     if (method === 'bank' || method === 'crypto') {
       setNotification({
         type: 'error',
-        message: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+        message: 'Not Available for Now. Please select JazzCash, UPaisa, or Easypaisa.',
       });
       return;
     }
@@ -361,7 +350,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
         </div>
       )}
 
-      {/* ⚠️ STRICT ELIGIBILITY ALERT: If referralCount < 1 */}
+      {/* ⚠️ STRICT ELIGIBILITY ALERT: Ineligible until $1.00 is earned */}
       {!isEligible && (
         <div className="p-6 rounded-3xl bg-[#fef2f2] border-2 border-[#fca5a5] text-[#991b1b] shadow-xs space-y-4">
           <div className="flex items-start gap-3">
@@ -371,69 +360,67 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-base font-extrabold text-[#7f1d1d]">
-                  ⚠️ Withdrawal Ineligible — Requires 1 Active Referral
+                  ⚠️ Withdrawal Ineligible — Minimum $1.00 Earnings Required
                 </h3>
                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#fee2e2] text-[#b91c1c] border border-[#fca5a5]">
-                  1 Refer = Permanent Eligibility Forever
+                  Earn $1.00 = Unlocks Withdrawals
                 </span>
               </div>
               <p className="text-xs text-[#991b1b] leading-relaxed max-w-2xl">
-                Once you refer at least 1 member, your account becomes permanently eligible for withdrawals forever. Only 1 referral is required for initial activation. Currently you have <strong>{referralCount} referrals</strong>. Share your Ultra-Short link below!
+                {!hasActivePackage ? (
+                  <>As a new member, your account is currently <strong>Ineligible</strong>. You must first activate an advertising package and earn at least <strong>$1.00</strong> to unlock the withdrawal gateway.</>
+                ) : (
+                  <>Your package is active, but your account remains <strong>Ineligible</strong> until you have earned at least <strong>$1.00</strong> from viewing daily ads or team commissions. Once you earn $1.00, your account becomes eligible for withdrawals! Current earnings: <strong>${totalEarned.toFixed(2)} / $1.00</strong>.</>
+                )}
               </p>
             </div>
           </div>
 
-          {/* Ultra-Short Direct @Username Link Box */}
-          <div className="space-y-2 pt-1 border-t border-[#fecaca]">
-            <div className="flex items-center justify-between flex-wrap gap-1">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#991b1b] flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#dc2626]" />
-                <span>Ultra-Short Direct @Username Link</span>
-              </span>
-              <span className="text-[10px] font-mono font-bold text-[#b91c1c]">
-                @{cleanUsername}
-              </span>
+          {/* Earnings Progress Bar */}
+          <div className="space-y-1.5 pt-2 border-t border-[#fecaca]">
+            <div className="flex items-center justify-between text-xs font-bold text-[#7f1d1d]">
+              <span>Earnings Progress to Unlock</span>
+              <span>${totalEarned.toFixed(2)} / $1.00 ({Math.min(100, Math.round((totalEarned / 1.00) * 100))}%)</span>
             </div>
-
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-              <div className="flex-1 bg-white px-3.5 py-2.5 rounded-xl border border-[#fca5a5] text-xs font-mono font-bold text-[#7f1d1d] truncate select-all">
-                {ultraShortLink}
-              </div>
-              <button
-                type="button"
-                id="btn-copy-withdraw-link"
-                onClick={handleCopyLink}
-                className="px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                {copiedLink ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
-              </button>
-              <button
-                type="button"
-                id="btn-share-withdraw-link"
-                onClick={handleShareLink}
-                className="px-4 py-2.5 bg-[#0c5963] hover:bg-[#08424b] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <Share2 className="w-4 h-4" />
-                <span>Share</span>
-              </button>
-              <button
-                type="button"
-                id="btn-whatsapp-withdraw-link"
-                onClick={handleWhatsAppShare}
-                className="px-4 py-2.5 bg-[#16a34a] hover:bg-[#15803d] text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
-              >
-                <span>WhatsApp</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => onSelectTab && onSelectTab('referrals')}
-                className="px-4 py-2.5 bg-white hover:bg-[#fef2f2] text-[#991b1b] text-xs font-bold rounded-xl border border-[#fca5a5] transition-colors cursor-pointer shrink-0"
-              >
-                Referral Center
-              </button>
+            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden border border-[#fca5a5]">
+              <div
+                className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 rounded-full transition-all duration-500"
+                style={{ width: `${Math.min(100, (totalEarned / 1.00) * 100)}%` }}
+              />
             </div>
           </div>
+
+          <div className="flex flex-wrap items-center gap-3 pt-1">
+            {onSelectTab && (
+              <button
+                type="button"
+                onClick={() => onSelectTab(hasActivePackage ? 'watch-ads' : 'buy-package')}
+                className="px-4 py-2.5 bg-[#dc2626] hover:bg-[#b91c1c] text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
+              >
+                {hasActivePackage ? 'Go to Watch Ads & Earn' : 'Buy Package to Start'}
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ✅ ELIGIBLE SUCCESS BADGE BANNER */}
+      {isEligible && (
+        <div className="p-4 rounded-2xl bg-[#f0fdf4] border border-[#bbf7d0] text-[#166534] flex items-center justify-between flex-wrap gap-2 shadow-xs">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-[#dcfce7] text-[#15803d] flex items-center justify-center shrink-0">
+              <Check className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-[#14532d]">Withdrawals 100% Eligible</p>
+              <p className="text-[11px] text-[#166534]">
+                You have met the $1.00 earnings threshold (Total Earned: ${totalEarned.toFixed(2)}). You can request payouts anytime.
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#dcfce7] text-[#15803d] border border-[#86efac]">
+            Eligible • Unlocked
+          </span>
         </div>
       )}
 
@@ -512,7 +499,7 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
                             if (!mItem.isAvailable) {
                               setNotification({
                                 type: 'error',
-                                message: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+                                message: 'Not Available for Now. Please select JazzCash, UPaisa, or Easypaisa.',
                               });
                             } else {
                               setNotification({ type: '', message: '' });
@@ -576,10 +563,10 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
                     {', or '}
                     <button
                       type="button"
-                      onClick={() => setMethod('sadapay')}
+                      onClick={() => setMethod('easypaisa')}
                       className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
                     >
-                      SadaPay
+                      Easypaisa
                     </button>
                     {' to receive your payout.'}
                   </p>
@@ -716,11 +703,11 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
                 <span>Ultra-Short Direct @Username Link</span>
               </span>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${isEligible ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
-                {isEligible ? 'Withdrawals Eligible' : 'Requires 1 Referral'}
+                {isEligible ? 'Withdrawals Eligible' : 'Requires $1.00 Earned'}
               </span>
             </div>
             <p className="text-xs text-[#526d72] leading-relaxed">
-              Referring 1 active member permanently unlocks withdrawals for your account. Share your personal sponsor link:
+              Earn at least $1.00 from ads or share your referral link to earn team matching bonuses and boost your profits:
             </p>
             <div className="p-3 bg-[#faf8f5] rounded-xl border border-[#ece6d9] font-mono text-xs font-bold text-[#09353e] truncate select-all">
               {ultraShortLink}
@@ -763,8 +750,8 @@ export default function WithdrawPage({ onSelectTab, onNavigate }) {
                   {isEligible ? <Check className="w-3.5 h-3.5" /> : <AlertCircle className="w-3.5 h-3.5" />}
                 </div>
                 <div>
-                  <span className="font-bold text-[#09353e]">Active Referral Check</span>
-                  <p className="text-[#718589]">Requires at least 1 active referral ({referralCount}/1)</p>
+                  <span className="font-bold text-[#09353e]">Minimum $1.00 Earnings Check</span>
+                  <p className="text-[#718589]">Requires at least $1.00 total earned (${totalEarned.toFixed(2)} / $1.00)</p>
                 </div>
               </div>
 

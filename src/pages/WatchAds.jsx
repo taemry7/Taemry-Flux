@@ -1,8 +1,8 @@
 /**
  * TAEMRY FLUX - Watch Ads Module (Phase 4 Streamlined Update)
- * - Clean 1 to 400 Ads Directory with individual watch action buttons
+ * - Clean 1 to 20 Ads Directory with individual watch action buttons
  * - Direct watch reward claiming with instant credit and celebratory toast
- * - 0.05% daily return per ad across 400 ads (20% total daily package yield)
+ * - 20 daily ads allocation (0.2% package reward per ad)
  */
 
 import React, { useState, useEffect } from 'react';
@@ -27,12 +27,12 @@ const WATCH_ADS_PACKAGES = [
     name: 'Bronze',
     tierName: 'Bronze',
     price: 1.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'STARTER',
     circleColor: 'bg-[#b45309]',
     color: '#b45309',
-    description: 'Entry-level advertising contract with guaranteed 20% daily returns.',
+    description: 'Entry-level advertising contract with guaranteed daily returns.',
     motivationText: '✨ Start your daily cashflow momentum with just $1.00 USD and build steady growth.',
   },
   {
@@ -40,12 +40,12 @@ const WATCH_ADS_PACKAGES = [
     name: 'Silver',
     tierName: 'Silver',
     price: 5.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'POPULAR',
     circleColor: 'bg-[#0f766e]',
     color: '#0f766e',
-    description: 'Accelerated revenue pace with guaranteed 20% daily returns.',
+    description: 'Accelerated revenue pace with guaranteed daily returns.',
     motivationText: '🚀 Step up your capital accumulation with verified daily asset compounding.',
   },
   {
@@ -53,12 +53,12 @@ const WATCH_ADS_PACKAGES = [
     name: 'Gold',
     tierName: 'Gold',
     price: 10.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'RECOMMENDED',
     circleColor: 'bg-[#ca8a04]',
     color: '#ca8a04',
-    description: 'High-yield momentum tier with guaranteed 20% daily returns.',
+    description: 'High-yield momentum tier with guaranteed daily returns.',
     motivationText: '💼 Accelerate your financial future with maximum daily asset growth and momentum.',
   },
   {
@@ -66,12 +66,12 @@ const WATCH_ADS_PACKAGES = [
     name: 'Premium',
     tierName: 'Premium',
     price: 50.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'HIGH DEMAND',
     circleColor: 'bg-[#0284c7]',
     color: '#0284c7',
-    description: 'Substantial daily earnings yield with 20% daily returns upon activation.',
+    description: 'Substantial daily earnings yield with daily returns upon activation.',
     motivationText: '🌟 Optimize your earnings portfolio with accelerated automated returns.',
   },
   {
@@ -79,12 +79,12 @@ const WATCH_ADS_PACKAGES = [
     name: 'Elite',
     tierName: 'Elite',
     price: 100.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'HIGH CAPACITY',
     circleColor: 'bg-[#7c3aed]',
     color: '#7c3aed',
-    description: 'Accelerated volume capacity yielding 20% guaranteed daily returns.',
+    description: 'Accelerated volume capacity yielding guaranteed daily returns.',
     motivationText: '💎 Unlock elite compounding speed with institutional-grade daily returns.',
   },
   {
@@ -92,8 +92,8 @@ const WATCH_ADS_PACKAGES = [
     name: 'Master',
     tierName: 'Master',
     price: 500.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'MASTER VIP',
     circleColor: 'bg-[#db2777]',
     color: '#db2777',
@@ -105,8 +105,8 @@ const WATCH_ADS_PACKAGES = [
     name: 'Apex',
     tierName: 'Apex',
     price: 1000.00,
-    rewardRate: '20%',
-    dailyLimit: 400,
+    rewardRate: 'Guaranteed Returns',
+    dailyLimit: 20,
     badge: 'APEX MASTER',
     circleColor: 'bg-[#dc2626]',
     color: '#dc2626',
@@ -144,8 +144,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const hasActivePkg = Boolean(userStats?.currentPackage && userStats?.currentPackage !== 'None');
   const pkgKey = (userStats?.currentPackage || 'None').toLowerCase();
   const pkgPrice = PACKAGE_PRICES[pkgKey] || 0.00;
-  // 20% daily return across 400 ads = 0.05% per ad (pkgPrice * 0.20 / 400)
-  const computedReward = hasActivePkg ? +(pkgPrice * 0.0005).toFixed(4) : 0;
+  // 0.2% reward per ad (pkgPrice * 0.2 / 100 = pkgPrice * 0.002)
+  const computedReward = hasActivePkg ? +(pkgPrice * 0.002).toFixed(4) : 0;
 
   // Component state
   const [adStatus, setAdStatus] = useState({
@@ -154,7 +154,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
     packagePrice: pkgPrice,
     rewardPerAd: computedReward,
     dailyAdCount: userStats?.dailyAdCount ?? 0,
-    dailyLimit: 400,
+    dailyLimit: 20,
     lifetimeAds: userStats?.lifetimeAds ?? 0,
   });
 
@@ -169,9 +169,9 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
   const [isClaiming, setIsClaiming] = useState(false);
 
   // Generate 1 to N Ads mapped to the 13 official Monetag partner units rotation
-  const generate400Ads = (watchedCount, rewardRate, limit = 400) => {
+  const generate20Ads = (watchedCount, rewardRate, limit = 20) => {
     const list = [];
-    const totalCount = limit || 400;
+    const totalCount = limit || 20;
     for (let i = 1; i <= totalCount; i++) {
       const monetagUnit = getMonetagAdForNumber(i);
       const isCompleted = i <= watchedCount;
@@ -200,16 +200,16 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       if (res.data?.success) {
         setAdStatus(res.data);
         const watched = res.data.dailyAdCount || 0;
-        const limit = res.data.dailyLimit || 400;
-        setAdsCatalog(generate400Ads(watched, res.data.rewardPerAd || computedReward, limit));
+        const limit = res.data.dailyLimit || 20;
+        setAdsCatalog(generate20Ads(watched, res.data.rewardPerAd || computedReward, limit));
       } else {
         const fallbackCount = userStats?.dailyAdCount || 0;
-        setAdsCatalog(generate400Ads(fallbackCount, computedReward, 400));
+        setAdsCatalog(generate20Ads(fallbackCount, computedReward, 20));
       }
     } catch (err) {
       console.error('Error fetching ad status:', err);
       const fallbackCount = userStats?.dailyAdCount || 0;
-      setAdsCatalog(generate400Ads(fallbackCount, computedReward, 400));
+      setAdsCatalog(generate20Ads(fallbackCount, computedReward, 20));
     }
   };
 
@@ -219,7 +219,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   // Open Sponsor Ad Player modal to watch ad before reward claim
   const handleOpenAdModal = (ad) => {
-    const limit = adStatus.dailyLimit || 400;
+    const limit = adStatus.dailyLimit || 20;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       return;
@@ -236,7 +236,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
   // Submit ad watch reward to server after user finishes watching ad
   const handleClaimReward = async (adNumber) => {
-    const limit = adStatus.dailyLimit || 400;
+    const limit = adStatus.dailyLimit || 20;
     if (adStatus.dailyAdCount >= limit) {
       setErrorMessage(`Daily limit reached (${limit}/${limit}). Resets tomorrow.`);
       setIsModalOpen(false);
@@ -289,8 +289,8 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
           lifetimeAds: newLifetimeAds,
         }));
 
-        const lim = adStatus.dailyLimit || 400;
-        setAdsCatalog(generate400Ads(newDailyCount, adStatus.rewardPerAd, lim));
+        const lim = adStatus.dailyLimit || 20;
+        setAdsCatalog(generate20Ads(newDailyCount, adStatus.rewardPerAd || computedReward, lim));
 
         // Background refetch user stats
         fetchUserStats();
@@ -319,7 +319,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                 Package Activation Required
               </h3>
               <p className="text-xs text-[#92400e] mt-0.5">
-                New accounts are only eligible for deposit and buying a package. Once you activate a package, 400 daily ads and guaranteed daily returns will be unlocked immediately!
+                New accounts are only eligible for deposit and buying a package. Once you activate a package, 20 daily ads and guaranteed daily returns will be unlocked immediately!
               </p>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
                 Ad #{recentReward.adNumber} Completed! +${Number(recentReward.amount).toFixed(4)} USD Credited
               </h3>
               <p className="text-xs text-[#047857]">
-                Progress: <strong>{recentReward.dailyCount} of 400</strong> completed today. Ready for Ad #{Math.min(400, recentReward.dailyCount + 1)}!
+                Progress: <strong>{recentReward.dailyCount} of 20</strong> completed today. Ready for Ad #{Math.min(20, recentReward.dailyCount + 1)}!
               </p>
             </div>
           </div>
@@ -379,13 +379,13 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
       {/* TOP GOOGLE ADSENSE SPONSOR BANNER */}
       <GoogleAdSense label="Sponsored Network" format="auto" className="my-3" />
 
-      {/* 400 ADS LISTING CATALOG */}
+      {/* 20 ADS LISTING CATALOG */}
       <div className="bg-white rounded-3xl p-6 sm:p-8 border border-[#e4ded2] shadow-xs space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-[#f0ebe0] pb-4 gap-2">
           <div className="flex items-center gap-2">
             <ListOrdered className="w-5 h-5 text-[#0c5963]" />
             <h2 className="text-lg sm:text-xl font-black text-[#09353e]">
-              Daily Ad Directory (1 to 400)
+              Daily Ad Directory (1 to 20)
             </h2>
           </div>
           <div className="flex items-center gap-2">
@@ -394,13 +394,13 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
               <span>Verified Sponsor Network</span>
             </span>
             <div className="text-xs font-bold text-[#0c5963] bg-[#e6f4f1] px-3 py-1 rounded-full border border-[#b8dfd7]">
-              {adStatus.dailyAdCount} / {adStatus.dailyLimit || 400} Completed
+              {adStatus.dailyAdCount} / {adStatus.dailyLimit || 20} Completed
             </div>
           </div>
         </div>
 
-        {/* 400 Ads Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+        {/* 20 Ads Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {adsCatalog.map((ad) => {
             const isCompleted = ad.isWatched;
             const isNext = ad.adNumber === adStatus.dailyAdCount + 1;
@@ -464,7 +464,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
 
                   <button
                     type="button"
-                    disabled={isCompleted || isBusy || adStatus.dailyAdCount >= (adStatus.dailyLimit || 400)}
+                    disabled={isCompleted || isBusy || adStatus.dailyAdCount >= (adStatus.dailyLimit || 20)}
                     onClick={() => handleOpenAdModal(ad)}
                     className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                       isCompleted
@@ -509,7 +509,7 @@ export default function WatchAds({ onSelectTab, onNavigate }) {
         rewardAmount={adStatus.rewardPerAd || computedReward}
         onClaimReward={handleClaimReward}
         isClaiming={isClaiming}
-        totalAdsLimit={adStatus.dailyLimit || 400}
+        totalAdsLimit={adStatus.dailyLimit || 20}
       />
     </div>
   );

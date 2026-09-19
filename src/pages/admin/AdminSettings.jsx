@@ -62,10 +62,10 @@ export default function AdminSettings() {
     paymentMethodStatus: {
       jazzcash: true,
       upaisa: true,
-      sadapay: true,
+      easypaisa: true,
+      sadapay: false,
       bank: false,
       crypto: false,
-      easypaisa: false,
     },
   });
 

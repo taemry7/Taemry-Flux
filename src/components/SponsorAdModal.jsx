@@ -33,7 +33,7 @@ export default function SponsorAdModal({
   rewardAmount,
   onClaimReward,
   isClaiming,
-  totalAdsLimit = 400,
+  totalAdsLimit = 20,
 }) {
   const [countdown, setCountdown] = useState(AD_WATCH_DURATION);
   const [isCompleted, setIsCompleted] = useState(false);

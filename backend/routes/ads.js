@@ -54,10 +54,10 @@ router.get('/status', verifyToken, async (req, res) => {
     const hasActivePackage = user.currentPackage && user.currentPackage !== 'None';
     const isEligible = Boolean(user.isEligible && hasActivePackage);
 
-    const dailyLimit = Number(settings.dailyAdLimit || 400);
+    const dailyLimit = Number(settings.dailyAdLimit || 20);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    // 20% daily return distributed across 400 ads = 0.05% per ad (20% / 400)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.05;
+    // 0.2% reward per ad of package price
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.2;
     const rewardRate = rewardPercentage / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
@@ -109,9 +109,9 @@ router.get('/listing', verifyToken, async (req, res) => {
       dailyAdCount = 0;
     }
 
-    const dailyLimit = Number(settings.dailyAdLimit || 400);
+    const dailyLimit = Number(settings.dailyAdLimit || 20);
     const timerSeconds = Number(settings.adTimerSeconds || 60);
-    const rewardRate = (Number(settings.adRewardPercentage) || 0.05) / 100;
+    const rewardRate = (Number(settings.adRewardPercentage) || 0.2) / 100;
 
     const packageKey = (user.currentPackage || 'bronze').toLowerCase();
     const packagePrice = PACKAGE_PRICES[packageKey] || 1.00;
@@ -203,9 +203,9 @@ router.post('/watch', verifyToken, adBotGuard, async (req, res) => {
     }
 
     const settings = await getSystemSettings();
-    const dailyLimit = Number(settings.dailyAdLimit || 400);
-    // 20% daily return distributed across 400 ads = 0.05% per ad (20% / 400)
-    const rewardPercentage = Number(settings.adRewardPercentage) || 0.05;
+    const dailyLimit = Number(settings.dailyAdLimit || 20);
+    // 0.2% reward per ad of package price
+    const rewardPercentage = Number(settings.adRewardPercentage) || 0.2;
     const rewardRate = rewardPercentage / 100;
 
     // 1. Strict eligibility: new accounts only eligible for deposit and buying a package
@@ -280,7 +280,7 @@ router.post('/watch', verifyToken, adBotGuard, async (req, res) => {
       balanceAfter: newBalance,
       timestamp: currentTimestamp,
       createdAt: currentTimestamp,
-      description: `Daily Ad View Reward (#${newDailyAdCount} / 400 - ${user.currentPackage || 'Bronze'} tier)`,
+      description: `Daily Ad View Reward (#${newDailyAdCount} / ${dailyLimit} - ${user.currentPackage || 'Bronze'} tier)`,
     });
 
     // 8. Upline Ad Commission (50% Rule) & Unlimited Depth Team Ads Counting

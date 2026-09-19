@@ -18,10 +18,10 @@ export const DEFAULT_PACKAGES = [
     price: 1.00,
     minWallet: 0.10,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'STARTER',
     color: '#0284c7',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '🌱 Take your first step into daily advertising earnings with minimal capital.',
     isActive: true,
     order: 1,
@@ -33,10 +33,10 @@ export const DEFAULT_PACKAGES = [
     price: 5.00,
     minWallet: 0.50,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'POPULAR',
     color: '#0f766e',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '⚡ Amplify your daily revenue with an optimized Silver contract allocation.',
     isActive: true,
     order: 2,
@@ -48,10 +48,10 @@ export const DEFAULT_PACKAGES = [
     price: 10.00,
     minWallet: 1.00,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'RECOMMENDED',
     color: '#ca8a04',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '🌟 Accelerate your growth and unlock higher advertising rewards every single day.',
     isActive: true,
     order: 3,
@@ -63,10 +63,10 @@ export const DEFAULT_PACKAGES = [
     price: 50.00,
     minWallet: 5.00,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'PRO',
     color: '#0284c7',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '💎 Experience pro-grade earning power with enhanced daily reward allocations.',
     isActive: true,
     order: 4,
@@ -78,10 +78,10 @@ export const DEFAULT_PACKAGES = [
     price: 100.00,
     minWallet: 10.00,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'HIGH CAPACITY',
     color: '#7c3aed',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '🚀 High-velocity contract tier crafted for dedicated digital earners.',
     isActive: true,
     order: 5,
@@ -93,10 +93,10 @@ export const DEFAULT_PACKAGES = [
     price: 500.00,
     minWallet: 50.00,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'ENTERPRISE',
     color: '#db2777',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '👑 Command the network with enterprise-level rewards and maximum earning capacity.',
     isActive: true,
     order: 6,
@@ -108,10 +108,10 @@ export const DEFAULT_PACKAGES = [
     price: 1000.00,
     minWallet: 100.00,
     rewardRate: '20%',
-    dailyLimit: 400,
+    dailyLimit: 20,
     badge: 'Apex Master',
     color: '#ea580c',
-    description: 'Active contract tier generating guaranteed 20% daily returns.',
+    description: 'Active contract tier generating guaranteed daily returns.',
     motivationText: '🔥 The absolute pinnacle of earning power — unbounded potential and supreme rewards.',
     isActive: true,
     order: 7,
@@ -166,10 +166,10 @@ export function normalizePackages(data) {
         price: Number(pkg.price !== undefined ? pkg.price : (fallback.price || 0)),
         minWallet: Number(pkg.minWallet !== undefined ? pkg.minWallet : (fallback.minWallet || (Number(pkg.price || 0) * 0.1))),
         rewardRate: pkg.rewardRate || fallback.rewardRate || '20%',
-        dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : (fallback.dailyLimit || 200)),
+        dailyLimit: Number(pkg.dailyLimit !== undefined ? pkg.dailyLimit : (fallback.dailyLimit || 20)),
         badge: pkg.badge !== undefined ? pkg.badge : fallback.badge,
         color: pkg.color || fallback.color || '#0284c7',
-        description: pkg.description || fallback.description || 'Active contract tier with 200 ads/day allocation and guaranteed daily rewards.',
+        description: pkg.description || fallback.description || 'Active contract tier with 20 ads/day allocation and guaranteed daily rewards.',
         motivationText: pkg.motivationText || fallback.motivationText || '✨ Build your digital earnings foundation with consistent daily rewards.',
         isActive: pkg.isActive !== false,
         order: Number(pkg.order !== undefined ? pkg.order : idx + 1),
@@ -357,6 +357,78 @@ router.post('/buy', verifyToken, async (req, res) => {
       }
     } catch (minerErr) {
       console.warn('Could not auto-start cloud miner upon package purchase:', minerErr.message);
+    }
+
+    // 8. Distribute Multi-Tier Direct Referral Commissions (Levels 1 to 5)
+    // Level 1: 20%, Level 2: 10%, Level 3: 5%, Level 4: 3%, Level 5: 2% of package purchase price
+    const directReferralRates = {
+      1: 0.20,
+      2: 0.10,
+      3: 0.05,
+      4: 0.03,
+      5: 0.02,
+    };
+
+    let currentUplineId = userData.referredBy;
+    let uplineLevel = 1;
+    const visitedUplines = new Set([uid]);
+    const currentTimestamp = new Date().toISOString();
+
+    while (currentUplineId && uplineLevel <= 5 && !visitedUplines.has(currentUplineId)) {
+      visitedUplines.add(currentUplineId);
+      try {
+        let uplineDoc = await db.collection('users').doc(currentUplineId).get();
+        let targetUplineRef = db.collection('users').doc(currentUplineId);
+
+        // If upline not found by doc id, attempt search by username or referralCode
+        if (!uplineDoc.exists) {
+          const cleanCode = currentUplineId.replace(/^@/, '');
+          const searchSnap = await db.collection('users').where('username', '==', cleanCode).limit(1).get();
+          if (!searchSnap.empty) {
+            uplineDoc = searchSnap.docs[0];
+            targetUplineRef = uplineDoc.ref;
+          }
+        }
+
+        if (!uplineDoc.exists) break;
+
+        const uplineData = uplineDoc.data() || {};
+        const rate = directReferralRates[uplineLevel];
+
+        if (rate) {
+          const commissionAmount = +(packagePrice * rate).toFixed(4);
+          const uplineNewBalance = +((Number(uplineData.walletBalance) || 0) + commissionAmount).toFixed(4);
+          const uplineNewTotalEarned = +((Number(uplineData.totalEarned) || 0) + commissionAmount).toFixed(4);
+
+          await targetUplineRef.update({
+            walletBalance: uplineNewBalance,
+            totalEarned: uplineNewTotalEarned,
+          });
+
+          // Log transaction for upline
+          await db.collection('transactions').add({
+            uid: uplineDoc.id,
+            userId: uplineDoc.id,
+            type: 'referral_package_commission',
+            fromUser: uid,
+            fromUserName: userData.displayName || userData.name || userData.username || 'Team Member',
+            level: uplineLevel,
+            amount: commissionAmount,
+            packageName: assignedPackageName,
+            packagePrice,
+            ratePercent: Math.round(rate * 100),
+            createdAt: currentTimestamp,
+            timestamp: currentTimestamp,
+            description: `Level ${uplineLevel} Direct Referral Commission (${Math.round(rate * 100)}% of $${packagePrice.toFixed(2)} ${assignedPackageName} package)`,
+          });
+        }
+
+        currentUplineId = uplineData.referredBy;
+        uplineLevel++;
+      } catch (refErr) {
+        console.warn(`Package referral commission error at level ${uplineLevel}:`, refErr.message);
+        break;
+      }
     }
 
     return res.status(200).json({

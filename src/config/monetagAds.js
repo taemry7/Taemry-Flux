@@ -3,7 +3,7 @@
  * Exact configuration for the 13 partner ad scripts and direct links
  * provided by the publisher.
  *
- * Mapped cleanly across the 1 to 400 daily ads directory:
+ * Mapped cleanly across the 1 to 20 daily ads directory:
  * - When watching an ad, user must watch for the required timer duration (6-8s).
  * - After viewing completes, reward is unlocked and claimed.
  */

@@ -38,13 +38,13 @@ export const DEFAULT_WHITEPAPER = {
   { id: 'tr-2500', referrals: 2500, bonus: 750.00, label: '2,500 Referrals', extraInfo: 'Reach 5945 total direct downlines' },
   ],
   packages: [
-    { name: 'Bronze', price: '$1.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'STARTER' },
-    { name: 'Silver', price: '$5.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'POPULAR' },
-    { name: 'Gold', price: '$10.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'RECOMMENDED' },
-    { name: 'Premium', price: '$50.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'PRO' },
-    { name: 'Elite', price: '$100.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'HIGH CAPACITY' },
-    { name: 'Master', price: '$500.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'ENTERPRISE' },
-    { name: 'Apex', price: '$1,000.00', dailyLimit: '200 ads/day', dailyReturn: '20% Daily Return', badge: 'GRAND MASTER' },
+    { name: 'Bronze', price: '$1.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'STARTER' },
+    { name: 'Silver', price: '$5.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'POPULAR' },
+    { name: 'Gold', price: '$10.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'RECOMMENDED' },
+    { name: 'Premium', price: '$50.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'PRO' },
+    { name: 'Elite', price: '$100.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'HIGH CAPACITY' },
+    { name: 'Master', price: '$500.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'ENTERPRISE' },
+    { name: 'Apex', price: '$1,000.00', dailyLimit: '20 ads/day', dailyReturn: 'Guaranteed Daily Return', badge: 'GRAND MASTER' },
   ],
   faqs: [
     {
@@ -77,7 +77,7 @@ export const DEFAULT_WHITEPAPER = {
     },
     {
       q: 'Q8. What deposit and withdrawal methods are supported?',
-      a: 'Active channels: JazzCash, UPaisa, and SadaPay (Pegged exchange rate: 1 USD = 300 PKR). Direct Bank Transfer and Cryptocurrency USDT are currently undergoing scheduled upgrades.'
+      a: 'Active channels: JazzCash, UPaisa, and Easypaisa (Pegged exchange rate: 1 USD = 300 PKR). Direct Bank Transfer and Cryptocurrency USDT are currently undergoing scheduled upgrades.'
     },
     {
       q: 'Q9. What are the minimum and maximum withdrawal thresholds?',

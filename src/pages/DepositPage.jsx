@@ -35,7 +35,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
   const toast = useToast();
 
   // Selected payment method
-  const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'jazzcash' | 'upaisa' | 'sadapay' | 'bank' | 'crypto'
+  const [selectedMethod, setSelectedMethod] = useState('jazzcash'); // 'jazzcash' | 'upaisa' | 'easypaisa' | 'bank' | 'crypto'
   const [isMethodDropdownOpen, setIsMethodDropdownOpen] = useState(false);
   const [amountUSD, setAmountUSD] = useState('10');
   const [transactionId, setTransactionId] = useState('');
@@ -52,8 +52,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     jazzcashName: 'TAEMRY OFFICIAL',
     upaisaNumber: '03129876543',
     upaisaName: 'TAEMRY OFFICIAL',
-    sadapayNumber: '03009876543',
-    sadapayName: 'TAEMRY OFFICIAL',
+    easypaisaNumber: '03451234567',
+    easypaisaName: 'TAEMRY OFFICIAL',
     cryptoAddresses: {
       USDT: '0x71C2d389a9fB08a9B4cE50bE2390aFa872B5498d (TRC20 / BEP20)',
       BTC: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
@@ -188,7 +188,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
     if (selectedMethod === 'bank' || selectedMethod === 'crypto') {
       setToastMessage({
         type: 'error',
-        text: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+        text: 'Not Available for Now. Please select JazzCash, UPaisa, or Easypaisa.',
       });
       return;
     }
@@ -289,7 +289,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
   // Calculated conversions
   const exchangeRate = paymentDetails.exchangeRate || 300;
   const numUSD = parseFloat(amountUSD) || 0;
-  const isLocal = ['bank', 'jazzcash', 'upaisa', 'sadapay'].includes(selectedMethod);
+  const isLocal = ['bank', 'jazzcash', 'upaisa', 'easypaisa'].includes(selectedMethod);
   const calculatedPKR = Math.round(numUSD * exchangeRate);
 
   // Clean payment methods catalog (without image logos)
@@ -309,8 +309,8 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
       isAvailable: true,
     },
     {
-      id: 'sadapay',
-      name: 'SadaPay',
+      id: 'easypaisa',
+      name: 'Easypaisa',
       badge: 'Active • Instant',
       description: 'Official IBAN Transfer',
       isAvailable: true,
@@ -454,7 +454,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                           if (!method.isAvailable) {
                             setToastMessage({
                               type: 'error',
-                              text: 'Not Available for Now. Please select JazzCash, UPaisa, or SadaPay.',
+                              text: 'Not Available for Now. Please select JazzCash, UPaisa, or Easypaisa.',
                             });
                           } else {
                             setToastMessage({ type: '', text: '' });
@@ -518,10 +518,10 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                   {', or '}
                   <button
                     type="button"
-                    onClick={() => setSelectedMethod('sadapay')}
+                    onClick={() => setSelectedMethod('easypaisa')}
                     className="font-bold underline text-[#9a3412] hover:text-[#7c2d12] cursor-pointer"
                   >
-                    SadaPay
+                    Easypaisa
                   </button>{' '}
                   instead.
                 </p>
@@ -779,29 +779,29 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                 </div>
               )}
 
-              {/* SADAPAY DETAILS */}
-              {selectedMethod === 'sadapay' && (
+              {/* EASYPAISA DETAILS */}
+              {selectedMethod === 'easypaisa' && (
                 <div className="space-y-3">
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      SadaPay Account Title
+                      Easypaisa Account Title
                     </span>
-                    <p className="text-sm font-bold text-white">{paymentDetails.sadapayName || 'TAEMRY OFFICIAL'}</p>
+                    <p className="text-sm font-bold text-white">{paymentDetails.easypaisaName || 'TAEMRY OFFICIAL'}</p>
                   </div>
                   <div>
                     <span className="text-[10px] uppercase font-bold text-white/60 tracking-wider">
-                      SadaPay IBAN Number
+                      Easypaisa IBAN Number
                     </span>
                     <div className="flex items-center justify-between bg-white/10 p-2.5 rounded-xl border border-white/10 mt-1">
                       <span className="text-base font-mono font-black text-[#2dd4bf]">
-                        {paymentDetails.sadapayNumber || '03009876543'}
+                        {paymentDetails.easypaisaNumber || '03451234567'}
                       </span>
                       <button
-                        onClick={() => handleCopy(paymentDetails.sadapayNumber || '03009876543', 'sp')}
+                        onClick={() => handleCopy(paymentDetails.easypaisaNumber || '03451234567', 'ep')}
                         className="px-2.5 py-1 bg-white/20 hover:bg-white/30 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
                       >
-                        {copiedKey === 'sp' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
-                        <span>{copiedKey === 'sp' ? 'Copied' : 'Copy'}</span>
+                        {copiedKey === 'ep' ? <Check className="w-3.5 h-3.5 text-[#4ade80]" /> : <Copy className="w-3.5 h-3.5" />}
+                        <span>{copiedKey === 'ep' ? 'Copied' : 'Copy'}</span>
                       </button>
                     </div>
                   </div>
@@ -819,7 +819,7 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                       Not Available for Now
                     </h3>
                     <p className="text-xs text-white/70 max-w-xs mx-auto leading-relaxed">
-                      {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available. Please switch to JazzCash, UPaisa, or SadaPay to proceed with your deposit.
+                      {selectedMethod === 'bank' ? 'Bank Transfer' : 'Crypto (USDT)'} is currently not available. Please switch to JazzCash, UPaisa, or Easypaisa to proceed with your deposit.
                     </p>
                   </div>
                   <div className="pt-2 flex flex-wrap justify-center gap-2">
@@ -839,10 +839,10 @@ export default function DepositPage({ onSelectTab, onNavigate }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setSelectedMethod('sadapay')}
+                      onClick={() => setSelectedMethod('easypaisa')}
                       className="px-3 py-1.5 bg-[#0f766e] hover:bg-[#115e59] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-xs"
                     >
-                      Use SadaPay
+                      Use Easypaisa
                     </button>
                   </div>
                 </div>

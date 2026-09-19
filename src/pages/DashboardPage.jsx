@@ -53,7 +53,7 @@ const STARTER_PACKAGE = {
   tierName: 'Bronze',
   price: 1.00,
   rewardRate: '20%',
-  dailyLimit: 200,
+  dailyLimit: 20,
   badge: 'STARTER',
   color: '#b45309',
   description: 'The starter tier ($1.00) generating guaranteed 20% daily returns.',
@@ -480,7 +480,7 @@ export default function DashboardPage({
                       <div className="w-full bg-[#e8e2d5] dark:bg-[#15343d] h-2 rounded-full overflow-hidden">
                         <div
                           className="bg-linear-to-r from-[#7c3aed] to-[#0c5963] h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, Math.round(((stats.dailyAdCount ?? 0) / 400) * 100))}%` }}
+                          style={{ width: `${Math.min(100, Math.round(((stats.dailyAdCount ?? 0) / 20) * 100))}%` }}
                         />
                       </div>
                     </div>

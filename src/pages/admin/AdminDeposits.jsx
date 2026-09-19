@@ -420,7 +420,7 @@ export default function AdminDeposits() {
             <option value="all">All Gateways</option>
             <option value="jazzcash">JazzCash</option>
             <option value="upaisa">UPaisa</option>
-            <option value="sadapay">SadaPay</option>
+            <option value="easypaisa">Easypaisa</option>
             <option value="bank">Bank Transfer</option>
             <option value="crypto">Crypto (USDT)</option>
           </select>

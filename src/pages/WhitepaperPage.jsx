@@ -697,7 +697,7 @@ export default function WhitepaperPage({ onNavigate }) {
                 <div className="p-4 rounded-2xl bg-[#faf8f5] dark:bg-[#0f2831] border border-[#e8e0d3] dark:border-[#173e49] space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-[#093e4a] dark:text-white text-sm">
-                      A) LOCAL WALLETS (JazzCash / UPaisa / SadaPay)
+                      A) LOCAL WALLETS (JazzCash / UPaisa / Easypaisa)
                     </span>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">ACTIVE</span>
                   </div>
@@ -720,7 +720,7 @@ export default function WhitepaperPage({ onNavigate }) {
                     Scheduled Infrastructure Upgrades
                   </div>
                   <p className="text-xs text-[#52666a] dark:text-[#94a3b8] leading-relaxed">
-                    Direct commercial Bank Transfer and on-chain USDT/Crypto channels are currently undergoing scheduled network maintenance. Please utilize our active JazzCash, UPaisa, or SadaPay gateways for instant transactions.
+                    Direct commercial Bank Transfer and on-chain USDT/Crypto channels are currently undergoing scheduled network maintenance. Please utilize our active JazzCash, UPaisa, or Easypaisa gateways for instant transactions.
                   </p>
                 </div>
               </div>

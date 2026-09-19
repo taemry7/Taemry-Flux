@@ -29,20 +29,21 @@ export const DEFAULT_SETTINGS = {
   paymentMethodStatus: {
     jazzcash: true,
     upaisa: true,
-    sadapay: true,
+    easypaisa: true,
+    sadapay: false,
     bank: false,
     crypto: false,
-    easypaisa: false,
   },
   depositApprovalTime: '~1 minute',
   minWithdrawal: 1.00,
   maxWithdrawal: 1000.00,
   withdrawalCooldownMinutes: 0,
   referralRequired: 1,
+  testMode: false, // Production Live Mode
   // Ads Engine Configuration
-  dailyAdLimit: 400,
+  dailyAdLimit: 20, // 20 daily ads per user directive
   adTimerSeconds: 60,
-  adRewardPercentage: 0.05, // 0.05% of package price
+  adRewardPercentage: 0.2, // 0.2% reward per ad
   adCooldownSeconds: 0, // 0s = disabled / consecutive watching allowed
   uplineCommissionPercentage: 50, // 50% distributed to uplines
   requirePackageForAds: true,

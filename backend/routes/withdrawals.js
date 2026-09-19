@@ -180,30 +180,31 @@ router.post('/request', verifyToken, async (req, res) => {
       });
     }
 
-    // 5. Strict Rule: Referral Check (requires at least 1 referral, once unlocked permanent forever)
-    const requiredReferrals = (typeof settings.referralRequired === 'number' && settings.referralRequired > 0)
-      ? settings.referralRequired
-      : 1;
+    // 5. Strict Rule: Minimum Earned Check ($1.00 required)
+    const totalEarned = Number(userData.totalEarned) || 0;
+    const minEarnedRequired = 1.00;
+    const hasEarnedMinimum = totalEarned >= minEarnedRequired;
+    const isWithdrawalEligible = isUserAdmin || (hasActivePackage && hasEarnedMinimum);
 
-    const referralCount = Number(userData.referralCount) || 0;
-    const isWithdrawalPermanentlyUnlocked = Boolean(
-      userData.hasUnlockedWithdrawal ||
-      userData.isWithdrawalUnlocked ||
-      referralCount >= requiredReferrals ||
-      isUserAdmin
-    );
-
-    if (!isWithdrawalPermanentlyUnlocked) {
+    if (!isWithdrawalEligible) {
+      if (!hasActivePackage) {
+        return res.status(400).json({
+          error: 'Ineligible',
+          message: 'Ineligible: An active package is required to unlock withdrawals. Please buy a package first.',
+          totalEarned,
+          minEarnedRequired,
+        });
+      }
       return res.status(400).json({
         error: 'Ineligible',
-        message: `Ineligible: You need at least ${requiredReferrals} active referral to unlock withdrawals. Once you refer 1 member, you are permanently eligible forever!`,
-        referralCount,
-        requiredReferrals,
+        message: `Ineligible: You must earn at least $1.00 to unlock withdrawals. Even with an active package, withdrawals remain locked until you have earned $1.00. Currently earned: $${totalEarned.toFixed(2)} / $${minEarnedRequired.toFixed(2)}.`,
+        totalEarned,
+        minEarnedRequired,
       });
     }
 
-    // Lock in permanent unlocked status for the user in database
-    if (!userData.hasUnlockedWithdrawal && (referralCount >= requiredReferrals || isUserAdmin)) {
+    // Lock in permanent unlocked status for the user in database once minimum earned
+    if (!userData.hasUnlockedWithdrawal && (hasEarnedMinimum || isUserAdmin)) {
       try {
         await userRef.set({ hasUnlockedWithdrawal: true }, { merge: true });
       } catch (saveErr) {

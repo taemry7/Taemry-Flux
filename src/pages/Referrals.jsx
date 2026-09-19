@@ -279,10 +279,10 @@ export default function Referrals({ onSelectTab }) {
               <span>Ultra-Short Direct @Username Link</span>
             </span>
             <h3 className="text-lg sm:text-xl font-black text-[#09353e] dark:text-white">
-              Invite members to earn multi-level matching commission
+              Invite members to earn multi-level commissions
             </h3>
             <p className="text-xs sm:text-sm text-[#526d72] dark:text-[#94a3b8] leading-relaxed">
-              Your referral code is now simply your <strong>Username (@{activeUsername})</strong>. When anyone signs up using your link or enters your username as their sponsor, you earn 5-level tiered commissions (25%, 20%, 15%, 10%, 5%) on all their ad watches automatically.
+              Your referral code is your <strong>Username (@{activeUsername})</strong>. Earn 5-level direct referral commissions (20%, 10%, 5%, 3%, 2%) on package purchases, plus 5-level matching commissions (25%, 20%, 15%, 10%, 5%) on all their daily ad watches!
             </p>
           </div>
 
@@ -642,13 +642,22 @@ export default function Referrals({ onSelectTab }) {
       </div>
 
       {/* COMMISSION PROTOCOL SUMMARY */}
-      <div className="p-6 rounded-3xl bg-[#f5f1e8] dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="p-6 rounded-3xl bg-[#f5f1e8] dark:bg-[#0a1b22] border border-[#e4ded2] dark:border-[#173740] grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0c5963] dark:text-[#2dd4bf] mb-1.5">
-            5-Level Tiered Matching Commission
+            5-Level Direct Refer Commission
           </h4>
           <p className="text-xs text-[#526d72] dark:text-[#94a3b8] leading-relaxed">
-            Every time any member in your downlines completes an ad view, you instantly receive tiered commissions: Level 1 (25%), Level 2 (20%), Level 3 (15%), Level 4 (10%), and Level 5 (5%) based on their ad reward. There is no cap on daily referral earnings.
+            Earn instant multi-tier commission on every package purchase made in your downline: <strong>L1: 20%</strong>, <strong>L2: 10%</strong>, <strong>L3: 5%</strong>, <strong>L4: 3%</strong>, and <strong>L5: 2%</strong> credited directly to your wallet.
+          </p>
+        </div>
+
+        <div>
+          <h4 className="text-xs font-bold uppercase tracking-[0.15em] text-[#0284c7] mb-1.5">
+            5-Level Ads Matching Commission
+          </h4>
+          <p className="text-xs text-[#526d72] dark:text-[#94a3b8] leading-relaxed">
+            Every time any downline member watches daily ads, you instantly earn matching bonuses: <strong>L1: 25%</strong>, <strong>L2: 20%</strong>, <strong>L3: 15%</strong>, <strong>L4: 10%</strong>, and <strong>L5: 5%</strong> of their ad rewards.
           </p>
         </div>
 
@@ -657,7 +666,7 @@ export default function Referrals({ onSelectTab }) {
             Unlimited Depth Team Milestones
           </h4>
           <p className="text-xs text-[#526d72] dark:text-[#94a3b8] leading-relaxed">
-            Every ad watched by any member across your entire lineage—regardless of depth—increments your <strong>Team Ads</strong> counter by +1. This powers your Team Milestone Ladder unlocks with rewards up to $150,000.
+            Every ad watched across your entire lineage increments your <strong>Team Ads</strong> counter by +1, unlocking Team Milestone rewards up to $150,000.
           </p>
         </div>
       </div>

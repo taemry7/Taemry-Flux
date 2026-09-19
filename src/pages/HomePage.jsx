@@ -415,7 +415,7 @@ export default function HomePage({ onNavigate }) {
     ? resolvedWalletBalance.toFixed(2)
     : '125.00';
   const displayProgress = currentUser
-    ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 400) * 100))
+    ? Math.min(100, Math.round(((userStats?.dailyAdCount || 0) / 20) * 100))
     : 37;
 
   // Live last reward resolution for logged-in user
@@ -635,7 +635,7 @@ export default function HomePage({ onNavigate }) {
                       <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
                         <span>Today's ad rhythm</span>
                         <span className="hidden font-bold text-[#0d5963] dark:text-[#38bdf8]">
-                          {userStats?.dailyAdCount || 0} / 400 ({displayProgress}%)
+                          {userStats?.dailyAdCount || 0} / 20 ({displayProgress}%)
                         </span>
                       </div>
                       <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">
@@ -1043,7 +1043,7 @@ export default function HomePage({ onNavigate }) {
                         <div className="flex justify-between text-xs font-medium text-[#4f676b] dark:text-[#94a3b8]">
                           <span>Today's ad rhythm</span>
                           <span className="font-bold text-[#0d5963] dark:text-[#38bdf8]">
-                            {userStats?.dailyAdCount || 0} / 400 ({displayProgress}%)
+                            {userStats?.dailyAdCount || 0} / 20 ({displayProgress}%)
                           </span>
                         </div>
                         <div className="w-full bg-[#f1eee7] dark:bg-[#122b33] h-2.5 rounded-full overflow-hidden">

@@ -167,10 +167,10 @@ router.get('/payment-details', verifyToken, async (req, res) => {
         paymentMethodStatus: settings.paymentMethodStatus || {
           jazzcash: true,
           upaisa: true,
-          sadapay: true,
+          easypaisa: true,
+          sadapay: false,
           bank: false,
           crypto: false,
-          easypaisa: false,
         },
         depositApprovalTime: settings.depositApprovalTime || '~1 minute',
       },
