@@ -458,6 +458,7 @@ export const AuthProvider = ({ children }) => {
 
         saveUserSession(userCredential.user);
         setCurrentUser(userCredential.user);
+        setIsAdmin(isUserAdmin);
         return userCredential.user;
       } else {
         // Development / Demo Mode Fallback
@@ -537,6 +538,7 @@ export const AuthProvider = ({ children }) => {
         const userCredential = await signInWithEmailAndPassword(auth, cleanEmail, password);
         saveUserSession(userCredential.user);
         setCurrentUser(userCredential.user);
+        setIsAdmin(isUserAdmin);
         return userCredential.user;
       } else {
         // Development / Offline Mode: Verify the user account was actually registered
@@ -1075,13 +1077,16 @@ export const AuthProvider = ({ children }) => {
           if (user) {
             saveUserSession(user);
             setCurrentUser(user);
+            setIsAdmin(checkIsAdminEmailStatic(user.email));
           } else {
             // Keep persisted user if user did not explicitly sign out
             const persisted = getInitialPersistedUser();
             if (persisted) {
               setCurrentUser(persisted);
+              setIsAdmin(checkIsAdminEmailStatic(persisted.email));
             } else {
               setCurrentUser(null);
+              setIsAdmin(false);
             }
           }
           setLoading(false);
@@ -1120,6 +1125,7 @@ export const AuthProvider = ({ children }) => {
     userStats,
     fetchUserStats,
     updateLocalStats,
+    checkIsAdminEmail: checkIsAdminEmailStatic,
   };
 
   return (

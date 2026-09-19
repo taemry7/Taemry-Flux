@@ -4,7 +4,25 @@ import Logo from './Logo';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode: externalAuthMode, isDrawerOpen }) {
-  const { currentUser, isAdmin, logout, userStats } = useAuth();
+  const { currentUser, isAdmin, logout, userStats, checkIsAdminEmail } = useAuth();
+  
+  // Strictly verify admin identity: only show to verified admins, never to ordinary users
+  const isVerifiedAdmin = Boolean(
+    isAdmin &&
+    currentUser &&
+    (
+      (typeof checkIsAdminEmail === 'function' && checkIsAdminEmail(currentUser.email)) ||
+      currentUser.email === 'mistrtaimoor@gmail.com' ||
+      currentUser.email === 'mistrtaemry@gmail.com' ||
+      currentUser.email === 'mistrtaimur7@gmail.com' ||
+      currentUser.email?.startsWith('admin@') ||
+      currentUser.email?.includes('taimri') ||
+      currentUser.email?.includes('taemryadmin') ||
+      currentUser.email?.includes('mistrtaimur') ||
+      currentUser.email?.includes('mistrtaimoor') ||
+      currentUser.email?.includes('mistrtaemry')
+    )
+  );
   const [currentAuthMode, setCurrentAuthMode] = useState(() => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash || '';
@@ -222,8 +240,8 @@ export default function Navbar({ onOpenDrawer, onNavigate, currentPage, authMode
         <div className="flex items-center gap-3">
           {currentUser ? (
             <div className="flex items-center gap-3">
-              {/* Admin Control Button - Strictly on Home Page and ONLY for Admin */}
-              {isAdmin && currentPage === 'home' && (
+              {/* Admin Control Button - Strictly on Home Page and ONLY for Admin, completely hidden from ordinary users */}
+              {isVerifiedAdmin && currentPage === 'home' && (
                 <button
                   type="button"
                   id="btn-nav-admin"
